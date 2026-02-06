@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Link, usePage } from '@inertiajs/vue3';
-import { ref, computed, withDefaults } from 'vue';
+import { ref, computed } from 'vue';
 
 interface Props {
     show: boolean;
