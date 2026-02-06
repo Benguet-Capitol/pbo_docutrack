@@ -1,0 +1,98 @@
+@import url('https://rsms.me/inter/inter.css');
+@import '@fortawesome/fontawesome-free/css/all.css';
+
+html {
+    font-family: 'Inter', sans-serif;
+}
+
+@supports (font-variation-settings: normal) {
+    html {
+        font-family: 'Inter var', sans-serif;
+    }
+}
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* PrimeVue DataTable Styling */
+:root {
+    --primary-color: #10b981;
+    --primary-dark: #059669;
+    --surface-0: #ffffff;
+    --surface-50: #f9fafb;
+    --surface-100: #f3f4f6;
+    --surface-200: #e5e7eb;
+    --surface-300: #d1d5db;
+    --surface-400: #9ca3af;
+    --text-color: #1f2937;
+}
+
+.dark {
+    --surface-0: #1f2937;
+    --surface-50: #374151;
+    --surface-100: #4b5563;
+    --surface-200: #6b7280;
+    --surface-300: #9ca3af;
+    --surface-400: #d1d5db;
+    --text-color: #f3f4f6;
+}
+
+/* DataTable styling */
+.p-datatable {
+    @apply border-none;
+}
+
+.p-datatable .p-datatable-thead > tr > th {
+    @apply bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white font-semibold border-b border-gray-200 dark:border-gray-600;
+    background-color: var(--surface-50) !important;
+    color: var(--text-color) !important;
+}
+
+.p-datatable .p-datatable-tbody > tr {
+    @apply border-b border-gray-200 dark:border-gray-700;
+}
+
+.p-datatable .p-datatable-tbody > tr > td {
+    @apply text-gray-600 dark:text-gray-400;
+    color: var(--text-color) !important;
+    background-color: var(--surface-0) !important;
+}
+
+.p-datatable .p-datatable-tbody > tr:hover > td {
+    @apply bg-gray-50 dark:bg-gray-700;
+    background-color: var(--surface-100) !important;
+}
+
+/* Paginator styling */
+.p-paginator {
+    @apply bg-gray-50 dark:bg-gray-700 border-t border-gray-200 dark:border-gray-600;
+    background-color: var(--surface-50) !important;
+}
+
+.p-paginator .p-paginator-left-content,
+.p-paginator .p-paginator-right-content {
+    @apply text-gray-600 dark:text-gray-400;
+    color: var(--text-color) !important;
+}
+
+.p-paginator .p-paginator-page,
+.p-paginator .p-paginator-next,
+.p-paginator .p-paginator-prev,
+.p-paginator .p-paginator-first,
+.p-paginator .p-paginator-last {
+    @apply text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600;
+    color: var(--text-color) !important;
+}
+
+.p-paginator .p-paginator-page.p-highlight {
+    @apply bg-emerald-600 text-white;
+    background-color: var(--primary-color) !important;
+}
+
+/* InputText styling */
+.p-inputtext {
+    @apply border border-gray-300 rounded px-3 py-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white;
+    background-color: var(--surface-0) !important;
+    color: var(--text-color) !important;
+}

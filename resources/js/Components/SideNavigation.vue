@@ -1,0 +1,192 @@
+<script setup lang="ts">
+import { Link, usePage } from '@inertiajs/vue3';
+import { ref, computed, withDefaults } from 'vue';
+
+interface Props {
+    show: boolean;
+    isOpen?: boolean;
+}
+
+const props = withDefaults(defineProps<Props>(), {
+    isOpen: false,
+});
+
+const emit = defineEmits<{
+    'update:isOpen': [value: boolean];
+}>();
+
+const isSidebarOpen = ref(props.isOpen);
+const isSidebarHovered = ref(false);
+
+const toggleSidebar = () => {
+    isSidebarOpen.value = !isSidebarOpen.value;
+    emit('update:isOpen', isSidebarOpen.value);
+};
+const page = usePage();
+
+const auth = computed(() => page.props.auth.user);
+const userInitial = computed(() => auth.value?.name?.charAt(0).toUpperCase() || 'U');
+
+const handleSidebarHover = (hovered: boolean) => {
+    isSidebarHovered.value = hovered;
+};
+</script>
+
+<template>
+    <!-- Side Navigation -->
+    <aside
+        v-show="show"
+        class="fixed inset-y-0 z-20 flex flex-col py-4 space-y-6 bg-gradient-to-b from-white via-gray-50 to-white shadow-xl dark:from-gray-900 dark:via-gray-800 dark:to-gray-900"
+        :class="[
+            isSidebarOpen || isSidebarHovered ? 'translate-x-0 w-64' : '-translate-x-full w-64 md:w-16 md:translate-x-0',
+        ]"
+        style="transition-property: width, transform; transition-duration: 200ms; box-shadow: rgba(0, 0, 0, 0.1) 8px 0 16px;"
+        @mouseenter="handleSidebarHover(true)"
+        @mouseleave="handleSidebarHover(false)"
+    >
+        <!-- Header Section -->
+        <div class="flex items-center justify-between flex-shrink-0 px-3">
+            <!-- Logo -->
+            <Link
+                href="/dashboard"
+                class="inline-flex items-center gap-2"
+            >
+                <!-- Logo Icon -->
+                <i class="ml-1 mr-1 fas fa-hexagon-nodes text-3xl text-emerald-600 dark:text-emerald-400"></i>
+
+                <span v-show="isSidebarOpen || isSidebarHovered" class="text-xl font-semibold text-gray-900 dark:text-white">PBO|DocuTrack</span>
+
+                <span class="sr-only">Dashboard</span>
+            </Link>
+
+            <!-- Toggle button -->
+            <button
+                v-show="isSidebarOpen || isSidebarHovered"
+                type="button"
+                @click="toggleSidebar"
+                class="hidden lg:block p-2 text-gray-600 hover:bg-gray-200 dark:text-gray-300 dark:hover:bg-gray-700 rounded-lg transition-colors"
+            >
+                <i v-if="!isSidebarOpen" class="fas fa-chevron-right text-lg"></i>
+                <i v-else class="fas fa-chevron-left text-lg"></i>
+            </button>
+
+            <button
+                v-show="isSidebarOpen || isSidebarHovered"
+                type="button"
+                @click="toggleSidebar"
+                class="lg:hidden p-2 text-gray-600 hover:bg-gray-200 dark:text-gray-300 dark:hover:bg-gray-700 rounded-lg transition-colors"
+            >
+                <i class="fas fa-times text-lg"></i>
+            </button>
+        </div>
+
+        <!-- Navigation Content -->
+        <nav class="flex flex-col flex-1 gap-2 px-2 overflow-y-auto">
+            <!-- Dashboard Link -->
+            <Link
+                href="/dashboard"
+                :class="[
+                    route().current('dashboard')
+                        ? 'text-white bg-gradient-to-r from-emerald-500 to-emerald-600 shadow-md hover:from-emerald-600 hover:to-emerald-700'
+                        : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 hover:shadow-sm',
+                    'flex-shrink-0 flex items-center gap-3 px-3 py-2.5 transition-all rounded-lg overflow-hidden',
+                ]"
+            >
+                <i class="fas fa-tachometer-alt text-xl flex-shrink-0 dark:text-gray-100" aria-hidden="true"></i>
+                <span class="text-sm font-medium whitespace-nowrap" v-show="isSidebarOpen || isSidebarHovered">Dashboard</span>
+            </Link>
+
+            <!-- Section Divider -->
+            <div
+                v-show="isSidebarOpen || isSidebarHovered"
+                class="text-xs font-bold uppercase tracking-widest text-emerald-600 dark:text-emerald-400 px-3 pt-4 pb-2 mt-2 border-b-2 border-emerald-200 dark:border-emerald-900 transition-opacity"
+            >
+                Main
+            </div>
+
+
+            <!-- User Management Section Divider -->
+            <div
+                v-show="isSidebarOpen || isSidebarHovered"
+                class="text-xs font-bold uppercase tracking-widest text-emerald-600 dark:text-emerald-400 px-3 pt-4 pb-2 mt-2 border-b-2 border-emerald-200 dark:border-emerald-900 transition-opacity"
+            >
+                User Management
+            </div>
+
+            <!-- Users Link -->
+            <Link
+                href="/users"
+                :class="[
+                    route().current('users.*')
+                        ? 'text-white bg-gradient-to-r from-emerald-500 to-emerald-600 shadow-md hover:from-emerald-600 hover:to-emerald-700'
+                        : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 hover:shadow-sm',
+                    'flex-shrink-0 flex items-center gap-3 px-3 py-2.5 transition-all rounded-lg overflow-hidden',
+                ]"
+            >
+                <i class="fas fa-users text-xl flex-shrink-0 dark:text-gray-100" aria-hidden="true"></i>
+                <span class="text-sm font-medium whitespace-nowrap" v-show="isSidebarOpen || isSidebarHovered">Users</span>
+            </Link>
+
+            <!-- Employees Link -->
+            <Link
+                href="/employees"
+                :class="[
+                    route().current('employees.*')
+                        ? 'text-white bg-gradient-to-r from-emerald-500 to-emerald-600 shadow-md hover:from-emerald-600 hover:to-emerald-700'
+                        : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 hover:shadow-sm',
+                    'flex-shrink-0 flex items-center gap-3 px-3 py-2.5 transition-all rounded-lg overflow-hidden',
+                ]"
+            >
+                <i class="fas fa-briefcase text-xl flex-shrink-0 dark:text-gray-100" aria-hidden="true"></i>
+                <span class="text-sm font-medium whitespace-nowrap" v-show="isSidebarOpen || isSidebarHovered">Employees</span>
+            </Link>
+
+            <!-- Offices Link -->
+            <Link
+                href="/offices"
+                :class="[
+                    route().current('offices.*')
+                        ? 'text-white bg-gradient-to-r from-emerald-500 to-emerald-600 shadow-md hover:from-emerald-600 hover:to-emerald-700'
+                        : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 hover:shadow-sm',
+                    'flex-shrink-0 flex items-center gap-3 px-3 py-2.5 transition-all rounded-lg overflow-hidden',
+                ]"
+            >
+                <i class="fas fa-building text-xl flex-shrink-0 dark:text-gray-100" aria-hidden="true"></i>
+                <span class="text-sm font-medium whitespace-nowrap" v-show="isSidebarOpen || isSidebarHovered">Offices</span>
+            </Link>
+        </nav>
+
+        <!-- Footer Section -->
+        <div class="px-3 py-4 mt-auto border-t border-gray-200 dark:border-gray-700 bg-gradient-to-b from-transparent to-gray-50 dark:to-gray-900">
+            <div class="flex items-center gap-3">
+                <!-- Avatar -->
+                <div class="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-emerald-500 via-emerald-600 to-teal-600 flex items-center justify-center shadow-lg hover:shadow-xl transition-shadow duration-200">
+                    <span class="text-sm font-bold text-white">{{ userInitial }}</span>
+                </div>
+
+                <!-- User Info -->
+                <div v-show="isSidebarOpen || isSidebarHovered" class="flex-1 min-w-0 transition-opacity">
+                    <div class="flex flex-col gap-0.5">
+                        <p class="text-sm font-semibold text-gray-900 dark:text-white truncate leading-tight">
+                            {{ auth.name }}
+                        </p>
+                        <p class="text-xs text-gray-600 dark:text-gray-400 truncate leading-tight">
+                            {{ auth.username }}
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar Toggle Button (Mobile) -->
+        <div v-show="!isSidebarOpen" class="px-3 flex-shrink-0 lg:hidden">
+            <button
+                type="button"
+                @click="toggleSidebar"
+                class="w-full p-2 text-gray-600 hover:bg-gray-200 dark:text-gray-300 dark:hover:bg-gray-700 rounded-lg transition-colors"
+            >
+                <i class="fas fa-bars text-lg"></i>
+            </button>
+        </div>
+    </aside>
+</template>
