@@ -11,7 +11,13 @@ interface Employee {
     designation: string;
 }
 
+interface Office {
+    id: number;
+    office_name: string;
+}
+
 const employees = ref<Employee[]>([]);
+const offices = ref<Office[]>([]);
 const loading = ref(true);
 const error = ref('');
 const searchQuery = ref('');
@@ -71,14 +77,26 @@ const paginatedEmployees = computed(() => {
 
 onMounted(async () => {
     try {
-        const response = await fetch('/api/employees', {
-            headers: {
-                Authorization: `Bearer ${localStorage.getItem('token')}`,
-            },
-        });
-        if (!response.ok) throw new Error('Failed to fetch employees');
-        const data = await response.json();
-        employees.value = data.data || data;
+        const [employeesResponse, officesResponse] = await Promise.all([
+            fetch('/api/employees', {
+                headers: {
+                    Authorization: `Bearer ${localStorage.getItem('token')}`,
+                },
+            }),
+            fetch('/api/offices', {
+                headers: {
+                    Authorization: `Bearer ${localStorage.getItem('token')}`,
+                },
+            })
+        ]);
+        
+        if (!employeesResponse.ok) throw new Error('Failed to fetch employees');
+        const employeesData = await employeesResponse.json();
+        employees.value = employeesData.data || employeesData;
+        
+        if (!officesResponse.ok) throw new Error('Failed to fetch offices');
+        const officesData = await officesResponse.json();
+        offices.value = officesData.data || officesData;
     } catch (err: any) {
         error.value = err.message;
     } finally {
@@ -454,8 +472,9 @@ const handleCreateEmployee = async () => {
                                         class="block w-full pl-10 pr-4 py-2 text-xs border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:outline-none focus:border-emerald-500 appearance-none"
                                     >
                                         <option value="">Select Office</option>
-                                        <option value="1">Main Office</option>
-                                        <option value="2">Branch Office</option>
+                                        <option v-for="office in offices" :key="office.id" :value="office.id">
+                                            {{ office.office_name }}
+                                        </option>
                                     </select>
                                 </div>
                             </div>

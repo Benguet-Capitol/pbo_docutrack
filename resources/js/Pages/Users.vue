@@ -10,7 +10,22 @@ interface User {
     usertype: string;
 }
 
+interface Employee {
+    id: number;
+    employee_id: string;
+    name: string;
+    office: number;
+    designation: string;
+}
+
+interface Office {
+    id: number;
+    office_name: string;
+}
+
 const users = ref<User[]>([]);
+const employees = ref<Employee[]>([]);
+const offices = ref<Office[]>([]);
 const loading = ref(true);
 const error = ref('');
 const searchQuery = ref('');
@@ -22,9 +37,13 @@ const activeDropdown = ref<number | null>(null);
 const showCreateModal = ref(false);
 
 const formData = ref({
+    employee_id: '',
     name: '',
     username: '',
-    usertype: ''
+    usertype: '',
+    office_id: '' as string | number,
+    password: '',
+    password_confirmation: ''
 });
 
 const formErrors = ref<Record<string, string>>({});
@@ -69,14 +88,35 @@ const paginatedUsers = computed(() => {
 
 onMounted(async () => {
     try {
-        const response = await fetch('/api/users', {
-            headers: {
-                Authorization: `Bearer ${localStorage.getItem('token')}`,
-            },
-        });
-        if (!response.ok) throw new Error('Failed to fetch users');
-        const data = await response.json();
-        users.value = data.data || data;
+        const [usersResponse, employeesResponse, officesResponse] = await Promise.all([
+            fetch('/api/users', {
+                headers: {
+                    Authorization: `Bearer ${localStorage.getItem('token')}`,
+                },
+            }),
+            fetch('/api/employees', {
+                headers: {
+                    Authorization: `Bearer ${localStorage.getItem('token')}`,
+                },
+            }),
+            fetch('/api/offices', {
+                headers: {
+                    Authorization: `Bearer ${localStorage.getItem('token')}`,
+                },
+            })
+        ]);
+        
+        if (!usersResponse.ok) throw new Error('Failed to fetch users');
+        const userData = await usersResponse.json();
+        users.value = userData.data || userData;
+        
+        if (!employeesResponse.ok) throw new Error('Failed to fetch employees');
+        const employeeData = await employeesResponse.json();
+        employees.value = employeeData.data || employeeData;
+        
+        if (!officesResponse.ok) throw new Error('Failed to fetch offices');
+        const officeData = await officesResponse.json();
+        offices.value = officeData.data || officeData;
     } catch (err: any) {
         error.value = err.message;
     } finally {
@@ -113,9 +153,13 @@ const handleDeleteUser = (userId: number) => {
 
 const openCreateModal = () => {
     formData.value = {
+        employee_id: '',
         name: '',
         username: '',
-        usertype: ''
+        usertype: '',
+        office_id: '',
+        password: '',
+        password_confirmation: ''
     };
     formErrors.value = {};
     showCreateModal.value = true;
@@ -128,8 +172,8 @@ const closeCreateModal = () => {
 const validateForm = (): boolean => {
     formErrors.value = {};
     
-    if (!formData.value.name.trim()) {
-        formErrors.value['name'] = 'Name is required';
+    if (!formData.value.employee_id.toString().trim()) {
+        formErrors.value['employee_id'] = 'Employee is required';
     }
     
     if (!formData.value.username.trim()) {
@@ -138,6 +182,22 @@ const validateForm = (): boolean => {
     
     if (!formData.value.usertype.trim()) {
         formErrors.value['usertype'] = 'Role is required';
+    }
+    
+    if (!formData.value.office_id.toString().trim()) {
+        formErrors.value['office_id'] = 'Office is required';
+    }
+    
+    if (!formData.value.password.trim()) {
+        formErrors.value['password'] = 'Password is required';
+    }
+    
+    if (!formData.value.password_confirmation.trim()) {
+        formErrors.value['password_confirmation'] = 'Password confirmation is required';
+    }
+    
+    if (formData.value.password !== formData.value.password_confirmation) {
+        formErrors.value['password_confirmation'] = 'Passwords do not match';
     }
     
     return Object.keys(formErrors.value).length === 0;
@@ -392,9 +452,29 @@ const handleCreateUser = async () => {
                     <!-- Modal body -->
                     <div class="px-6 py-4 overflow-y-auto" style="max-height: calc(90vh - 200px);">
                         <div class="grid gap-4">
-                            <!-- Name -->
+                            <!-- Employee Selection -->
                             <div class="space-y-2">
-                                <label for="name" class="block text-xs font-medium text-gray-700 dark:text-gray-300">Name</label>
+                                <label for="employee_id" class="block text-xs font-medium text-gray-700 dark:text-gray-300">Employee</label>
+                                <div class="relative flex items-center">
+                                    <i class="fas fa-id-card absolute left-3 text-gray-400 text-sm"></i>
+                                    <select
+                                        v-model.number="formData.employee_id"
+                                        id="employee_id"
+                                        @change="() => { const emp = employees.find(e => e.id === Number(formData.employee_id)); if (emp) { formData.name = emp.name; formData.office_id = emp.office.toString(); } }"
+                                        class="block w-full pl-10 pr-4 py-2 text-xs border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:outline-none focus:border-emerald-500 appearance-none"
+                                    >
+                                        <option value="">Select Employee</option>
+                                        <option v-for="emp in employees" :key="emp.id" :value="emp.id">
+                                            {{ emp.name }} ({{ emp.employee_id }})
+                                        </option>
+                                    </select>
+                                </div>
+                                <span v-if="formErrors.employee_id" class="text-red-500 text-xs">{{ formErrors.employee_id }}</span>
+                            </div>
+
+                            <!-- Name (Auto-filled from Employee) -->
+                            <div class="space-y-2">
+                                <label for="name" class="block text-xs font-medium text-gray-700 dark:text-gray-300">Name (Auto-filled)</label>
                                 <div class="relative flex items-center">
                                     <i class="fas fa-user absolute left-3 text-gray-400 text-sm"></i>
                                     <input
@@ -402,6 +482,7 @@ const handleCreateUser = async () => {
                                         id="name"
                                         type="text"
                                         placeholder="Name"
+                                        readonly
                                         class="block w-full pl-10 pr-4 py-2 text-xs border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:outline-none focus:border-emerald-500"
                                     />
                                 </div>
@@ -424,6 +505,25 @@ const handleCreateUser = async () => {
                                 <span v-if="formErrors.username" class="text-red-500 text-xs">{{ formErrors.username }}</span>
                             </div>
 
+                            <!-- Office (Auto-filled from Employee) -->
+                            <div class="space-y-2">
+                                <label for="office_id" class="block text-xs font-medium text-gray-700 dark:text-gray-300">Office (Auto-filled)</label>
+                                <div class="relative flex items-center">
+                                    <i class="fas fa-building absolute left-3 text-gray-400 text-sm"></i>
+                                    <select
+                                        v-model.number="formData.office_id"
+                                        id="office_id"
+                                        class="block w-full pl-10 pr-4 py-2 text-xs border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:outline-none focus:border-emerald-500 appearance-none"
+                                    >
+                                        <option value="">Select Office</option>
+                                        <option v-for="office in offices" :key="office.id" :value="office.id">
+                                            {{ office.office_name }}
+                                        </option>
+                                    </select>
+                                </div>
+                                <span v-if="formErrors.office_id" class="text-red-500 text-xs">{{ formErrors.office_id }}</span>
+                            </div>
+
                             <!-- Role -->
                             <div class="space-y-2">
                                 <label for="usertype" class="block text-xs font-medium text-gray-700 dark:text-gray-300">Role</label>
@@ -435,12 +535,45 @@ const handleCreateUser = async () => {
                                         class="block w-full pl-10 pr-4 py-2 text-xs border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:outline-none focus:border-emerald-500 appearance-none"
                                     >
                                         <option value="">Select Role</option>
-                                        <option value="Admin">Admin</option>
-                                        <option value="User">User</option>
-                                        <option value="Viewer">Viewer</option>
+                                        <option value="Administrator">Administrator</option>
+                                        <option value="Developer">Developer</option>
+                                        <option value="Supervisor">Supervisor</option>
+                                        <option value="Reviewer">Reviewer</option>
                                     </select>
                                 </div>
                                 <span v-if="formErrors.usertype" class="text-red-500 text-xs">{{ formErrors.usertype }}</span>
+                            </div>
+
+                            <!-- Password -->
+                            <div class="space-y-2">
+                                <label for="password" class="block text-xs font-medium text-gray-700 dark:text-gray-300">Password</label>
+                                <div class="relative flex items-center">
+                                    <i class="fas fa-lock absolute left-3 text-gray-400 text-sm"></i>
+                                    <input
+                                        v-model="formData.password"
+                                        id="password"
+                                        type="password"
+                                        placeholder="Password"
+                                        class="block w-full pl-10 pr-4 py-2 text-xs border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:outline-none focus:border-emerald-500"
+                                    />
+                                </div>
+                                <span v-if="formErrors.password" class="text-red-500 text-xs">{{ formErrors.password }}</span>
+                            </div>
+
+                            <!-- Password Confirmation -->
+                            <div class="space-y-2">
+                                <label for="password_confirmation" class="block text-xs font-medium text-gray-700 dark:text-gray-300">Confirm Password</label>
+                                <div class="relative flex items-center">
+                                    <i class="fas fa-lock absolute left-3 text-gray-400 text-sm"></i>
+                                    <input
+                                        v-model="formData.password_confirmation"
+                                        id="password_confirmation"
+                                        type="password"
+                                        placeholder="Confirm Password"
+                                        class="block w-full pl-10 pr-4 py-2 text-xs border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:outline-none focus:border-emerald-500"
+                                    />
+                                </div>
+                                <span v-if="formErrors.password_confirmation" class="text-red-500 text-xs">{{ formErrors.password_confirmation }}</span>
                             </div>
 
                             <!-- Submit error -->
