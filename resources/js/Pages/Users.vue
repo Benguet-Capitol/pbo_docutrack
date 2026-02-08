@@ -1,235 +1,3 @@
-<script setup lang="ts">
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
-import { Head } from '@inertiajs/vue3';
-import { ref, computed, onMounted } from 'vue';
-
-interface User {
-    id: number;
-    name: string;
-    username: string;
-    usertype: string;
-}
-
-interface Employee {
-    id: number;
-    employee_id: string;
-    name: string;
-    office: number;
-    designation: string;
-}
-
-interface Office {
-    id: number;
-    office_name: string;
-}
-
-const users = ref<User[]>([]);
-const employees = ref<Employee[]>([]);
-const offices = ref<Office[]>([]);
-const loading = ref(true);
-const error = ref('');
-const searchQuery = ref('');
-const currentPage = ref(1);
-const itemsPerPage = ref(10);
-const sortBy = ref<'id' | 'name' | 'username' | 'usertype'>('id');
-const sortOrder = ref<'asc' | 'desc'>('asc');
-const activeDropdown = ref<number | null>(null);
-const showCreateModal = ref(false);
-
-const formData = ref({
-    employee_id: '',
-    name: '',
-    username: '',
-    usertype: '',
-    office_id: '' as string | number,
-    password: '',
-    password_confirmation: ''
-});
-
-const formErrors = ref<Record<string, string>>({});
-
-const filteredUsers = computed(() => {
-    let result = users.value.filter((user) => {
-        const query = searchQuery.value.toLowerCase();
-        return (
-            user.name.toLowerCase().includes(query) ||
-            user.username.toLowerCase().includes(query) ||
-            user.usertype.toLowerCase().includes(query)
-        );
-    });
-
-    result.sort((a, b) => {
-        let aVal: any = a[sortBy.value];
-        let bVal: any = b[sortBy.value];
-
-        if (aVal === null || aVal === undefined) aVal = '';
-        if (bVal === null || bVal === undefined) bVal = '';
-
-        if (typeof aVal === 'string') {
-            aVal = aVal.toLowerCase();
-            bVal = bVal.toLowerCase();
-        }
-
-        if (aVal < bVal) return sortOrder.value === 'asc' ? -1 : 1;
-        if (aVal > bVal) return sortOrder.value === 'asc' ? 1 : -1;
-        return 0;
-    });
-
-    return result;
-});
-
-const totalPages = computed(() => Math.ceil(filteredUsers.value.length / itemsPerPage.value));
-
-const paginatedUsers = computed(() => {
-    const start = (currentPage.value - 1) * itemsPerPage.value;
-    const end = start + itemsPerPage.value;
-    return filteredUsers.value.slice(start, end);
-});
-
-onMounted(async () => {
-    try {
-        const [usersResponse, employeesResponse, officesResponse] = await Promise.all([
-            fetch('/api/users', {
-                headers: {
-                    Authorization: `Bearer ${localStorage.getItem('token')}`,
-                },
-            }),
-            fetch('/api/employees', {
-                headers: {
-                    Authorization: `Bearer ${localStorage.getItem('token')}`,
-                },
-            }),
-            fetch('/api/offices', {
-                headers: {
-                    Authorization: `Bearer ${localStorage.getItem('token')}`,
-                },
-            })
-        ]);
-        
-        if (!usersResponse.ok) throw new Error('Failed to fetch users');
-        const userData = await usersResponse.json();
-        users.value = userData.data || userData;
-        
-        if (!employeesResponse.ok) throw new Error('Failed to fetch employees');
-        const employeeData = await employeesResponse.json();
-        employees.value = employeeData.data || employeeData;
-        
-        if (!officesResponse.ok) throw new Error('Failed to fetch offices');
-        const officeData = await officesResponse.json();
-        offices.value = officeData.data || officeData;
-    } catch (err: any) {
-        error.value = err.message;
-    } finally {
-        loading.value = false;
-    }
-});
-
-const changePage = (page: number) => {
-    if (page >= 1 && page <= totalPages.value) {
-        currentPage.value = page;
-    }
-};
-
-const toggleSort = (field: 'id' | 'name' | 'username' | 'usertype') => {
-    if (sortBy.value === field) {
-        sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc';
-    } else {
-        sortBy.value = field;
-        sortOrder.value = 'asc';
-    }
-};
-
-const toggleDropdown = (userId: number) => {
-    activeDropdown.value = activeDropdown.value === userId ? null : userId;
-};
-
-const handleEditUser = (userId: number) => {
-    console.log('Edit user:', userId);
-};
-
-const handleDeleteUser = (userId: number) => {
-    console.log('Delete user:', userId);
-};
-
-const openCreateModal = () => {
-    formData.value = {
-        employee_id: '',
-        name: '',
-        username: '',
-        usertype: '',
-        office_id: '',
-        password: '',
-        password_confirmation: ''
-    };
-    formErrors.value = {};
-    showCreateModal.value = true;
-};
-
-const closeCreateModal = () => {
-    showCreateModal.value = false;
-};
-
-const validateForm = (): boolean => {
-    formErrors.value = {};
-    
-    if (!formData.value.employee_id.toString().trim()) {
-        formErrors.value['employee_id'] = 'Employee is required';
-    }
-    
-    if (!formData.value.username.trim()) {
-        formErrors.value['username'] = 'Username is required';
-    }
-    
-    if (!formData.value.usertype.trim()) {
-        formErrors.value['usertype'] = 'Role is required';
-    }
-    
-    if (!formData.value.office_id.toString().trim()) {
-        formErrors.value['office_id'] = 'Office is required';
-    }
-    
-    if (!formData.value.password.trim()) {
-        formErrors.value['password'] = 'Password is required';
-    }
-    
-    if (!formData.value.password_confirmation.trim()) {
-        formErrors.value['password_confirmation'] = 'Password confirmation is required';
-    }
-    
-    if (formData.value.password !== formData.value.password_confirmation) {
-        formErrors.value['password_confirmation'] = 'Passwords do not match';
-    }
-    
-    return Object.keys(formErrors.value).length === 0;
-};
-
-const handleCreateUser = async () => {
-    if (!validateForm()) return;
-    
-    try {
-        const response = await fetch('/api/users', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json',
-                Authorization: `Bearer ${localStorage.getItem('token')}`,
-            },
-            body: JSON.stringify(formData.value)
-        });
-        
-        if (!response.ok) {
-            throw new Error('Failed to create user');
-        }
-        
-        const newUser = await response.json();
-        users.value.push(newUser);
-        closeCreateModal();
-    } catch (e) {
-        formErrors.value['submit'] = e instanceof Error ? e.message : 'An error occurred';
-    }
-};
-</script>
-
 <template>
 
     <AuthenticatedLayout>
@@ -361,13 +129,13 @@ const handleCreateUser = async () => {
                                             class="absolute right-0 mt-2 w-36 bg-white dark:bg-gray-700 rounded-lg shadow-lg z-10 border border-gray-200 dark:border-gray-600 overflow-hidden"
                                         >
                                             <button 
-                                                @click="handleEditUser(user.id); activeDropdown = null" 
+                                                @click="handleEditUser(user); activeDropdown = null" 
                                                 class="w-full text-left px-4 py-2 text-xs font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors duration-150 flex items-center gap-2"
                                             >
                                                 <i class="fas fa-pencil-alt"></i>Edit
                                             </button>
                                             <button 
-                                                @click="handleDeleteUser(user.id); activeDropdown = null" 
+                                                @click="handleDeleteUser(user); activeDropdown = null" 
                                                 class="w-full text-left px-4 py-2 text-xs font-medium text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors duration-150 border-t border-gray-200 dark:border-gray-600 flex items-center gap-2"
                                             >
                                                 <i class="fas fa-trash-alt"></i>Delete
@@ -603,8 +371,475 @@ const handleCreateUser = async () => {
                 </div>
             </div>
         </Teleport>
+
+        <!-- Edit User Modal -->
+        <Teleport to="body" v-if="showEditModal">
+            <div class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50" @click.self="closeEditModal">
+                <div class="relative w-full max-w-4xl mx-4 bg-white rounded-lg shadow-lg dark:bg-gray-800 animate-scaleInUp">
+                    <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 rounded-t-lg bg-gradient-to-r from-blue-50 to-blue-100 dark:from-gray-700 dark:to-gray-600 dark:border-gray-600">
+                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                            <i class="fas fa-edit text-blue-600 dark:text-blue-400"></i>
+                            Edit User
+                        </h3>
+                        <button @click="closeEditModal" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
+                            <i class="fas fa-times text-xl"></i>
+                        </button>
+                    </div>
+
+                    <div class="px-6 py-4 overflow-y-auto" style="max-height: calc(90vh - 200px);">
+                        <div class="grid gap-4">
+                            <div class="space-y-2">
+                                <label for="edit_name" class="block text-xs font-medium text-gray-700 dark:text-gray-300">Name</label>
+                                <div class="relative flex items-center">
+                                    <i class="fas fa-user absolute left-3 text-gray-400 text-sm"></i>
+                                    <input
+                                        v-model="formData.name"
+                                        id="edit_name"
+                                        type="text"
+                                        placeholder="Name"
+                                        class="block w-full pl-10 pr-4 py-2 text-xs border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:outline-none focus:border-blue-500"
+                                        disabled
+                                    />
+                                </div>
+                            </div>
+
+                            <div class="space-y-2">
+                                <label for="edit_username" class="block text-xs font-medium text-gray-700 dark:text-gray-300">Username</label>
+                                <div class="relative flex items-center">
+                                    <i class="fas fa-at absolute left-3 text-gray-400 text-sm"></i>
+                                    <input
+                                        v-model="formData.username"
+                                        id="edit_username"
+                                        type="text"
+                                        placeholder="Username"
+                                        class="block w-full pl-10 pr-4 py-2 text-xs border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:outline-none focus:border-blue-500"
+                                    />
+                                </div>
+                                <span v-if="formErrors.username" class="text-red-500 text-xs">{{ formErrors.username }}</span>
+                            </div>
+
+                            <div class="space-y-2">
+                                <label for="edit_usertype" class="block text-xs font-medium text-gray-700 dark:text-gray-300">Role</label>
+                                <div class="relative flex items-center">
+                                    <i class="fas fa-users absolute left-3 text-gray-400 text-sm"></i>
+                                    <select
+                                        v-model="formData.usertype"
+                                        id="edit_usertype"
+                                        class="block w-full pl-10 pr-4 py-2 text-xs border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:outline-none focus:border-blue-500 appearance-none"
+                                    >
+                                        <option value="">Select Role</option>
+                                        <option value="Administrator">Administrator</option>
+                                        <option value="Developer">Developer</option>
+                                        <option value="Supervisor">Supervisor</option>
+                                        <option value="Reviewer">Reviewer</option>
+                                    </select>
+                                </div>
+                                <span v-if="formErrors.usertype" class="text-red-500 text-xs">{{ formErrors.usertype }}</span>
+                            </div>
+
+                            <div v-if="formErrors.submit" class="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                                <p class="text-xs text-red-600 dark:text-red-400">{{ formErrors.submit }}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center justify-center gap-3 p-6 border-t-2 border-gray-200 rounded-b-lg dark:border-gray-600 bg-gray-50 dark:bg-gray-800">
+                        <button
+                            @click="handleUpdateUser"
+                            class="inline-flex items-center gap-2 px-5 py-3 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95"
+                        >
+                            <i class="fas fa-save"></i>
+                            Update
+                        </button>
+                        <button
+                            @click="closeEditModal"
+                            class="inline-flex items-center gap-2 px-5 py-3 text-xs font-medium text-gray-600 dark:text-gray-400 border border-gray-600 dark:border-gray-500 hover:text-white hover:bg-gray-600 dark:hover:bg-gray-600 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95"
+                        >
+                            <i class="fas fa-times"></i>
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </Teleport>
+
+        <!-- Delete User Modal -->
+        <Teleport to="body" v-if="showDeleteModal && userToDelete">
+            <div class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50" @click.self="closeDeleteModal">
+                <div class="relative w-full max-w-md mx-4 bg-white rounded-lg shadow-lg dark:bg-gray-800 animate-scaleInUp">
+                    <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 rounded-t-lg bg-gradient-to-r from-red-50 to-red-100 dark:from-gray-700 dark:to-gray-600 dark:border-gray-600">
+                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                            <i class="fas fa-trash-alt text-red-600 dark:text-red-400"></i>
+                            Delete User
+                        </h3>
+                        <button @click="closeDeleteModal" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
+                            <i class="fas fa-times text-xl"></i>
+                        </button>
+                    </div>
+
+                    <div class="px-6 py-6">
+                        <div class="flex items-start gap-4">
+                            <div class="flex-shrink-0">
+                                <i class="fas fa-exclamation-triangle text-red-600 dark:text-red-400 text-3xl"></i>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-900 dark:text-gray-100">
+                                    Are you sure you want to delete <span class="font-semibold">{{ userToDelete.username }}</span>?
+                                </p>
+                                <p class="text-xs text-gray-600 dark:text-gray-400 mt-2">
+                                    This action cannot be undone. All associated data will be permanently deleted.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center justify-center gap-3 p-6 border-t-2 border-gray-200 rounded-b-lg dark:border-gray-600 bg-gray-50 dark:bg-gray-800">
+                        <button
+                            @click="confirmDeleteUser"
+                            class="inline-flex items-center gap-2 px-5 py-3 text-xs font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95"
+                        >
+                            <i class="fas fa-trash-alt"></i>
+                            Delete
+                        </button>
+                        <button
+                            @click="closeDeleteModal"
+                            class="inline-flex items-center gap-2 px-5 py-3 text-xs font-medium text-gray-600 dark:text-gray-400 border border-gray-600 dark:border-gray-500 hover:text-white hover:bg-gray-600 dark:hover:bg-gray-600 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95"
+                        >
+                            <i class="fas fa-times"></i>
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </Teleport>
     </AuthenticatedLayout>
 </template>
+
+<script setup lang="ts">
+import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import { Head } from '@inertiajs/vue3';
+import { ref, computed, onMounted } from 'vue';
+
+interface User {
+    id: number;
+    name: string;
+    username: string;
+    usertype: string;
+}
+
+interface Employee {
+    id: number;
+    employee_id: string;
+    name: string;
+    office: number;
+    designation: string;
+}
+
+interface Office {
+    id: number;
+    office_name: string;
+}
+
+const users = ref<User[]>([]);
+const employees = ref<Employee[]>([]);
+const offices = ref<Office[]>([]);
+const loading = ref(true);
+const error = ref('');
+const searchQuery = ref('');
+const currentPage = ref(1);
+const itemsPerPage = ref(10);
+const sortBy = ref<'id' | 'name' | 'username' | 'usertype'>('id');
+const sortOrder = ref<'asc' | 'desc'>('asc');
+const activeDropdown = ref<number | null>(null);
+const showCreateModal = ref(false);
+const showEditModal = ref(false);
+const showDeleteModal = ref(false);
+const editingUser = ref<User | null>(null);
+const userToDelete = ref<User | null>(null);
+
+const formData = ref({
+    employee_id: '',
+    name: '',
+    username: '',
+    usertype: '',
+    office_id: '' as string | number,
+    password: '',
+    password_confirmation: ''
+});
+
+const formErrors = ref<Record<string, string>>({});
+
+const filteredUsers = computed(() => {
+    let result = users.value.filter((user) => {
+        const query = searchQuery.value.toLowerCase();
+        return (
+            user.name.toLowerCase().includes(query) ||
+            user.username.toLowerCase().includes(query) ||
+            user.usertype.toLowerCase().includes(query)
+        );
+    });
+
+    result.sort((a, b) => {
+        let aVal: any = a[sortBy.value];
+        let bVal: any = b[sortBy.value];
+
+        if (aVal === null || aVal === undefined) aVal = '';
+        if (bVal === null || bVal === undefined) bVal = '';
+
+        if (typeof aVal === 'string') {
+            aVal = aVal.toLowerCase();
+            bVal = bVal.toLowerCase();
+        }
+
+        if (aVal < bVal) return sortOrder.value === 'asc' ? -1 : 1;
+        if (aVal > bVal) return sortOrder.value === 'asc' ? 1 : -1;
+        return 0;
+    });
+
+    return result;
+});
+
+const totalPages = computed(() => Math.ceil(filteredUsers.value.length / itemsPerPage.value));
+
+const paginatedUsers = computed(() => {
+    const start = (currentPage.value - 1) * itemsPerPage.value;
+    const end = start + itemsPerPage.value;
+    return filteredUsers.value.slice(start, end);
+});
+
+onMounted(async () => {
+    try {
+        const [usersResponse, employeesResponse, officesResponse] = await Promise.all([
+            fetch('/api/users', {
+                headers: {
+                    Authorization: `Bearer ${localStorage.getItem('token')}`,
+                },
+            }),
+            fetch('/api/employees', {
+                headers: {
+                    Authorization: `Bearer ${localStorage.getItem('token')}`,
+                },
+            }),
+            fetch('/api/offices', {
+                headers: {
+                    Authorization: `Bearer ${localStorage.getItem('token')}`,
+                },
+            })
+        ]);
+        
+        if (!usersResponse.ok) throw new Error('Failed to fetch users');
+        const userData = await usersResponse.json();
+        users.value = userData.data || userData;
+        
+        if (!employeesResponse.ok) throw new Error('Failed to fetch employees');
+        const employeeData = await employeesResponse.json();
+        employees.value = employeeData.data || employeeData;
+        
+        if (!officesResponse.ok) throw new Error('Failed to fetch offices');
+        const officeData = await officesResponse.json();
+        offices.value = officeData.data || officeData;
+    } catch (err: any) {
+        error.value = err.message;
+    } finally {
+        loading.value = false;
+    }
+});
+
+const changePage = (page: number) => {
+    if (page >= 1 && page <= totalPages.value) {
+        currentPage.value = page;
+    }
+};
+
+const toggleSort = (field: 'id' | 'name' | 'username' | 'usertype') => {
+    if (sortBy.value === field) {
+        sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc';
+    } else {
+        sortBy.value = field;
+        sortOrder.value = 'asc';
+    }
+};
+
+const toggleDropdown = (userId: number) => {
+    activeDropdown.value = activeDropdown.value === userId ? null : userId;
+};
+
+const handleEditUser = (user: User) => {
+    editingUser.value = user;
+    formData.value = {
+        employee_id: '',
+        name: user.name,
+        username: user.username,
+        usertype: user.usertype,
+        office_id: '',
+        password: '',
+        password_confirmation: ''
+    };
+    formErrors.value = {};
+    showEditModal.value = true;
+};
+
+const closeEditModal = () => {
+    showEditModal.value = false;
+    editingUser.value = null;
+};
+
+const handleUpdateUser = async () => {
+    if (!editingUser.value) return;
+    
+    formErrors.value = {};
+    
+    if (!formData.value.username.trim()) {
+        formErrors.value['username'] = 'Username is required';
+    }
+    
+    if (!formData.value.usertype.trim()) {
+        formErrors.value['usertype'] = 'Role is required';
+    }
+    
+    if (Object.keys(formErrors.value).length > 0) return;
+    
+    try {
+        const response = await fetch(`/api/users/${editingUser.value.id}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                Authorization: `Bearer ${localStorage.getItem('token')}`,
+            },
+            body: JSON.stringify({
+                name: formData.value.name,
+                username: formData.value.username,
+                usertype: formData.value.usertype
+            })
+        });
+        
+        if (!response.ok) {
+            throw new Error('Failed to update user');
+        }
+        
+        const updatedUser = await response.json();
+        const index = users.value.findIndex(u => u.id === editingUser.value!.id);
+        if (index !== -1) {
+            users.value[index] = updatedUser;
+        }
+        closeEditModal();
+    } catch (e) {
+        formErrors.value['submit'] = e instanceof Error ? e.message : 'An error occurred';
+    }
+};
+
+const handleDeleteUser = (user: User) => {
+    userToDelete.value = user;
+    showDeleteModal.value = true;
+};
+
+const closeDeleteModal = () => {
+    showDeleteModal.value = false;
+    userToDelete.value = null;
+};
+
+const confirmDeleteUser = async () => {
+    if (!userToDelete.value) return;
+    
+    try {
+        const response = await fetch(`/api/users/${userToDelete.value.id}`, {
+            method: 'DELETE',
+            headers: {
+                'Accept': 'application/json',
+                Authorization: `Bearer ${localStorage.getItem('token')}`,
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error('Failed to delete user');
+        }
+        
+        users.value = users.value.filter(u => u.id !== userToDelete.value!.id);
+        closeDeleteModal();
+    } catch (e) {
+        alert(e instanceof Error ? e.message : 'An error occurred');
+    }
+};
+
+const openCreateModal = () => {
+    formData.value = {
+        employee_id: '',
+        name: '',
+        username: '',
+        usertype: '',
+        office_id: '',
+        password: '',
+        password_confirmation: ''
+    };
+    formErrors.value = {};
+    showCreateModal.value = true;
+};
+
+const closeCreateModal = () => {
+    showCreateModal.value = false;
+};
+
+const validateForm = (): boolean => {
+    formErrors.value = {};
+    
+    if (!formData.value.employee_id.toString().trim()) {
+        formErrors.value['employee_id'] = 'Employee is required';
+    }
+    
+    if (!formData.value.username.trim()) {
+        formErrors.value['username'] = 'Username is required';
+    }
+    
+    if (!formData.value.usertype.trim()) {
+        formErrors.value['usertype'] = 'Role is required';
+    }
+    
+    if (!formData.value.office_id.toString().trim()) {
+        formErrors.value['office_id'] = 'Office is required';
+    }
+    
+    if (!formData.value.password.trim()) {
+        formErrors.value['password'] = 'Password is required';
+    }
+    
+    if (!formData.value.password_confirmation.trim()) {
+        formErrors.value['password_confirmation'] = 'Password confirmation is required';
+    }
+    
+    if (formData.value.password !== formData.value.password_confirmation) {
+        formErrors.value['password_confirmation'] = 'Passwords do not match';
+    }
+    
+    return Object.keys(formErrors.value).length === 0;
+};
+
+const handleCreateUser = async () => {
+    if (!validateForm()) return;
+    
+    try {
+        const response = await fetch('/api/users', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                Authorization: `Bearer ${localStorage.getItem('token')}`,
+            },
+            body: JSON.stringify(formData.value)
+        });
+        
+        if (!response.ok) {
+            throw new Error('Failed to create user');
+        }
+        
+        const newUser = await response.json();
+        users.value.push(newUser);
+        closeCreateModal();
+    } catch (e) {
+        formErrors.value['submit'] = e instanceof Error ? e.message : 'An error occurred';
+    }
+};
+</script>
 
 <style scoped>
 @keyframes scaleInUp {

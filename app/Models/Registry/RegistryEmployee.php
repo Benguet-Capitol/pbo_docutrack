@@ -14,6 +14,7 @@ class RegistryEmployee extends Model
     public $timestamps = false;
 
     protected $fillable = [
+        'id',
         'employee_id',
         'name',
         'fk_office_id',
