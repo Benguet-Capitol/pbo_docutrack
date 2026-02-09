@@ -48,7 +48,7 @@ const handleSidebarHover = (hovered: boolean) => {
         <div class="flex items-center justify-between flex-shrink-0 px-3">
             <!-- Logo -->
             <Link
-                href="/dashboard"
+                :href="route('dashboard')"
                 class="inline-flex items-center gap-2"
             >
                 <!-- Logo Icon -->
@@ -84,7 +84,7 @@ const handleSidebarHover = (hovered: boolean) => {
         <nav class="flex flex-col flex-1 gap-2 px-2 overflow-y-auto">
             <!-- Dashboard Link -->
             <Link
-                href="/dashboard"
+                :href="route('dashboard')"
                 :class="[
                     route().current('dashboard')
                         ? 'text-white bg-gradient-to-r from-emerald-500 to-emerald-600 shadow-md hover:from-emerald-600 hover:to-emerald-700'
@@ -115,7 +115,7 @@ const handleSidebarHover = (hovered: boolean) => {
 
             <!-- Users Link -->
             <Link
-                href="/users"
+                :href="route('users.index')"
                 :class="[
                     route().current('users.*')
                         ? 'text-white bg-gradient-to-r from-emerald-500 to-emerald-600 shadow-md hover:from-emerald-600 hover:to-emerald-700'
@@ -129,7 +129,7 @@ const handleSidebarHover = (hovered: boolean) => {
 
             <!-- Employees Link -->
             <Link
-                href="/employees"
+                :href="route('employees.index')"
                 :class="[
                     route().current('employees.*')
                         ? 'text-white bg-gradient-to-r from-emerald-500 to-emerald-600 shadow-md hover:from-emerald-600 hover:to-emerald-700'
@@ -143,7 +143,7 @@ const handleSidebarHover = (hovered: boolean) => {
 
             <!-- Offices Link -->
             <Link
-                href="/offices"
+                :href="route('offices.index')"
                 :class="[
                     route().current('offices.*')
                         ? 'text-white bg-gradient-to-r from-emerald-500 to-emerald-600 shadow-md hover:from-emerald-600 hover:to-emerald-700'

@@ -1,5 +1,5 @@
 <template>
-
+    <Toast ref="toastRef" />
     <AuthenticatedLayout>
         <template #header>
             <h2 class="text-xl font-semibold leading-tight text-gray-800 dark:text-gray-200">
@@ -228,7 +228,7 @@
                                     <select
                                         v-model.number="formData.employee_id"
                                         id="employee_id"
-                                        @change="() => { const emp = employees.find(e => e.id === Number(formData.employee_id)); if (emp) { formData.name = emp.name; formData.office_id = emp.office.toString(); } }"
+                                        @change="() => { const emp = employees.find(e => e.id === Number(formData.employee_id)); if (emp) { formData.name = emp.name; formData.office = emp.office.toString(); } }"
                                         class="block w-full pl-10 pr-4 py-2 text-xs border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:outline-none focus:border-emerald-500 appearance-none"
                                     >
                                         <option value="">Select Employee</option>
@@ -275,12 +275,12 @@
 
                             <!-- Office (Auto-filled from Employee) -->
                             <div class="space-y-2">
-                                <label for="office_id" class="block text-xs font-medium text-gray-700 dark:text-gray-300">Office (Auto-filled)</label>
+                                <label for="office" class="block text-xs font-medium text-gray-700 dark:text-gray-300">Office (Auto-filled)</label>
                                 <div class="relative flex items-center">
                                     <i class="fas fa-building absolute left-3 text-gray-400 text-sm"></i>
                                     <select
-                                        v-model.number="formData.office_id"
-                                        id="office_id"
+                                        v-model.number="formData.office"
+                                        id="office"
                                         class="block w-full pl-10 pr-4 py-2 text-xs border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:outline-none focus:border-emerald-500 appearance-none"
                                     >
                                         <option value="">Select Office</option>
@@ -289,7 +289,7 @@
                                         </option>
                                     </select>
                                 </div>
-                                <span v-if="formErrors.office_id" class="text-red-500 text-xs">{{ formErrors.office_id }}</span>
+                                <span v-if="formErrors.office" class="text-red-500 text-xs">{{ formErrors.office }}</span>
                             </div>
 
                             <!-- Role -->
@@ -388,6 +388,25 @@
 
                     <div class="px-6 py-4 overflow-y-auto" style="max-height: calc(90vh - 200px);">
                         <div class="grid gap-4">
+                            <!-- Employee Selection -->
+                            <div class="space-y-2">
+                                <label for="edit_employee_id" class="block text-xs font-medium text-gray-700 dark:text-gray-300">Employee</label>
+                                <div class="relative flex items-center">
+                                    <i class="fas fa-id-card absolute left-3 text-gray-400 text-sm"></i>
+                                    <select
+                                        v-model.number="formData.employee_id"
+                                        id="edit_employee_id"
+                                        @change="() => { const emp = employees.find(e => e.id === Number(formData.employee_id)); if (emp) { formData.name = emp.name; formData.office = emp.office.toString(); } }"
+                                        class="block w-full pl-10 pr-4 py-2 text-xs border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:outline-none focus:border-blue-500 appearance-none"
+                                    >
+                                        <option value="">Select Employee</option>
+                                        <option v-for="emp in employees" :key="emp.id" :value="emp.id">
+                                            {{ emp.name }} ({{ emp.employee_id }})
+                                        </option>
+                                    </select>
+                                </div>
+                            </div>
+
                             <div class="space-y-2">
                                 <label for="edit_name" class="block text-xs font-medium text-gray-700 dark:text-gray-300">Name</label>
                                 <div class="relative flex items-center">
@@ -398,9 +417,9 @@
                                         type="text"
                                         placeholder="Name"
                                         class="block w-full pl-10 pr-4 py-2 text-xs border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:outline-none focus:border-blue-500"
-                                        disabled
                                     />
                                 </div>
+                                <span v-if="formErrors.name" class="text-red-500 text-xs">{{ formErrors.name }}</span>
                             </div>
 
                             <div class="space-y-2">
@@ -435,6 +454,24 @@
                                     </select>
                                 </div>
                                 <span v-if="formErrors.usertype" class="text-red-500 text-xs">{{ formErrors.usertype }}</span>
+                            </div>
+
+                            <div class="space-y-2">
+                                <label for="edit_office" class="block text-xs font-medium text-gray-700 dark:text-gray-300">Office <span v-if="editingUser" class="text-gray-500">(Current: {{ getCurrentOfficeName() }})</span></label>
+                                <div class="relative flex items-center">
+                                    <i class="fas fa-building absolute left-3 text-gray-400 text-sm"></i>
+                                    <select
+                                        v-model.number="formData.office"
+                                        id="edit_office"
+                                        class="block w-full pl-10 pr-4 py-2 text-xs border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:outline-none focus:border-blue-500 appearance-none"
+                                    >
+                                        <option value="">Select Office</option>
+                                        <option v-for="office in offices" :key="office.id" :value="office.id">
+                                            {{ office.office_name }}
+                                        </option>
+                                    </select>
+                                </div>
+                                <span v-if="formErrors.office" class="text-red-500 text-xs">{{ formErrors.office }}</span>
                             </div>
 
                             <div v-if="formErrors.submit" class="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
@@ -517,6 +554,7 @@
 
 <script setup lang="ts">
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import Toast from '@/Components/Toast.vue';
 import { Head } from '@inertiajs/vue3';
 import { ref, computed, onMounted } from 'vue';
 
@@ -525,6 +563,7 @@ interface User {
     name: string;
     username: string;
     usertype: string;
+    office?: number | null;
 }
 
 interface Employee {
@@ -562,7 +601,7 @@ const formData = ref({
     name: '',
     username: '',
     usertype: '',
-    office_id: '' as string | number,
+    office: '' as string | number,
     password: '',
     password_confirmation: ''
 });
@@ -610,17 +649,17 @@ const paginatedUsers = computed(() => {
 onMounted(async () => {
     try {
         const [usersResponse, employeesResponse, officesResponse] = await Promise.all([
-            fetch('/api/users', {
+            fetch('/docutrack/api/users', {
                 headers: {
                     Authorization: `Bearer ${localStorage.getItem('token')}`,
                 },
             }),
-            fetch('/api/employees', {
+            fetch('/docutrack/api/employees', {
                 headers: {
                     Authorization: `Bearer ${localStorage.getItem('token')}`,
                 },
             }),
-            fetch('/api/offices', {
+            fetch('/docutrack/api/offices', {
                 headers: {
                     Authorization: `Bearer ${localStorage.getItem('token')}`,
                 },
@@ -664,6 +703,29 @@ const toggleDropdown = (userId: number) => {
     activeDropdown.value = activeDropdown.value === userId ? null : userId;
 };
 
+/**
+ * Get the current office name for the editing user
+ */
+const getCurrentOfficeName = (): string => {
+    if (!editingUser.value) return 'Not Assigned';
+    
+    const officeId = typeof editingUser.value.office === 'number' 
+        ? editingUser.value.office 
+        : editingUser.value.office?.id;
+    
+    if (!officeId || officeId === 0) {
+        return 'Not Assigned';
+    }
+    
+    const office = offices.value.find(o => o.id === officeId);
+    return office ? office.office_name : `Office ID: ${officeId}`;
+};
+
+// ============== Toast Component Reference ==============
+
+/** Reference to the Toast component for displaying notifications */
+const toastRef = ref<InstanceType<typeof Toast> | null>(null);
+
 const handleEditUser = (user: User) => {
     editingUser.value = user;
     formData.value = {
@@ -671,7 +733,7 @@ const handleEditUser = (user: User) => {
         name: user.name,
         username: user.username,
         usertype: user.usertype,
-        office_id: '',
+        office: user.office ? Number(user.office) : '',
         password: '',
         password_confirmation: ''
     };
@@ -689,6 +751,10 @@ const handleUpdateUser = async () => {
     
     formErrors.value = {};
     
+    if (!formData.value.name.trim()) {
+        formErrors.value['name'] = 'Name is required';
+    }
+    
     if (!formData.value.username.trim()) {
         formErrors.value['username'] = 'Username is required';
     }
@@ -697,10 +763,14 @@ const handleUpdateUser = async () => {
         formErrors.value['usertype'] = 'Role is required';
     }
     
+    if (!formData.value.office || Number(formData.value.office) === 0) {
+        formErrors.value['office'] = 'The office field is required';
+    }
+    
     if (Object.keys(formErrors.value).length > 0) return;
     
     try {
-        const response = await fetch(`/api/users/${editingUser.value.id}`, {
+        const response = await fetch(`/docutrack/api/users/${editingUser.value.id}`, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
@@ -710,12 +780,14 @@ const handleUpdateUser = async () => {
             body: JSON.stringify({
                 name: formData.value.name,
                 username: formData.value.username,
-                usertype: formData.value.usertype
+                usertype: formData.value.usertype,
+                office: formData.value.office
             })
         });
         
         if (!response.ok) {
-            throw new Error('Failed to update user');
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.message || errorData.error || 'Failed to update user');
         }
         
         const updatedUser = await response.json();
@@ -724,8 +796,18 @@ const handleUpdateUser = async () => {
             users.value[index] = updatedUser;
         }
         closeEditModal();
+        
+        toastRef.value?.add(
+            'info',
+            'Success',
+            `User: <strong>${updatedUser.username}</strong> has been updated successfully!`,
+            3000
+        );
     } catch (e) {
-        formErrors.value['submit'] = e instanceof Error ? e.message : 'An error occurred';
+        const errorMsg = e instanceof Error ? e.message : 'An error occurred';
+        formErrors.value['submit'] = errorMsg;
+        
+        toastRef.value?.add('error', 'Error', errorMsg, 4000);
     }
 };
 
@@ -742,8 +824,10 @@ const closeDeleteModal = () => {
 const confirmDeleteUser = async () => {
     if (!userToDelete.value) return;
     
+    const deletingUser = userToDelete.value;
+    
     try {
-        const response = await fetch(`/api/users/${userToDelete.value.id}`, {
+        const response = await fetch(`/docutrack/api/users/${deletingUser.id}`, {
             method: 'DELETE',
             headers: {
                 'Accept': 'application/json',
@@ -752,13 +836,23 @@ const confirmDeleteUser = async () => {
         });
         
         if (!response.ok) {
-            throw new Error('Failed to delete user');
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.message || errorData.error || 'Failed to delete user');
         }
         
-        users.value = users.value.filter(u => u.id !== userToDelete.value!.id);
+        users.value = users.value.filter(u => u.id !== deletingUser.id);
         closeDeleteModal();
+        
+        toastRef.value?.add(
+            'error',
+            'Success',
+            `User: <strong>${deletingUser.username}</strong> has been deleted successfully!`,
+            3000
+        );
     } catch (e) {
-        alert(e instanceof Error ? e.message : 'An error occurred');
+        const errorMsg = e instanceof Error ? e.message : 'An error occurred';
+        
+        toastRef.value?.add('error', 'Error', errorMsg, 4000);
     }
 };
 
@@ -768,7 +862,7 @@ const openCreateModal = () => {
         name: '',
         username: '',
         usertype: '',
-        office_id: '',
+        office: '',
         password: '',
         password_confirmation: ''
     };
@@ -795,8 +889,8 @@ const validateForm = (): boolean => {
         formErrors.value['usertype'] = 'Role is required';
     }
     
-    if (!formData.value.office_id.toString().trim()) {
-        formErrors.value['office_id'] = 'Office is required';
+    if (!formData.value.office || Number(formData.value.office) === 0) {
+        formErrors.value['office'] = 'The office field is required';
     }
     
     if (!formData.value.password.trim()) {
@@ -818,7 +912,7 @@ const handleCreateUser = async () => {
     if (!validateForm()) return;
     
     try {
-        const response = await fetch('/api/users', {
+        const response = await fetch('/docutrack/api/users', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -829,14 +923,25 @@ const handleCreateUser = async () => {
         });
         
         if (!response.ok) {
-            throw new Error('Failed to create user');
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.message || errorData.error || 'Failed to create user');
         }
         
         const newUser = await response.json();
         users.value.push(newUser);
         closeCreateModal();
+        
+        toastRef.value?.add(
+            'success',
+            'Success',
+            `User: <strong>${newUser.username}</strong> has been created successfully!`,
+            3000
+        );
     } catch (e) {
-        formErrors.value['submit'] = e instanceof Error ? e.message : 'An error occurred';
+        const errorMsg = e instanceof Error ? e.message : 'An error occurred';
+        formErrors.value['submit'] = errorMsg;
+        
+        toastRef.value?.add('error', 'Error', errorMsg, 4000);
     }
 };
 </script>

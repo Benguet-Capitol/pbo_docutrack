@@ -1,4 +1,5 @@
 <template>
+    <Toast ref="toastRef" />
     <PageHead />
     <AuthenticatedLayout>
         <template #header>
@@ -655,6 +656,7 @@
 <script setup lang="ts">
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import PageHead from '@/Components/PageHead.vue';
+import Toast from '@/Components/Toast.vue';
 import { ref, onMounted, computed } from 'vue';
 
 /**
@@ -671,6 +673,11 @@ interface Office {
     responsibility_code: string | null;
     branch: string | null;
 }
+
+// ============== Toast Component Reference ==============
+
+/** Reference to the Toast component for displaying notifications */
+const toastRef = ref<InstanceType<typeof Toast> | null>(null);
 
 // ============== Reactive State Management ==============
 
@@ -794,7 +801,7 @@ const paginatedOffices = computed(() => {
  */
 onMounted(async () => {
     try {
-        const response = await fetch('/api/offices');
+        const response = await fetch('/docutrack/api/offices');
         if (!response.ok) {
             throw new Error('Failed to fetch offices');
         }
@@ -878,25 +885,27 @@ const closeEditModal = () => {
 /**
  * handleUpdateOffice: Submits the form to update an existing office
  * - Validates form data first
- * - Makes PUT request to /api/offices/{id} with updated data
- * - On success: updates the office in the offices array and closes the modal
- * - On error: sets formErrors['submit'] with the error message
+ * - Makes PUT request to /api/offices/{id} with updated data and Bearer token
+ * - On success: updates the office in the offices array, closes the modal, and shows success toast with office details
+ * - On error: sets formErrors['submit'] with the error message and shows error toast
  */
 const handleUpdateOffice = async () => {
     if (!validateForm() || !editingOffice.value) return;
     
     try {
-        const response = await fetch(`/api/offices/${editingOffice.value.id}`, {
+        const response = await fetch(`/docutrack/api/offices/${editingOffice.value.id}`, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
-                'Accept': 'application/json'
+                'Accept': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
             },
             body: JSON.stringify(formData.value)
         });
         
         if (!response.ok) {
-            throw new Error('Failed to update office');
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.message || errorData.error || 'Failed to update office');
         }
         
         const updatedOffice = await response.json();
@@ -905,8 +914,18 @@ const handleUpdateOffice = async () => {
             offices.value[index] = updatedOffice;
         }
         closeEditModal();
+        
+        toastRef.value?.add(
+            'info',
+            'Success',
+            `Office: <strong>${updatedOffice.office_name}</strong> under <strong>${updatedOffice.fund}</strong> has been updated successfully!`,
+            3000
+        );
     } catch (e) {
-        formErrors.value['submit'] = e instanceof Error ? e.message : 'An error occurred';
+        const errorMsg = e instanceof Error ? e.message : 'An error occurred';
+        formErrors.value['submit'] = errorMsg;
+        
+        toastRef.value?.add('error', 'Error', errorMsg, 4000);
     }
 };
 
@@ -932,29 +951,42 @@ const closeDeleteModal = () => {
 
 /**
  * confirmDeleteOffice: Confirms and executes the deletion of an office
- * - Makes DELETE request to /api/offices/{id}
- * - On success: removes the office from the offices array and closes the modal
- * - On error: shows an error message
+ * - Makes DELETE request to /api/offices/{id} with Bearer token
+ * - On success: removes the office from the offices array, closes the modal, and shows success toast with office details
+ * - On error: shows an error toast with the error message
  */
 const confirmDeleteOffice = async () => {
     if (!officeToDelete.value) return;
     
+    const deletingOffice = officeToDelete.value;
+    
     try {
-        const response = await fetch(`/api/offices/${officeToDelete.value.id}`, {
+        const response = await fetch(`/docutrack/api/offices/${deletingOffice.id}`, {
             method: 'DELETE',
             headers: {
-                'Accept': 'application/json'
+                'Accept': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
             }
         });
         
         if (!response.ok) {
-            throw new Error('Failed to delete office');
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.message || errorData.error || 'Failed to delete office');
         }
         
-        offices.value = offices.value.filter(o => o.id !== officeToDelete.value!.id);
+        offices.value = offices.value.filter(o => o.id !== deletingOffice.id);
         closeDeleteModal();
+        
+        toastRef.value?.add(
+            'error',
+            'Success',
+            `Office: <strong>${deletingOffice.office_name}</strong> under <strong>${deletingOffice.fund}</strong> has been deleted successfully!`,
+            3000
+        );
     } catch (e) {
-        alert(e instanceof Error ? e.message : 'An error occurred');
+        const errorMsg = e instanceof Error ? e.message : 'An error occurred';
+        
+        toastRef.value?.add('error', 'Error', errorMsg, 4000);
     }
 };
 
@@ -1017,32 +1049,44 @@ const validateForm = (): boolean => {
 /**
  * handleCreateOffice: Submits the form to create a new office
  * - Validates form data first
- * - Makes POST request to /api/offices with form data
- * - On success: adds the new office to the offices array and closes the modal
- * - On error: sets formErrors['submit'] with the error message
+ * - Makes POST request to /api/offices with form data and Bearer token
+ * - On success: adds the new office to the offices array, closes the modal, and shows success toast with office details
+ * - On error: sets formErrors['submit'] with the error message and shows error toast
  */
 const handleCreateOffice = async () => {
     if (!validateForm()) return;
     
     try {
-        const response = await fetch('/api/offices', {
+        const response = await fetch('/docutrack/api/offices', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Accept': 'application/json'
+                'Accept': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
             },
             body: JSON.stringify(formData.value)
         });
         
         if (!response.ok) {
-            throw new Error('Failed to create office');
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.message || errorData.error || 'Failed to create office');
         }
         
         const newOffice = await response.json();
         offices.value.push(newOffice);
         closeCreateModal();
+        
+        toastRef.value?.add(
+            'success',
+            'Success',
+            `Office: <strong>${newOffice.office_name}</strong> under <strong>${newOffice.fund}</strong> has been created successfully!`,
+            3000
+        );
     } catch (e) {
-        formErrors.value['submit'] = e instanceof Error ? e.message : 'An error occurred';
+        const errorMsg = e instanceof Error ? e.message : 'An error occurred';
+        formErrors.value['submit'] = errorMsg;
+        
+        toastRef.value?.add('error', 'Error', errorMsg, 4000);
     }
 };
 </script>

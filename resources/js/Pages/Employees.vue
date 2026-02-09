@@ -1,4 +1,5 @@
 <template>
+    <Toast ref="toastRef" />
     <AuthenticatedLayout>
         <template #header>
             <h2 class="text-xl font-semibold leading-tight text-gray-800 dark:text-gray-200">
@@ -118,7 +119,7 @@
                                     {{ employee.designation }}
                                 </td>
                                 <td class="px-4 py-2 text-xs text-gray-600 dark:text-gray-400">
-                                    {{ getOfficeNameById(employee.fk_office_id, employee) }}
+                                    {{ getOfficeNameById(employee.office, employee) }}
                                 </td>
                                 <td class="px-4 py-2 text-xs text-center">
                                     <div class="relative inline-block">
@@ -274,12 +275,12 @@
 
                             <!-- Office -->
                             <div class="space-y-2">
-                                <label for="fk_office_id" class="block text-xs font-medium text-gray-700 dark:text-gray-300">Office</label>
+                                <label for="office" class="block text-xs font-medium text-gray-700 dark:text-gray-300">Office</label>
                                 <div class="relative flex items-center">
                                     <i class="fas fa-building absolute left-3 text-gray-400 text-sm"></i>
                                     <select
-                                        v-model.number="formData.fk_office_id"
-                                        id="fk_office_id"
+                                        v-model.number="formData.office"
+                                        id="office"
                                         class="block w-full pl-10 pr-4 py-2 text-xs border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:outline-none focus:border-emerald-500 appearance-none"
                                     >
                                         <option value="">Select Office</option>
@@ -380,12 +381,12 @@
                             </div>
 
                             <div class="space-y-2">
-                                <label for="edit_fk_office_id" class="block text-xs font-medium text-gray-700 dark:text-gray-300">Office <span class="text-gray-500">(Currently: {{ editingEmployee && getOfficeNameById(editingEmployee.fk_office_id, editingEmployee) }})</span></label>
+                                <label for="edit_office" class="block text-xs font-medium text-gray-700 dark:text-gray-300">Office <span class="text-gray-500">(Currently: {{ editingEmployee && getOfficeNameById(editingEmployee.office, editingEmployee) }})</span></label>
                                 <div class="relative flex items-center">
                                     <i class="fas fa-building absolute left-3 text-gray-400 text-sm"></i>
                                     <select
-                                        v-model.number="formData.fk_office_id"
-                                        id="edit_fk_office_id"
+                                        v-model.number="formData.office"
+                                        id="edit_office"
                                         class="block w-full pl-10 pr-4 py-2 text-xs border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:outline-none focus:border-blue-500 appearance-none"
                                     >
                                         <option :value="''">Select Office</option>
@@ -476,6 +477,7 @@
 
 <script setup lang="ts">
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import Toast from '@/Components/Toast.vue';
 import { Head } from '@inertiajs/vue3';
 import { ref, computed, onMounted } from 'vue';
 
@@ -483,7 +485,6 @@ interface Employee {
     id: number;
     employee_id: string;
     name: string;
-    fk_office_id?: number | null;
     designation: string;
     office?: number | {
         id: number;
@@ -517,12 +518,12 @@ const formData = ref<{
     employee_id: string;
     name: string;
     designation: string;
-    fk_office_id: number | '';
+    office: number | '';
 }>({
     employee_id: '',
     name: '',
     designation: '',
-    fk_office_id: ''
+    office: ''
 });
 
 const formErrors = ref<Record<string, string>>({});
@@ -576,12 +577,12 @@ const officeMap = computed(() => {
 onMounted(async () => {
     try {
         const [employeesResponse, officesResponse] = await Promise.all([
-            fetch('/api/employees', {
+            fetch('/docutrack/api/employees', {
                 headers: {
                     Authorization: `Bearer ${localStorage.getItem('token')}`,
                 },
             }),
-            fetch('/api/offices', {
+            fetch('/docutrack/api/offices', {
                 headers: {
                     Authorization: `Bearer ${localStorage.getItem('token')}`,
                 },
@@ -620,6 +621,11 @@ const toggleSort = (field: 'id' | 'employee_id' | 'name' | 'designation') => {
 const toggleDropdown = (employeeId: number) => {
     activeDropdown.value = activeDropdown.value === employeeId ? null : employeeId;
 };
+
+// ============== Toast Component Reference ==============
+
+/** Reference to the Toast component for displaying notifications */
+const toastRef = ref<InstanceType<typeof Toast> | null>(null);
 
 const getOfficeNameById = (officeId: number | null | undefined, employee?: Employee): string => {
     
@@ -665,17 +671,21 @@ const getOfficeNameById = (officeId: number | null | undefined, employee?: Emplo
 const handleEditEmployee = (employee: Employee) => {
     editingEmployee.value = employee;
     
-    // Use office ID from either fk_office_id or office field
-    let officeId = employee.fk_office_id;
-    if (!officeId && employee.office && typeof employee.office === 'number') {
-        officeId = employee.office;
+    // Extract office ID, handling both object and number formats
+    let officeId: number | '' = '';
+    if (employee.office) {
+        if (typeof employee.office === 'number') {
+            officeId = employee.office;
+        } else if (typeof employee.office === 'object' && 'id' in employee.office) {
+            officeId = employee.office.id;
+        }
     }
     
     formData.value = {
         employee_id: employee.employee_id,
         name: employee.name,
         designation: employee.designation,
-        fk_office_id: officeId || ''
+        office: officeId
     };
     formErrors.value = {};
     showEditModal.value = true;
@@ -690,7 +700,7 @@ const handleUpdateEmployee = async () => {
     if (!validateForm() || !editingEmployee.value) return;
     
     try {
-        const response = await fetch(`/api/employees/${editingEmployee.value.id}`, {
+        const response = await fetch(`/docutrack/api/employees/${editingEmployee.value.id}`, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
@@ -701,7 +711,8 @@ const handleUpdateEmployee = async () => {
         });
         
         if (!response.ok) {
-            throw new Error('Failed to update employee');
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.message || errorData.error || 'Failed to update employee');
         }
         
         const updatedEmployee = await response.json();
@@ -710,8 +721,18 @@ const handleUpdateEmployee = async () => {
             employees.value[index] = updatedEmployee;
         }
         closeEditModal();
+        
+        toastRef.value?.add(
+            'info',
+            'Success',
+            `Employee: <strong>${updatedEmployee.name}</strong> has been updated successfully!`,
+            3000
+        );
     } catch (e) {
-        formErrors.value['submit'] = e instanceof Error ? e.message : 'An error occurred';
+        const errorMsg = e instanceof Error ? e.message : 'An error occurred';
+        formErrors.value['submit'] = errorMsg;
+        
+        toastRef.value?.add('error', 'Error', errorMsg, 4000);
     }
 };
 
@@ -728,8 +749,10 @@ const closeDeleteModal = () => {
 const confirmDeleteEmployee = async () => {
     if (!employeeToDelete.value) return;
     
+    const deletingEmployee = employeeToDelete.value;
+    
     try {
-        const response = await fetch(`/api/employees/${employeeToDelete.value.id}`, {
+        const response = await fetch(`/docutrack/api/employees/${deletingEmployee.id}`, {
             method: 'DELETE',
             headers: {
                 'Accept': 'application/json',
@@ -738,13 +761,23 @@ const confirmDeleteEmployee = async () => {
         });
         
         if (!response.ok) {
-            throw new Error('Failed to delete employee');
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.message || errorData.error || 'Failed to delete employee');
         }
         
-        employees.value = employees.value.filter(e => e.id !== employeeToDelete.value!.id);
+        employees.value = employees.value.filter(e => e.id !== deletingEmployee.id);
         closeDeleteModal();
+        
+        toastRef.value?.add(
+            'error',
+            'Success',
+            `Employee: <strong>${deletingEmployee.name}</strong> has been deleted successfully!`,
+            3000
+        );
     } catch (e) {
-        alert(e instanceof Error ? e.message : 'An error occurred');
+        const errorMsg = e instanceof Error ? e.message : 'An error occurred';
+        
+        toastRef.value?.add('error', 'Error', errorMsg, 4000);
     }
 };
 
@@ -753,7 +786,7 @@ const openCreateModal = () => {
         employee_id: '',
         name: '',
         designation: '',
-        fk_office_id: ''
+        office: ''
     };
     formErrors.value = {};
     showCreateModal.value = true;
@@ -785,7 +818,7 @@ const handleCreateEmployee = async () => {
     if (!validateForm()) return;
     
     try {
-        const response = await fetch('/api/employees', {
+        const response = await fetch('/docutrack/api/employees', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -796,14 +829,25 @@ const handleCreateEmployee = async () => {
         });
         
         if (!response.ok) {
-            throw new Error('Failed to create employee');
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.message || errorData.error || 'Failed to create employee');
         }
         
         const newEmployee = await response.json();
         employees.value.push(newEmployee);
         closeCreateModal();
+        
+        toastRef.value?.add(
+            'success',
+            'Success',
+            `Employee: <strong>${newEmployee.name}</strong> has been created successfully!`,
+            3000
+        );
     } catch (e) {
-        formErrors.value['submit'] = e instanceof Error ? e.message : 'An error occurred';
+        const errorMsg = e instanceof Error ? e.message : 'An error occurred';
+        formErrors.value['submit'] = errorMsg;
+        
+        toastRef.value?.add('error', 'Error', errorMsg, 4000);
     }
 };
 </script>

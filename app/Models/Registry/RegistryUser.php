@@ -18,7 +18,7 @@ class RegistryUser extends Model
         'username',
         'password',
         'usertype',
-        'fk_office_id',
+        'office',
     ];
 
     protected $hidden = [
@@ -30,6 +30,6 @@ class RegistryUser extends Model
      */
     public function office()
     {
-        return $this->belongsTo(RegistryOffice::class, 'fk_office_id');
+        return $this->belongsTo(RegistryOffice::class, 'office');
     }
 }

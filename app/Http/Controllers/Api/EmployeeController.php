@@ -44,7 +44,7 @@ class EmployeeController extends Controller
             $validated = $request->validate([
                 'employee_id' => 'required|string',
                 'name' => 'required|string',
-                'fk_office_id' => 'required|integer',
+                'office' => 'required|integer',
                 'designation' => 'required|string',
             ]);
 
@@ -66,7 +66,7 @@ class EmployeeController extends Controller
             $validated = $request->validate([
                 'employee_id' => 'sometimes|string',
                 'name' => 'sometimes|string',
-                'fk_office_id' => 'sometimes|integer',
+                'office' => 'sometimes|integer',
                 'designation' => 'sometimes|string',
             ]);
 

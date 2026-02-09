@@ -17,7 +17,7 @@ class RegistryEmployee extends Model
         'id',
         'employee_id',
         'name',
-        'fk_office_id',
+        'office',
         'designation',
     ];
 
@@ -26,6 +26,6 @@ class RegistryEmployee extends Model
      */
     public function office()
     {
-        return $this->belongsTo(RegistryOffice::class, 'fk_office_id');
+        return $this->belongsTo(RegistryOffice::class, 'office');
     }
 }

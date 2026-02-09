@@ -35,11 +35,24 @@ Route::middleware('auth')->group(function () {
     })->name('offices.index');
 });
 
-// API Routes
-Route::middleware('auth')->group(function () {
+// API Routes - Stateless with Bearer token authentication (skip CSRF)
+Route::middleware('auth')
+    ->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class])
+    ->group(function () {
     Route::get('/api/users', [UserController::class, 'index']);
+    Route::post('/api/users', [UserController::class, 'store']);
+    Route::put('/api/users/{id}', [UserController::class, 'update']);
+    Route::delete('/api/users/{id}', [UserController::class, 'destroy']);
+
     Route::get('/api/employees', [EmployeeController::class, 'index']);
+    Route::post('/api/employees', [EmployeeController::class, 'store']);
+    Route::put('/api/employees/{id}', [EmployeeController::class, 'update']);
+    Route::delete('/api/employees/{id}', [EmployeeController::class, 'destroy']);
+
     Route::get('/api/offices', [OfficeController::class, 'index']);
+    Route::post('/api/offices', [OfficeController::class, 'store']);
+    Route::put('/api/offices/{id}', [OfficeController::class, 'update']);
+    Route::delete('/api/offices/{id}', [OfficeController::class, 'destroy']);
 });
 
 require __DIR__.'/auth.php';
