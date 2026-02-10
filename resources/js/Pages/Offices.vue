@@ -801,7 +801,7 @@ const paginatedOffices = computed(() => {
  */
 onMounted(async () => {
     try {
-        const response = await fetch('/docutrack/api/offices');
+        const response = await fetch('/api/offices');
         if (!response.ok) {
             throw new Error('Failed to fetch offices');
         }
@@ -893,7 +893,7 @@ const handleUpdateOffice = async () => {
     if (!validateForm() || !editingOffice.value) return;
     
     try {
-        const response = await fetch(`/docutrack/api/offices/${editingOffice.value.id}`, {
+        const response = await fetch(`/api/offices/${editingOffice.value.id}`, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
@@ -961,7 +961,7 @@ const confirmDeleteOffice = async () => {
     const deletingOffice = officeToDelete.value;
     
     try {
-        const response = await fetch(`/docutrack/api/offices/${deletingOffice.id}`, {
+        const response = await fetch(`/api/offices/${deletingOffice.id}`, {
             method: 'DELETE',
             headers: {
                 'Accept': 'application/json',
@@ -1057,7 +1057,7 @@ const handleCreateOffice = async () => {
     if (!validateForm()) return;
     
     try {
-        const response = await fetch('/docutrack/api/offices', {
+        const response = await fetch('/api/offices', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

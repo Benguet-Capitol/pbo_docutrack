@@ -104,6 +104,19 @@ const handleSidebarHover = (hovered: boolean) => {
                 Main
             </div>
 
+            <!-- Documents Link -->
+            <Link
+                :href="route('documents.index')"
+                :class="[
+                    route().current('documents.*')
+                        ? 'text-white bg-gradient-to-r from-emerald-500 to-emerald-600 shadow-md hover:from-emerald-600 hover:to-emerald-700'
+                        : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 hover:shadow-sm',
+                    'flex-shrink-0 flex items-center gap-3 px-3 py-2.5 transition-all rounded-lg overflow-hidden',
+                ]"
+            >
+                <i class="fas fa-file-alt text-xl flex-shrink-0 dark:text-gray-100" aria-hidden="true"></i>
+                <span class="text-sm font-medium whitespace-nowrap" v-show="isSidebarOpen || isSidebarHovered">Documents</span>
+            </Link>
 
             <!-- User Management Section Divider -->
             <div
@@ -154,6 +167,20 @@ const handleSidebarHover = (hovered: boolean) => {
                 <i class="fas fa-building text-xl flex-shrink-0 dark:text-gray-100" aria-hidden="true"></i>
                 <span class="text-sm font-medium whitespace-nowrap" v-show="isSidebarOpen || isSidebarHovered">Offices</span>
             </Link>
+
+            <!-- Municipalities Link -->
+            <Link
+                :href="route('municipalities.index')"
+                :class="[
+                    route().current('municipalities.*')
+                        ? 'text-white bg-gradient-to-r from-emerald-500 to-emerald-600 shadow-md hover:from-emerald-600 hover:to-emerald-700'
+                        : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 hover:shadow-sm',
+                    'flex-shrink-0 flex items-center gap-3 px-3 py-2.5 transition-all rounded-lg overflow-hidden',
+                ]"
+            >
+                <i class="fas fa-city text-xl flex-shrink-0 dark:text-gray-100" aria-hidden="true"></i>
+                <span class="text-sm font-medium whitespace-nowrap" v-show="isSidebarOpen || isSidebarHovered">Municipalities</span>
+            </Link>   
         </nav>
 
         <!-- Footer Section -->

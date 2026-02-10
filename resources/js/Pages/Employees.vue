@@ -577,12 +577,12 @@ const officeMap = computed(() => {
 onMounted(async () => {
     try {
         const [employeesResponse, officesResponse] = await Promise.all([
-            fetch('/docutrack/api/employees', {
+            fetch('/api/employees', {
                 headers: {
                     Authorization: `Bearer ${localStorage.getItem('token')}`,
                 },
             }),
-            fetch('/docutrack/api/offices', {
+            fetch('/api/offices', {
                 headers: {
                     Authorization: `Bearer ${localStorage.getItem('token')}`,
                 },
@@ -700,7 +700,7 @@ const handleUpdateEmployee = async () => {
     if (!validateForm() || !editingEmployee.value) return;
     
     try {
-        const response = await fetch(`/docutrack/api/employees/${editingEmployee.value.id}`, {
+        const response = await fetch(`/api/employees/${editingEmployee.value.id}`, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
@@ -752,7 +752,7 @@ const confirmDeleteEmployee = async () => {
     const deletingEmployee = employeeToDelete.value;
     
     try {
-        const response = await fetch(`/docutrack/api/employees/${deletingEmployee.id}`, {
+        const response = await fetch(`/api/employees/${deletingEmployee.id}`, {
             method: 'DELETE',
             headers: {
                 'Accept': 'application/json',
@@ -818,7 +818,7 @@ const handleCreateEmployee = async () => {
     if (!validateForm()) return;
     
     try {
-        const response = await fetch('/docutrack/api/employees', {
+        const response = await fetch('/api/employees', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

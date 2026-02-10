@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\Registry\RegistryUser;
+use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -11,12 +11,12 @@ use Illuminate\Support\Facades\Hash;
 class UserController extends Controller
 {
     /**
-     * Display a listing of users from pbo-registry.
+     * Display a listing of users from local database.
      */
     public function index(): JsonResponse
     {
         try {
-            $users = RegistryUser::with('office')->get();
+            $users = User::select('id', 'name', 'username', 'usertype', 'fk_office_id')->get();
             return response()->json($users);
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], 500);

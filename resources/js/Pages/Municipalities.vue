@@ -1,29 +1,33 @@
 <template>
     <Toast ref="toastRef" />
+    <PageHead />
     <AuthenticatedLayout>
         <template #header>
             <h2 class="text-xl font-semibold leading-tight text-gray-800 dark:text-gray-200">
-                Users
+                Municipalities
             </h2>
         </template>
 
         <div class="py-6 px-4 sm:px-6 lg:px-8">
             <div class="bg-white dark:bg-gray-800 rounded-lg shadow">
-                <!-- Header -->
+                <!-- Header Section: Contains Create button, search bar, and items-per-page selector -->
                 <div class="px-6 py-5 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
                     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                        <!-- Create Municipality Button: Calls openCreateModal() to show the create form modal -->
                         <button @click="openCreateModal" class="inline-flex items-center gap-2 px-5 py-2.5 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-700 dark:hover:bg-emerald-800 rounded-lg transition-colors duration-200">
                             <i class="fas fa-plus"></i>
-                            Create User
+                            Create Municipality
                         </button>
                         <div class="flex items-center gap-3">
                                 <i class="fas fa-search text-gray-400"></i>
+                                <!-- Search Input: v-model binds to searchQuery, triggers filter recomputation -->
                                 <input
                                     v-model="searchQuery"
                                     type="text"
-                                    placeholder="Search users..."
+                                    placeholder="Search municipalities..."
                                     class="border border-gray-300 rounded-lg px-4 py-2 text-xs flex-1 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white w-80"
                                 />
+                            <!-- Items Per Page Selector: Controls number of items displayed per page -->
                             <select
                                 v-model.number="itemsPerPage"
                                 class="border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 rounded-lg px-3 py-2 text-xs text-gray-900 dark:text-white focus:outline-none focus:border-emerald-500 dark:focus:border-emerald-500 transition-colors cursor-pointer"
@@ -38,104 +42,135 @@
                     </div>
                 </div>
 
-                <!-- Loading State -->
+                <!-- Loading State: v-if shows spinner while data is being fetched -->
                 <div v-if="loading" class="px-6 py-12 text-center">
                     <div class="inline-block">
                         <i class="fas fa-spinner fa-spin text-emerald-600 dark:text-emerald-400 text-4xl"></i>
                     </div>
-                    <p class="mt-4 text-lg font-medium text-gray-600 dark:text-gray-400">Loading users...</p>
+                    <p class="mt-4 text-lg font-medium text-gray-600 dark:text-gray-400">Loading municipalities...</p>
                     <p class="mt-2 text-sm text-gray-500 dark:text-gray-500">Please wait</p>
                 </div>
 
-                <!-- Error State -->
+                <!-- Error State: v-else-if displays error message if fetch fails -->
                 <div v-else-if="error" class="px-6 py-6 bg-red-50 dark:bg-red-900/20 border-2 border-red-200 dark:border-red-900/40 rounded-lg">
                     <div class="flex items-start gap-4">
                         <div class="flex-shrink-0">
                             <i class="fas fa-exclamation-circle text-red-600 dark:text-red-400 text-2xl"></i>
                         </div>
                         <div>
-                            <h3 class="font-bold text-red-900 dark:text-red-200 text-sm">Error Loading Users</h3>
+                            <h3 class="font-bold text-red-900 dark:text-red-200 text-sm">Error Loading Municipalities</h3>
+                            <!-- Displays the error message from error ref -->
                             <p class="text-red-700 dark:text-red-300 text-sm mt-1">{{ error }}</p>
                         </div>
                     </div>
                 </div>
 
-                <!-- Empty State -->
-                <div v-else-if="users.length === 0" class="px-6 py-12 text-center">
+                <!-- Empty State: v-else-if shows when no municipalities exist -->
+                <div v-else-if="municipalities.length === 0" class="px-6 py-12 text-center">
                     <div class="inline-block mb-4">
                         <i class="fas fa-inbox text-gray-400 dark:text-gray-600 text-4xl"></i>
                     </div>
-                    <p class="text-lg font-medium text-gray-600 dark:text-gray-400">No users found</p>
-                    <p class="text-sm text-gray-500 dark:text-gray-500 mt-1">Get started by creating a new user</p>
+                    <p class="text-lg font-medium text-gray-600 dark:text-gray-400">No municipalities found</p>
+                    <p class="text-sm text-gray-500 dark:text-gray-500 mt-1">Get started by creating a new municipality</p>
                 </div>
 
-                <!-- Table -->
+                <!-- Data Table: v-else shows when municipalities data is loaded -->
                 <div v-else class="overflow-x-auto">
                     <table class="w-full text-left table-fixed">
                         <colgroup>
+                            <col class="w-40">
+                            <col class="w-40">
+                            <col class="w-40">
+                            <col class="w-40">
                             <col class="w-20">
-                            <col class="w-20">
-                            <col class="w-20">
-                            <col class="w-10">
                         </colgroup>
+                        <!-- Table Header: Contains sortable column headers -->
                         <thead class="bg-gray-100 dark:bg-gray-900 border-b-2 border-gray-300 dark:border-gray-700">
                             <tr>
+                                <!-- Municipality Name Header: Sortable, calls toggleSort('name') when clicked -->
                                 <th class="px-6 py-3 text-xs font-bold text-gray-700 dark:text-gray-200">
                                     <button @click="toggleSort('name')" class="flex items-center gap-2 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
-                                        Name
+                                        Municipality Name
                                         <span v-if="sortBy === 'name'" class="text-xs">{{ sortOrder === 'asc' ? '▲' : '▼' }}</span>
                                     </button>
                                 </th>
+                                <!-- Code Header: Sortable -->
                                 <th class="px-6 py-3 text-xs font-bold text-gray-700 dark:text-gray-200">
-                                    <button @click="toggleSort('username')" class="flex items-center gap-2 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
-                                        Username
-                                        <span v-if="sortBy === 'username'" class="text-xs">{{ sortOrder === 'asc' ? '▲' : '▼' }}</span>
+                                    <button @click="toggleSort('code')" class="flex items-center gap-2 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
+                                        Code
+                                        <span v-if="sortBy === 'code'" class="text-xs">{{ sortOrder === 'asc' ? '▲' : '▼' }}</span>
                                     </button>
                                 </th>
+                                <!-- Municipal Budget Officer Header: Sortable -->
                                 <th class="px-6 py-3 text-xs font-bold text-gray-700 dark:text-gray-200">
-                                    <button @click="toggleSort('usertype')" class="flex items-center gap-2 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
-                                        Role
-                                        <span v-if="sortBy === 'usertype'" class="text-xs">{{ sortOrder === 'asc' ? '▲' : '▼' }}</span>
+                                    <button @click="toggleSort('municipal_budget_officer')" class="flex items-center gap-2 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
+                                        Budget Officer
+                                        <span v-if="sortBy === 'municipal_budget_officer'" class="text-xs">{{ sortOrder === 'asc' ? '▲' : '▼' }}</span>
+                                    </button>
+                                </th>
+                                <!-- Representative Header: Sortable -->
+                                <th class="px-6 py-3 text-xs font-bold text-gray-700 dark:text-gray-200">
+                                    <button @click="toggleSort('representative')" class="flex items-center gap-2 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
+                                        Representative
+                                        <span v-if="sortBy === 'representative'" class="text-xs">{{ sortOrder === 'asc' ? '▲' : '▼' }}</span>
                                     </button>
                                 </th>
                                 <th class="px-6 py-3 text-xs font-bold text-gray-700 dark:text-gray-200 text-center">Actions</th>
                             </tr>
                         </thead>
+                        <!-- Table Body: Renders rows for each municipality in paginatedMunicipalities -->
                         <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+                            <!-- v-for loops through paginatedMunicipalities (filtered, sorted, and paginated data) -->
+                            <!-- :key uses municipality.id for efficient Vue rendering -->
                             <tr
-                                v-for="user in paginatedUsers"
-                                :key="user.id"
+                                v-for="municipality in paginatedMunicipalities"
+                                :key="municipality.id"
                                 class="bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-150"
                             >
+                                <!-- Municipality Name Column -->
                                 <td class="px-4 py-2 text-xs font-medium text-gray-900 dark:text-gray-100">
-                                    {{ user.name }}
+                                    {{ municipality.name }}
                                 </td>
-                                <td class="px-4 py-2 text-xs text-gray-700 dark:text-gray-300">
-                                    {{ user.username }}
+                                <!-- Code Column: Shows code or dash (-) if not available -->
+                                <td class="px-4 py-2 text-xs text-gray-700 dark:text-gray-300 font-mono">
+                                    <span v-if="municipality.code">{{ municipality.code }}</span>
+                                    <span v-else class="text-gray-400 dark:text-gray-600 italic">-</span>
                                 </td>
+                                <!-- Municipal Budget Officer Column: Shows value or dash (-) if not available -->
                                 <td class="px-4 py-2 text-xs text-gray-600 dark:text-gray-400">
-                                    {{ user.usertype }}
+                                    <span v-if="municipality.municipal_budget_officer">{{ municipality.municipal_budget_officer }}</span>
+                                    <span v-else class="text-gray-400 dark:text-gray-600 italic">-</span>
                                 </td>
+                                <!-- Representative Column: Shows value or dash (-) if not available -->
+                                <td class="px-4 py-2 text-xs text-gray-600 dark:text-gray-400">
+                                    <span v-if="municipality.representative">{{ municipality.representative }}</span>
+                                    <span v-else class="text-gray-400 dark:text-gray-600 italic">-</span>
+                                </td>
+                                <!-- Actions Column: Contains edit/delete dropdown menu -->
                                 <td class="px-4 py-2 text-xs text-center">
                                     <div class="relative inline-block">
+                                        <!-- Action Menu Button: Calls toggleDropdown(municipality.id) to show/hide dropdown -->
                                         <button 
-                                            @click="toggleDropdown(user.id)" 
+                                            @click="toggleDropdown(municipality.id)" 
                                             class="px-3 py-2 text-gray-600 dark:text-gray-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-all duration-200"
                                         >
                                             <i class="fas fa-ellipsis-v"></i>
                                         </button>
+                                        <!-- Dropdown Menu: v-if shows menu only when activeDropdown === municipality.id -->
                                         <div 
-                                            v-if="activeDropdown === user.id" 
+                                            v-if="activeDropdown === municipality.id" 
                                             class="absolute right-0 mt-2 w-36 bg-white dark:bg-gray-700 rounded-lg shadow-lg z-10 border border-gray-200 dark:border-gray-600 overflow-hidden"
                                         >
+                                            <!-- Edit Button: Calls handleEditMunicipality(municipality) and closes the dropdown -->
                                             <button 
-                                                @click="handleEditUser(user); activeDropdown = null" 
+                                                @click="handleEditMunicipality(municipality); activeDropdown = null" 
                                                 class="w-full text-left px-4 py-2 text-xs font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors duration-150 flex items-center gap-2"
                                             >
                                                 <i class="fas fa-pencil-alt"></i>Edit
                                             </button>
+                                            <!-- Delete Button: Calls handleDeleteMunicipality(municipality) and closes the dropdown -->
                                             <button 
-                                                @click="handleDeleteUser(user); activeDropdown = null" 
+                                                @click="handleDeleteMunicipality(municipality); activeDropdown = null" 
                                                 class="w-full text-left px-4 py-2 text-xs font-medium text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors duration-150 border-t border-gray-200 dark:border-gray-600 flex items-center gap-2"
                                             >
                                                 <i class="fas fa-trash-alt"></i>Delete
@@ -148,12 +183,15 @@
                     </table>
                 </div>
 
-                <!-- Pagination -->
-                <div v-if="!loading && users.length > 0" class="px-6 py-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <!-- Pagination Controls: v-if shows only when data is loaded and exists -->
+                <div v-if="!loading && municipalities.length > 0" class="px-6 py-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <!-- Pagination Info: Displays current range and total count -->
                     <div class="text-xs text-gray-600 dark:text-gray-400">
-                        Showing <span class="font-semibold">{{ (currentPage - 1) * itemsPerPage + 1 }}-{{ Math.min(currentPage * itemsPerPage, filteredUsers.length) }}</span> of <span class="font-semibold">{{ filteredUsers.length }}</span> users
+                        Showing <span class="font-semibold">{{ (currentPage - 1) * itemsPerPage + 1 }}-{{ Math.min(currentPage * itemsPerPage, filteredMunicipalities.length) }}</span> of <span class="font-semibold">{{ filteredMunicipalities.length }}</span> municipalities
                     </div>
+                    <!-- Pagination Buttons -->
                     <div class="flex items-center gap-1">
+                        <!-- First Page Button: Navigates to page 1, disabled when on page 1 -->
                         <button
                             @click="changePage(1)"
                             :disabled="currentPage === 1"
@@ -161,6 +199,7 @@
                         >
                             <i class="fas fa-chevron-left"></i>
                         </button>
+                        <!-- Previous Page Button: Navigates to previous page, disabled on page 1 -->
                         <button
                             @click="changePage(currentPage - 1)"
                             :disabled="currentPage === 1"
@@ -168,6 +207,7 @@
                         >
                             Prev
                         </button>
+                        <!-- Page Number Buttons: v-for loops through all pages, highlights current page -->
                         <div class="flex gap-0.5">
                             <button
                                 v-for="page in totalPages"
@@ -202,146 +242,89 @@
             </div>
         </div>
 
-        <!-- Create User Modal -->
+        <!-- Create Municipality Modal: Teleports to body when showCreateModal is true -->
+        <!-- @click.self="closeCreateModal" closes modal when clicking outside the dialog -->
         <Teleport to="body" v-if="showCreateModal">
             <div class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50" @click.self="closeCreateModal">
-                <div class="relative w-full max-w-4xl mx-4 bg-white rounded-lg shadow-lg dark:bg-gray-800 animate-scaleInUp">
-                    <!-- Modal header -->
+                <div class="relative w-full max-w-2xl mx-4 bg-white rounded-lg shadow-lg dark:bg-gray-800 animate-scaleInUp">
+                    <!-- Modal Header: Shows title and close button -->
                     <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 rounded-t-lg bg-gradient-to-r from-emerald-50 to-emerald-100 dark:from-gray-700 dark:to-gray-600 dark:border-gray-600">
                         <h3 class="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-                            <i class="fas fa-user-plus text-emerald-600 dark:text-emerald-400"></i>
-                            Create User
+                            <i class="fas fa-city text-emerald-600 dark:text-emerald-400"></i>
+                            Create Municipality
                         </h3>
+                        <!-- Close Button: Calls closeCreateModal() when clicked -->
                         <button @click="closeCreateModal" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
                             <i class="fas fa-times text-xl"></i>
                         </button>
                     </div>
 
-                    <!-- Modal body -->
+                    <!-- Modal Body: Contains form inputs for creating a new municipality -->
                     <div class="px-6 py-4 overflow-y-auto" style="max-height: calc(90vh - 200px);">
                         <div class="grid gap-4">
-                            <!-- Employee Selection -->
+                            <!-- Municipality Name Field: Required field, v-model binds to formData.name -->
                             <div class="space-y-2">
-                                <label for="employee_id" class="block text-xs font-medium text-gray-700 dark:text-gray-300">Employee</label>
+                                <label for="name" class="block text-xs font-medium text-gray-700 dark:text-gray-300">Municipality Name</label>
                                 <div class="relative flex items-center">
-                                    <i class="fas fa-id-card absolute left-3 text-gray-400 text-sm"></i>
-                                    <select
-                                        v-model.number="formData.employee_id"
-                                        id="employee_id"
-                                        @change="() => { const emp = employees.find(e => e.id === Number(formData.employee_id)); if (emp) { formData.name = emp.name; formData.office = emp.office.toString(); } }"
-                                        class="block w-full pl-10 pr-4 py-2 text-xs border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:outline-none focus:border-emerald-500 appearance-none"
-                                    >
-                                        <option value="">Select Employee</option>
-                                        <option v-for="emp in employees" :key="emp.id" :value="emp.id">
-                                            {{ emp.name }} ({{ emp.employee_id }})
-                                        </option>
-                                    </select>
-                                </div>
-                                <span v-if="formErrors.employee_id" class="text-red-500 text-xs">{{ formErrors.employee_id }}</span>
-                            </div>
-
-                            <!-- Name (Auto-filled from Employee) -->
-                            <div class="space-y-2">
-                                <label for="name" class="block text-xs font-medium text-gray-700 dark:text-gray-300">Name (Auto-filled)</label>
-                                <div class="relative flex items-center">
-                                    <i class="fas fa-user absolute left-3 text-gray-400 text-sm"></i>
+                                    <i class="fas fa-city absolute left-3 text-gray-400 text-sm"></i>
+                                    <!-- v-model binds input to formData.name for form submission -->
                                     <input
                                         v-model="formData.name"
                                         id="name"
                                         type="text"
-                                        placeholder="Name"
-                                        readonly
+                                        placeholder="Municipality Name"
                                         class="block w-full pl-10 pr-4 py-2 text-xs border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:outline-none focus:border-emerald-500"
                                     />
                                 </div>
+                                <!-- Shows validation error if field is invalid -->
                                 <span v-if="formErrors.name" class="text-red-500 text-xs">{{ formErrors.name }}</span>
                             </div>
 
-                            <!-- Username -->
+                            <!-- Code Field: Required, v-model binds to formData.code -->
                             <div class="space-y-2">
-                                <label for="username" class="block text-xs font-medium text-gray-700 dark:text-gray-300">Username</label>
+                                <label for="code" class="block text-xs font-medium text-gray-700 dark:text-gray-300">Code</label>
                                 <div class="relative flex items-center">
-                                    <i class="fas fa-envelope absolute left-3 text-gray-400 text-sm"></i>
+                                    <i class="fas fa-barcode absolute left-3 text-gray-400 text-sm"></i>
                                     <input
-                                        v-model="formData.username"
-                                        id="username"
+                                        v-model="formData.code"
+                                        id="code"
                                         type="text"
-                                        placeholder="Username"
+                                        placeholder="Municipality Code"
                                         class="block w-full pl-10 pr-4 py-2 text-xs border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:outline-none focus:border-emerald-500"
                                     />
                                 </div>
-                                <span v-if="formErrors.username" class="text-red-500 text-xs">{{ formErrors.username }}</span>
+                                <!-- Shows validation error if field is invalid -->
+                                <span v-if="formErrors.code" class="text-red-500 text-xs">{{ formErrors.code }}</span>
                             </div>
 
-                            <!-- Office (Auto-filled from Employee) -->
+                            <!-- Municipal Budget Officer Field: Optional -->
                             <div class="space-y-2">
-                                <label for="office" class="block text-xs font-medium text-gray-700 dark:text-gray-300">Office (Auto-filled)</label>
+                                <label for="municipal_budget_officer" class="block text-xs font-medium text-gray-700 dark:text-gray-300">Municipal Budget Officer</label>
                                 <div class="relative flex items-center">
-                                    <i class="fas fa-building absolute left-3 text-gray-400 text-sm"></i>
-                                    <select
-                                        v-model.number="formData.office"
-                                        id="office"
-                                        class="block w-full pl-10 pr-4 py-2 text-xs border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:outline-none focus:border-emerald-500 appearance-none"
-                                    >
-                                        <option value="">Select Office</option>
-                                        <option v-for="office in offices" :key="office.id" :value="office.id">
-                                            {{ office.office_name }}
-                                        </option>
-                                    </select>
-                                </div>
-                                <span v-if="formErrors.office" class="text-red-500 text-xs">{{ formErrors.office }}</span>
-                            </div>
-
-                            <!-- Role -->
-                            <div class="space-y-2">
-                                <label for="usertype" class="block text-xs font-medium text-gray-700 dark:text-gray-300">Role</label>
-                                <div class="relative flex items-center">
-                                    <i class="fas fa-users absolute left-3 text-gray-400 text-sm"></i>
-                                    <select
-                                        v-model="formData.usertype"
-                                        id="usertype"
-                                        class="block w-full pl-10 pr-4 py-2 text-xs border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:outline-none focus:border-emerald-500 appearance-none"
-                                    >
-                                        <option value="">Select Role</option>
-                                        <option value="Administrator">Administrator</option>
-                                        <option value="Developer">Developer</option>
-                                        <option value="Supervisor">Supervisor</option>
-                                        <option value="Reviewer">Reviewer</option>
-                                    </select>
-                                </div>
-                                <span v-if="formErrors.usertype" class="text-red-500 text-xs">{{ formErrors.usertype }}</span>
-                            </div>
-
-                            <!-- Password -->
-                            <div class="space-y-2">
-                                <label for="password" class="block text-xs font-medium text-gray-700 dark:text-gray-300">Password</label>
-                                <div class="relative flex items-center">
-                                    <i class="fas fa-lock absolute left-3 text-gray-400 text-sm"></i>
+                                    <i class="fas fa-user-tie absolute left-3 text-gray-400 text-sm"></i>
                                     <input
-                                        v-model="formData.password"
-                                        id="password"
-                                        type="password"
-                                        placeholder="Password"
+                                        v-model="formData.municipal_budget_officer"
+                                        id="municipal_budget_officer"
+                                        type="text"
+                                        placeholder="Budget Officer Name"
                                         class="block w-full pl-10 pr-4 py-2 text-xs border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:outline-none focus:border-emerald-500"
                                     />
                                 </div>
-                                <span v-if="formErrors.password" class="text-red-500 text-xs">{{ formErrors.password }}</span>
                             </div>
 
-                            <!-- Password Confirmation -->
+                            <!-- Representative Field: Optional -->
                             <div class="space-y-2">
-                                <label for="password_confirmation" class="block text-xs font-medium text-gray-700 dark:text-gray-300">Confirm Password</label>
+                                <label for="representative" class="block text-xs font-medium text-gray-700 dark:text-gray-300">Representative</label>
                                 <div class="relative flex items-center">
-                                    <i class="fas fa-lock absolute left-3 text-gray-400 text-sm"></i>
+                                    <i class="fas fa-person-booth absolute left-3 text-gray-400 text-sm"></i>
                                     <input
-                                        v-model="formData.password_confirmation"
-                                        id="password_confirmation"
-                                        type="password"
-                                        placeholder="Confirm Password"
+                                        v-model="formData.representative"
+                                        id="representative"
+                                        type="text"
+                                        placeholder="Representative Name"
                                         class="block w-full pl-10 pr-4 py-2 text-xs border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:outline-none focus:border-emerald-500"
                                     />
                                 </div>
-                                <span v-if="formErrors.password_confirmation" class="text-red-500 text-xs">{{ formErrors.password_confirmation }}</span>
                             </div>
 
                             <!-- Submit error -->
@@ -351,15 +334,17 @@
                         </div>
                     </div>
 
-                    <!-- Modal footer -->
+                    <!-- Modal Footer: Contains Save and Cancel buttons -->
                     <div class="flex items-center justify-center gap-3 p-6 border-t-2 border-gray-200 rounded-b-lg dark:border-gray-600 bg-gray-50 dark:bg-gray-800">
+                        <!-- Save Button: Calls handleCreateMunicipality() to submit the form -->
                         <button
-                            @click="handleCreateUser"
+                            @click="handleCreateMunicipality"
                             class="inline-flex items-center gap-2 px-5 py-3 text-xs font-medium text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95"
                         >
                             <i class="fas fa-save"></i>
                             Save
                         </button>
+                        <!-- Cancel Button: Calls closeCreateModal() to close the form -->
                         <button
                             @click="closeCreateModal"
                             class="inline-flex items-center gap-2 px-5 py-3 text-xs font-medium text-gray-600 dark:text-gray-400 border border-gray-600 dark:border-gray-500 hover:text-white hover:bg-gray-600 dark:hover:bg-gray-600 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95"
@@ -372,117 +357,98 @@
             </div>
         </Teleport>
 
-        <!-- Edit User Modal -->
+        <!-- Edit Municipality Modal: Teleports to body when showEditModal is true -->
         <Teleport to="body" v-if="showEditModal">
             <div class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50" @click.self="closeEditModal">
-                <div class="relative w-full max-w-4xl mx-4 bg-white rounded-lg shadow-lg dark:bg-gray-800 animate-scaleInUp">
+                <div class="relative w-full max-w-2xl mx-4 bg-white rounded-lg shadow-lg dark:bg-gray-800 animate-scaleInUp">
+                    <!-- Modal Header: Shows title and close button -->
                     <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 rounded-t-lg bg-gradient-to-r from-blue-50 to-blue-100 dark:from-gray-700 dark:to-gray-600 dark:border-gray-600">
                         <h3 class="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
                             <i class="fas fa-edit text-blue-600 dark:text-blue-400"></i>
-                            Edit User
+                            Edit Municipality
                         </h3>
+                        <!-- Close Button: Calls closeEditModal() when clicked -->
                         <button @click="closeEditModal" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
                             <i class="fas fa-times text-xl"></i>
                         </button>
                     </div>
 
+                    <!-- Modal Body: Contains form inputs for editing a municipality -->
                     <div class="px-6 py-4 overflow-y-auto" style="max-height: calc(90vh - 200px);">
                         <div class="grid gap-4">
-                            <!-- Employee Selection -->
+                            <!-- Municipality Name Field -->
                             <div class="space-y-2">
-                                <label for="edit_employee_id" class="block text-xs font-medium text-gray-700 dark:text-gray-300">Employee</label>
+                                <label for="edit_name" class="block text-xs font-medium text-gray-700 dark:text-gray-300">Municipality Name</label>
                                 <div class="relative flex items-center">
-                                    <i class="fas fa-id-card absolute left-3 text-gray-400 text-sm"></i>
-                                    <select
-                                        v-model.number="formData.employee_id"
-                                        id="edit_employee_id"
-                                        @change="() => { const emp = employees.find(e => e.id === Number(formData.employee_id)); if (emp) { formData.name = emp.name; formData.office = emp.office.toString(); } }"
-                                        class="block w-full pl-10 pr-4 py-2 text-xs border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:outline-none focus:border-blue-500 appearance-none"
-                                    >
-                                        <option value="">Select Employee</option>
-                                        <option v-for="emp in employees" :key="emp.id" :value="emp.id">
-                                            {{ emp.name }} ({{ emp.employee_id }})
-                                        </option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div class="space-y-2">
-                                <label for="edit_name" class="block text-xs font-medium text-gray-700 dark:text-gray-300">Name</label>
-                                <div class="relative flex items-center">
-                                    <i class="fas fa-user absolute left-3 text-gray-400 text-sm"></i>
+                                    <i class="fas fa-city absolute left-3 text-gray-400 text-sm"></i>
                                     <input
                                         v-model="formData.name"
                                         id="edit_name"
                                         type="text"
-                                        placeholder="Name"
+                                        placeholder="Municipality Name"
                                         class="block w-full pl-10 pr-4 py-2 text-xs border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:outline-none focus:border-blue-500"
                                     />
                                 </div>
                                 <span v-if="formErrors.name" class="text-red-500 text-xs">{{ formErrors.name }}</span>
                             </div>
 
+                            <!-- Code Field -->
                             <div class="space-y-2">
-                                <label for="edit_username" class="block text-xs font-medium text-gray-700 dark:text-gray-300">Username</label>
+                                <label for="edit_code" class="block text-xs font-medium text-gray-700 dark:text-gray-300">Code</label>
                                 <div class="relative flex items-center">
-                                    <i class="fas fa-at absolute left-3 text-gray-400 text-sm"></i>
+                                    <i class="fas fa-barcode absolute left-3 text-gray-400 text-sm"></i>
                                     <input
-                                        v-model="formData.username"
-                                        id="edit_username"
+                                        v-model="formData.code"
+                                        id="edit_code"
                                         type="text"
-                                        placeholder="Username"
+                                        placeholder="Municipality Code"
                                         class="block w-full pl-10 pr-4 py-2 text-xs border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:outline-none focus:border-blue-500"
                                     />
                                 </div>
-                                <span v-if="formErrors.username" class="text-red-500 text-xs">{{ formErrors.username }}</span>
+                                <span v-if="formErrors.code" class="text-red-500 text-xs">{{ formErrors.code }}</span>
                             </div>
 
+                            <!-- Municipal Budget Officer Field -->
                             <div class="space-y-2">
-                                <label for="edit_usertype" class="block text-xs font-medium text-gray-700 dark:text-gray-300">Role</label>
+                                <label for="edit_municipal_budget_officer" class="block text-xs font-medium text-gray-700 dark:text-gray-300">Municipal Budget Officer</label>
                                 <div class="relative flex items-center">
-                                    <i class="fas fa-users absolute left-3 text-gray-400 text-sm"></i>
-                                    <select
-                                        v-model="formData.usertype"
-                                        id="edit_usertype"
-                                        class="block w-full pl-10 pr-4 py-2 text-xs border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:outline-none focus:border-blue-500 appearance-none"
-                                    >
-                                        <option value="">Select Role</option>
-                                        <option value="Administrator">Administrator</option>
-                                        <option value="Developer">Developer</option>
-                                        <option value="Supervisor">Supervisor</option>
-                                        <option value="Reviewer">Reviewer</option>
-                                    </select>
+                                    <i class="fas fa-user-tie absolute left-3 text-gray-400 text-sm"></i>
+                                    <input
+                                        v-model="formData.municipal_budget_officer"
+                                        id="edit_municipal_budget_officer"
+                                        type="text"
+                                        placeholder="Budget Officer Name"
+                                        class="block w-full pl-10 pr-4 py-2 text-xs border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:outline-none focus:border-blue-500"
+                                    />
                                 </div>
-                                <span v-if="formErrors.usertype" class="text-red-500 text-xs">{{ formErrors.usertype }}</span>
                             </div>
 
+                            <!-- Representative Field -->
                             <div class="space-y-2">
-                                <label for="edit_office" class="block text-xs font-medium text-gray-700 dark:text-gray-300">Office <span v-if="editingUser" class="text-gray-500">(Current: {{ getCurrentOfficeName() }})</span></label>
+                                <label for="edit_representative" class="block text-xs font-medium text-gray-700 dark:text-gray-300">Representative</label>
                                 <div class="relative flex items-center">
-                                    <i class="fas fa-building absolute left-3 text-gray-400 text-sm"></i>
-                                    <select
-                                        v-model.number="formData.office"
-                                        id="edit_office"
-                                        class="block w-full pl-10 pr-4 py-2 text-xs border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:outline-none focus:border-blue-500 appearance-none"
-                                    >
-                                        <option value="">Select Office</option>
-                                        <option v-for="office in offices" :key="office.id" :value="office.id">
-                                            {{ office.office_name }}
-                                        </option>
-                                    </select>
+                                    <i class="fas fa-person-booth absolute left-3 text-gray-400 text-sm"></i>
+                                    <input
+                                        v-model="formData.representative"
+                                        id="edit_representative"
+                                        type="text"
+                                        placeholder="Representative Name"
+                                        class="block w-full pl-10 pr-4 py-2 text-xs border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:outline-none focus:border-blue-500"
+                                    />
                                 </div>
-                                <span v-if="formErrors.office" class="text-red-500 text-xs">{{ formErrors.office }}</span>
                             </div>
 
+                            <!-- Submit error -->
                             <div v-if="formErrors.submit" class="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
                                 <p class="text-xs text-red-600 dark:text-red-400">{{ formErrors.submit }}</p>
                             </div>
                         </div>
                     </div>
 
+                    <!-- Modal Footer -->
                     <div class="flex items-center justify-center gap-3 p-6 border-t-2 border-gray-200 rounded-b-lg dark:border-gray-600 bg-gray-50 dark:bg-gray-800">
                         <button
-                            @click="handleUpdateUser"
+                            @click="handleUpdateMunicipality"
                             class="inline-flex items-center gap-2 px-5 py-3 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95"
                         >
                             <i class="fas fa-save"></i>
@@ -500,20 +466,23 @@
             </div>
         </Teleport>
 
-        <!-- Delete User Modal -->
-        <Teleport to="body" v-if="showDeleteModal && userToDelete">
+        <!-- Delete Municipality Modal: Confirmation dialog for deleting a municipality -->
+        <Teleport to="body" v-if="showDeleteModal && municipalityToDelete">
             <div class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50" @click.self="closeDeleteModal">
                 <div class="relative w-full max-w-md mx-4 bg-white rounded-lg shadow-lg dark:bg-gray-800 animate-scaleInUp">
+                    <!-- Modal Header: Shows warning icon and title -->
                     <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 rounded-t-lg bg-gradient-to-r from-red-50 to-red-100 dark:from-gray-700 dark:to-gray-600 dark:border-gray-600">
                         <h3 class="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
                             <i class="fas fa-trash-alt text-red-600 dark:text-red-400"></i>
-                            Delete User
+                            Delete Municipality
                         </h3>
+                        <!-- Close Button -->
                         <button @click="closeDeleteModal" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
                             <i class="fas fa-times text-xl"></i>
                         </button>
                     </div>
 
+                    <!-- Modal Body: Confirmation message -->
                     <div class="px-6 py-6">
                         <div class="flex items-start gap-4">
                             <div class="flex-shrink-0">
@@ -521,7 +490,7 @@
                             </div>
                             <div>
                                 <p class="text-sm text-gray-900 dark:text-gray-100">
-                                    Are you sure you want to delete <span class="font-semibold">{{ userToDelete.username }}</span>?
+                                    Are you sure you want to delete <span class="font-semibold">{{ municipalityToDelete.name }}</span>?
                                 </p>
                                 <p class="text-xs text-gray-600 dark:text-gray-400 mt-2">
                                     This action cannot be undone. All associated data will be permanently deleted.
@@ -530,9 +499,10 @@
                         </div>
                     </div>
 
+                    <!-- Modal Footer: Confirm and Cancel buttons -->
                     <div class="flex items-center justify-center gap-3 p-6 border-t-2 border-gray-200 rounded-b-lg dark:border-gray-600 bg-gray-50 dark:bg-gray-800">
                         <button
-                            @click="confirmDeleteUser"
+                            @click="confirmDeleteMunicipality"
                             class="inline-flex items-center gap-2 px-5 py-3 text-xs font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95"
                         >
                             <i class="fas fa-trash-alt"></i>
@@ -554,143 +524,185 @@
 
 <script setup lang="ts">
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import PageHead from '@/Components/PageHead.vue';
 import Toast from '@/Components/Toast.vue';
-import { Head } from '@inertiajs/vue3';
-import { ref, computed, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 
-interface User {
+/**
+ * Municipality interface defines the structure of municipality data
+ * Represents a single municipality entity with all its properties
+ */
+interface Municipality {
     id: number;
     name: string;
-    username: string;
-    usertype: string;
-    office?: number | null;
+    code: string;
+    municipal_budget_officer: string | null;
+    representative: string | null;
 }
 
-interface Employee {
-    id: number;
-    employee_id: string;
-    name: string;
-    office: number;
-    designation: string;
-}
+// ============== Toast Component Reference ==============
 
-interface Office {
-    id: number;
-    office_name: string;
-}
+/** Reference to the Toast component for displaying notifications */
+const toastRef = ref<InstanceType<typeof Toast> | null>(null);
 
-const users = ref<User[]>([]);
-const employees = ref<Employee[]>([]);
-const offices = ref<Office[]>([]);
+// ============== Reactive State Management ==============
+
+/** Stores the list of all municipalities fetched from the API */
+const municipalities = ref<Municipality[]>([]);
+
+/** Tracks the loading state of the page */
 const loading = ref(true);
-const error = ref('');
-const searchQuery = ref('');
-const currentPage = ref(1);
-const itemsPerPage = ref(10);
-const sortBy = ref<'id' | 'name' | 'username' | 'usertype'>('id');
-const sortOrder = ref<'asc' | 'desc'>('asc');
-const activeDropdown = ref<number | null>(null);
-const showCreateModal = ref(false);
-const showEditModal = ref(false);
-const showDeleteModal = ref(false);
-const editingUser = ref<User | null>(null);
-const userToDelete = ref<User | null>(null);
 
+/** Stores error messages if any API call fails */
+const error = ref<string | null>(null);
+
+/** Stores the search query for filtering municipalities */
+const searchQuery = ref('');
+
+/** Current page number for pagination */
+const currentPage = ref(1);
+
+/** Number of items to display per page */
+const itemsPerPage = ref(10);
+
+/** The field to sort municipalities by */
+const sortBy = ref<'id' | 'name' | 'code' | 'municipal_budget_officer' | 'representative'>('id');
+
+/** Sort direction: 'asc' for ascending, 'desc' for descending */
+const sortOrder = ref<'asc' | 'desc'>('asc');
+
+/** Tracks which municipality's dropdown menu is currently open (by municipality ID) */
+const activeDropdown = ref<number | null>(null);
+
+/** Controls visibility of the Create Municipality modal */
+const showCreateModal = ref(false);
+
+/** Controls visibility of the Edit Municipality modal */
+const showEditModal = ref(false);
+
+/** Controls visibility of the Delete Municipality modal */
+const showDeleteModal = ref(false);
+
+/** Stores the municipality being edited */
+const editingMunicipality = ref<Municipality | null>(null);
+
+/** Stores the municipality to be deleted */
+const municipalityToDelete = ref<Municipality | null>(null);
+
+// ============== Form Data & Validation ==============
+
+/** Form data for creating a new municipality */
 const formData = ref({
-    employee_id: '',
     name: '',
-    username: '',
-    usertype: '',
-    office: '' as string | number,
-    password: '',
-    password_confirmation: ''
+    code: '',
+    municipal_budget_officer: '',
+    representative: ''
 });
 
+/** Stores validation errors for form fields */
 const formErrors = ref<Record<string, string>>({});
 
-const filteredUsers = computed(() => {
-    let result = users.value.filter((user) => {
-        const query = searchQuery.value.toLowerCase();
-        return (
-            user.name.toLowerCase().includes(query) ||
-            user.username.toLowerCase().includes(query) ||
-            user.usertype.toLowerCase().includes(query)
-        );
-    });
+// ============== Computed Properties ==============
 
-    result.sort((a, b) => {
-        let aVal: any = a[sortBy.value];
-        let bVal: any = b[sortBy.value];
-
-        if (aVal === null || aVal === undefined) aVal = '';
-        if (bVal === null || bVal === undefined) bVal = '';
-
-        if (typeof aVal === 'string') {
-            aVal = aVal.toLowerCase();
-            bVal = bVal.toLowerCase();
+/**
+ * filteredMunicipalities: Filters and sorts municipalities based on search query and sort settings
+ * - Filters municipalities by multiple fields (name, code, budget officer, representative, etc.)
+ * - Applies sorting based on sortBy and sortOrder
+ * Returns the filtered and sorted array of municipalities
+ */
+const filteredMunicipalities = computed(() => {
+    let filtered = municipalities.value.filter(municipality => 
+        municipality.name.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
+        municipality.code.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
+        municipality.municipal_budget_officer?.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
+        municipality.representative?.toLowerCase().includes(searchQuery.value.toLowerCase())
+    );
+    
+    // Sort
+    filtered.sort((a, b) => {
+        let aVal: any = a[sortBy.value] || '';
+        let bVal: any = b[sortBy.value] || '';
+        
+        // Handle numeric sorting for id
+        if (sortBy.value === 'id') {
+            aVal = Number(aVal);
+            bVal = Number(bVal);
+        } else {
+            aVal = aVal.toString();
+            bVal = bVal.toString();
         }
-
-        if (aVal < bVal) return sortOrder.value === 'asc' ? -1 : 1;
-        if (aVal > bVal) return sortOrder.value === 'asc' ? 1 : -1;
-        return 0;
+        
+        let comparison = 0;
+        if (aVal < bVal) comparison = -1;
+        if (aVal > bVal) comparison = 1;
+        return sortOrder.value === 'asc' ? comparison : -comparison;
     });
-
-    return result;
+    
+    return filtered;
 });
 
-const totalPages = computed(() => Math.ceil(filteredUsers.value.length / itemsPerPage.value));
+/**
+ * totalPages: Calculates the total number of pages needed for pagination
+ * Based on the filtered municipalities count and items per page
+ */
+const totalPages = computed(() => {
+    return Math.ceil(filteredMunicipalities.value.length / itemsPerPage.value);
+});
 
-const paginatedUsers = computed(() => {
+/**
+ * paginatedMunicipalities: Slices filtered municipalities to show only the current page
+ * Calculates start and end indices based on currentPage and itemsPerPage
+ * Returns the municipalities for the current page only
+ */
+const paginatedMunicipalities = computed(() => {
     const start = (currentPage.value - 1) * itemsPerPage.value;
     const end = start + itemsPerPage.value;
-    return filteredUsers.value.slice(start, end);
+    return filteredMunicipalities.value.slice(start, end);
 });
 
+// ============== Lifecycle Hooks ==============
+
+/**
+ * onMounted: Fetches municipalities from the API when component is mounted
+ * - Sets loading state to true initially
+ * - Makes API request to /api/municipalities
+ * - Populates municipalities.value with response data
+ * - Handles errors and sets loading state to false on completion
+ */
 onMounted(async () => {
     try {
-        const [usersResponse, employeesResponse, officesResponse] = await Promise.all([
-            fetch('/api/users', {
-                headers: {
-                    Authorization: `Bearer ${localStorage.getItem('token')}`,
-                },
-            }),
-            fetch('/api/employees', {
-                headers: {
-                    Authorization: `Bearer ${localStorage.getItem('token')}`,
-                },
-            }),
-            fetch('/api/offices', {
-                headers: {
-                    Authorization: `Bearer ${localStorage.getItem('token')}`,
-                },
-            })
-        ]);
-        
-        if (!usersResponse.ok) throw new Error('Failed to fetch users');
-        const userData = await usersResponse.json();
-        users.value = userData.data || userData;
-        
-        if (!employeesResponse.ok) throw new Error('Failed to fetch employees');
-        const employeeData = await employeesResponse.json();
-        employees.value = employeeData.data || employeeData;
-        
-        if (!officesResponse.ok) throw new Error('Failed to fetch offices');
-        const officeData = await officesResponse.json();
-        offices.value = officeData.data || officeData;
-    } catch (err: any) {
-        error.value = err.message;
+        const response = await fetch('/api/municipalities');
+        if (!response.ok) {
+            throw new Error('Failed to fetch municipalities');
+        }
+        municipalities.value = await response.json();
+    } catch (e) {
+        error.value = e instanceof Error ? e.message : 'An error occurred';
     } finally {
         loading.value = false;
     }
 });
 
+// ============== Utility Functions ==============
+
+/**
+ * changePage: Navigate to a specific page
+ * @param {number} page - The page number to navigate to
+ * Validates that page is within valid range (1 to totalPages)
+ */
 const changePage = (page: number) => {
     if (page >= 1 && page <= totalPages.value) {
         currentPage.value = page;
     }
 };
 
-const toggleSort = (field: 'id' | 'name' | 'username' | 'usertype') => {
+/**
+ * toggleSort: Toggle sorting by a specific field
+ * @param {string} field - The field to sort by
+ * If already sorting by this field, toggles between asc/desc
+ * If sorting by a different field, sets it as the new sort and resets to asc
+ */
+const toggleSort = (field: 'id' | 'name' | 'code' | 'municipal_budget_officer' | 'representative') => {
     if (sortBy.value === field) {
         sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc';
     } else {
@@ -699,108 +711,81 @@ const toggleSort = (field: 'id' | 'name' | 'username' | 'usertype') => {
     }
 };
 
-const toggleDropdown = (userId: number) => {
-    activeDropdown.value = activeDropdown.value === userId ? null : userId;
+/**
+ * toggleDropdown: Toggle the action dropdown menu for a municipality
+ * @param {number} municipalityId - The ID of the municipality
+ * If dropdown is already open for this municipality, close it
+ * Otherwise, open the dropdown for this municipality (closes any other open dropdowns)
+ */
+const toggleDropdown = (municipalityId: number) => {
+    activeDropdown.value = activeDropdown.value === municipalityId ? null : municipalityId;
 };
 
 /**
- * Get the current office name for the editing user
+ * handleEditMunicipality: Opens the Edit Municipality modal with the selected municipality data
+ * @param {Municipality} municipality - The municipality object to edit
+ * Populates formData with the current municipality values
+ * Sets editingMunicipality to the municipality being edited
+ * Opens the edit modal
  */
-const getCurrentOfficeName = (): string => {
-    if (!editingUser.value) return 'Not Assigned';
-    
-    const officeId = typeof editingUser.value.office === 'number' 
-        ? editingUser.value.office 
-        : editingUser.value.office?.id;
-    
-    if (!officeId || officeId === 0) {
-        return 'Not Assigned';
-    }
-    
-    const office = offices.value.find(o => o.id === officeId);
-    return office ? office.office_name : `Office ID: ${officeId}`;
-};
-
-// ============== Toast Component Reference ==============
-
-/** Reference to the Toast component for displaying notifications */
-const toastRef = ref<InstanceType<typeof Toast> | null>(null);
-
-const handleEditUser = (user: User) => {
-    editingUser.value = user;
+const handleEditMunicipality = (municipality: Municipality) => {
+    editingMunicipality.value = municipality;
     formData.value = {
-        employee_id: '',
-        name: user.name,
-        username: user.username,
-        usertype: user.usertype,
-        office: user.office ? Number(user.office) : '',
-        password: '',
-        password_confirmation: ''
+        name: municipality.name,
+        code: municipality.code,
+        municipal_budget_officer: municipality.municipal_budget_officer || '',
+        representative: municipality.representative || ''
     };
     formErrors.value = {};
     showEditModal.value = true;
 };
 
+/**
+ * closeEditModal: Closes the Edit Municipality modal
+ * Clears the editingMunicipality reference
+ */
 const closeEditModal = () => {
     showEditModal.value = false;
-    editingUser.value = null;
+    editingMunicipality.value = null;
 };
 
-const handleUpdateUser = async () => {
-    if (!editingUser.value) return;
-    
-    formErrors.value = {};
-    
-    if (!formData.value.name.trim()) {
-        formErrors.value['name'] = 'Name is required';
-    }
-    
-    if (!formData.value.username.trim()) {
-        formErrors.value['username'] = 'Username is required';
-    }
-    
-    if (!formData.value.usertype.trim()) {
-        formErrors.value['usertype'] = 'Role is required';
-    }
-    
-    if (!formData.value.office || Number(formData.value.office) === 0) {
-        formErrors.value['office'] = 'The office field is required';
-    }
-    
-    if (Object.keys(formErrors.value).length > 0) return;
+/**
+ * handleUpdateMunicipality: Submits the form to update an existing municipality
+ * - Validates form data first
+ * - Makes PUT request to /api/municipalities/{id} with updated data and Bearer token
+ * - On success: updates the municipality in the municipalities array, closes the modal, and shows success toast with municipality details
+ * - On error: sets formErrors['submit'] with the error message and shows error toast
+ */
+const handleUpdateMunicipality = async () => {
+    if (!validateForm() || !editingMunicipality.value) return;
     
     try {
-        const response = await fetch(`/api/users/${editingUser.value.id}`, {
+        const response = await fetch(`/api/municipalities/${editingMunicipality.value.id}`, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
                 'Accept': 'application/json',
-                Authorization: `Bearer ${localStorage.getItem('token')}`,
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
             },
-            body: JSON.stringify({
-                name: formData.value.name,
-                username: formData.value.username,
-                usertype: formData.value.usertype,
-                office: formData.value.office
-            })
+            body: JSON.stringify(formData.value)
         });
         
         if (!response.ok) {
             const errorData = await response.json().catch(() => ({}));
-            throw new Error(errorData.message || errorData.error || 'Failed to update user');
+            throw new Error(errorData.message || errorData.error || 'Failed to update municipality');
         }
         
-        const updatedUser = await response.json();
-        const index = users.value.findIndex(u => u.id === editingUser.value!.id);
+        const updatedMunicipality = await response.json();
+        const index = municipalities.value.findIndex(m => m.id === editingMunicipality.value!.id);
         if (index !== -1) {
-            users.value[index] = updatedUser;
+            municipalities.value[index] = updatedMunicipality;
         }
         closeEditModal();
         
         toastRef.value?.add(
             'info',
             'Success',
-            `User: <strong>${updatedUser.username}</strong> has been updated successfully!`,
+            `Municipality: <strong>${updatedMunicipality.name}</strong> has been updated successfully!`,
             3000
         );
     } catch (e) {
@@ -811,42 +796,58 @@ const handleUpdateUser = async () => {
     }
 };
 
-const handleDeleteUser = (user: User) => {
-    userToDelete.value = user;
+/**
+ * handleDeleteMunicipality: Opens the Delete Municipality confirmation modal
+ * @param {Municipality} municipality - The municipality object to delete
+ * Sets municipalityToDelete to the municipality being confirmed for deletion
+ * Opens the delete confirmation modal
+ */
+const handleDeleteMunicipality = (municipality: Municipality) => {
+    municipalityToDelete.value = municipality;
     showDeleteModal.value = true;
 };
 
+/**
+ * closeDeleteModal: Closes the Delete Municipality modal
+ * Clears the municipalityToDelete reference
+ */
 const closeDeleteModal = () => {
     showDeleteModal.value = false;
-    userToDelete.value = null;
+    municipalityToDelete.value = null;
 };
 
-const confirmDeleteUser = async () => {
-    if (!userToDelete.value) return;
+/**
+ * confirmDeleteMunicipality: Confirms and executes the deletion of a municipality
+ * - Makes DELETE request to /api/municipalities/{id} with Bearer token
+ * - On success: removes the municipality from the municipalities array, closes the modal, and shows success toast with municipality details
+ * - On error: shows an error toast with the error message
+ */
+const confirmDeleteMunicipality = async () => {
+    if (!municipalityToDelete.value) return;
     
-    const deletingUser = userToDelete.value;
+    const deletingMunicipality = municipalityToDelete.value;
     
     try {
-        const response = await fetch(`/api/users/${deletingUser.id}`, {
+        const response = await fetch(`/api/municipalities/${deletingMunicipality.id}`, {
             method: 'DELETE',
             headers: {
                 'Accept': 'application/json',
-                Authorization: `Bearer ${localStorage.getItem('token')}`,
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
             }
         });
         
         if (!response.ok) {
             const errorData = await response.json().catch(() => ({}));
-            throw new Error(errorData.message || errorData.error || 'Failed to delete user');
+            throw new Error(errorData.message || errorData.error || 'Failed to delete municipality');
         }
         
-        users.value = users.value.filter(u => u.id !== deletingUser.id);
+        municipalities.value = municipalities.value.filter(m => m.id !== deletingMunicipality.id);
         closeDeleteModal();
         
         toastRef.value?.add(
             'error',
             'Success',
-            `User: <strong>${deletingUser.username}</strong> has been deleted successfully!`,
+            `Municipality: <strong>${deletingMunicipality.name}</strong> has been deleted successfully!`,
             3000
         );
     } catch (e) {
@@ -856,85 +857,85 @@ const confirmDeleteUser = async () => {
     }
 };
 
+/**
+ * openCreateModal: Opens the Create Municipality modal
+ * - Resets formData to empty values
+ * - Clears any existing form errors
+ * - Sets showCreateModal to true
+ */
 const openCreateModal = () => {
     formData.value = {
-        employee_id: '',
         name: '',
-        username: '',
-        usertype: '',
-        office: '',
-        password: '',
-        password_confirmation: ''
+        code: '',
+        municipal_budget_officer: '',
+        representative: ''
     };
     formErrors.value = {};
     showCreateModal.value = true;
 };
 
+/**
+ * closeCreateModal: Closes the Create Municipality modal
+ * Sets showCreateModal to false
+ */
 const closeCreateModal = () => {
     showCreateModal.value = false;
 };
 
+/**
+ * validateForm: Validates the form data for creating a municipality
+ * Required fields: name, code
+ * Returns true if all validations pass, false otherwise
+ * Sets formErrors with specific error messages for invalid fields
+ */
 const validateForm = (): boolean => {
     formErrors.value = {};
     
-    if (!formData.value.employee_id.toString().trim()) {
-        formErrors.value['employee_id'] = 'Employee is required';
+    if (!formData.value.name.trim()) {
+        formErrors.value['name'] = 'Municipality Name is required';
     }
     
-    if (!formData.value.username.trim()) {
-        formErrors.value['username'] = 'Username is required';
-    }
-    
-    if (!formData.value.usertype.trim()) {
-        formErrors.value['usertype'] = 'Role is required';
-    }
-    
-    if (!formData.value.office || Number(formData.value.office) === 0) {
-        formErrors.value['office'] = 'The office field is required';
-    }
-    
-    if (!formData.value.password.trim()) {
-        formErrors.value['password'] = 'Password is required';
-    }
-    
-    if (!formData.value.password_confirmation.trim()) {
-        formErrors.value['password_confirmation'] = 'Password confirmation is required';
-    }
-    
-    if (formData.value.password !== formData.value.password_confirmation) {
-        formErrors.value['password_confirmation'] = 'Passwords do not match';
+    if (!formData.value.code.trim()) {
+        formErrors.value['code'] = 'Code is required';
     }
     
     return Object.keys(formErrors.value).length === 0;
 };
 
-const handleCreateUser = async () => {
+/**
+ * handleCreateMunicipality: Submits the form to create a new municipality
+ * - Validates form data first
+ * - Makes POST request to /api/municipalities with form data and Bearer token
+ * - On success: adds the new municipality to the municipalities array, closes the modal, and shows success toast with municipality details
+ * - On error: sets formErrors['submit'] with the error message and shows error toast
+ */
+const handleCreateMunicipality = async () => {
     if (!validateForm()) return;
     
     try {
-        const response = await fetch('/docutrack/api/users', {
+        const response = await fetch('/api/municipalities', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'Accept': 'application/json',
-                Authorization: `Bearer ${localStorage.getItem('token')}`,
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
             },
             body: JSON.stringify(formData.value)
         });
         
         if (!response.ok) {
             const errorData = await response.json().catch(() => ({}));
-            throw new Error(errorData.message || errorData.error || 'Failed to create user');
+            throw new Error(errorData.message || errorData.error || 'Failed to create municipality');
         }
         
-        const newUser = await response.json();
-        users.value.push(newUser);
+        const newMunicipality = await response.json();
+        municipalities.value.push(newMunicipality);
         closeCreateModal();
         
         toastRef.value?.add(
             'success',
             'Success',
-            `User: <strong>${newUser.username}</strong> has been created successfully!`,
+            `Municipality: <strong>${newMunicipality.name}</strong> has been created successfully!`,
             3000
         );
     } catch (e) {
@@ -946,6 +947,7 @@ const handleCreateUser = async () => {
 };
 </script>
 
+<!-- Scoped Styles: Modal animations and transitions -->
 <style scoped>
 @keyframes scaleInUp {
     from {

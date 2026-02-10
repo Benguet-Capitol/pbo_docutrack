@@ -4,6 +4,8 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\EmployeeController;
 use App\Http\Controllers\Api\OfficeController;
+use App\Http\Controllers\Api\MunicipalityController;
+use App\Http\Controllers\Api\DocumentController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -33,6 +35,14 @@ Route::middleware('auth')->group(function () {
     Route::get('/offices', function () {
         return Inertia::render('Offices');
     })->name('offices.index');
+
+    Route::get('/municipalities', function () {
+        return Inertia::render('Municipalities');
+    })->name('municipalities.index');
+
+    Route::get('/documents', function () {
+        return Inertia::render('Documents');
+    })->name('documents.index');
 });
 
 // API Routes - Stateless with Bearer token authentication (skip CSRF)
@@ -49,10 +59,21 @@ Route::middleware('auth')
     Route::put('/api/employees/{id}', [EmployeeController::class, 'update']);
     Route::delete('/api/employees/{id}', [EmployeeController::class, 'destroy']);
 
+
+    Route::get('/api/municipalities', [MunicipalityController::class, 'index']);
+    Route::post('/api/municipalities', [MunicipalityController::class, 'store']);
+    Route::put('/api/municipalities/{id}', [MunicipalityController::class, 'update']);
+    Route::delete('/api/municipalities/{id}', [MunicipalityController::class, 'destroy']);
+
     Route::get('/api/offices', [OfficeController::class, 'index']);
     Route::post('/api/offices', [OfficeController::class, 'store']);
     Route::put('/api/offices/{id}', [OfficeController::class, 'update']);
     Route::delete('/api/offices/{id}', [OfficeController::class, 'destroy']);
+
+    Route::get('/api/documents', [DocumentController::class, 'index']);
+    Route::post('/api/documents', [DocumentController::class, 'store']);
+    Route::put('/api/documents/{id}', [DocumentController::class, 'update']);
+    Route::delete('/api/documents/{id}', [DocumentController::class, 'destroy']);
 });
 
 require __DIR__.'/auth.php';
