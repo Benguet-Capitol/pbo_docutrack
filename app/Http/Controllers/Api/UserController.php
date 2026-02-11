@@ -31,16 +31,20 @@ class UserController extends Controller
         try {
             $validated = $request->validate([
                 'name' => 'required|string',
-                'username' => 'required|string|unique:' . env('DB_DATABASE_REGISTRY', 'pbo_registry') . '.users,username',
+                'username' => 'required|string|unique:users,username',
                 'password' => 'required|string|min:6',
                 'usertype' => 'required|string',
                 'office' => 'required|integer',
             ]);
 
+            // Map 'office' to 'fk_office_id' for the model
+            $validated['fk_office_id'] = $validated['office'];
+            unset($validated['office']);
+
             // Hash the password before storing
             $validated['password'] = Hash::make($validated['password']);
 
-            $user = RegistryUser::create($validated);
+            $user = User::create($validated);
             
             // Don't return the password
             $user = $user->load('office');
@@ -58,15 +62,21 @@ class UserController extends Controller
     public function update(Request $request, $id): JsonResponse
     {
         try {
-            $user = RegistryUser::findOrFail($id);
+            $user = User::findOrFail($id);
             
             $validated = $request->validate([
                 'name' => 'sometimes|string',
-                'username' => 'sometimes|string|unique:' . env('DB_DATABASE_REGISTRY', 'pbo_registry') . '.users,username,' . $id,
+                'username' => 'sometimes|string|unique:users,username,' . $id,
                 'password' => 'sometimes|string|min:6',
                 'usertype' => 'sometimes|string',
                 'office' => 'sometimes|integer',
             ]);
+
+            // Map 'office' to 'fk_office_id' for the model
+            if (isset($validated['office'])) {
+                $validated['fk_office_id'] = $validated['office'];
+                unset($validated['office']);
+            }
 
             // Hash the password if provided
             if (isset($validated['password'])) {
@@ -86,7 +96,7 @@ class UserController extends Controller
     public function destroy($id): JsonResponse
     {
         try {
-            $user = RegistryUser::findOrFail($id);
+            $user = User::findOrFail($id);
             $user->delete();
             return response()->json(['message' => 'User deleted successfully']);
         } catch (\Exception $e) {

@@ -22,6 +22,8 @@ class DocumentTransaction extends Model
         'document_id',
         'user_id',
         'forwarded_to_user_id',
+        'forwarded_to_office_id',
+        'forwarded_to_municipality_id',
         'action',
         'remarks',
         'created_at',
@@ -61,5 +63,21 @@ class DocumentTransaction extends Model
     public function forwardedToUser(): BelongsTo
     {
         return $this->belongsTo(User::class, 'forwarded_to_user_id');
+    }
+
+    /**
+     * Get the office this document was forwarded to.
+     */
+    public function forwardedToOffice(): BelongsTo
+    {
+        return $this->belongsTo(Office::class, 'forwarded_to_office_id');
+    }
+
+    /**
+     * Get the municipality this document was forwarded to.
+     */
+    public function forwardedToMunicipality(): BelongsTo
+    {
+        return $this->belongsTo(Municipality::class, 'forwarded_to_municipality_id');
     }
 }

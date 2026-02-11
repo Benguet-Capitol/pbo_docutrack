@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\Registry\RegistryOffice;
+use App\Models\Office;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -15,7 +15,7 @@ class OfficeController extends Controller
     public function index(): JsonResponse
     {
         try {
-            $offices = RegistryOffice::all();
+            $offices = Office::all();
             return response()->json($offices);
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], 500);
@@ -38,7 +38,7 @@ class OfficeController extends Controller
                 'branch' => 'required|string',
             ]);
 
-            $office = RegistryOffice::create($validated);
+            $office = Office::create($validated);
             return response()->json($office, 201);
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], 500);
@@ -51,7 +51,7 @@ class OfficeController extends Controller
     public function update(Request $request, $id): JsonResponse
     {
         try {
-            $office = RegistryOffice::findOrFail($id);
+            $office = Office::findOrFail($id);
             
             $validated = $request->validate([
                 'office_abbreviation' => 'sometimes|string',
@@ -76,7 +76,7 @@ class OfficeController extends Controller
     public function destroy($id): JsonResponse
     {
         try {
-            $office = RegistryOffice::findOrFail($id);
+            $office = Office::findOrFail($id);
             $office->delete();
             return response()->json(['message' => 'Office deleted successfully']);
         } catch (\Exception $e) {

@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\Registry\RegistryEmployee;
+use App\Models\Employee;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -15,15 +15,15 @@ class EmployeeController extends Controller
     public function index(): JsonResponse
     {
         try {
-            $employees = RegistryEmployee::with('office')->get();
+            $employees = Employee::with('office')->get();
             
-            // Ensure fk_office_id is included in the response
+            // Ensure office_id is included in the response
             $employees = $employees->map(function ($employee) {
                 return [
                     'id' => $employee->id,
                     'employee_id' => $employee->employee_id,
                     'name' => $employee->name,
-                    'fk_office_id' => $employee->fk_office_id,
+                    'office_id' => $employee->office_id,
                     'designation' => $employee->designation,
                     'office' => $employee->office,
                 ];
@@ -48,7 +48,11 @@ class EmployeeController extends Controller
                 'designation' => 'required|string',
             ]);
 
-            $employee = RegistryEmployee::create($validated);
+            // Map 'office' to 'office_id' for the model
+            $validated['office_id'] = $validated['office'];
+            unset($validated['office']);
+
+            $employee = Employee::create($validated);
             return response()->json($employee->load('office'), 201);
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], 500);
@@ -61,7 +65,7 @@ class EmployeeController extends Controller
     public function update(Request $request, $id): JsonResponse
     {
         try {
-            $employee = RegistryEmployee::findOrFail($id);
+            $employee = Employee::findOrFail($id);
             
             $validated = $request->validate([
                 'employee_id' => 'sometimes|string',
@@ -69,6 +73,12 @@ class EmployeeController extends Controller
                 'office' => 'sometimes|integer',
                 'designation' => 'sometimes|string',
             ]);
+
+            // Map 'office' to 'office_id' for the model
+            if (isset($validated['office'])) {
+                $validated['office_id'] = $validated['office'];
+                unset($validated['office']);
+            }
 
             $employee->update($validated);
             return response()->json($employee->load('office'));
@@ -83,7 +93,7 @@ class EmployeeController extends Controller
     public function destroy($id): JsonResponse
     {
         try {
-            $employee = RegistryEmployee::findOrFail($id);
+            $employee = Employee::findOrFail($id);
             $employee->delete();
             return response()->json(['message' => 'Employee deleted successfully']);
         } catch (\Exception $e) {

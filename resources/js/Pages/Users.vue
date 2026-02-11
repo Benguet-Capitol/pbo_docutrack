@@ -228,7 +228,7 @@
                                     <select
                                         v-model.number="formData.employee_id"
                                         id="employee_id"
-                                        @change="() => { const emp = employees.find(e => e.id === Number(formData.employee_id)); if (emp) { formData.name = emp.name; formData.office = emp.office.toString(); } }"
+                                        @change="handleEmployeeChange"
                                         class="block w-full pl-10 pr-4 py-2 text-xs border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:outline-none focus:border-emerald-500 appearance-none"
                                     >
                                         <option value="">Select Employee</option>
@@ -275,13 +275,14 @@
 
                             <!-- Office (Auto-filled from Employee) -->
                             <div class="space-y-2">
-                                <label for="office" class="block text-xs font-medium text-gray-700 dark:text-gray-300">Office (Auto-filled)</label>
+                                <label for="office" class="block text-xs font-medium text-gray-700 dark:text-gray-300">Office (Auto-filled from Employee)</label>
                                 <div class="relative flex items-center">
                                     <i class="fas fa-building absolute left-3 text-gray-400 text-sm"></i>
                                     <select
                                         v-model.number="formData.office"
                                         id="office"
-                                        class="block w-full pl-10 pr-4 py-2 text-xs border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:outline-none focus:border-emerald-500 appearance-none"
+                                        :disabled="!formData.employee_id"
+                                        :class="['block w-full pl-10 pr-4 py-2 text-xs border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:outline-none appearance-none', !formData.employee_id ? 'bg-gray-100 border-gray-300 cursor-not-allowed opacity-60' : 'border-gray-300 focus:border-emerald-500 bg-white dark:bg-gray-700']"
                                     >
                                         <option value="">Select Office</option>
                                         <option v-for="office in offices" :key="office.id" :value="office.id">
@@ -396,7 +397,7 @@
                                     <select
                                         v-model.number="formData.employee_id"
                                         id="edit_employee_id"
-                                        @change="() => { const emp = employees.find(e => e.id === Number(formData.employee_id)); if (emp) { formData.name = emp.name; formData.office = emp.office.toString(); } }"
+                                        @change="handleEmployeeChange"
                                         class="block w-full pl-10 pr-4 py-2 text-xs border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:outline-none focus:border-blue-500 appearance-none"
                                     >
                                         <option value="">Select Employee</option>
@@ -463,7 +464,8 @@
                                     <select
                                         v-model.number="formData.office"
                                         id="edit_office"
-                                        class="block w-full pl-10 pr-4 py-2 text-xs border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:outline-none focus:border-blue-500 appearance-none"
+                                        :disabled="!formData.employee_id"
+                                        :class="['block w-full pl-10 pr-4 py-2 text-xs border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:outline-none appearance-none', !formData.employee_id ? 'bg-gray-100 border-gray-300 cursor-not-allowed opacity-60' : 'border-gray-300 focus:border-blue-500 bg-white dark:bg-gray-700']"
                                     >
                                         <option value="">Select Office</option>
                                         <option v-for="office in offices" :key="office.id" :value="office.id">
@@ -912,7 +914,7 @@ const handleCreateUser = async () => {
     if (!validateForm()) return;
     
     try {
-        const response = await fetch('/docutrack/api/users', {
+        const response = await fetch('/api/users', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -942,6 +944,28 @@ const handleCreateUser = async () => {
         formErrors.value['submit'] = errorMsg;
         
         toastRef.value?.add('error', 'Error', errorMsg, 4000);
+    }
+};
+
+const handleEmployeeChange = () => {
+    const selectedEmpId = Number(formData.value.employee_id);
+    console.log('Employee ID selected:', selectedEmpId);
+    console.log('Available employees:', employees.value);
+    
+    const emp = employees.value.find(e => e.id === selectedEmpId);
+    console.log('Found employee:', emp);
+    
+    if (emp) {
+        formData.value.name = emp.name;
+        const officeId = emp.office_id || emp.fk_office_id;
+        console.log('Setting office to:', officeId);
+        
+        // Ensure it's a number
+        formData.value.office = Number(officeId);
+        
+        // Log available offices
+        console.log('Available offices:', offices.value);
+        console.log('Office options:', offices.value.map(o => ({id: o.id, name: o.office_name})));
     }
 };
 </script>

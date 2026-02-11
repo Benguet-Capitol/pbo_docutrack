@@ -40,6 +40,7 @@ Route::middleware(['web', 'auth'])->group(function () {
     Route::put('/documents/{id}', [DocumentController::class, 'update']);
     Route::get('/documents/{id}/transactions', [DocumentController::class, 'getTransactions']);
     Route::post('/documents/{id}/forward', [DocumentController::class, 'forward']);
+    Route::post('/documents/{id}/receive', [DocumentController::class, 'receive']);
     Route::post('/documents/{id}/finalize', [DocumentController::class, 'finalize']);
     Route::delete('/documents/{id}', [DocumentController::class, 'destroy']);
 });

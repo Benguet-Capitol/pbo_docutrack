@@ -195,31 +195,34 @@
                                 </td>
                                 <!-- Status Column -->
                                 <td class="px-4 py-2 text-xs text-center">
-                                    <span v-if="document.status === 'pending'" class="px-2 py-1 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300 rounded-full text-xs font-medium">Pending</span>
+                                    <span v-if="document.status === 'created'" class="px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 rounded-full text-xs font-medium">Created</span>
+                                    <span v-else-if="document.status === 'forwarded'" class="px-2 py-1 bg-cyan-100 dark:bg-cyan-900/30 text-cyan-800 dark:text-cyan-300 rounded-full text-xs font-medium">Forwarded</span>
+                                    <span v-else-if="document.status === 'pending'" class="px-2 py-1 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300 rounded-full text-xs font-medium">Pending</span>
                                     <span v-else-if="document.status === 'finalized'" class="px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 rounded-full text-xs font-medium">Finalized</span>
                                     <span v-else class="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300 rounded-full text-xs font-medium">{{ document.status }}</span>
                                 </td>
                                 <!-- Actions Column: Contains edit/delete dropdown menu -->
                                 <td class="px-4 py-2 text-xs text-center">
                                     <div class="flex items-center justify-center gap-2">
-                                        <!-- Edit Button: Icon only with tooltip -->
+                                        <!-- Forward Button: Visible if created or pending -->
                                         <button 
-                                            @click.stop="handleEditDocument(document)" 
-                                            class="relative p-2 text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded-lg transition-all duration-200 group"
-                                        >
-                                            <i class="fas fa-pencil-alt"></i>
-                                            <span class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-1 text-xs font-medium text-white bg-gray-900 dark:bg-gray-950 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-20">Edit</span>
-                                        </button>
-                                        <!-- Forward Button: Icon only with tooltip, hidden if finalized -->
-                                        <button 
-                                            v-if="document.status !== 'finalized'"
+                                            v-if="document.status === 'created' || document.status === 'pending'"
                                             @click.stop="handleForwardDocument(document)" 
                                             class="relative p-2 text-cyan-600 dark:text-cyan-400 hover:text-cyan-700 dark:hover:text-cyan-300 hover:bg-cyan-100 dark:hover:bg-cyan-900/30 rounded-lg transition-all duration-200 group"
                                         >
                                             <i class="fas fa-share-alt"></i>
                                             <span class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-1 text-xs font-medium text-white bg-gray-900 dark:bg-gray-950 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-20">Forward</span>
                                         </button>
-                                        <!-- Finalize Button: Icon only with tooltip, shown if pending -->
+                                        <!-- Receive Button: Visible if forwarded -->
+                                        <button 
+                                            v-if="document.status === 'forwarded'"
+                                            @click.stop="handleReceiveDocument(document)" 
+                                            class="relative p-2 text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 hover:bg-purple-100 dark:hover:bg-purple-900/30 rounded-lg transition-all duration-200 group"
+                                        >
+                                            <i class="fas fa-inbox"></i>
+                                            <span class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-1 text-xs font-medium text-white bg-gray-900 dark:bg-gray-950 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-20">Receive</span>
+                                        </button>
+                                        <!-- Finalize Button: Visible if pending -->
                                         <button 
                                             v-if="document.status === 'pending'"
                                             @click.stop="handleFinalizeDocument(document)" 
@@ -228,7 +231,15 @@
                                             <i class="fas fa-check"></i>
                                             <span class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-1 text-xs font-medium text-white bg-gray-900 dark:bg-gray-950 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-20">Finalize</span>
                                         </button>
-                                        <!-- Delete Button: Icon only with tooltip -->
+                                        <!-- Edit Button: Always visible -->
+                                        <button 
+                                            @click.stop="handleEditDocument(document)" 
+                                            class="relative p-2 text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded-lg transition-all duration-200 group"
+                                        >
+                                            <i class="fas fa-pencil-alt"></i>
+                                            <span class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-1 text-xs font-medium text-white bg-gray-900 dark:bg-gray-950 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-20">Edit</span>
+                                        </button>
+                                        <!-- Delete Button: Always visible -->
                                         <button 
                                             @click.stop="handleDeleteDocument(document)" 
                                             class="relative p-2 text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-lg transition-all duration-200 group"
@@ -694,7 +705,7 @@
             </div>
         </Teleport>
 
-        <!-- Forward Document Modal: Modal for forwarding document to another user -->
+        <!-- Forward Document Modal: Modal for forwarding document to User, Office, or Municipality -->
         <Teleport to="body" v-if="showForwardModal && documentToForward">
             <div class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50" @click.self="closeForwardModal">
                 <div class="relative w-full max-w-md mx-4 bg-white rounded-lg shadow-lg dark:bg-gray-800 animate-scaleInUp">
@@ -715,13 +726,41 @@
                             Forwarding document: <span class="font-semibold">{{ documentToForward.tracking_no }}</span>
                         </p>
 
-                        <!-- Forward To User: Required -->
+                        <!-- Forward To Type Selection -->
                         <div class="space-y-2">
-                            <label for="forward_user_id" class="block text-xs font-medium text-gray-700 dark:text-gray-300">Forward To</label>
+                            <label class="block text-xs font-medium text-gray-700 dark:text-gray-300">Forward To Type</label>
+                            <div class="flex gap-2">
+                                <button
+                                    @click="forwardData.forward_to_type = 'user'; forwardData.forward_to_id = null;"
+                                    :class="forwardData.forward_to_type === 'user' ? 'bg-blue-600 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100'"
+                                    class="flex-1 px-3 py-2 text-xs font-medium rounded-lg transition-colors"
+                                >
+                                    <i class="fas fa-user mr-1"></i>User
+                                </button>
+                                <button
+                                    @click="forwardData.forward_to_type = 'office'; forwardData.forward_to_id = null;"
+                                    :class="forwardData.forward_to_type === 'office' ? 'bg-blue-600 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100'"
+                                    class="flex-1 px-3 py-2 text-xs font-medium rounded-lg transition-colors"
+                                >
+                                    <i class="fas fa-building mr-1"></i>Office
+                                </button>
+                                <button
+                                    @click="forwardData.forward_to_type = 'municipality'; forwardData.forward_to_id = null;"
+                                    :class="forwardData.forward_to_type === 'municipality' ? 'bg-blue-600 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100'"
+                                    class="flex-1 px-3 py-2 text-xs font-medium rounded-lg transition-colors"
+                                >
+                                    <i class="fas fa-map mr-1"></i>Municipality
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- User Selection -->
+                        <div v-if="forwardData.forward_to_type === 'user'" class="space-y-2">
+                            <label for="forward_user_id" class="block text-xs font-medium text-gray-700 dark:text-gray-300">Select User</label>
                             <div class="relative flex items-center">
                                 <i class="fas fa-user-check absolute left-3 text-gray-400 text-sm"></i>
                                 <select
-                                    v-model.number="forwardData.user_id"
+                                    v-model.number="forwardData.forward_to_id"
                                     id="forward_user_id"
                                     class="block w-full pl-10 pr-4 py-2 text-xs border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:outline-none focus:border-blue-500 appearance-none"
                                 >
@@ -731,7 +770,45 @@
                                     </option>
                                 </select>
                             </div>
-                            <span v-if="forwardErrors.user_id" class="text-red-500 text-xs">{{ forwardErrors.user_id }}</span>
+                            <span v-if="forwardErrors.forward_to_id" class="text-red-500 text-xs">{{ forwardErrors.forward_to_id }}</span>
+                        </div>
+
+                        <!-- Office Selection -->
+                        <div v-if="forwardData.forward_to_type === 'office'" class="space-y-2">
+                            <label for="forward_office_id" class="block text-xs font-medium text-gray-700 dark:text-gray-300">Select Office</label>
+                            <div class="relative flex items-center">
+                                <i class="fas fa-building absolute left-3 text-gray-400 text-sm"></i>
+                                <select
+                                    v-model.number="forwardData.forward_to_id"
+                                    id="forward_office_id"
+                                    class="block w-full pl-10 pr-4 py-2 text-xs border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:outline-none focus:border-blue-500 appearance-none"
+                                >
+                                    <option :value="null">Select Office</option>
+                                    <option v-for="office in offices" :key="office.id" :value="office.id">
+                                        {{ office.office_name }}
+                                    </option>
+                                </select>
+                            </div>
+                            <span v-if="forwardErrors.forward_to_id" class="text-red-500 text-xs">{{ forwardErrors.forward_to_id }}</span>
+                        </div>
+
+                        <!-- Municipality Selection -->
+                        <div v-if="forwardData.forward_to_type === 'municipality'" class="space-y-2">
+                            <label for="forward_municipality_id" class="block text-xs font-medium text-gray-700 dark:text-gray-300">Select Municipality</label>
+                            <div class="relative flex items-center">
+                                <i class="fas fa-map absolute left-3 text-gray-400 text-sm"></i>
+                                <select
+                                    v-model.number="forwardData.forward_to_id"
+                                    id="forward_municipality_id"
+                                    class="block w-full pl-10 pr-4 py-2 text-xs border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:outline-none focus:border-blue-500 appearance-none"
+                                >
+                                    <option :value="null">Select Municipality</option>
+                                    <option v-for="municipality in municipalities" :key="municipality.id" :value="municipality.id">
+                                        {{ municipality.name }}
+                                    </option>
+                                </select>
+                            </div>
+                            <span v-if="forwardErrors.forward_to_id" class="text-red-500 text-xs">{{ forwardErrors.forward_to_id }}</span>
                         </div>
 
                         <!-- Remarks: Optional -->
@@ -829,6 +906,60 @@
             </div>
         </Teleport>
 
+        <!-- Receive Document Modal: Confirmation dialog for receiving a document -->
+        <Teleport to="body" v-if="showReceiveModal && documentToReceive">
+            <div class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50" @click.self="closeReceiveModal">
+                <div class="relative w-full max-w-md mx-4 bg-white rounded-lg shadow-lg dark:bg-gray-800 animate-scaleInUp">
+                    <!-- Modal Header: Shows inbox icon and title -->
+                    <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 rounded-t-lg bg-gradient-to-r from-purple-50 to-purple-100 dark:from-gray-700 dark:to-gray-600 dark:border-gray-600">
+                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                            <i class="fas fa-inbox text-purple-600 dark:text-purple-400"></i>
+                            Receive Document
+                        </h3>
+                        <!-- Close Button -->
+                        <button @click="closeReceiveModal" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
+                            <i class="fas fa-times text-xl"></i>
+                        </button>
+                    </div>
+
+                    <!-- Modal Body: Confirmation message -->
+                    <div class="px-6 py-6">
+                        <div class="flex items-start gap-4">
+                            <div class="flex-shrink-0">
+                                <i class="fas fa-info-circle text-blue-600 dark:text-blue-400 text-3xl"></i>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-900 dark:text-gray-100">
+                                    Are you sure you want to receive document <span class="font-semibold">{{ documentToReceive.tracking_no }}</span>?
+                                </p>
+                                <p class="text-xs text-gray-600 dark:text-gray-400 mt-2">
+                                    This will log your receipt of the document.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Modal Footer: Confirm and Cancel buttons -->
+                    <div class="flex items-center justify-center gap-3 p-6 border-t-2 border-gray-200 rounded-b-lg dark:border-gray-600 bg-gray-50 dark:bg-gray-800">
+                        <button
+                            @click="confirmReceiveDocument"
+                            class="inline-flex items-center gap-2 px-5 py-3 text-xs font-medium text-white bg-purple-600 hover:bg-purple-700 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95"
+                        >
+                            <i class="fas fa-check"></i>
+                            Receive
+                        </button>
+                        <button
+                            @click="closeReceiveModal"
+                            class="inline-flex items-center gap-2 px-5 py-3 text-xs font-medium text-gray-600 dark:text-gray-400 border border-gray-600 dark:border-gray-500 hover:text-white hover:bg-gray-600 dark:hover:bg-gray-600 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95"
+                        >
+                            <i class="fas fa-times"></i>
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </Teleport>
+
         <!-- Document Transactions Modal: Displays all transactions for a document -->
         <Teleport to="body" v-if="showTransactionsModal && documentViewingTransactions">
             <div class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50" @click.self="closeTransactionsModal">
@@ -863,9 +994,10 @@
                             <div v-for="transaction in documentTransactions" :key="transaction.id" class="flex gap-4 pb-4 border-l-2 border-gray-300 dark:border-gray-600 pl-4">
                                 <!-- Timeline Dot -->
                                 <div class="flex-shrink-0 mt-1">
-                                    <div v-if="transaction.action === 'created'" class="w-3 h-3 rounded-full bg-green-500 ring-2 ring-green-200 dark:ring-green-900/30 -ml-5"></div>
-                                    <div v-else-if="transaction.action === 'forwarded'" class="w-3 h-3 rounded-full bg-cyan-500 ring-2 ring-cyan-200 dark:ring-cyan-900/30 -ml-5"></div>
-                                    <div v-else-if="transaction.action === 'finalized'" class="w-3 h-3 rounded-full bg-purple-500 ring-2 ring-purple-200 dark:ring-purple-900/30 -ml-5"></div>
+                                    <div v-if="getActionType(transaction.action) === 'created'" class="w-3 h-3 rounded-full bg-green-500 ring-2 ring-green-200 dark:ring-green-900/30 -ml-5"></div>
+                                    <div v-else-if="getActionType(transaction.action) === 'forwarded'" class="w-3 h-3 rounded-full bg-cyan-500 ring-2 ring-cyan-200 dark:ring-cyan-900/30 -ml-5"></div>
+                                    <div v-else-if="getActionType(transaction.action) === 'received'" class="w-3 h-3 rounded-full bg-orange-500 ring-2 ring-orange-200 dark:ring-orange-900/30 -ml-5"></div>
+                                    <div v-else-if="getActionType(transaction.action) === 'finalized'" class="w-3 h-3 rounded-full bg-purple-500 ring-2 ring-purple-200 dark:ring-purple-900/30 -ml-5"></div>
                                 </div>
 
                                 <!-- Transaction Details -->
@@ -874,16 +1006,26 @@
                                         <div>
                                             <!-- Action Badge -->
                                             <div class="mb-1">
-                                                <span v-if="transaction.action === 'created'" class="inline-block px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 rounded text-xs font-medium">Created</span>
-                                                <span v-else-if="transaction.action === 'forwarded'" class="inline-block px-2 py-1 bg-cyan-100 dark:bg-cyan-900/30 text-cyan-800 dark:text-cyan-300 rounded text-xs font-medium">Forwarded</span>
-                                                <span v-else-if="transaction.action === 'finalized'" class="inline-block px-2 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300 rounded text-xs font-medium">Finalized</span>
+                                                <span v-if="getActionType(transaction.action) === 'created'" class="inline-block px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 rounded text-xs font-medium">Created</span>
+                                                <span v-else-if="getActionType(transaction.action) === 'forwarded'" class="inline-block px-2 py-1 bg-cyan-100 dark:bg-cyan-900/30 text-cyan-800 dark:text-cyan-300 rounded text-xs font-medium">Forwarded</span>
+                                                <span v-else-if="getActionType(transaction.action) === 'received'" class="inline-block px-2 py-1 bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-300 rounded text-xs font-medium">Received</span>
+                                                <span v-else-if="getActionType(transaction.action) === 'finalized'" class="inline-block px-2 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300 rounded text-xs font-medium">Finalized</span>
                                             </div>
+                                            
+                                            <!-- Action Details -->
+                                            <p class="text-xs text-gray-700 dark:text-gray-300 mt-1">{{ transaction.action }}</p>
 
                                             <!-- User and Timestamp -->
                                             <p class="text-xs text-gray-600 dark:text-gray-400">
                                                 by <span class="font-semibold text-gray-900 dark:text-gray-100">{{ transaction.user?.name || 'Unknown User' }}</span>
-                                                <span v-if="transaction.action === 'forwarded' && transaction.forwardedToUser">
+                                                <span v-if="getActionType(transaction.action) === 'forwarded' && transaction.forwardedToUser">
                                                     to <span class="font-semibold text-gray-900 dark:text-gray-100">{{ transaction.forwardedToUser.name }}</span>
+                                                </span>
+                                                <span v-if="getActionType(transaction.action) === 'forwarded' && transaction.forwardedToOffice">
+                                                    to <span class="font-semibold text-gray-900 dark:text-gray-100">{{ transaction.forwardedToOffice.office_name }}</span>
+                                                </span>
+                                                <span v-if="getActionType(transaction.action) === 'forwarded' && transaction.forwardedToMunicipality">
+                                                    to <span class="font-semibold text-gray-900 dark:text-gray-100">{{ transaction.forwardedToMunicipality.name }}</span>
                                                 </span>
                                             </p>
                                             <p class="text-xs text-gray-500 dark:text-gray-500">
@@ -1006,7 +1148,8 @@ const documentToForward = ref<Document | null>(null);
 
 /** Forward form data */
 const forwardData = ref({
-    user_id: null as number | null,
+    forward_to_type: 'user', // 'user', 'office', or 'municipality'
+    forward_to_id: null as number | null,
     remarks: '',
 });
 
@@ -1018,6 +1161,12 @@ const showFinalizeModal = ref(false);
 
 /** Stores the document to be finalized */
 const documentToFinalize = ref<Document | null>(null);
+
+/** Controls visibility of the Receive Document modal */
+const showReceiveModal = ref(false);
+
+/** Stores the document to be received */
+const documentToReceive = ref<Document | null>(null);
 
 /** Stores the list of offices for internal source */
 const offices = ref<Array<{id: number; office_name: string}>>([]);
@@ -1040,12 +1189,25 @@ interface DocumentTransaction {
     document_id: number;
     user_id: number;
     forwarded_to_user_id?: number | null;
-    action: 'created' | 'forwarded' | 'finalized';
+    action: string;
     remarks: string | null;
     created_at: string;
     user?: { id: number; name: string };
     forwardedToUser?: { id: number; name: string } | null;
+    forwardedToOffice?: { id: number; office_name: string } | null;
+    forwardedToMunicipality?: { id: number; name: string } | null;
 }
+
+/**
+ * Helper function to determine action type from action string
+ */
+const getActionType = (action: string): 'created' | 'forwarded' | 'finalized' | 'received' => {
+    if (action.toLowerCase().includes('created')) return 'created';
+    if (action.toLowerCase().includes('forwarded')) return 'forwarded';
+    if (action.toLowerCase().includes('received')) return 'received';
+    if (action.toLowerCase().includes('finalized')) return 'finalized';
+    return 'created'; // default
+};
 
 const documentTransactions = ref<DocumentTransaction[]>([]);
 
@@ -1400,7 +1562,8 @@ const confirmDeleteDocument = async () => {
 const handleForwardDocument = (document: Document) => {
     documentToForward.value = document;
     forwardData.value = {
-        user_id: null,
+        forward_to_type: 'user',
+        forward_to_id: null,
         remarks: '',
     };
     forwardErrors.value = {};
@@ -1414,18 +1577,19 @@ const closeForwardModal = () => {
     showForwardModal.value = false;
     documentToForward.value = null;
     forwardData.value = {
-        user_id: null,
+        forward_to_type: 'user',
+        forward_to_id: null,
         remarks: '',
     };
     forwardErrors.value = {};
 };
 
 /**
- * handleSubmitForward: Submits the forward form to forward a document to another user
+ * handleSubmitForward: Submits the forward form to forward a document to another user, office, or municipality
  */
 const handleSubmitForward = async () => {
-    if (!documentToForward.value || !forwardData.value.user_id) {
-        forwardErrors.value['user_id'] = 'Please select a user to forward to';
+    if (!documentToForward.value || !forwardData.value.forward_to_id) {
+        forwardErrors.value['forward_to_id'] = 'Please select a recipient';
         return;
     }
 
@@ -1438,7 +1602,8 @@ const handleSubmitForward = async () => {
                 'X-CSRF-Token': getCsrfToken()
             },
             body: JSON.stringify({
-                user_id: forwardData.value.user_id,
+                forward_to_type: forwardData.value.forward_to_type,
+                forward_to_id: forwardData.value.forward_to_id,
                 remarks: forwardData.value.remarks || null,
             }),
             credentials: 'include'
@@ -1529,6 +1694,68 @@ const confirmFinalizeDocument = async () => {
             'success',
             'Success',
             `Document: <strong>${updatedDocument.tracking_no}</strong> has been finalized successfully!`,
+            3000
+        );
+    } catch (e) {
+        const errorMsg = e instanceof Error ? e.message : 'An error occurred';
+
+        toastRef.value?.add('error', 'Error', errorMsg, 4000);
+    }
+};
+
+/**
+ * handleReceiveDocument: Opens the Receive Document modal
+ * @param {Document} document - The document to receive
+ */
+const handleReceiveDocument = (document: Document) => {
+    documentToReceive.value = document;
+    showReceiveModal.value = true;
+};
+
+/**
+ * closeReceiveModal: Closes the Receive Document modal
+ */
+const closeReceiveModal = () => {
+    showReceiveModal.value = false;
+    documentToReceive.value = null;
+};
+
+/**
+ * confirmReceiveDocument: Confirms and executes the receipt of a document
+ */
+const confirmReceiveDocument = async () => {
+    if (!documentToReceive.value) return;
+
+    const receivingDocument = documentToReceive.value;
+
+    try {
+        const response = await fetch(`/api/documents/${receivingDocument.id}/receive`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-CSRF-Token': getCsrfToken()
+            },
+            credentials: 'include'
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.message || errorData.error || 'Failed to receive document');
+        }
+
+        const updatedDocument = await response.json();
+        const index = documents.value.findIndex(d => d.id === receivingDocument.id);
+        if (index !== -1) {
+            documents.value[index] = updatedDocument;
+        }
+
+        closeReceiveModal();
+
+        toastRef.value?.add(
+            'success',
+            'Success',
+            `Document: <strong>${updatedDocument.tracking_no}</strong> has been received successfully!`,
             3000
         );
     } catch (e) {
