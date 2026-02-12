@@ -14,11 +14,11 @@
                 <div class="px-6 py-5 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
                     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                         <!-- Create Office Button: Calls openCreateModal() to show the create form modal -->
-                        <button @click="openCreateModal" class="inline-flex items-center gap-2 px-5 py-2.5 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-700 dark:hover:bg-emerald-800 rounded-lg transition-colors duration-200">
+                        <button v-if="canCreateOffices" @click="openCreateModal" class="inline-flex items-center gap-2 px-5 py-2.5 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-700 dark:hover:bg-emerald-800 rounded-lg transition-colors duration-200">
                             <i class="fas fa-plus"></i>
                             Create Office
                         </button>
-                        <div class="flex items-center gap-3">
+                        <div :class="['flex items-center gap-3', !canCreateOffices && 'sm:ml-auto']">
                                 <i class="fas fa-search text-gray-400"></i>
                                 <!-- Search Input: v-model binds to searchQuery, triggers filter recomputation -->
                                 <input
@@ -168,34 +168,25 @@
                                 </td>
                                 <!-- Actions Column: Contains edit/delete dropdown menu -->
                                 <td class="px-4 py-2 text-xs text-center">
-                                    <div class="relative inline-block">
-                                        <!-- Action Menu Button: Calls toggleDropdown(office.id) to show/hide dropdown -->
+                                    <div class="flex items-center justify-center gap-2">
+                                        <!-- Edit Button -->
                                         <button 
-                                            @click="toggleDropdown(office.id)" 
-                                            class="px-3 py-2 text-gray-600 dark:text-gray-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-all duration-200"
+                                            v-if="canEditOffices"
+                                            @click.stop="handleEditOffice(office)" 
+                                            class="relative p-2 text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/30 hover:text-blue-700 dark:hover:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-900/50 rounded-lg transition-all duration-200 group"
                                         >
-                                            <i class="fas fa-ellipsis-v"></i>
+                                            <i class="fas fa-pencil-alt"></i>
+                                            <span class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-1 text-xs font-medium text-white bg-gray-900 dark:bg-gray-950 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-20">Edit</span>
                                         </button>
-                                        <!-- Dropdown Menu: v-if shows menu only when activeDropdown === office.id -->
-                                        <div 
-                                            v-if="activeDropdown === office.id" 
-                                            class="absolute right-0 mt-2 w-36 bg-white dark:bg-gray-700 rounded-lg shadow-lg z-10 border border-gray-200 dark:border-gray-600 overflow-hidden"
+                                        <!-- Delete Button -->
+                                        <button 
+                                            v-if="canDeleteOffices"
+                                            @click.stop="handleDeleteOffice(office)" 
+                                            class="relative p-2 text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-900/30 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-200 dark:hover:bg-red-900/50 rounded-lg transition-all duration-200 group"
                                         >
-                                            <!-- Edit Button: Calls handleEditOffice(office) and closes the dropdown -->
-                                            <button 
-                                                @click="handleEditOffice(office); activeDropdown = null" 
-                                                class="w-full text-left px-4 py-2 text-xs font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors duration-150 flex items-center gap-2"
-                                            >
-                                                <i class="fas fa-pencil-alt"></i>Edit
-                                            </button>
-                                            <!-- Delete Button: Calls handleDeleteOffice(office) and closes the dropdown -->
-                                            <button 
-                                                @click="handleDeleteOffice(office); activeDropdown = null" 
-                                                class="w-full text-left px-4 py-2 text-xs font-medium text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors duration-150 border-t border-gray-200 dark:border-gray-600 flex items-center gap-2"
-                                            >
-                                                <i class="fas fa-trash-alt"></i>Delete
-                                            </button>
-                                        </div>
+                                            <i class="fas fa-trash-alt"></i>
+                                            <span class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-1 text-xs font-medium text-white bg-gray-900 dark:bg-gray-950 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-20">Delete</span>
+                                        </button>
                                     </div>
                                 </td>
                             </tr>
@@ -658,6 +649,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import PageHead from '@/Components/PageHead.vue';
 import Toast from '@/Components/Toast.vue';
 import { ref, onMounted, computed } from 'vue';
+import { usePage } from '@inertiajs/vue3';
 
 /**
  * Office interface defines the structure of office data
@@ -705,9 +697,6 @@ const sortBy = ref<'id' | 'office_name' | 'office_abbreviation' | 'fpp_code' | '
 /** Sort direction: 'asc' for ascending, 'desc' for descending */
 const sortOrder = ref<'asc' | 'desc'>('asc');
 
-/** Tracks which office's dropdown menu is currently open (by office ID) */
-const activeDropdown = ref<number | null>(null);
-
 /** Controls visibility of the Create Office modal */
 const showCreateModal = ref(false);
 
@@ -738,6 +727,33 @@ const formData = ref({
 
 /** Stores validation errors for form fields */
 const formErrors = ref<Record<string, string>>({});
+
+const page = usePage();
+const usertype = computed(() => page.props.auth.user?.usertype || '');
+
+/**
+ * Check if current user can create offices
+ * Only Developer and Administrator can create offices
+ */
+const canCreateOffices = computed(() => {
+    return ['Developer', 'Administrator'].includes(usertype.value);
+});
+
+/**
+ * Check if current user can edit offices
+ * All authenticated users can edit offices (they all have offices.edit permission)
+ */
+const canEditOffices = computed(() => {
+    return true;
+});
+
+/**
+ * Check if current user can delete offices
+ * Only Developer and Administrator can delete offices
+ */
+const canDeleteOffices = computed(() => {
+    return ['Developer', 'Administrator'].includes(usertype.value);
+});
 
 // ============== Computed Properties ==============
 
@@ -839,16 +855,6 @@ const toggleSort = (field: 'id' | 'office_name' | 'office_abbreviation' | 'fpp_c
         sortBy.value = field;
         sortOrder.value = 'asc';
     }
-};
-
-/**
- * toggleDropdown: Toggle the action dropdown menu for an office
- * @param {number} officeId - The ID of the office
- * If dropdown is already open for this office, close it
- * Otherwise, open the dropdown for this office (closes any other open dropdowns)
- */
-const toggleDropdown = (officeId: number) => {
-    activeDropdown.value = activeDropdown.value === officeId ? null : officeId;
 };
 
 /**

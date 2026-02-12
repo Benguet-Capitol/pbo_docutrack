@@ -26,6 +26,28 @@ const page = usePage();
 
 const auth = computed(() => page.props.auth.user);
 const userInitial = computed(() => auth.value?.name?.charAt(0).toUpperCase() || 'U');
+const usertype = computed(() => auth.value?.usertype || '');
+
+/**
+ * Check if current user can view a specific navigation item
+ */
+const canViewItem = (item: string): boolean => {
+    const role = usertype.value;
+    
+    // Everyone can view Documents
+    if (item === 'documents') return true;
+    
+    // Only Developer and Administrator can view Users
+    if (item === 'users') return role === 'Developer' || role === 'Administrator';
+    
+    // Developer and Administrator can view Employees
+    if (item === 'employees') return ['Developer', 'Administrator'].includes(role);
+    
+    // Everyone except none can view Offices and Municipalities
+    if (item === 'offices' || item === 'municipalities') return true;
+    
+    return false;
+};
 
 const handleSidebarHover = (hovered: boolean) => {
     isSidebarHovered.value = hovered;
@@ -118,16 +140,17 @@ const handleSidebarHover = (hovered: boolean) => {
                 <span class="text-sm font-medium whitespace-nowrap" v-show="isSidebarOpen || isSidebarHovered">Documents</span>
             </Link>
 
-            <!-- User Management Section Divider -->
+            <!-- Auxiliary Section Divider -->
             <div
-                v-show="isSidebarOpen || isSidebarHovered"
+                v-show="(isSidebarOpen || isSidebarHovered) && (canViewItem('users') || canViewItem('employees') || canViewItem('offices') || canViewItem('municipalities'))"
                 class="text-xs font-bold uppercase tracking-widest text-emerald-600 dark:text-emerald-400 px-3 pt-4 pb-2 mt-2 border-b-2 border-emerald-200 dark:border-emerald-900 transition-opacity"
             >
-                User Management
+                Auxiliary
             </div>
 
             <!-- Users Link -->
             <Link
+                v-if="canViewItem('users')"
                 :href="route('users.index')"
                 :class="[
                     route().current('users.*')
@@ -142,6 +165,7 @@ const handleSidebarHover = (hovered: boolean) => {
 
             <!-- Employees Link -->
             <Link
+                v-if="canViewItem('employees')"
                 :href="route('employees.index')"
                 :class="[
                     route().current('employees.*')
@@ -156,6 +180,7 @@ const handleSidebarHover = (hovered: boolean) => {
 
             <!-- Offices Link -->
             <Link
+                v-if="canViewItem('offices')"
                 :href="route('offices.index')"
                 :class="[
                     route().current('offices.*')
@@ -170,6 +195,7 @@ const handleSidebarHover = (hovered: boolean) => {
 
             <!-- Municipalities Link -->
             <Link
+                v-if="canViewItem('municipalities')"
                 :href="route('municipalities.index')"
                 :class="[
                     route().current('municipalities.*')

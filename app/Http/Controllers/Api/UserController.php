@@ -4,8 +4,10 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Services\RoleService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 
 class UserController extends Controller
@@ -31,7 +33,7 @@ class UserController extends Controller
         try {
             $validated = $request->validate([
                 'name' => 'required|string',
-                'username' => 'required|string|unique:users,username',
+                'username' => 'required|string|unique:' . env('DB_DATABASE_REGISTRY', 'pbo_registry') . '.users,username',
                 'password' => 'required|string|min:6',
                 'usertype' => 'required|string',
                 'office' => 'required|integer',
@@ -66,7 +68,7 @@ class UserController extends Controller
             
             $validated = $request->validate([
                 'name' => 'sometimes|string',
-                'username' => 'sometimes|string|unique:users,username,' . $id,
+                'username' => 'sometimes|string|unique:' . env('DB_DATABASE_REGISTRY', 'pbo_registry') . '.users,username,' . $id,
                 'password' => 'sometimes|string|min:6',
                 'usertype' => 'sometimes|string',
                 'office' => 'sometimes|integer',
@@ -99,6 +101,33 @@ class UserController extends Controller
             $user = User::findOrFail($id);
             $user->delete();
             return response()->json(['message' => 'User deleted successfully']);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Get current authenticated user with permissions.
+     */
+    public function getCurrentUser(): JsonResponse
+    {
+        try {
+            $user = Auth::user();
+            if (!$user) {
+                return response()->json(['error' => 'Unauthorized'], 401);
+            }
+
+            $permissions = RoleService::getUserPermissions($user);
+            
+            return response()->json([
+                'id' => $user->id,
+                'name' => $user->name,
+                'username' => $user->username,
+                'usertype' => $user->usertype,
+                'office_id' => $user->fk_office_id,
+                'office' => $user->office,
+                'permissions' => $permissions,
+            ]);
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], 500);
         }

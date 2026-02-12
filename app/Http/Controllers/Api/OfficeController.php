@@ -4,8 +4,10 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Office;
+use App\Services\RoleService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class OfficeController extends Controller
 {
@@ -27,6 +29,11 @@ class OfficeController extends Controller
      */
     public function store(Request $request): JsonResponse
     {
+        $user = Auth::user();
+        if (!RoleService::hasPermission($user, 'offices.edit')) {
+            return response()->json(['error' => 'You do not have permission to create offices'], 403);
+        }
+
         try {
             $validated = $request->validate([
                 'office_abbreviation' => 'required|string',
@@ -50,6 +57,11 @@ class OfficeController extends Controller
      */
     public function update(Request $request, $id): JsonResponse
     {
+        $user = Auth::user();
+        if (!RoleService::hasPermission($user, 'offices.edit')) {
+            return response()->json(['error' => 'You do not have permission to edit offices'], 403);
+        }
+
         try {
             $office = Office::findOrFail($id);
             
@@ -75,6 +87,11 @@ class OfficeController extends Controller
      */
     public function destroy($id): JsonResponse
     {
+        $user = Auth::user();
+        if (!RoleService::hasPermission($user, 'offices.edit')) {
+            return response()->json(['error' => 'You do not have permission to delete offices'], 403);
+        }
+
         try {
             $office = Office::findOrFail($id);
             $office->delete();

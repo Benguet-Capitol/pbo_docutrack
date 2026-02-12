@@ -14,11 +14,11 @@
                 <div class="px-6 py-5 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
                     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                         <!-- Create Document Button: Calls openCreateModal() to show the create form modal -->
-                        <button @click="openCreateModal" class="inline-flex items-center gap-2 px-5 py-2.5 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-700 dark:hover:bg-emerald-800 rounded-lg transition-colors duration-200">
+                        <button v-if="hasPermission('documents.create')" @click="openCreateModal" class="inline-flex items-center gap-2 px-5 py-2.5 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-700 dark:hover:bg-emerald-800 rounded-lg transition-colors duration-200">
                             <i class="fas fa-plus"></i>
                             Create Document
                         </button>
-                        <div class="flex items-center gap-3">
+                        <div :class="['flex items-center gap-3', !hasPermission('documents.create') && 'sm:ml-auto']">
                                 <i class="fas fa-search text-gray-400"></i>
                                 <!-- Search Input: v-model binds to searchQuery, triggers filter recomputation -->
                                 <input
@@ -188,61 +188,63 @@
                                     <span v-if="document.remarks" :title="document.remarks">{{ document.remarks }}</span>
                                     <span v-else class="text-gray-400 dark:text-gray-600 italic">-</span>
                                 </td>
-                                <!-- Custodian Column -->
+                                <!-- Custodian Column: Shows office/municipality if forwarded, otherwise current user -->
                                 <td class="px-4 py-2 text-xs text-gray-600 dark:text-gray-400">
-                                    <span v-if="document.user">{{ document.user.name }}</span>
-                                    <span v-else class="text-gray-400 dark:text-gray-600 italic">-</span>
+                                    {{ getCustodianDisplay(document) }}
                                 </td>
                                 <!-- Status Column -->
                                 <td class="px-4 py-2 text-xs text-center">
-                                    <span v-if="document.status === 'created'" class="px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 rounded-full text-xs font-medium">Created</span>
-                                    <span v-else-if="document.status === 'forwarded'" class="px-2 py-1 bg-cyan-100 dark:bg-cyan-900/30 text-cyan-800 dark:text-cyan-300 rounded-full text-xs font-medium">Forwarded</span>
-                                    <span v-else-if="document.status === 'pending'" class="px-2 py-1 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300 rounded-full text-xs font-medium">Pending</span>
-                                    <span v-else-if="document.status === 'finalized'" class="px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 rounded-full text-xs font-medium">Finalized</span>
-                                    <span v-else class="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300 rounded-full text-xs font-medium">{{ document.status }}</span>
+                                    <span v-if="getDisplayStatus(document) === 'created'" class="px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 rounded-full text-xs font-medium">Created</span>
+                                    <span v-else-if="getDisplayStatus(document) === 'forwarded'" class="px-2 py-1 bg-cyan-100 dark:bg-cyan-900/30 text-cyan-800 dark:text-cyan-300 rounded-full text-xs font-medium">Forwarded</span>
+                                    <span v-else-if="getDisplayStatus(document) === 'to be received'" class="px-2 py-1 bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-300 rounded-full text-xs font-medium">To Be Received</span>
+                                    <span v-else-if="getDisplayStatus(document) === 'pending'" class="px-2 py-1 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300 rounded-full text-xs font-medium">Pending</span>
+                                    <span v-else-if="getDisplayStatus(document) === 'finalized'" class="px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 rounded-full text-xs font-medium">Finalized</span>
+                                    <span v-else class="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300 rounded-full text-xs font-medium">{{ getDisplayStatus(document) }}</span>
                                 </td>
                                 <!-- Actions Column: Contains edit/delete dropdown menu -->
                                 <td class="px-4 py-2 text-xs text-center">
                                     <div class="flex items-center justify-center gap-2">
-                                        <!-- Forward Button: Visible if created or pending -->
+                                        <!-- Forward Button: Visible if created or pending and user has permission -->
                                         <button 
-                                            v-if="document.status === 'created' || document.status === 'pending'"
+                                            v-if="(document.status === 'created' || document.status === 'pending') && hasPermission('documents.forward')"
                                             @click.stop="handleForwardDocument(document)" 
-                                            class="relative p-2 text-cyan-600 dark:text-cyan-400 hover:text-cyan-700 dark:hover:text-cyan-300 hover:bg-cyan-100 dark:hover:bg-cyan-900/30 rounded-lg transition-all duration-200 group"
+                                            class="relative p-2 text-cyan-600 dark:text-cyan-400 bg-cyan-100 dark:bg-cyan-900/30 hover:text-cyan-700 dark:hover:text-cyan-300 hover:bg-cyan-200 dark:hover:bg-cyan-900/50 rounded-lg transition-all duration-200 group"
                                         >
-                                            <i class="fas fa-share-alt"></i>
+                                            <i class="fas fa-share"></i>
                                             <span class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-1 text-xs font-medium text-white bg-gray-900 dark:bg-gray-950 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-20">Forward</span>
                                         </button>
-                                        <!-- Receive Button: Visible if forwarded -->
+                                        <!-- Receive Button: Visible if forwarded and current user didn't forward it -->
                                         <button 
-                                            v-if="document.status === 'forwarded'"
+                                            v-if="document.status === 'forwarded' && hasPermission('documents.receive') && document.user_id !== currentUser.id"w
                                             @click.stop="handleReceiveDocument(document)" 
-                                            class="relative p-2 text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 hover:bg-purple-100 dark:hover:bg-purple-900/30 rounded-lg transition-all duration-200 group"
+                                            class="relative p-2 text-purple-600 dark:text-purple-400 bg-purple-100 dark:bg-purple-900/30 hover:text-purple-700 dark:hover:text-purple-300 hover:bg-purple-200 dark:hover:bg-purple-900/50 rounded-lg transition-all duration-200 group"
                                         >
-                                            <i class="fas fa-inbox"></i>
+                                            <i class="fas fa-folder-open"></i>
                                             <span class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-1 text-xs font-medium text-white bg-gray-900 dark:bg-gray-950 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-20">Receive</span>
                                         </button>
-                                        <!-- Finalize Button: Visible if pending -->
+                                        <!-- Finalize Button: Visible if pending and user has permission -->
                                         <button 
-                                            v-if="document.status === 'pending'"
+                                            v-if="document.status === 'pending' && hasPermission('documents.finalize')"
                                             @click.stop="handleFinalizeDocument(document)" 
-                                            class="relative p-2 text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 hover:bg-green-100 dark:hover:bg-green-900/30 rounded-lg transition-all duration-200 group"
+                                            class="relative p-2 text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-900/30 hover:text-green-700 dark:hover:text-green-300 hover:bg-green-200 dark:hover:bg-green-900/50 rounded-lg transition-all duration-200 group"
                                         >
-                                            <i class="fas fa-check"></i>
+                                            <i class="fas fa-check-double"></i>
                                             <span class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-1 text-xs font-medium text-white bg-gray-900 dark:bg-gray-950 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-20">Finalize</span>
                                         </button>
-                                        <!-- Edit Button: Always visible -->
+                                        <!-- Edit Button: Visible if user has permission -->
                                         <button 
+                                            v-if="hasPermission('documents.edit')"
                                             @click.stop="handleEditDocument(document)" 
-                                            class="relative p-2 text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded-lg transition-all duration-200 group"
+                                            class="relative p-2 text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/30 hover:text-blue-700 dark:hover:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-900/50 rounded-lg transition-all duration-200 group"
                                         >
                                             <i class="fas fa-pencil-alt"></i>
                                             <span class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-1 text-xs font-medium text-white bg-gray-900 dark:bg-gray-950 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-20">Edit</span>
                                         </button>
-                                        <!-- Delete Button: Always visible -->
+                                        <!-- Delete Button: Visible only for Developer and Administrator roles -->
                                         <button 
+                                            v-if="hasPermission('documents.delete')"
                                             @click.stop="handleDeleteDocument(document)" 
-                                            class="relative p-2 text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-lg transition-all duration-200 group"
+                                            class="relative p-2 text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-900/30 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-200 dark:hover:bg-red-900/50 rounded-lg transition-all duration-200 group"
                                         >
                                             <i class="fas fa-trash-alt"></i>
                                             <span class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-1 text-xs font-medium text-white bg-gray-900 dark:bg-gray-950 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-20">Delete</span>
@@ -733,21 +735,24 @@
                                 <button
                                     @click="forwardData.forward_to_type = 'user'; forwardData.forward_to_id = null;"
                                     :class="forwardData.forward_to_type === 'user' ? 'bg-blue-600 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100'"
-                                    class="flex-1 px-3 py-2 text-xs font-medium rounded-lg transition-colors"
+                                    :disabled="false"
+                                    class="flex-1 px-3 py-2 text-xs font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                     <i class="fas fa-user mr-1"></i>User
                                 </button>
                                 <button
-                                    @click="forwardData.forward_to_type = 'office'; forwardData.forward_to_id = null;"
+                                    @click="selectForwardOffice"
                                     :class="forwardData.forward_to_type === 'office' ? 'bg-blue-600 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100'"
-                                    class="flex-1 px-3 py-2 text-xs font-medium rounded-lg transition-colors"
+                                    :disabled="forwardDocumentSourceType === 'municipality'"
+                                    class="flex-1 px-3 py-2 text-xs font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                     <i class="fas fa-building mr-1"></i>Office
                                 </button>
                                 <button
-                                    @click="forwardData.forward_to_type = 'municipality'; forwardData.forward_to_id = null;"
+                                    @click="selectForwardMunicipality"
                                     :class="forwardData.forward_to_type === 'municipality' ? 'bg-blue-600 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100'"
-                                    class="flex-1 px-3 py-2 text-xs font-medium rounded-lg transition-colors"
+                                    :disabled="forwardDocumentSourceType === 'office'"
+                                    class="flex-1 px-3 py-2 text-xs font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                     <i class="fas fa-map mr-1"></i>Municipality
                                 </button>
@@ -765,7 +770,7 @@
                                     class="block w-full pl-10 pr-4 py-2 text-xs border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:outline-none focus:border-blue-500 appearance-none"
                                 >
                                     <option :value="null">Select User</option>
-                                    <option v-for="user in users" :key="user.id" :value="user.id">
+                                    <option v-for="user in availableUsersForForward" :key="user.id" :value="user.id">
                                         {{ user.name }}
                                     </option>
                                 </select>
@@ -977,9 +982,15 @@
 
                     <!-- Modal Body -->
                     <div class="px-6 py-4 overflow-y-auto" style="max-height: calc(90vh - 200px);">
-                        <div class="mb-4">
+                        <div class="mb-4 pb-4 border-b border-gray-200 dark:border-gray-700">
                             <p class="text-sm text-gray-600 dark:text-gray-400">
-                                Document: <span class="font-semibold text-gray-900 dark:text-gray-100">{{ documentViewingTransactions.tracking_no }}</span>
+                                Tracking No.: <span class="font-semibold text-gray-900 dark:text-gray-100">{{ documentViewingTransactions.tracking_no }}</span>
+                            </p>
+                            <p v-if="documentViewingTransactions.source" class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                                Source: <span class="font-semibold text-gray-900 dark:text-gray-100">{{ documentViewingTransactions.source }}</span>
+                            </p>
+                            <p v-if="documentViewingTransactions.particulars" class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                                Particulars: <span class="font-semibold text-gray-900 dark:text-gray-100">{{ documentViewingTransactions.particulars }}</span>
                             </p>
                         </div>
 
@@ -1003,7 +1014,7 @@
                                 <!-- Transaction Details -->
                                 <div class="flex-grow">
                                     <div class="flex items-start justify-between gap-2">
-                                        <div>
+                                        <div class="flex-grow">
                                             <!-- Action Badge -->
                                             <div class="mb-1">
                                                 <span v-if="getActionType(transaction.action) === 'created'" class="inline-block px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 rounded text-xs font-medium">Created</span>
@@ -1015,23 +1026,34 @@
                                             <!-- Action Details -->
                                             <p class="text-xs text-gray-700 dark:text-gray-300 mt-1">{{ transaction.action }}</p>
 
-                                            <!-- User and Timestamp -->
-                                            <p class="text-xs text-gray-600 dark:text-gray-400">
-                                                by <span class="font-semibold text-gray-900 dark:text-gray-100">{{ transaction.user?.name || 'Unknown User' }}</span>
-                                                <span v-if="getActionType(transaction.action) === 'forwarded' && transaction.forwardedToUser">
-                                                    to <span class="font-semibold text-gray-900 dark:text-gray-100">{{ transaction.forwardedToUser.name }}</span>
-                                                </span>
-                                                <span v-if="getActionType(transaction.action) === 'forwarded' && transaction.forwardedToOffice">
-                                                    to <span class="font-semibold text-gray-900 dark:text-gray-100">{{ transaction.forwardedToOffice.office_name }}</span>
-                                                </span>
-                                                <span v-if="getActionType(transaction.action) === 'forwarded' && transaction.forwardedToMunicipality">
-                                                    to <span class="font-semibold text-gray-900 dark:text-gray-100">{{ transaction.forwardedToMunicipality.name }}</span>
-                                                </span>
-                                            </p>
-                                            <p class="text-xs text-gray-500 dark:text-gray-500">
-                                                {{ new Date(transaction.created_at).toLocaleDateString() }}
-                                                {{ new Date(transaction.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }}
-                                            </p>
+                                            <!-- User, timestamp, and recipient info -->
+                                            <div class="mt-2 p-2 bg-gray-50 dark:bg-gray-700 dark:bg-opacity-50 rounded text-xs">
+                                                <p class="text-gray-600 dark:text-gray-400">
+                                                    <span class="font-semibold text-gray-900 dark:text-gray-100">{{ transaction.user?.name || 'Unknown User' }}</span>
+                                                    <span class="text-gray-500 dark:text-gray-400">
+                                                        — {{ new Date(transaction.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) }}
+                                                        at {{ new Date(transaction.created_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) }}
+                                                    </span>
+                                                </p>
+                                                <p v-if="transaction.duration_hours !== null && transaction.duration_hours !== undefined" class="text-gray-600 dark:text-gray-400 mt-1">
+                                                    <i class="fas fa-hourglass-end text-blue-600 dark:text-blue-400 mr-1"></i>
+                                                    Duration: <span class="font-semibold">
+                                                        <span v-if="transaction.duration_hours >= 24">{{ Math.floor(transaction.duration_hours / 24) }} days {{ transaction.duration_hours % 24 }} hours</span>
+                                                        <span v-else>{{ transaction.duration_hours }} hours</span>
+                                                    </span>
+                                                </p>
+                                                <p v-if="getActionType(transaction.action) === 'forwarded' && (transaction.forwardedToUser || transaction.forwardedToOffice || transaction.forwardedToMunicipality)" class="text-gray-600 dark:text-gray-400 mt-1">
+                                                    <span v-if="transaction.forwardedToUser">
+                                                        Forwarded to: <span class="font-semibold text-gray-900 dark:text-gray-100">{{ transaction.forwardedToUser.name }}</span>
+                                                    </span>
+                                                    <span v-else-if="transaction.forwardedToOffice">
+                                                        Forwarded to: <span class="font-semibold text-gray-900 dark:text-gray-100">{{ transaction.forwardedToOffice.office_name }}</span>
+                                                    </span>
+                                                    <span v-else-if="transaction.forwardedToMunicipality">
+                                                        Forwarded to: <span class="font-semibold text-gray-900 dark:text-gray-100">{{ transaction.forwardedToMunicipality.name }}</span>
+                                                    </span>
+                                                </p>
+                                            </div>
 
                                             <!-- Remarks -->
                                             <p v-if="transaction.remarks" class="text-xs text-gray-700 dark:text-gray-300 mt-2 italic">
@@ -1081,6 +1103,7 @@ interface Document {
     remarks: string | null;
     user_id: number;
     user?: { id: number; name: string } | null;
+    transactions?: DocumentTransaction[];
 }
 
 // ============== Toast Component Reference ==============
@@ -1094,6 +1117,11 @@ const toastRef = ref<InstanceType<typeof Toast> | null>(null);
 const getCsrfToken = (): string => {
     const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
     return token;
+};
+
+/** Check if current user has a specific permission */
+const hasPermission = (permission: string): boolean => {
+    return permissions.value.includes(permission);
 };
 
 // ============== Reactive State Management ==============
@@ -1177,6 +1205,14 @@ const municipalities = ref<Array<{id: number; name: string}>>([]);
 /** Stores the list of users for document forwarding */
 const users = ref<Array<{id: number; name: string}>>([]);
 
+// ============== User & Permissions ==============
+
+/** Stores the current authenticated user information */
+const currentUser = ref<any>(null);
+
+/** Stores the current user's permissions */
+const permissions = ref<string[]>([]);
+
 /** Controls visibility of the Document Transactions modal */
 const showTransactionsModal = ref(false);
 
@@ -1192,6 +1228,7 @@ interface DocumentTransaction {
     action: string;
     remarks: string | null;
     created_at: string;
+    duration_hours?: number | null;
     user?: { id: number; name: string };
     forwardedToUser?: { id: number; name: string } | null;
     forwardedToOffice?: { id: number; office_name: string } | null;
@@ -1207,6 +1244,79 @@ const getActionType = (action: string): 'created' | 'forwarded' | 'finalized' | 
     if (action.toLowerCase().includes('received')) return 'received';
     if (action.toLowerCase().includes('finalized')) return 'finalized';
     return 'created'; // default
+};
+
+/**
+ * canReceiveDocument: Check if the current user can receive the document
+ * Returns true if:
+ * - Document is forwarded
+ * - Document hasn't been received yet
+ * - Current user is NOT the one who forwarded it OR is an Administrator/Developer
+ */
+const canReceiveDocument = (document: Document): boolean => {
+    if (document.status !== 'forwarded') {
+        return false;
+    }
+
+    // Administrator and Developer can receive any forwarded document
+    if (currentUser.value?.usertype === 'Administrator' || currentUser.value?.usertype === 'Developer') {
+        // Check if document has been received
+        if (document.transactions && document.transactions.length > 0) {
+            const hasBeenReceived = document.transactions.some(transaction => 
+                getActionType(transaction.action) === 'received'
+            );
+            if (hasBeenReceived) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    // Check if document has been received
+    if (document.transactions && document.transactions.length > 0) {
+        const hasBeenReceived = document.transactions.some(transaction => 
+            getActionType(transaction.action) === 'received'
+        );
+        if (hasBeenReceived) {
+            return false;
+        }
+
+        // Check if current user is the one who forwarded it
+        const latestForwardedTransaction = [...document.transactions]
+            .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+            .find(transaction => getActionType(transaction.action) === 'forwarded');
+        
+        if (latestForwardedTransaction && latestForwardedTransaction.user_id === currentUser.value?.id) {
+            return false; // Current user forwarded it, so they can't receive it
+        }
+    }
+
+    return true;
+};
+
+/**
+ * getDisplayStatus: Get the display status based on current user's perspective
+ * For forwarded documents:
+ * - If forwarded to current user: "to be received"
+ * - If forwarded by current user: "forwarded"
+ * Otherwise: return the actual status
+ */
+const getDisplayStatus = (document: Document): string => {
+    if (document.status !== 'forwarded') {
+        return document.status;
+    }
+
+    // Check if document is forwarded to current user
+    const latestTransaction = document.transactions && document.transactions.length > 0
+        ? document.transactions[0]
+        : null;
+    
+    if (latestTransaction && latestTransaction.forwarded_to_user_id === currentUser.value?.id) {
+        return 'to be received';
+    }
+
+    // It's forwarded by current user
+    return 'forwarded';
 };
 
 const documentTransactions = ref<DocumentTransaction[]>([]);
@@ -1245,10 +1355,36 @@ const formErrors = ref<Record<string, string>>({});
  * filteredDocuments: Filters and sorts documents based on search query and sort settings
  * - Filters documents by multiple fields (tracking_no, date, document_type, source, particulars, etc.)
  * - Applies sorting based on sortBy and sortOrder
+ * - Filters based on user viewing permissions
  * Returns the filtered and sorted array of documents
  */
 const filteredDocuments = computed(() => {
-    let filtered = documents.value.filter(document => 
+    let filtered = documents.value.filter(document => {
+        // Check if user can view this document
+        if (permissions.value.includes('documents.view.all')) {
+            // Can view all documents
+            return true;
+        } else if (permissions.value.includes('documents.view.assigned')) {
+            // Can view documents assigned to them (user_id matches)
+            if (document.user_id === currentUser.value?.id) {
+                return true;
+            }
+            
+            // Can view documents forwarded to them as a user
+            const latestTransaction = document.transactions && document.transactions.length > 0 
+                ? document.transactions[0] 
+                : null;
+            if (latestTransaction && latestTransaction.forwarded_to_user_id === currentUser.value?.id) {
+                return true;
+            }
+            
+            return false;
+        }
+        return false;
+    });
+
+    // Apply search filter
+    filtered = filtered.filter(document => 
         document.tracking_no.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
         document.date.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
         document.document_type.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
@@ -1307,6 +1443,70 @@ const paginatedDocuments = computed(() => {
     return filteredDocuments.value.slice(start, end);
 });
 
+/**
+ * Determine the source type (office or municipality) of the document being forwarded
+ * by checking if the document source exists in the offices or municipalities lists
+ */
+const forwardDocumentSourceType = computed(() => {
+    if (!documentToForward.value) return null;
+    const source = documentToForward.value.source;
+    
+    // Check if source is an office
+    if (offices.value.some(office => office.office_name === source)) {
+        return 'office';
+    }
+    
+    // Check if source is a municipality
+    if (municipalities.value.some(municipality => municipality.name === source)) {
+        return 'municipality';
+    }
+    
+    return null;
+});
+
+/**
+ * Filter users list to exclude the current document holder
+ * Prevents forwarding document to the user who currently has it
+ */
+const availableUsersForForward = computed(() => {
+    if (!documentToForward.value) return users.value;
+    return users.value.filter(user => user.id !== documentToForward.value!.user_id);
+});
+
+/**
+ * Helper: Check if document was forwarded to office or municipality
+ * Users can directly receive documents with this status
+ */
+const isDocumentForwardedToOfficeOrMunicipality = (document: Document): boolean => {
+    return document.status === 'forwarded';
+};
+
+/**
+ * Get custodian display name: office/municipality if forwarded to them, otherwise current user
+ */
+const getCustodianDisplay = (document: Document): string => {
+    // If no transactions, show document creator
+    if (!document.transactions || document.transactions.length === 0) {
+        return document.user?.name || 'Unknown';
+    }
+
+    const latestTransaction = document.transactions[0];
+    
+    // Check for forwarded destinations in order of priority
+    if (latestTransaction.forwardedToOffice) {
+        return latestTransaction.forwardedToOffice.office_name;
+    }
+    if (latestTransaction.forwardedToMunicipality) {
+        return latestTransaction.forwardedToMunicipality.name;
+    }
+    if (latestTransaction.forwardedToUser) {
+        return latestTransaction.forwardedToUser.name;
+    }
+    
+    // Fallback to the user who performed the transaction
+    return latestTransaction.user?.name || document.user?.name || 'Unknown';
+};
+
 // ============== Lifecycle Hooks ==============
 
 /**
@@ -1329,6 +1529,14 @@ const paginatedDocuments = computed(() => {
  */
 onMounted(async () => {
     try {
+        // Fetch current user with permissions
+        const currentUserResponse = await fetch('/api/user/current');
+        if (currentUserResponse.ok) {
+            const userData = await currentUserResponse.json();
+            currentUser.value = userData;
+            permissions.value = userData.permissions || [];
+        }
+
         const response = await fetch('/api/documents');
         if (!response.ok) {
             throw new Error('Failed to fetch documents');
@@ -1558,6 +1766,7 @@ const confirmDeleteDocument = async () => {
 /**
  * handleForwardDocument: Opens the Forward Document modal
  * @param {Document} document - The document to forward
+ * Default button selection is User, but source office/municipality can be auto-selected when switching buttons
  */
 const handleForwardDocument = (document: Document) => {
     documentToForward.value = document;
@@ -1568,6 +1777,44 @@ const handleForwardDocument = (document: Document) => {
     };
     forwardErrors.value = {};
     showForwardModal.value = true;
+};
+
+/**
+ * selectForwardOffice: Selects office type and auto-selects document source office if available
+ */
+const selectForwardOffice = () => {
+    forwardData.value.forward_to_type = 'office';
+    
+    // Auto-select the document source if it's an office
+    if (documentToForward.value?.source) {
+        const officeMatch = offices.value.find(office => office.office_name === documentToForward.value!.source);
+        if (officeMatch) {
+            forwardData.value.forward_to_id = officeMatch.id;
+        } else {
+            forwardData.value.forward_to_id = null;
+        }
+    } else {
+        forwardData.value.forward_to_id = null;
+    }
+};
+
+/**
+ * selectForwardMunicipality: Selects municipality type and auto-selects document source municipality if available
+ */
+const selectForwardMunicipality = () => {
+    forwardData.value.forward_to_type = 'municipality';
+    
+    // Auto-select the document source if it's a municipality
+    if (documentToForward.value?.source) {
+        const municipalityMatch = municipalities.value.find(municipality => municipality.name === documentToForward.value!.source);
+        if (municipalityMatch) {
+            forwardData.value.forward_to_id = municipalityMatch.id;
+        } else {
+            forwardData.value.forward_to_id = null;
+        }
+    } else {
+        forwardData.value.forward_to_id = null;
+    }
 };
 
 /**

@@ -27,6 +27,7 @@ class DocumentTransaction extends Model
         'action',
         'remarks',
         'created_at',
+        'duration_hours',
     ];
 
     /**

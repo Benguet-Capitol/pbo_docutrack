@@ -12,7 +12,7 @@
                 <!-- Header -->
                 <div class="px-6 py-5 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
                     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                        <button @click="openCreateModal" class="inline-flex items-center gap-2 px-5 py-2.5 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-700 dark:hover:bg-emerald-800 rounded-lg transition-colors duration-200">
+                        <button v-if="canCreateEditEmployees" @click="openCreateModal" class="inline-flex items-center gap-2 px-5 py-2.5 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-700 dark:hover:bg-emerald-800 rounded-lg transition-colors duration-200">
                             <i class="fas fa-plus"></i>
                             Add Employee
                         </button>
@@ -122,30 +122,25 @@
                                     {{ getOfficeNameById(employee.office, employee) }}
                                 </td>
                                 <td class="px-4 py-2 text-xs text-center">
-                                    <div class="relative inline-block">
+                                    <div class="flex items-center justify-center gap-2">
+                                        <!-- Edit Button -->
                                         <button 
-                                            @click="toggleDropdown(employee.id)" 
-                                            class="px-3 py-2 text-gray-600 dark:text-gray-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-all duration-200"
+                                            v-if="canCreateEditEmployees"
+                                            @click.stop="handleEditEmployee(employee)" 
+                                            class="relative p-2 text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/30 hover:text-blue-700 dark:hover:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-900/50 rounded-lg transition-all duration-200 group"
                                         >
-                                            <i class="fas fa-ellipsis-v"></i>
+                                            <i class="fas fa-pencil-alt"></i>
+                                            <span class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-1 text-xs font-medium text-white bg-gray-900 dark:bg-gray-950 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-20">Edit</span>
                                         </button>
-                                        <div 
-                                            v-if="activeDropdown === employee.id" 
-                                            class="absolute right-0 mt-2 w-36 bg-white dark:bg-gray-700 rounded-lg shadow-lg z-10 border border-gray-200 dark:border-gray-600 overflow-hidden"
+                                        <!-- Delete Button -->
+                                        <button 
+                                            v-if="canDeleteEmployees"
+                                            @click.stop="handleDeleteEmployee(employee)" 
+                                            class="relative p-2 text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-900/30 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-200 dark:hover:bg-red-900/50 rounded-lg transition-all duration-200 group"
                                         >
-                                            <button 
-                                                @click="handleEditEmployee(employee); activeDropdown = null" 
-                                                class="w-full text-left px-4 py-2 text-xs font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors duration-150 flex items-center gap-2"
-                                            >
-                                                <i class="fas fa-pencil-alt"></i>Edit
-                                            </button>
-                                            <button 
-                                                @click="handleDeleteEmployee(employee); activeDropdown = null" 
-                                                class="w-full text-left px-4 py-2 text-xs font-medium text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors duration-150 border-t border-gray-200 dark:border-gray-600 flex items-center gap-2"
-                                            >
-                                                <i class="fas fa-trash-alt"></i>Delete
-                                            </button>
-                                        </div>
+                                            <i class="fas fa-trash-alt"></i>
+                                            <span class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-1 text-xs font-medium text-white bg-gray-900 dark:bg-gray-950 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-20">Delete</span>
+                                        </button>
                                     </div>
                                 </td>
                             </tr>
@@ -478,7 +473,7 @@
 <script setup lang="ts">
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import Toast from '@/Components/Toast.vue';
-import { Head } from '@inertiajs/vue3';
+import { Head, usePage } from '@inertiajs/vue3';
 import { ref, computed, onMounted } from 'vue';
 
 interface Employee {
@@ -507,7 +502,6 @@ const currentPage = ref(1);
 const itemsPerPage = ref(10);
 const sortBy = ref<'id' | 'employee_id' | 'name' | 'designation'>('id');
 const sortOrder = ref<'asc' | 'desc'>('asc');
-const activeDropdown = ref<number | null>(null);
 const showCreateModal = ref(false);
 const showEditModal = ref(false);
 const showDeleteModal = ref(false);
@@ -527,6 +521,25 @@ const formData = ref<{
 });
 
 const formErrors = ref<Record<string, string>>({});
+
+const page = usePage();
+const usertype = computed(() => page.props.auth.user?.usertype || '');
+
+/**
+ * Check if current user can create/edit employees
+ * Only Developer and Administrator can create/edit employees
+ */
+const canCreateEditEmployees = computed(() => {
+    return ['Developer', 'Administrator'].includes(usertype.value);
+});
+
+/**
+ * Check if current user can delete employees
+ * Only Developer and Administrator can delete employees
+ */
+const canDeleteEmployees = computed(() => {
+    return ['Developer', 'Administrator'].includes(usertype.value);
+});
 
 const filteredEmployees = computed(() => {
     let result = employees.value.filter((employee) => {
@@ -616,10 +629,6 @@ const toggleSort = (field: 'id' | 'employee_id' | 'name' | 'designation') => {
         sortBy.value = field;
         sortOrder.value = 'asc';
     }
-};
-
-const toggleDropdown = (employeeId: number) => {
-    activeDropdown.value = activeDropdown.value === employeeId ? null : employeeId;
 };
 
 // ============== Toast Component Reference ==============

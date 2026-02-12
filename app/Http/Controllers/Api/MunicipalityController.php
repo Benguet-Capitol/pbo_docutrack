@@ -4,8 +4,10 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Municipality;
+use App\Services\RoleService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class MunicipalityController extends Controller
 {
@@ -27,6 +29,11 @@ class MunicipalityController extends Controller
      */
     public function store(Request $request): JsonResponse
     {
+        $user = Auth::user();
+        if (!RoleService::hasPermission($user, 'municipalities.edit')) {
+            return response()->json(['error' => 'You do not have permission to create municipalities'], 403);
+        }
+
         try {
             $validated = $request->validate([
                 'name' => 'required|string|unique:municipalities,name',
@@ -47,6 +54,11 @@ class MunicipalityController extends Controller
      */
     public function update(Request $request, $id): JsonResponse
     {
+        $user = Auth::user();
+        if (!RoleService::hasPermission($user, 'municipalities.edit')) {
+            return response()->json(['error' => 'You do not have permission to edit municipalities'], 403);
+        }
+
         try {
             $municipality = Municipality::findOrFail($id);
             
@@ -69,6 +81,11 @@ class MunicipalityController extends Controller
      */
     public function destroy($id): JsonResponse
     {
+        $user = Auth::user();
+        if (!RoleService::hasPermission($user, 'municipalities.edit')) {
+            return response()->json(['error' => 'You do not have permission to delete municipalities'], 403);
+        }
+
         try {
             $municipality = Municipality::findOrFail($id);
             $municipality->delete();
