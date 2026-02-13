@@ -399,6 +399,7 @@
                                     >
                                         <option value="internal">Internal (Offices)</option>
                                         <option value="external">External (Municipalities)</option>
+                                        <option value="others">Others</option>
                                     </select>
                                 </div>
                             </div>
@@ -419,6 +420,9 @@
                                         </option>
                                         <option v-if="formData.sourceType === 'external'" v-for="municipality in municipalities" :key="municipality.id" :value="municipality.name">
                                             {{ municipality.name }}
+                                        </option>
+                                        <option v-if="formData.sourceType === 'others'" value="Others">
+                                            Others
                                         </option>
                                     </select>
                                 </div>
@@ -568,6 +572,7 @@
                                     >
                                         <option value="internal">Internal (Offices)</option>
                                         <option value="external">External (Municipalities)</option>
+                                        <option value="others">Others</option>
                                     </select>
                                 </div>
                             </div>
@@ -588,6 +593,9 @@
                                         </option>
                                         <option v-if="formData.sourceType === 'external'" v-for="municipality in municipalities" :key="municipality.id" :value="municipality.name">
                                             {{ municipality.name }}
+                                        </option>
+                                        <option v-if="formData.sourceType === 'others'" value="Others">
+                                            Others
                                         </option>
                                     </select>
                                 </div>
@@ -1114,7 +1122,7 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import PageHead from '@/Components/PageHead.vue';
 import Toast from '@/Components/Toast.vue';
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, computed, watch } from 'vue';
 
 /**
  * Document interface defines the structure of document data
@@ -1322,6 +1330,19 @@ const formData = ref({
     status: 'pending',
     remarks: ''
 }); 
+
+/** Watch for changes in sourceType and auto-set source to 'Others' when sourceType is 'others' */
+watch(
+    () => formData.value.sourceType,
+    (newSourceType) => {
+        if (newSourceType === 'others') {
+            formData.value.source = 'Others';
+        } else {
+            formData.value.source = '';
+        }
+    }
+);
+
 /** Get today's date in YYYY-MM-DD format */
 const todayDate = computed(() => {
     const today = new Date();
