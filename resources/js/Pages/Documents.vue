@@ -213,9 +213,9 @@
                                             <i class="fas fa-share"></i>
                                             <span class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-1 text-xs font-medium text-white bg-gray-900 dark:bg-gray-950 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-20">Forward</span>
                                         </button>
-                                        <!-- Receive Button: Visible if forwarded and current user didn't forward it -->
+                                        <!-- Receive Button: Visible if forwarded. User can receive if: they didn't forward it (to user), OR if forwarded to office/municipality and user is Receiving role or the forwarder -->
                                         <button 
-                                            v-if="document.status === 'forwarded' && hasPermission('documents.receive') && document.user_id !== currentUser.id"w
+                                            v-if="document.status === 'forwarded' && hasPermission('documents.receive') && ((isForwardedToOfficeOrMunicipality(document) && (currentUser.usertype === 'Receiving' || getForwardedByUserId(document) === currentUser.id)) || document.user_id !== currentUser.id)"
                                             @click.stop="handleReceiveDocument(document)" 
                                             class="relative p-2 text-purple-600 dark:text-purple-400 bg-purple-100 dark:bg-purple-900/30 hover:text-purple-700 dark:hover:text-purple-300 hover:bg-purple-200 dark:hover:bg-purple-900/50 rounded-lg transition-all duration-200 group"
                                         >
@@ -1148,7 +1148,7 @@ const itemsPerPage = ref(10);
 const sortBy = ref<'id' | 'tracking_no' | 'date' | 'document_type' | 'source' | 'particulars' | 'remarks' | 'user_id' | 'status'>('id');
 
 /** Sort direction: 'asc' for ascending, 'desc' for descending */
-const sortOrder = ref<'asc' | 'desc'>('asc');
+const sortOrder = ref<'desc' | 'asc'>('desc');
 
 /** Tracks which document's dropdown menu is currently open (by document ID) */
 const activeDropdown = ref<number | null>(null);
@@ -1378,6 +1378,12 @@ const filteredDocuments = computed(() => {
                 return true;
             }
             
+            // Only Receiving role can view documents forwarded to offices or municipalities
+            if (currentUser.value?.usertype === 'Receiving' && latestTransaction && 
+                (latestTransaction.forwarded_to_office_id || latestTransaction.forwarded_to_municipality_id)) {
+                return true;
+            }
+            
             return false;
         }
         return false;
@@ -1484,6 +1490,32 @@ const isDocumentForwardedToOfficeOrMunicipality = (document: Document): boolean 
 /**
  * Get custodian display name: office/municipality if forwarded to them, otherwise current user
  */
+/**
+ * Check if document is forwarded to an office or municipality
+ * Returns true if the latest transaction shows forwarding to office or municipality
+ */
+const isForwardedToOfficeOrMunicipality = (document: Document): boolean => {
+    if (!document.transactions || document.transactions.length === 0) {
+        return false;
+    }
+
+    const latestTransaction = document.transactions[0];
+    return !!(latestTransaction.forwardedToOffice || latestTransaction.forwardedToMunicipality);
+};
+
+/**
+ * Get the user ID of who forwarded the document
+ * Returns the user_id from the latest transaction (who performed the forward action)
+ */
+const getForwardedByUserId = (document: Document): number | null => {
+    if (!document.transactions || document.transactions.length === 0) {
+        return null;
+    }
+
+    const latestTransaction = document.transactions[0];
+    return latestTransaction.user_id || null;
+};
+
 const getCustodianDisplay = (document: Document): string => {
     // If no transactions, show document creator
     if (!document.transactions || document.transactions.length === 0) {

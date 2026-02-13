@@ -124,6 +124,33 @@ class RoleService
     }
 
     /**
+     * Check if user can receive a specific document
+     * For documents forwarded to offices/municipalities: only Receiving role or the forwarder can receive
+     * For documents forwarded to users: standard receive permission applies
+     */
+    public static function canReceiveSpecificDocument(User $user, $document): bool
+    {
+        // Must have receive permission
+        if (!self::hasPermission($user, 'documents.receive')) {
+            return false;
+        }
+
+        // Get latest transaction
+        $latestTransaction = $document->latest_transaction ?? 
+                            ($document->transactions()->latest('created_at')->first() ?? null);
+
+        // If forwarded to office or municipality
+        if ($latestTransaction && 
+            ($latestTransaction->forwarded_to_office_id || $latestTransaction->forwarded_to_municipality_id)) {
+            // Only Receiving role or the user who forwarded it can receive
+            return $user->usertype === 'Receiving' || $document->user_id === $user->id;
+        }
+
+        // Otherwise: standard rule - can receive if they didn't forward it
+        return $document->user_id !== $user->id;
+    }
+
+    /**
      * Check if user can finalize documents
      */
     public static function canFinalizeDocument(User $user): bool
@@ -161,6 +188,7 @@ class RoleService
      * Receiving, Reviewer, Supervisor, Administrative can only view documents:
      * - Where the document's user_id matches their ID (document is assigned/under them)
      * - OR forwarded to them directly (as a user, not to office/municipality)
+     * - OR (only for Receiving role) forwarded to an office/municipality
      */
     public static function canViewDocument(User $user, $document): bool
     {
@@ -187,6 +215,12 @@ class RoleService
             $latestTransaction = $document->transactions()->latest('created_at')->first();
             if ($latestTransaction && 
                 $latestTransaction->forwarded_to_user_id === $user->id) {
+                return true;
+            }
+
+            // Only Receiving role can view documents forwarded to offices or municipalities
+            if ($user->usertype === 'Receiving' && $latestTransaction && 
+                ($latestTransaction->forwarded_to_office_id || $latestTransaction->forwarded_to_municipality_id)) {
                 return true;
             }
 

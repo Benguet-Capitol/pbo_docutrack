@@ -1,397 +1,3 @@
-<script setup lang="ts">
-import { computed, onMounted, ref } from 'vue';
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
-import PageHead from '@/Components/PageHead.vue';
-
-interface DocumentTransaction {
-    id: number;
-    document_id: number;
-    user_id: number;
-    forwarded_to_user_id: number | null;
-    forwarded_to_office_id: number | null;
-    forwarded_to_municipality_id: number | null;
-    action: string;
-    remarks: string;
-    created_at: string;
-    duration_hours: number;
-    user?: { id: number; name: string; email: string } | null;
-    forwardedToUser?: { id: number; name: string; email: string } | null;
-    forwardedToOffice?: { id: number; office_name: string } | null;
-    forwardedToMunicipality?: { id: number; name: string } | null;
-}
-
-interface Document {
-    id: number;
-    tracking_no: string;
-    date: string;
-    document_type: string;
-    particulars: string;
-    source: string;
-    status: string;
-    remarks: string;
-    user_id: number;
-    user?: { id: number; name: string; email: string } | null;
-    transactions: DocumentTransaction[];
-}
-
-// ============== State ==============
-const documents = ref<Document[]>([]);
-const searchQuery = ref('');
-const sortBy = ref('date');
-const sortOrder = ref<'asc' | 'desc'>('desc');
-const itemsPerPage = ref(10);
-const currentPage = ref(1);
-const expandedDocumentId = ref<number | null>(null);
-const expandedUserId = ref<number | null>(null);
-const loading = ref(true);
-const error = ref('');
-
-// ============== Fetch Documents ==============
-const fetchDocuments = async () => {
-    try {
-        loading.value = true;
-        error.value = '';
-        const response = await fetch('/api/documents');
-        if (!response.ok) {
-            throw new Error('Failed to fetch documents');
-        }
-        documents.value = await response.json();
-    } catch (e) {
-        error.value = e instanceof Error ? e.message : 'An error occurred while fetching documents';
-        console.error('Error fetching documents:', error.value);
-    } finally {
-        loading.value = false;
-    }
-};
-
-// ============== Computed Properties ==============
-const filteredDocuments = computed(() => {
-    let filtered = documents.value.filter(document => 
-        document.tracking_no.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-        document.date.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-        document.document_type.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-        document.source?.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-        document.particulars?.toLowerCase().includes(searchQuery.value.toLowerCase())
-    );
-
-    // Sort
-    filtered.sort((a, b) => {
-        let aValue = a[sortBy.value as keyof Document];
-        let bValue = b[sortBy.value as keyof Document];
-
-        if (typeof aValue === 'string') {
-            aValue = aValue.toLowerCase();
-        }
-        if (typeof bValue === 'string') {
-            bValue = bValue.toLowerCase();
-        }
-
-        if (aValue < bValue) return sortOrder.value === 'asc' ? -1 : 1;
-        if (aValue > bValue) return sortOrder.value === 'asc' ? 1 : -1;
-        return 0;
-    });
-
-    return filtered;
-});
-
-const paginatedDocuments = computed(() => {
-    const start = (currentPage.value - 1) * itemsPerPage.value;
-    const end = start + itemsPerPage.value;
-    return filteredDocuments.value.slice(start, end);
-});
-
-const totalPages = computed(() => {
-    return Math.ceil(filteredDocuments.value.length / itemsPerPage.value);
-});
-
-/**
- * Calculate user statistics: average pending time per document
- * Timer starts when user receives the document and stops when they forward/finalize it
- */
-const userStatistics = computed(() => {
-    const stats = new Map<number, { userId: number; name: string; totalHours: number; count: number; averageHours: number }>();
-    
-    documents.value.forEach(document => {
-        // Sort transactions by created_at to process in chronological order
-        const sortedTransactions = [...(document.transactions || [])].sort(
-            (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
-        );
-        
-        let currentOwner: { userId: number; userName: string; startTime: Date } | null = null;
-        
-        sortedTransactions.forEach((transaction) => {
-            const action = getActionType(transaction.action);
-            const transactionTime = new Date(transaction.created_at);
-            
-            if (action === 'created') {
-                // Document created - start timer for creator
-                currentOwner = {
-                    userId: transaction.user_id,
-                    userName: transaction.user?.name || 'Unknown',
-                    startTime: transactionTime
-                };
-            } else if (action === 'forwarded' && currentOwner) {
-                // Document forwarded - stop timer for current owner and calculate pending time
-                const pendingMs = transactionTime.getTime() - currentOwner.startTime.getTime();
-                const pendingHours = pendingMs / (1000 * 60 * 60);
-                
-                const existing = stats.get(currentOwner.userId) || {
-                    userId: currentOwner.userId,
-                    name: currentOwner.userName,
-                    totalHours: 0,
-                    count: 0,
-                    averageHours: 0
-                };
-                
-                existing.totalHours += pendingHours;
-                existing.count += 1;
-                existing.averageHours = existing.totalHours / existing.count;
-                stats.set(currentOwner.userId, existing);
-                
-                // Transfer ownership to the forwarded recipient
-                if (transaction.forwardedToUser) {
-                    currentOwner = {
-                        userId: transaction.forwardedToUser.id,
-                        userName: transaction.forwardedToUser.name,
-                        startTime: transactionTime
-                    };
-                } else {
-                    // Forwarded to office or municipality, not tracked as user time
-                    currentOwner = null;
-                }
-            } else if (action === 'received') {
-                // Someone received the document - start timer for them
-                currentOwner = {
-                    userId: transaction.user_id,
-                    userName: transaction.user?.name || 'Unknown',
-                    startTime: transactionTime
-                };
-            } else if (action === 'finalized' && currentOwner) {
-                // Document finalized - stop timer for current owner and calculate pending time
-                const pendingMs = transactionTime.getTime() - currentOwner.startTime.getTime();
-                const pendingHours = pendingMs / (1000 * 60 * 60);
-                
-                const existing = stats.get(currentOwner.userId) || {
-                    userId: currentOwner.userId,
-                    name: currentOwner.userName,
-                    totalHours: 0,
-                    count: 0,
-                    averageHours: 0
-                };
-                
-                existing.totalHours += pendingHours;
-                existing.count += 1;
-                existing.averageHours = existing.totalHours / existing.count;
-                stats.set(currentOwner.userId, existing);
-                
-                currentOwner = null;
-            }
-        });
-    });
-    
-    return Array.from(stats.values())
-        .sort((a, b) => b.averageHours - a.averageHours); // Sort by average hours descending
-});
-
-/**
- * Get detailed breakdown for selected user
- */
-const selectedUserDetails = computed(() => {
-    if (!expandedUserId.value && expandedUserId.value !== 0) return [];
-    
-    const selectedUser = userStatistics.value[expandedUserId.value];
-    if (!selectedUser) return [];
-    
-    const details: Array<{ documentId: number; trackingNo: string; pendingHours: number; startDate: string; endDate: string }> = [];
-    
-    documents.value.forEach(document => {
-        const sortedTransactions = [...(document.transactions || [])].sort(
-            (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
-        );
-        
-        let currentOwner: { userId: number; startTime: Date } | null = null;
-        
-        sortedTransactions.forEach((transaction) => {
-            const action = getActionType(transaction.action);
-            const transactionTime = new Date(transaction.created_at);
-            
-            if (action === 'created') {
-                currentOwner = {
-                    userId: transaction.user_id,
-                    startTime: transactionTime
-                };
-            } else if (action === 'forwarded' && currentOwner && currentOwner.userId === selectedUser.userId) {
-                const pendingMs = transactionTime.getTime() - currentOwner.startTime.getTime();
-                const pendingHours = pendingMs / (1000 * 60 * 60);
-                
-                details.push({
-                    documentId: document.id,
-                    trackingNo: document.tracking_no,
-                    pendingHours,
-                    startDate: new Date(currentOwner.startTime).toLocaleString('en-US', {
-                        month: 'short',
-                        day: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                        hour12: true
-                    }),
-                    endDate: new Date(transactionTime).toLocaleString('en-US', {
-                        month: 'short',
-                        day: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                        hour12: true
-                    })
-                });
-                
-                if (transaction.forwardedToUser) {
-                    currentOwner = {
-                        userId: transaction.forwardedToUser.id,
-                        startTime: transactionTime
-                    };
-                } else {
-                    currentOwner = null;
-                }
-            } else if (action === 'received') {
-                currentOwner = {
-                    userId: transaction.user_id,
-                    startTime: transactionTime
-                };
-            } else if (action === 'finalized' && currentOwner && currentOwner.userId === selectedUser.userId) {
-                const pendingMs = transactionTime.getTime() - currentOwner.startTime.getTime();
-                const pendingHours = pendingMs / (1000 * 60 * 60);
-                
-                details.push({
-                    documentId: document.id,
-                    trackingNo: document.tracking_no,
-                    pendingHours,
-                    startDate: new Date(currentOwner.startTime).toLocaleString('en-US', {
-                        month: 'short',
-                        day: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                        hour12: true
-                    }),
-                    endDate: new Date(transactionTime).toLocaleString('en-US', {
-                        month: 'short',
-                        day: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                        hour12: true
-                    })
-                });
-                
-                currentOwner = null;
-            }
-        });
-    });
-    
-    return details;
-});
-
-/**
- * Calculate processing time from document creation to latest transaction
- */
-const calculateProcessingTime = (document: Document): string => {
-    if (!document.transactions || document.transactions.length === 0) {
-        return '-';
-    }
-
-    const createdAt = new Date(document.date);
-    const latestTransaction = document.transactions[document.transactions.length - 1];
-    const latestAt = new Date(latestTransaction.created_at);
-
-    const diffMs = latestAt.getTime() - createdAt.getTime();
-    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-    const diffDays = Math.floor(diffHours / 24);
-
-    if (diffDays > 0) {
-        return `${diffDays} day${diffDays > 1 ? 's' : ''} ${diffHours % 24} hr${(diffHours % 24) !== 1 ? 's' : ''}`;
-    }
-
-    return `${diffHours} hr${diffHours !== 1 ? 's' : ''}`;
-};
-
-/**
- * Get action type from action string
- */
-const getActionType = (action: string): string => {
-    if (action.toLowerCase().includes('created')) return 'created';
-    if (action.toLowerCase().includes('forwarded')) return 'forwarded';
-    if (action.toLowerCase().includes('received')) return 'received';
-    if (action.toLowerCase().includes('finalized')) return 'finalized';
-    return action;
-};
-
-/**
- * Get custodian display name: office/municipality/user based on latest transaction
- */
-const getCustodianName = (document: Document): string => {
-    if (document.transactions.length === 0) {
-        return document.user?.name || 'Unknown';
-    }
-
-    const latestTransaction = document.transactions[0];
-    
-    // Check for forwarded destinations in order of priority
-    if (latestTransaction.forwardedToOffice) {
-        return latestTransaction.forwardedToOffice.office_name;
-    }
-    if (latestTransaction.forwardedToMunicipality) {
-        return latestTransaction.forwardedToMunicipality.name;
-    }
-    if (latestTransaction.forwardedToUser) {
-        return latestTransaction.forwardedToUser.name;
-    }
-    
-    // Fallback to the user who performed the transaction
-    return latestTransaction.user?.name || document.user?.name || 'Unknown';
-};
-
-/**
- * Format hours into readable string
- */
-const formatHours = (hours: number): string => {
-    if (hours < 1) {
-        return Math.round(hours * 60) + ' min';
-    }
-    if (hours < 24) {
-        return hours.toFixed(1) + ' hrs';
-    }
-    const days = Math.floor(hours / 24);
-    const remainingHours = hours % 24;
-    return `${days} day${days > 1 ? 's' : ''} ${remainingHours.toFixed(1)} hrs`;
-};
-
-/**
- * Toggle document expansion
- */
-const toggleExpanded = (documentId: number) => {
-    expandedDocumentId.value = expandedDocumentId.value === documentId ? null : documentId;
-};
-
-/**
- * Toggle user expansion
- */
-const toggleUserExpanded = (userId: number) => {
-    expandedUserId.value = expandedUserId.value === userId ? null : userId;
-};
-
-/**
- * Change page
- */
-const changePage = (page: number) => {
-    if (page >= 1 && page <= totalPages.value) {
-        currentPage.value = page;
-    }
-};
-
-// ============== Lifecycle ==============
-onMounted(async () => {
-    await fetchDocuments();
-});
-</script>
-
 <template>
     <PageHead />
     <AuthenticatedLayout>
@@ -408,7 +14,7 @@ onMounted(async () => {
             <div class="bg-white dark:bg-gray-800 rounded-lg shadow">
                     <!-- Header Section: Contains search bar and items-per-page selector -->
                     <div class="px-6 py-5 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
-                        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
                             <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
                                 Documents Summary
                             </h3>
@@ -432,6 +38,61 @@ onMounted(async () => {
                                     <option value="100">100</option>
                                     <option value="999999">All</option>
                                 </select>
+                            </div>
+                        </div>
+
+                        <!-- Filter Section -->
+                        <div class="flex flex-col sm:flex-row gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+                            <!-- Year Filter -->
+                            <div class="flex flex-col gap-1">
+                                <label class="text-xs font-semibold text-gray-700 dark:text-gray-300">Year</label>
+                                <select
+                                    v-model.number="selectedYear"
+                                    class="border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 rounded-lg px-3 py-2 text-xs text-gray-900 dark:text-white focus:outline-none focus:border-emerald-500 dark:focus:border-emerald-500 transition-colors cursor-pointer"
+                                >
+                                    <option :value="null">All Years</option>
+                                    <option v-for="year in availableYears" :key="year" :value="year">
+                                        {{ year }}
+                                    </option>
+                                </select>
+                            </div>
+
+                            <!-- Semester Filter -->
+                            <div class="flex flex-col gap-1">
+                                <label class="text-xs font-semibold text-gray-700 dark:text-gray-300">Semester</label>
+                                <select
+                                    v-model.number="selectedSemester"
+                                    class="border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 rounded-lg px-3 py-2 text-xs text-gray-900 dark:text-white focus:outline-none focus:border-emerald-500 dark:focus:border-emerald-500 transition-colors cursor-pointer"
+                                >
+                                    <option :value="null">All Semesters</option>
+                                    <option :value="1">1st Semester (Jan - Jun)</option>
+                                    <option :value="2">2nd Semester (Jul - Dec)</option>
+                                </select>
+                            </div>
+
+                            <!-- User Filter -->
+                            <div class="flex flex-col gap-1">
+                                <label class="text-xs font-semibold text-gray-700 dark:text-gray-300">User</label>
+                                <select
+                                    v-model.number="selectedUser"
+                                    class="border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 rounded-lg px-3 py-2 text-xs text-gray-900 dark:text-white focus:outline-none focus:border-emerald-500 dark:focus:border-emerald-500 transition-colors cursor-pointer"
+                                >
+                                    <option :value="null">All Users</option>
+                                    <option v-for="user in availableUsers" :key="user.id" :value="user.id">
+                                        {{ user.name }}
+                                    </option>
+                                </select>
+                            </div>
+
+                            <!-- Reset Filters Button -->
+                            <div class="flex items-end pt-1">
+                                <button
+                                    @click="selectedYear = null; selectedSemester = null; selectedUser = null"
+                                    class="inline-flex items-center gap-1 px-3 py-2 rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors text-xs font-medium"
+                                >
+                                    <i class="fas fa-times"></i>
+                                    Reset
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -723,14 +384,14 @@ onMounted(async () => {
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
-                            <template v-if="userStatistics.length > 0">
-                                <template v-for="(user, userIndex) in userStatistics" :key="`user-${userIndex}`">
+                            <template v-if="filteredUserStatistics.length > 0">
+                                <template v-for="(user, userIndex) in filteredUserStatistics" :key="`user-${userIndex}`">
                                     <tr 
-                                        @click="toggleUserExpanded(userIndex)"
+                                        @click="toggleUserExpanded(user.userId)"
                                         class="bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-150 cursor-pointer"
                                     >
                                         <td class="px-6 py-4 text-sm font-medium text-gray-900 dark:text-gray-100 flex items-center gap-2">
-                                            <i :class="['fas', expandedUserId === userIndex ? 'fa-chevron-down' : 'fa-chevron-right', 'text-gray-400 text-xs']"></i>
+                                            <i :class="['fas', expandedUserId === user.userId ? 'fa-chevron-down' : 'fa-chevron-right', 'text-gray-400 text-xs']"></i>
                                             {{ user.name }}
                                         </td>
                                         <td class="px-6 py-4 text-sm text-center text-gray-700 dark:text-gray-300">
@@ -746,7 +407,7 @@ onMounted(async () => {
                                         </td>
                                     </tr>
                                     <!-- Expanded User Details Row -->
-                                    <tr v-if="expandedUserId === userIndex" class="bg-gray-50 dark:bg-gray-700/50">
+                                    <tr v-if="expandedUserId === user.userId" class="bg-gray-50 dark:bg-gray-700/50">
                                         <td :colspan="3" class="px-6 py-6">
                                             <div class="space-y-4">
                                                 <h4 class="font-semibold text-gray-900 dark:text-white text-sm flex items-center gap-2">
@@ -766,6 +427,7 @@ onMounted(async () => {
                                                         <thead class="bg-gray-200 dark:bg-gray-600">
                                                             <tr>
                                                                 <th class="px-4 py-2 text-left font-semibold text-gray-700 dark:text-gray-200">Document</th>
+                                                                <th class="px-4 py-2 text-left font-semibold text-gray-700 dark:text-gray-200">Particulars</th>
                                                                 <th class="px-4 py-2 text-center font-semibold text-gray-700 dark:text-gray-200">Received</th>
                                                                 <th class="px-4 py-2 text-center font-semibold text-gray-700 dark:text-gray-200">Completed</th>
                                                                 <th class="px-4 py-2 text-center font-semibold text-gray-700 dark:text-gray-200">Pending Time</th>
@@ -775,6 +437,9 @@ onMounted(async () => {
                                                             <tr v-for="detail in selectedUserDetails" :key="`detail-${detail.documentId}`" class="bg-white dark:bg-gray-800">
                                                                 <td class="px-4 py-2 text-gray-900 dark:text-gray-100 font-medium">
                                                                     {{ detail.trackingNo }}
+                                                                </td>
+                                                                <td class="px-4 py-2 text-gray-600 dark:text-gray-400 text-xs max-w-xs truncate" :title="detail.particulars">
+                                                                    {{ detail.particulars }}
                                                                 </td>
                                                                 <td class="px-4 py-2 text-center text-gray-600 dark:text-gray-400">
                                                                     {{ detail.startDate }}
@@ -812,3 +477,513 @@ onMounted(async () => {
         </div>
     </AuthenticatedLayout>
 </template>
+
+
+<script setup lang="ts">
+import { computed, onMounted, ref } from 'vue';
+import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import PageHead from '@/Components/PageHead.vue';
+
+interface DocumentTransaction {
+    id: number;
+    document_id: number;
+    user_id: number;
+    forwarded_to_user_id: number | null;
+    forwarded_to_office_id: number | null;
+    forwarded_to_municipality_id: number | null;
+    action: string;
+    remarks: string;
+    created_at: string;
+    duration_hours: number;
+    user?: { id: number; name: string; email: string } | null;
+    forwardedToUser?: { id: number; name: string; email: string } | null;
+    forwardedToOffice?: { id: number; office_name: string } | null;
+    forwardedToMunicipality?: { id: number; name: string } | null;
+}
+
+interface Document {
+    id: number;
+    tracking_no: string;
+    date: string;
+    document_type: string;
+    particulars: string;
+    source: string;
+    status: string;
+    remarks: string;
+    user_id: number;
+    user?: { id: number; name: string; email: string } | null;
+    transactions: DocumentTransaction[];
+}
+
+// ============== State ==============
+const documents = ref<Document[]>([]);
+const searchQuery = ref('');
+const sortBy = ref('id');
+const sortOrder = ref<'asc' | 'desc'>('desc');
+const itemsPerPage = ref(10);
+const currentPage = ref(1);
+const expandedDocumentId = ref<number | null>(null);
+const expandedUserId = ref<number | null>(null);
+const loading = ref(true);
+const error = ref('');
+const selectedYear = ref<number | null>(new Date().getFullYear());
+const selectedSemester = ref<number | null>(null);
+const selectedUser = ref<number | null>(null);
+
+// ============== Fetch Documents ==============
+const fetchDocuments = async () => {
+    try {
+        loading.value = true;
+        error.value = '';
+        const response = await fetch('/api/documents');
+        if (!response.ok) {
+            throw new Error('Failed to fetch documents');
+        }
+        documents.value = await response.json();
+    } catch (e) {
+        error.value = e instanceof Error ? e.message : 'An error occurred while fetching documents';
+        console.error('Error fetching documents:', error.value);
+    } finally {
+        loading.value = false;
+    }
+};
+
+// ============== Computed Properties ==============
+
+/**
+ * Extract unique years from documents
+ */
+const availableYears = computed(() => {
+    const years = new Set<number>();
+    documents.value.forEach(doc => {
+        const year = new Date(doc.date).getFullYear();
+        years.add(year);
+    });
+    return Array.from(years).sort((a, b) => b - a);
+});
+
+/**
+ * Extract users who have transactions
+ */
+const availableUsers = computed(() => {
+    const usersMap = new Map<number, string>();
+    documents.value.forEach(doc => {
+        doc.transactions?.forEach(transaction => {
+            if (transaction.user && !usersMap.has(transaction.user.id)) {
+                usersMap.set(transaction.user.id, transaction.user.name);
+            }
+        });
+    });
+    return Array.from(usersMap, ([id, name]) => ({ id, name }))
+        .sort((a, b) => a.name.localeCompare(b.name));
+});
+
+/**
+ * Get semester from date (1 = Jan-Jun, 2 = Jul-Dec)
+ */
+const getSemester = (date: string | Date): number => {
+    const d = new Date(date);
+    const month = d.getMonth() + 1;
+    return month <= 6 ? 1 : 2;
+};
+
+/**
+ * Check if document falls within selected year and semester
+ */
+const matchesYearAndSemester = (date: string): boolean => {
+    if (!selectedYear.value && !selectedSemester.value) {
+        return true;
+    }
+    
+    const docDate = new Date(date);
+    const docYear = docDate.getFullYear();
+    const docSemester = getSemester(date);
+    
+    if (selectedYear.value && docYear !== selectedYear.value) {
+        return false;
+    }
+    if (selectedSemester.value && docSemester !== selectedSemester.value) {
+        return false;
+    }
+    
+    return true;
+};
+
+const filteredDocuments = computed(() => {
+    let filtered = documents.value.filter(document => {
+        // Apply search query filter
+        const matchesSearch = document.tracking_no.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
+            document.date.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
+            document.document_type.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
+            document.source?.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
+            document.particulars?.toLowerCase().includes(searchQuery.value.toLowerCase());
+        
+        if (!matchesSearch) return false;
+        
+        // Apply year and semester filters
+        if (!matchesYearAndSemester(document.date)) return false;
+        
+        // Apply user filter (filter documents where the selected user has transactions)
+        if (selectedUser.value) {
+            const userHasTransaction = document.transactions?.some(t => t.user_id === selectedUser.value);
+            if (!userHasTransaction) return false;
+        }
+        
+        return true;
+    });
+
+    // Sort
+    filtered.sort((a, b) => {
+        let aValue = a[sortBy.value as keyof Document];
+        let bValue = b[sortBy.value as keyof Document];
+
+        if (typeof aValue === 'string') {
+            aValue = aValue.toLowerCase();
+        }
+        if (typeof bValue === 'string') {
+            bValue = bValue.toLowerCase();
+        }
+
+        if (aValue < bValue) return sortOrder.value === 'asc' ? -1 : 1;
+        if (aValue > bValue) return sortOrder.value === 'asc' ? 1 : -1;
+        return 0;
+    });
+
+    return filtered;
+});
+
+const paginatedDocuments = computed(() => {
+    const start = (currentPage.value - 1) * itemsPerPage.value;
+    const end = start + itemsPerPage.value;
+    return filteredDocuments.value.slice(start, end);
+});
+
+const totalPages = computed(() => {
+    return Math.ceil(filteredDocuments.value.length / itemsPerPage.value);
+});
+
+/**
+ * Filter user statistics based on selected user
+ */
+const filteredUserStatistics = computed(() => {
+    let filtered = userStatistics.value;
+    
+    // If a user is selected in the Users Summary section, only show that user
+    if (selectedUser.value) {
+        filtered = filtered.filter(user => user.userId === selectedUser.value);
+    }
+    
+    return filtered;
+});
+
+/**
+ * Calculate user statistics: average pending time per document
+ * Timer starts when user receives the document and stops when they forward/finalize it
+ */
+const userStatistics = computed(() => {
+    const stats = new Map<number, { userId: number; name: string; totalHours: number; count: number; averageHours: number }>();
+    
+    documents.value.forEach(document => {
+        // Apply year and semester filters
+        if (!matchesYearAndSemester(document.date)) return;
+        
+        // Apply user filter - only include documents where selected user (if any) has transactions
+        if (selectedUser.value) {
+            const userHasTransaction = document.transactions?.some(t => t.user_id === selectedUser.value);
+            if (!userHasTransaction) return;
+        }
+        
+        // Sort transactions by created_at to process in chronological order
+        const sortedTransactions = [...(document.transactions || [])].sort(
+            (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+        );
+        
+        let currentOwner: { userId: number; userName: string; startTime: Date } | null = null;
+        
+        sortedTransactions.forEach((transaction) => {
+            const action = getActionType(transaction.action);
+            const transactionTime = new Date(transaction.created_at);
+            
+            if (action === 'created') {
+                // Document created - start timer for creator
+                currentOwner = {
+                    userId: transaction.user_id,
+                    userName: transaction.user?.name || 'Unknown',
+                    startTime: transactionTime
+                };
+            } else if (action === 'forwarded' && currentOwner) {
+                // Document forwarded - stop timer for current owner and calculate pending time
+                const pendingMs = transactionTime.getTime() - currentOwner.startTime.getTime();
+                const pendingHours = pendingMs / (1000 * 60 * 60);
+                
+                const existing = stats.get(currentOwner.userId) || {
+                    userId: currentOwner.userId,
+                    name: currentOwner.userName,
+                    totalHours: 0,
+                    count: 0,
+                    averageHours: 0
+                };
+                
+                existing.totalHours += pendingHours;
+                existing.count += 1;
+                existing.averageHours = existing.totalHours / existing.count;
+                stats.set(currentOwner.userId, existing);
+                
+                // Transfer ownership to the forwarded recipient
+                if (transaction.forwardedToUser) {
+                    currentOwner = {
+                        userId: transaction.forwardedToUser.id,
+                        userName: transaction.forwardedToUser.name,
+                        startTime: transactionTime
+                    };
+                } else {
+                    // Forwarded to office or municipality, not tracked as user time
+                    currentOwner = null;
+                }
+            } else if (action === 'received') {
+                // Someone received the document - start timer for them
+                currentOwner = {
+                    userId: transaction.user_id,
+                    userName: transaction.user?.name || 'Unknown',
+                    startTime: transactionTime
+                };
+            } else if (action === 'finalized' && currentOwner) {
+                // Document finalized - stop timer for current owner and calculate pending time
+                const pendingMs = transactionTime.getTime() - currentOwner.startTime.getTime();
+                const pendingHours = pendingMs / (1000 * 60 * 60);
+                
+                const existing = stats.get(currentOwner.userId) || {
+                    userId: currentOwner.userId,
+                    name: currentOwner.userName,
+                    totalHours: 0,
+                    count: 0,
+                    averageHours: 0
+                };
+                
+                existing.totalHours += pendingHours;
+                existing.count += 1;
+                existing.averageHours = existing.totalHours / existing.count;
+                stats.set(currentOwner.userId, existing);
+                
+                currentOwner = null;
+            }
+        });
+    });
+    
+    return Array.from(stats.values())
+        .sort((a, b) => b.averageHours - a.averageHours); // Sort by average hours descending
+});
+
+/**
+ * Get detailed breakdown for selected user
+ */
+const selectedUserDetails = computed(() => {
+    if (!expandedUserId.value && expandedUserId.value !== 0) return [];
+    
+    const currentSelectedUserStat = userStatistics.value.find(u => u.userId === expandedUserId.value);
+    if (!currentSelectedUserStat) return [];
+    
+    const details: Array<{ documentId: number; trackingNo: string; particulars: string; pendingHours: number; startDate: string; endDate: string }> = [];
+    
+    documents.value.forEach(document => {
+        // Apply year and semester filters
+        if (!matchesYearAndSemester(document.date)) return;
+        
+        // Apply user filter - only include documents where selected user (if any) has transactions
+        if (selectedUser.value) {
+            const userHasTransaction = document.transactions?.some(t => t.user_id === selectedUser.value);
+            if (!userHasTransaction) return;
+        }
+        
+        const sortedTransactions = [...(document.transactions || [])].sort(
+            (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+        );
+        
+        let currentOwner: { userId: number; startTime: Date } | null = null;
+        
+        sortedTransactions.forEach((transaction) => {
+            const action = getActionType(transaction.action);
+            const transactionTime = new Date(transaction.created_at);
+            
+            if (action === 'created') {
+                currentOwner = {
+                    userId: transaction.user_id,
+                    startTime: transactionTime
+                };
+            } else if (action === 'forwarded' && currentOwner && currentOwner.userId === currentSelectedUserStat.userId) {
+                const pendingMs = transactionTime.getTime() - currentOwner.startTime.getTime();
+                const pendingHours = pendingMs / (1000 * 60 * 60);
+                
+                details.push({
+                    documentId: document.id,
+                    trackingNo: document.tracking_no,
+                    particulars: document.particulars || '-',
+                    pendingHours,
+                    startDate: new Date(currentOwner.startTime).toLocaleString('en-US', {
+                        month: 'short',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        hour12: true
+                    }),
+                    endDate: new Date(transactionTime).toLocaleString('en-US', {
+                        month: 'short',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        hour12: true
+                    })
+                });
+                
+                if (transaction.forwardedToUser) {
+                    currentOwner = {
+                        userId: transaction.forwardedToUser.id,
+                        startTime: transactionTime
+                    };
+                } else {
+                    currentOwner = null;
+                }
+            } else if (action === 'received') {
+                currentOwner = {
+                    userId: transaction.user_id,
+                    startTime: transactionTime
+                };
+            } else if (action === 'finalized' && currentOwner && currentOwner.userId === currentSelectedUserStat.userId) {
+                const pendingMs = transactionTime.getTime() - currentOwner.startTime.getTime();
+                const pendingHours = pendingMs / (1000 * 60 * 60);
+                
+                details.push({
+                    documentId: document.id,
+                    trackingNo: document.tracking_no,
+                    particulars: document.particulars || '-',
+                    pendingHours,
+                    startDate: new Date(currentOwner.startTime).toLocaleString('en-US', {
+                        month: 'short',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        hour12: true
+                    }),
+                    endDate: new Date(transactionTime).toLocaleString('en-US', {
+                        month: 'short',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        hour12: true
+                    })
+                });
+                
+                currentOwner = null;
+            }
+        });
+    });
+    
+    return details;
+});
+
+/**
+ * Calculate processing time from first 'created' transaction to latest transaction
+ */
+const calculateProcessingTime = (document: Document): string => {
+    if (!document.transactions || document.transactions.length === 0) {
+        return '-';
+    }
+
+    // Find the first transaction (should be 'created' action)
+    const firstTransaction = document.transactions[document.transactions.length - 1];
+    const latestTransaction = document.transactions[0];
+
+    const createdAt = new Date(firstTransaction.created_at);
+    const latestAt = new Date(latestTransaction.created_at);
+
+    const diffMs = latestAt.getTime() - createdAt.getTime();
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+    const diffDays = Math.floor(diffHours / 24);
+
+    if (diffDays > 0) {
+        return `${diffDays} day${diffDays > 1 ? 's' : ''} ${diffHours % 24} hr${(diffHours % 24) !== 1 ? 's' : ''}`;
+    }
+
+    return `${diffHours} hr${diffHours !== 1 ? 's' : ''}`;
+};
+
+/**
+ * Get action type from action string
+ */
+const getActionType = (action: string): string => {
+    if (action.toLowerCase().includes('created')) return 'created';
+    if (action.toLowerCase().includes('forwarded')) return 'forwarded';
+    if (action.toLowerCase().includes('received')) return 'received';
+    if (action.toLowerCase().includes('finalized')) return 'finalized';
+    return action;
+};
+
+/**
+ * Get custodian display name: office/municipality/user based on latest transaction
+ */
+const getCustodianName = (document: Document): string => {
+    if (document.transactions.length === 0) {
+        return document.user?.name || 'Unknown';
+    }
+
+    const latestTransaction = document.transactions[0];
+    
+    // Check for forwarded destinations in order of priority
+    if (latestTransaction.forwardedToOffice) {
+        return latestTransaction.forwardedToOffice.office_name;
+    }
+    if (latestTransaction.forwardedToMunicipality) {
+        return latestTransaction.forwardedToMunicipality.name;
+    }
+    if (latestTransaction.forwardedToUser) {
+        return latestTransaction.forwardedToUser.name;
+    }
+    
+    // Fallback to the user who performed the transaction
+    return latestTransaction.user?.name || document.user?.name || 'Unknown';
+};
+
+/**
+ * Format hours into readable string
+ */
+const formatHours = (hours: number): string => {
+    if (hours < 1) {
+        return Math.round(hours * 60) + ' min';
+    }
+    if (hours < 24) {
+        return hours.toFixed(1) + ' hrs';
+    }
+    const days = Math.floor(hours / 24);
+    const remainingHours = hours % 24;
+    return `${days} day${days > 1 ? 's' : ''} ${remainingHours.toFixed(1)} hrs`;
+};
+
+/**
+ * Toggle document expansion
+ */
+const toggleExpanded = (documentId: number) => {
+    expandedDocumentId.value = expandedDocumentId.value === documentId ? null : documentId;
+};
+
+/**
+ * Toggle user expansion
+ */
+const toggleUserExpanded = (userIdOrIndex: number | { userId: number }) => {
+    const userId = typeof userIdOrIndex === 'object' ? userIdOrIndex.userId : userIdOrIndex;
+    expandedUserId.value = expandedUserId.value === userId ? null : userId;
+};
+
+/**
+ * Change page
+ */
+const changePage = (page: number) => {
+    if (page >= 1 && page <= totalPages.value) {
+        currentPage.value = page;
+    }
+};
+
+// ============== Lifecycle ==============
+onMounted(async () => {
+    await fetchDocuments();
+});
+</script>

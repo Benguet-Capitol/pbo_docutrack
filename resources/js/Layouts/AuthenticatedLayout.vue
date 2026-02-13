@@ -3,6 +3,7 @@ import { ref, onMounted } from 'vue';
 import SideNavigation from '@/Components/SideNavigation.vue';
 import Dropdown from '@/Components/Dropdown.vue';
 import DropdownLink from '@/Components/DropdownLink.vue';
+import Footer from '@/Components/Footer.vue';
 import { Link } from '@inertiajs/vue3';
 
 const showingSideNavigation = ref(true);
@@ -115,6 +116,9 @@ const toggleDarkMode = () => {
             <main class="flex-1 bg-gradient-to-br from-gray-100 via-emerald-50 to-gray-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
                 <slot />
             </main>
+
+            <!-- Footer Component -->
+            <Footer />
         </div>
     </div>
 </template>
