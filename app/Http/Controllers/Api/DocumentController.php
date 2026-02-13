@@ -280,7 +280,7 @@ class DocumentController extends Controller
                 'document_id' => $document->id,
                 'user_id' => $user->id,
                 'action' => 'Received document from ' . $receivedFromName,
-                'remarks' => null,
+                'remarks' => $request->input('remarks'),
                 'duration_hours' => $durationHours,
             ]);
             
@@ -303,19 +303,19 @@ class DocumentController extends Controller
 
             // Check role permission
             if (!RoleService::canFinalizeDocument($user)) {
-                return response()->json(['error' => 'You do not have permission to finalize documents'], 403);
+                return response()->json(['error' => 'You do not have permission to end  document transactions'], 403);
             }
 
             $document = Document::findOrFail($id);
             
             // Check if already finalized
             if ($document->status === 'finalized') {
-                return response()->json(['error' => 'Document has already been finalized'], 400);
+                return response()->json(['error' => 'Document transaction has already ended'], 400);
             }
 
             // Only allow finalization from pending status
             if ($document->status !== 'pending') {
-                return response()->json(['error' => 'Only pending documents can be finalized'], 400);
+                return response()->json(['error' => 'Only pending documents can have their transactions ended'], 400);
             }
 
             // Update the document status to finalized
@@ -340,8 +340,8 @@ class DocumentController extends Controller
             DocumentTransaction::create([
                 'document_id' => $document->id,
                 'user_id' => $user->id,
-                'action' => 'Document Finalized!',
-                'remarks' => null,
+                'action' => 'Document Transaction Ended!',
+                'remarks' => $request->input('remarks'),
                 'duration_hours' => $durationHours,
             ]);
             

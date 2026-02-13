@@ -69,7 +69,6 @@ class RoleService
             'municipalities.edit',
         ],
         'Administrative' => [
-            'documents.finalize',
             'documents.receive',
             'documents.view.assigned',
             'offices.view',
@@ -125,7 +124,7 @@ class RoleService
 
     /**
      * Check if user can receive a specific document
-     * For documents forwarded to offices/municipalities: only Receiving role or the forwarder can receive
+     * For documents forwarded to offices/municipalities: Administrator, Developer, Receiving roles or the forwarder can receive
      * For documents forwarded to users: standard receive permission applies
      */
     public static function canReceiveSpecificDocument(User $user, $document): bool
@@ -142,12 +141,13 @@ class RoleService
         // If forwarded to office or municipality
         if ($latestTransaction && 
             ($latestTransaction->forwarded_to_office_id || $latestTransaction->forwarded_to_municipality_id)) {
-            // Only Receiving role or the user who forwarded it can receive
-            return $user->usertype === 'Receiving' || $document->user_id === $user->id;
+            // Administrator, Developer, Receiving roles or the user who forwarded it can receive
+            return in_array($user->usertype, ['Administrator', 'Developer', 'Receiving']) 
+                || $latestTransaction->user_id === $user->id;
         }
 
         // Otherwise: standard rule - can receive if they didn't forward it
-        return $document->user_id !== $user->id;
+        return $latestTransaction->user_id !== $user->id;
     }
 
     /**

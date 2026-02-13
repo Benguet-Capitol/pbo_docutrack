@@ -198,7 +198,7 @@
                                     <span v-else-if="getDisplayStatus(document) === 'forwarded'" class="px-2 py-1 bg-cyan-100 dark:bg-cyan-900/30 text-cyan-800 dark:text-cyan-300 rounded-full text-xs font-medium">Forwarded</span>
                                     <span v-else-if="getDisplayStatus(document) === 'to be received'" class="px-2 py-1 bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-300 rounded-full text-xs font-medium">To Be Received</span>
                                     <span v-else-if="getDisplayStatus(document) === 'pending'" class="px-2 py-1 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300 rounded-full text-xs font-medium">Pending</span>
-                                    <span v-else-if="getDisplayStatus(document) === 'finalized'" class="px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 rounded-full text-xs font-medium">Finalized</span>
+                                    <span v-else-if="getDisplayStatus(document) === 'finalized'" class="px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 rounded-full text-xs font-medium">Transaction Ended</span>
                                     <span v-else class="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300 rounded-full text-xs font-medium">{{ getDisplayStatus(document) }}</span>
                                 </td>
                                 <!-- Actions Column: Contains edit/delete dropdown menu -->
@@ -213,23 +213,23 @@
                                             <i class="fas fa-share"></i>
                                             <span class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-1 text-xs font-medium text-white bg-gray-900 dark:bg-gray-950 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-20">Forward</span>
                                         </button>
-                                        <!-- Receive Button: Visible if forwarded. User can receive if: they didn't forward it (to user), OR if forwarded to office/municipality and user is Receiving role or the forwarder -->
+                                        <!-- Receive Button: Visible if user can receive the document -->
                                         <button 
-                                            v-if="document.status === 'forwarded' && hasPermission('documents.receive') && ((isForwardedToOfficeOrMunicipality(document) && (currentUser.usertype === 'Receiving' || getForwardedByUserId(document) === currentUser.id)) || document.user_id !== currentUser.id)"
+                                            v-if="canReceiveDocument(document)"
                                             @click.stop="handleReceiveDocument(document)" 
                                             class="relative p-2 text-purple-600 dark:text-purple-400 bg-purple-100 dark:bg-purple-900/30 hover:text-purple-700 dark:hover:text-purple-300 hover:bg-purple-200 dark:hover:bg-purple-900/50 rounded-lg transition-all duration-200 group"
                                         >
                                             <i class="fas fa-folder-open"></i>
                                             <span class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-1 text-xs font-medium text-white bg-gray-900 dark:bg-gray-950 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-20">Receive</span>
                                         </button>
-                                        <!-- Finalize Button: Visible if pending and user has permission -->
+                                        <!-- End Transaction Button: Visible if pending and user has permission -->
                                         <button 
                                             v-if="document.status === 'pending' && hasPermission('documents.finalize')"
                                             @click.stop="handleFinalizeDocument(document)" 
                                             class="relative p-2 text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-900/30 hover:text-green-700 dark:hover:text-green-300 hover:bg-green-200 dark:hover:bg-green-900/50 rounded-lg transition-all duration-200 group"
                                         >
-                                            <i class="fas fa-check-double"></i>
-                                            <span class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-1 text-xs font-medium text-white bg-gray-900 dark:bg-gray-950 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-20">Finalize</span>
+                                            <i class="fas fa-calendar-xmark"></i>
+                                            <span class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-1 text-xs font-medium text-white bg-gray-900 dark:bg-gray-950 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-20">End Transaction</span>
                                         </button>
                                         <!-- Edit Button: Visible if user has permission -->
                                         <button 
@@ -857,7 +857,7 @@
             </div>
         </Teleport>
 
-        <!-- Finalize Document Modal: Confirmation dialog for finalizing a document -->
+        <!-- End Transaction Document Modal: Confirmation dialog for ending a document transaction -->
         <Teleport to="body" v-if="showFinalizeModal && documentToFinalize">
             <div class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50" @click.self="closeFinalizeModal">
                 <div class="relative w-full max-w-md mx-4 bg-white rounded-lg shadow-lg dark:bg-gray-800 animate-scaleInUp">
@@ -865,7 +865,7 @@
                     <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 rounded-t-lg bg-gradient-to-r from-green-50 to-green-100 dark:from-gray-700 dark:to-gray-600 dark:border-gray-600">
                         <h3 class="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
                             <i class="fas fa-check-circle text-green-600 dark:text-green-400"></i>
-                            Finalize Document
+                            End Transaction
                         </h3>
                         <!-- Close Button -->
                         <button @click="closeFinalizeModal" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
@@ -873,19 +873,33 @@
                         </button>
                     </div>
 
-                    <!-- Modal Body: Confirmation message -->
-                    <div class="px-6 py-6">
+                    <!-- Modal Body: Confirmation message and remarks input -->
+                    <div class="px-6 py-6 space-y-4">
                         <div class="flex items-start gap-4">
                             <div class="flex-shrink-0">
                                 <i class="fas fa-info-circle text-blue-600 dark:text-blue-400 text-3xl"></i>
                             </div>
                             <div>
                                 <p class="text-sm text-gray-900 dark:text-gray-100">
-                                    Are you sure you want to finalize document <span class="font-semibold">{{ documentToFinalize.tracking_no }}</span>?
+                                    Are you sure you want to end the transaction for document <span class="font-semibold">{{ documentToFinalize.tracking_no }}</span>?
                                 </p>
                                 <p class="text-xs text-gray-600 dark:text-gray-400 mt-2">
-                                    This action cannot be undone. The document status will be changed to "Finalized" immediately.
+                                    This action cannot be undone. The document status will be changed to "Transaction Ended" immediately.
                                 </p>
+                            </div>
+                        </div>
+
+                        <!-- Remarks Field -->
+                        <div class="space-y-2 border-t border-gray-200 dark:border-gray-700 pt-4">
+                            <label for="finalize_remarks" class="block text-xs font-medium text-gray-700 dark:text-gray-300">Remarks (Optional)</label>
+                            <div class="relative flex items-start">
+                                <textarea
+                                    v-model="finalizeModalRemarks"
+                                    id="finalize_remarks"
+                                    placeholder="Add any remarks or notes about finalizing this document..."
+                                    rows="3"
+                                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-blue-500 dark:focus:border-blue-500 transition-colors text-xs resize-none"
+                                ></textarea>
                             </div>
                         </div>
                     </div>
@@ -897,7 +911,7 @@
                             class="inline-flex items-center gap-2 px-5 py-3 text-xs font-medium text-white bg-green-600 hover:bg-green-700 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95"
                         >
                             <i class="fas fa-check"></i>
-                            Finalize
+                            End Transaction
                         </button>
                         <button
                             @click="closeFinalizeModal"
@@ -927,8 +941,8 @@
                         </button>
                     </div>
 
-                    <!-- Modal Body: Confirmation message -->
-                    <div class="px-6 py-6">
+                    <!-- Modal Body: Confirmation message and remarks input -->
+                    <div class="px-6 py-6 space-y-4">
                         <div class="flex items-start gap-4">
                             <div class="flex-shrink-0">
                                 <i class="fas fa-info-circle text-blue-600 dark:text-blue-400 text-3xl"></i>
@@ -940,6 +954,20 @@
                                 <p class="text-xs text-gray-600 dark:text-gray-400 mt-2">
                                     This will log your receipt of the document.
                                 </p>
+                            </div>
+                        </div>
+
+                        <!-- Remarks Field -->
+                        <div class="space-y-2 border-t border-gray-200 dark:border-gray-700 pt-4">
+                            <label for="receive_remarks" class="block text-xs font-medium text-gray-700 dark:text-gray-300">Remarks (Optional)</label>
+                            <div class="relative flex items-start">
+                                <textarea
+                                    v-model="receiveModalRemarks"
+                                    id="receive_remarks"
+                                    placeholder="Add any remarks or notes about receiving this document..."
+                                    rows="3"
+                                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-blue-500 dark:focus:border-blue-500 transition-colors text-xs resize-none"
+                                ></textarea>
                             </div>
                         </div>
                     </div>
@@ -1020,7 +1048,7 @@
                                                 <span v-if="getActionType(transaction.action) === 'created'" class="inline-block px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 rounded text-xs font-medium">Created</span>
                                                 <span v-else-if="getActionType(transaction.action) === 'forwarded'" class="inline-block px-2 py-1 bg-cyan-100 dark:bg-cyan-900/30 text-cyan-800 dark:text-cyan-300 rounded text-xs font-medium">Forwarded</span>
                                                 <span v-else-if="getActionType(transaction.action) === 'received'" class="inline-block px-2 py-1 bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-300 rounded text-xs font-medium">Received</span>
-                                                <span v-else-if="getActionType(transaction.action) === 'finalized'" class="inline-block px-2 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300 rounded text-xs font-medium">Finalized</span>
+                                                <span v-else-if="getActionType(transaction.action) === 'finalized'" class="inline-block px-2 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300 rounded text-xs font-medium">Transaction Ended</span>
                                             </div>
                                             
                                             <!-- Action Details -->
@@ -1196,6 +1224,12 @@ const showReceiveModal = ref(false);
 /** Stores the document to be received */
 const documentToReceive = ref<Document | null>(null);
 
+/** Stores remarks for receive modal */
+const receiveModalRemarks = ref('');
+
+/** Stores remarks for finalize modal */
+const finalizeModalRemarks = ref('');
+
 /** Stores the list of offices for internal source */
 const offices = ref<Array<{id: number; office_name: string}>>([]);
 
@@ -1225,6 +1259,8 @@ interface DocumentTransaction {
     document_id: number;
     user_id: number;
     forwarded_to_user_id?: number | null;
+    forwarded_to_office_id?: number | null;
+    forwarded_to_municipality_id?: number | null;
     action: string;
     remarks: string | null;
     created_at: string;
@@ -1244,54 +1280,6 @@ const getActionType = (action: string): 'created' | 'forwarded' | 'finalized' | 
     if (action.toLowerCase().includes('received')) return 'received';
     if (action.toLowerCase().includes('finalized')) return 'finalized';
     return 'created'; // default
-};
-
-/**
- * canReceiveDocument: Check if the current user can receive the document
- * Returns true if:
- * - Document is forwarded
- * - Document hasn't been received yet
- * - Current user is NOT the one who forwarded it OR is an Administrator/Developer
- */
-const canReceiveDocument = (document: Document): boolean => {
-    if (document.status !== 'forwarded') {
-        return false;
-    }
-
-    // Administrator and Developer can receive any forwarded document
-    if (currentUser.value?.usertype === 'Administrator' || currentUser.value?.usertype === 'Developer') {
-        // Check if document has been received
-        if (document.transactions && document.transactions.length > 0) {
-            const hasBeenReceived = document.transactions.some(transaction => 
-                getActionType(transaction.action) === 'received'
-            );
-            if (hasBeenReceived) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    // Check if document has been received
-    if (document.transactions && document.transactions.length > 0) {
-        const hasBeenReceived = document.transactions.some(transaction => 
-            getActionType(transaction.action) === 'received'
-        );
-        if (hasBeenReceived) {
-            return false;
-        }
-
-        // Check if current user is the one who forwarded it
-        const latestForwardedTransaction = [...document.transactions]
-            .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-            .find(transaction => getActionType(transaction.action) === 'forwarded');
-        
-        if (latestForwardedTransaction && latestForwardedTransaction.user_id === currentUser.value?.id) {
-            return false; // Current user forwarded it, so they can't receive it
-        }
-    }
-
-    return true;
 };
 
 /**
@@ -1378,10 +1366,14 @@ const filteredDocuments = computed(() => {
                 return true;
             }
             
-            // Only Receiving role can view documents forwarded to offices or municipalities
-            if (currentUser.value?.usertype === 'Receiving' && latestTransaction && 
-                (latestTransaction.forwarded_to_office_id || latestTransaction.forwarded_to_municipality_id)) {
-                return true;
+            // Administrator, Developer, Receiving roles can view documents forwarded to offices or municipalities
+            // Also, the user who forwarded it can view it
+            if (latestTransaction && (latestTransaction.forwarded_to_office_id || latestTransaction.forwarded_to_municipality_id)) {
+                const isAllowedRole = ['Receiving', 'Administrator', 'Developer'].includes(currentUser.value?.usertype || '');
+                const isForwarder = latestTransaction.user_id === currentUser.value?.id;
+                if (isAllowedRole || isForwarder) {
+                    return true;
+                }
             }
             
             return false;
@@ -1500,7 +1492,8 @@ const isForwardedToOfficeOrMunicipality = (document: Document): boolean => {
     }
 
     const latestTransaction = document.transactions[0];
-    return !!(latestTransaction.forwardedToOffice || latestTransaction.forwardedToMunicipality);
+    // Check the ID fields directly (these are always present)
+    return !!(latestTransaction.forwarded_to_office_id || latestTransaction.forwarded_to_municipality_id);
 };
 
 /**
@@ -1513,7 +1506,45 @@ const getForwardedByUserId = (document: Document): number | null => {
     }
 
     const latestTransaction = document.transactions[0];
-    return latestTransaction.user_id || null;
+    const userId = latestTransaction.user_id;
+    return userId ? Number(userId) : null;
+};
+
+/**
+ * Check if current user can receive a specific document
+ * Mirrors the backend canReceiveSpecificDocument logic exactly
+ */
+const canReceiveDocument = (document: Document): boolean => {
+    // Must be forwarded status
+    if (document.status !== 'forwarded') {
+        return false;
+    }
+    
+    // Must have receive permission
+    if (!hasPermission('documents.receive')) {
+        return false;
+    }
+    
+    // Get forwarder ID and current user ID (ensure both are numbers)
+    const forwarderId = getForwardedByUserId(document);
+    const currentUserId = currentUser.value?.id ? Number(currentUser.value.id) : null;
+    
+    if (!forwarderId || !currentUserId) {
+        return false;
+    }
+    
+    // If forwarded to office or municipality
+    if (isForwardedToOfficeOrMunicipality(document)) {
+        // Only Admin, Developer, Receiving roles can receive as base rule
+        const userRole = currentUser.value?.usertype || '';
+        const isAllowedRole = ['Administrator', 'Developer', 'Receiving'].includes(userRole);
+        // OR the user who forwarded it can receive (regardless of role)
+        const isForwarder = forwarderId === currentUserId;
+        return isAllowedRole || isForwarder;
+    }
+    
+    // Otherwise (forwarded to a user): can receive if they didn't forward it
+    return forwarderId !== currentUserId;
 };
 
 const getCustodianDisplay = (document: Document): string => {
@@ -1524,15 +1555,40 @@ const getCustodianDisplay = (document: Document): string => {
 
     const latestTransaction = document.transactions[0];
     
-    // Check for forwarded destinations in order of priority
-    if (latestTransaction.forwardedToOffice) {
-        return latestTransaction.forwardedToOffice.office_name;
+    // Check for office forwarding (by ID field)
+    if (latestTransaction.forwarded_to_office_id) {
+        const office = offices.value.find(o => o.id === latestTransaction.forwarded_to_office_id);
+        if (office) {
+            return office.office_name;
+        }
     }
-    if (latestTransaction.forwardedToMunicipality) {
-        return latestTransaction.forwardedToMunicipality.name;
+    
+    // Check for municipality forwarding (by ID field)
+    if (latestTransaction.forwarded_to_municipality_id) {
+        const municipality = municipalities.value.find(m => m.id === latestTransaction.forwarded_to_municipality_id);
+        if (municipality) {
+            return municipality.name;
+        }
     }
-    if (latestTransaction.forwardedToUser) {
-        return latestTransaction.forwardedToUser.name;
+    
+    // Check for user-to-user forwarding
+    if (latestTransaction.forwarded_to_user_id) {
+        // Check if the forwarded-to user has received the document
+        const hasReceived = document.transactions.some(t => 
+            t.forwarded_to_user_id === latestTransaction.forwarded_to_user_id &&
+            t.action.toLowerCase().includes('received')
+        );
+        
+        if (hasReceived) {
+            // User has received it, show that user as custodian
+            const forwardedUser = users.value.find(u => u.id === latestTransaction.forwarded_to_user_id);
+            if (forwardedUser) {
+                return forwardedUser.name;
+            }
+        } else {
+            // User hasn't received it yet, show the forwarder as custodian
+            return latestTransaction.user?.name || document.user?.name || 'Unknown';
+        }
     }
     
     // Fallback to the user who performed the transaction
@@ -1921,7 +1977,7 @@ const handleSubmitForward = async () => {
  */
 const handleFinalizeDocument = (document: Document) => {
     if (document.status !== 'pending') {
-        toastRef.value?.add('error', 'Error', 'Only pending documents can be finalized', 4000);
+        toastRef.value?.add('error', 'Error', 'Only pending documents can be ended', 4000);
         return;
     }
 
@@ -1935,6 +1991,7 @@ const handleFinalizeDocument = (document: Document) => {
 const closeFinalizeModal = () => {
     showFinalizeModal.value = false;
     documentToFinalize.value = null;
+    finalizeModalRemarks.value = '';
 };
 
 /**
@@ -1953,12 +2010,15 @@ const confirmFinalizeDocument = async () => {
                 'Accept': 'application/json',
                 'X-CSRF-Token': getCsrfToken()
             },
+            body: JSON.stringify({
+                remarks: finalizeModalRemarks.value || null
+            }),
             credentials: 'include'
         });
 
         if (!response.ok) {
             const errorData = await response.json().catch(() => ({}));
-            throw new Error(errorData.message || errorData.error || 'Failed to finalize document');
+            throw new Error(errorData.message || errorData.error || 'Failed to end document');
         }
 
         const updatedDocument = await response.json();
@@ -1972,7 +2032,7 @@ const confirmFinalizeDocument = async () => {
         toastRef.value?.add(
             'success',
             'Success',
-            `Document: <strong>${updatedDocument.tracking_no}</strong> has been finalized successfully!`,
+            `Document: <strong>${updatedDocument.tracking_no}</strong> has been ended successfully!`,
             3000
         );
     } catch (e) {
@@ -1997,6 +2057,7 @@ const handleReceiveDocument = (document: Document) => {
 const closeReceiveModal = () => {
     showReceiveModal.value = false;
     documentToReceive.value = null;
+    receiveModalRemarks.value = '';
 };
 
 /**
@@ -2015,6 +2076,9 @@ const confirmReceiveDocument = async () => {
                 'Accept': 'application/json',
                 'X-CSRF-Token': getCsrfToken()
             },
+            body: JSON.stringify({
+                remarks: receiveModalRemarks.value || null
+            }),
             credentials: 'include'
         });
 

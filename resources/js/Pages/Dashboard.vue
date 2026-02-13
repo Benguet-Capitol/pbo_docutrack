@@ -133,6 +133,9 @@
                                         Processing Time
                                     </th>
                                     <th class="px-6 py-3 text-xs font-bold text-gray-700 dark:text-gray-200 text-center">
+                                        Remaining Duration
+                                    </th>
+                                    <th class="px-6 py-3 text-xs font-bold text-gray-700 dark:text-gray-200 text-center">
                                         Transactions
                                     </th>
                                 </tr>
@@ -166,11 +169,16 @@
                                                 <span v-if="document.status === 'created'" class="px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 rounded-full text-xs font-medium">Created</span>
                                                 <span v-else-if="document.status === 'forwarded'" class="px-2 py-1 bg-cyan-100 dark:bg-cyan-900/30 text-cyan-800 dark:text-cyan-300 rounded-full text-xs font-medium">Forwarded</span>
                                                 <span v-else-if="document.status === 'pending'" class="px-2 py-1 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300 rounded-full text-xs font-medium">Pending</span>
-                                                <span v-else-if="document.status === 'finalized'" class="px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 rounded-full text-xs font-medium">Finalized</span>
+                                                <span v-else-if="document.status === 'finalized'" class="px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 rounded-full text-xs font-medium">Transaction Ended</span>
                                                 <span v-else class="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300 rounded-full text-xs font-medium">{{ document.status }}</span>
                                             </td>
                                             <td class="px-4 py-2 text-xs text-center text-gray-600 dark:text-gray-400 font-medium">
                                                 {{ calculateProcessingTime(document) }}
+                                            </td>
+                                            <td class="px-4 py-2 text-xs text-center font-medium">
+                                                <div :class="getTimeLeftStyles(document)">
+                                                    {{ getTimeLeftText(document) }}
+                                                </div>
                                             </td>
                                             <td class="px-4 py-2 text-xs text-center">
                                                 <button
@@ -185,7 +193,7 @@
 
                                         <!-- Expanded Transactions Row -->
                                         <tr v-if="expandedDocumentId === document.id" :key="`transactions-${document.id}`" class="bg-gray-50 dark:bg-gray-700/50">
-                                        <td :colspan="9" class="px-6 py-6">
+                                        <td :colspan="10" class="px-6 py-6">
                                             <div class="space-y-4">
                                                 <h4 class="font-semibold text-gray-900 dark:text-white text-sm flex items-center gap-2">
                                                     <i class="fas fa-history text-purple-600 dark:text-purple-400"></i>
@@ -224,7 +232,7 @@
                                                                 <span v-if="getActionType(transaction.action) === 'created'" class="inline-block px-2 py-0.5 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 rounded text-xs font-medium">Created</span>
                                                                 <span v-else-if="getActionType(transaction.action) === 'forwarded'" class="inline-block px-2 py-0.5 bg-cyan-100 dark:bg-cyan-900/30 text-cyan-800 dark:text-cyan-300 rounded text-xs font-medium">Forwarded</span>
                                                                 <span v-else-if="getActionType(transaction.action) === 'received'" class="inline-block px-2 py-0.5 bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-300 rounded text-xs font-medium">Received</span>
-                                                                <span v-else-if="getActionType(transaction.action) === 'finalized'" class="inline-block px-2 py-0.5 bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300 rounded text-xs font-medium">Finalized</span>
+                                                                <span v-else-if="getActionType(transaction.action) === 'finalized'" class="inline-block px-2 py-0.5 bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300 rounded text-xs font-medium">Transaction Ended</span>
                                                             </div>
 
                                                             <!-- Date/Time -->
@@ -278,7 +286,7 @@
                                     </template>
                                 </template>
                                 <tr v-else>
-                                    <td :colspan="9" class="px-6 py-8 text-center">
+                                    <td :colspan="10" class="px-6 py-8 text-center">
                                         <div v-if="loading" class="text-gray-500 dark:text-gray-400 space-y-2">
                                             <i class="fas fa-spinner fa-spin text-2xl opacity-30"></i>
                                             <p>Loading documents...</p>
@@ -530,6 +538,11 @@ const selectedYear = ref<number | null>(new Date().getFullYear());
 const selectedSemester = ref<number | null>(null);
 const selectedUser = ref<number | null>(null);
 
+// ============== Office/Municipality/User Lists ==============
+const offices = ref<Array<{id: number; office_name: string}>>([]);
+const municipalities = ref<Array<{id: number; name: string}>>([]);
+const users = ref<Array<{id: number; name: string}>>([]);
+
 // ============== Fetch Documents ==============
 const fetchDocuments = async () => {
     try {
@@ -540,6 +553,23 @@ const fetchDocuments = async () => {
             throw new Error('Failed to fetch documents');
         }
         documents.value = await response.json();
+        
+        // Fetch offices and municipalities
+        const officesResponse = await fetch('/api/offices');
+        if (officesResponse.ok) {
+            offices.value = await officesResponse.json();
+        }
+        
+        const municipalitiesResponse = await fetch('/api/municipalities');
+        if (municipalitiesResponse.ok) {
+            municipalities.value = await municipalitiesResponse.json();
+        }
+        
+        // Fetch users for lookup
+        const usersResponse = await fetch('/api/users');
+        if (usersResponse.ok) {
+            users.value = await usersResponse.json();
+        }
     } catch (e) {
         error.value = e instanceof Error ? e.message : 'An error occurred while fetching documents';
         console.error('Error fetching documents:', error.value);
@@ -928,19 +958,195 @@ const getCustodianName = (document: Document): string => {
 
     const latestTransaction = document.transactions[0];
     
-    // Check for forwarded destinations in order of priority
-    if (latestTransaction.forwardedToOffice) {
-        return latestTransaction.forwardedToOffice.office_name;
+    // Check for office forwarding (by ID field)
+    if (latestTransaction.forwarded_to_office_id) {
+        const office = offices.value.find(o => o.id === latestTransaction.forwarded_to_office_id);
+        if (office) {
+            return office.office_name;
+        }
     }
-    if (latestTransaction.forwardedToMunicipality) {
-        return latestTransaction.forwardedToMunicipality.name;
+    
+    // Check for municipality forwarding (by ID field)
+    if (latestTransaction.forwarded_to_municipality_id) {
+        const municipality = municipalities.value.find(m => m.id === latestTransaction.forwarded_to_municipality_id);
+        if (municipality) {
+            return municipality.name;
+        }
     }
-    if (latestTransaction.forwardedToUser) {
-        return latestTransaction.forwardedToUser.name;
+    
+    // Check for user-to-user forwarding
+    if (latestTransaction.forwarded_to_user_id) {
+        // Check if the forwarded-to user has received the document
+        const hasReceived = document.transactions.some(t => 
+            t.forwarded_to_user_id === latestTransaction.forwarded_to_user_id &&
+            t.action.toLowerCase().includes('received')
+        );
+        
+        if (hasReceived) {
+            // User has received it, show that user as custodian
+            const forwardedUser = users.value.find(u => u.id === latestTransaction.forwarded_to_user_id);
+            if (forwardedUser) {
+                return forwardedUser.name;
+            }
+        } else {
+            // User hasn't received it yet, show the forwarder as custodian
+            return latestTransaction.user?.name || document.user?.name || 'Unknown';
+        }
     }
     
     // Fallback to the user who performed the transaction
     return latestTransaction.user?.name || document.user?.name || 'Unknown';
+};
+
+/**
+ * Get processing time limit in days based on document type
+ */
+const getProcessingTimeLimit = (docType: string): number => {
+    const type = docType.toLowerCase().trim();
+    if (type.includes('annual')) return 25; // Annual Budget: 25 days
+    if (type.includes('supplemental')) return 12; // Supplemental Budget: 12 days
+    if (type.includes('proposal') || type.includes('proposals')) return 12; // Budget Proposals: 12 days
+    return 30; // Default: 30 days for other types
+};
+
+/**
+ * Calculate business days (excluding weekends) between two dates
+ */
+const calculateBusinessDays = (startDate: Date, endDate: Date): number => {
+    let count = 0;
+    const current = new Date(startDate);
+    
+    while (current <= endDate) {
+        const dayOfWeek = current.getDay();
+        // 0 = Sunday, 6 = Saturday
+        if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+            count++;
+        }
+        current.setDate(current.getDate() + 1);
+    }
+    
+    return count;
+};
+
+/**
+ * Calculate time left for processing and determine color
+ */
+const getTimeLeftInfo = (document: Document): { daysLeft: number; hoursLeft: number; isLapsed: boolean; percentage: number } => {
+    if (!document.transactions || document.transactions.length === 0) {
+        return { daysLeft: 0, hoursLeft: 0, isLapsed: false, percentage: 0 };
+    }
+    
+    // Get limit based on document type (in business days)
+    const limit = getProcessingTimeLimit(document.document_type);
+    
+    // Get the first transaction date (document creation date)
+    const firstTransaction = document.transactions[document.transactions.length - 1];
+    const createdDate = new Date(firstTransaction.created_at);
+    
+    // If document is ended (finalized), freeze the time at the moment of ending
+    let now = new Date();
+    if (document.status === 'ended' || document.status === 'finalized') {
+        // Use the last transaction date as the reference point (when it was ended)
+        const lastTransaction = document.transactions[0];
+        now = new Date(lastTransaction.created_at);
+    }
+    
+    // Calculate business days elapsed
+    const daysElapsed = calculateBusinessDays(createdDate, now);
+    
+    // Calculate remaining business days in hours
+    const totalHoursLimit = limit * 24; // Convert business days to hours
+    
+    // Calculate total hours elapsed (including non-business hours)
+    const msElapsed = now.getTime() - createdDate.getTime();
+    const hoursElapsed = msElapsed / (1000 * 60 * 60);
+    
+    // Calculate total hours left
+    const totalHoursLeft = Math.max(0, totalHoursLimit - hoursElapsed);
+    const daysLeft = Math.floor(totalHoursLeft / 24);
+    const hoursLeft = Math.round(totalHoursLeft % 24);
+    
+    const isLapsed = hoursElapsed > totalHoursLimit;
+    const percentage = (hoursElapsed / totalHoursLimit) * 100;
+    
+    return { daysLeft, hoursLeft, isLapsed, percentage };
+};
+
+/**
+ * Get the text to display for time left
+ */
+const getTimeLeftText = (document: Document): string => {
+    const { daysLeft, hoursLeft, isLapsed } = getTimeLeftInfo(document);
+    
+    if (isLapsed) {
+        return `Overdue`;
+    }
+    
+    if (daysLeft === 0 && hoursLeft === 0) {
+        return `No time`;
+    }
+    
+    if (daysLeft === 0) {
+        return `${hoursLeft}hrs`;
+    }
+    
+    if (hoursLeft === 0) {
+        return `${daysLeft}days`;
+    }
+    
+    return `${daysLeft} days ${hoursLeft} hrs`;
+};
+
+/**
+ * Get the style classes for time left cell based on remaining time
+ */
+const getTimeLeftStyles = (document: Document): object => {
+    const { daysLeft, isLapsed, percentage } = getTimeLeftInfo(document);
+    
+    let bgColor = '';
+    let textColor = '';
+    let borderColor = '';
+    
+    if (isLapsed) {
+        // Red: lapsed
+        bgColor = 'bg-red-100 dark:bg-red-900/30';
+        textColor = 'text-red-800 dark:text-red-300';
+        borderColor = 'border-red-200 dark:border-red-800';
+    } else if (percentage >= 75) {
+        // Red: very urgent (75%+ of time used)
+        bgColor = 'bg-red-100 dark:bg-red-900/30';
+        textColor = 'text-red-800 dark:text-red-300';
+        borderColor = 'border-red-200 dark:border-red-800';
+    } else if (percentage >= 50) {
+        // Orange: urgent (50-75% of time used)
+        bgColor = 'bg-orange-100 dark:bg-orange-900/30';
+        textColor = 'text-orange-800 dark:text-orange-300';
+        borderColor = 'border-orange-200 dark:border-orange-800';
+    } else if (percentage >= 25) {
+        // Yellow: moderate (25-50% of time used)
+        bgColor = 'bg-yellow-100 dark:bg-yellow-900/30';
+        textColor = 'text-yellow-800 dark:text-yellow-300';
+        borderColor = 'border-yellow-200 dark:border-yellow-800';
+    } else {
+        // Green: plenty of time (< 25% of time used)
+        bgColor = 'bg-green-100 dark:bg-green-900/30';
+        textColor = 'text-green-800 dark:text-green-300';
+        borderColor = 'border-green-200 dark:border-green-800';
+    }
+    
+    return {
+        'inline-flex': true,
+        'items-center': true,
+        'gap-1': true,
+        'px-3': true,
+        'py-1': true,
+        [bgColor]: true,
+        [textColor]: true,
+        'rounded-full': true,
+        'border': true,
+        [borderColor]: true,
+        'whitespace-nowrap': true
+    };
 };
 
 /**
