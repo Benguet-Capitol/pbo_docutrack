@@ -1029,6 +1029,70 @@ const calculateBusinessDays = (startDate: Date, endDate: Date): number => {
 };
 
 /**
+ * Calculate business hours elapsed (excluding weekends)
+ */
+const calculateBusinessHoursElapsed = (startDate: Date, endDate: Date): number => {
+    let businessHours = 0;
+    const current = new Date(startDate);
+    current.setHours(0, 0, 0, 0); // Start at beginning of day
+    
+    const end = new Date(endDate);
+    
+    // Iterate through each day
+    while (current < end) {
+        const dayOfWeek = current.getDay();
+        // 0 = Sunday, 6 = Saturday
+        if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+            // This is a business day
+            const nextDay = new Date(current);
+            nextDay.setDate(nextDay.getDate() + 1);
+            
+            if (nextDay <= end) {
+                // Full day of business hours
+                businessHours += 24;
+            } else {
+                // Partial day - calculate hours from current time to end time
+                const msElapsed = end.getTime() - current.getTime();
+                businessHours += msElapsed / (1000 * 60 * 60);
+            }
+        }
+        current.setDate(current.getDate() + 1);
+        current.setHours(0, 0, 0, 0);
+    }
+    
+    return businessHours;
+};
+
+/**
+ * Calculate remaining business days and hours (excluding weekends)
+ */
+const calculateRemainingBusinessTime = (remainingHours: number): { days: number; hours: number } => {
+    let remainingBusinessHours = remainingHours;
+    let businessDays = 0;
+    const now = new Date();
+    let current = new Date(now);
+    
+    // Count how many business hours we can fit in the calendar
+    while (remainingBusinessHours > 0) {
+        const dayOfWeek = current.getDay();
+        // 0 = Sunday, 6 = Saturday
+        if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+            // This is a business day
+            if (remainingBusinessHours >= 24) {
+                remainingBusinessHours -= 24;
+                businessDays += 1;
+            } else {
+                // Remaining hours are less than a full day
+                break;
+            }
+        }
+        current.setDate(current.getDate() + 1);
+    }
+    
+    return { days: businessDays, hours: Math.round(remainingBusinessHours) };
+};
+
+/**
  * Calculate time left for processing and determine color
  */
 const getTimeLeftInfo = (document: Document): { daysLeft: number; hoursLeft: number; isLapsed: boolean; percentage: number } => {
@@ -1051,20 +1115,17 @@ const getTimeLeftInfo = (document: Document): { daysLeft: number; hoursLeft: num
         now = new Date(lastTransaction.created_at);
     }
     
-    // Calculate business days elapsed
-    const daysElapsed = calculateBusinessDays(createdDate, now);
-    
     // Calculate remaining business days in hours
     const totalHoursLimit = limit * 24; // Convert business days to hours
     
-    // Calculate total hours elapsed (including non-business hours)
-    const msElapsed = now.getTime() - createdDate.getTime();
-    const hoursElapsed = msElapsed / (1000 * 60 * 60);
+    // Calculate business hours elapsed (only counting weekdays)
+    const hoursElapsed = calculateBusinessHoursElapsed(createdDate, now);
     
     // Calculate total hours left
     const totalHoursLeft = Math.max(0, totalHoursLimit - hoursElapsed);
-    const daysLeft = Math.floor(totalHoursLeft / 24);
-    const hoursLeft = Math.round(totalHoursLeft % 24);
+    
+    // Calculate remaining business days and hours (excluding weekends)
+    const { days: daysLeft, hours: hoursLeft } = calculateRemainingBusinessTime(totalHoursLeft);
     
     const isLapsed = hoursElapsed > totalHoursLimit;
     const percentage = (hoursElapsed / totalHoursLimit) * 100;
