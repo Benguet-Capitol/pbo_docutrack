@@ -78,14 +78,15 @@
                 <div v-else class="overflow-x-auto">
                     <table class="w-full text-left table-fixed">
                         <colgroup>
-                            <col class="w-24">
-                            <col class="w-24">
-                            <col class="w-24">
-                            <col class="w-24">
+                            <col class="w-16">
+                            <col class="w-16">
+                            <col class="w-20">
+                            <col class="w-20">
                             <col class="w-32">
                             <col class="w-20">
                             <col class="w-20">
                             <col class="w-20">
+                            <col class="w-28">
                             <col class="w-20">
                         </colgroup>
                         <!-- Table Header: Contains sortable column headers -->
@@ -147,6 +148,9 @@
                                         <span v-if="sortBy === 'status'" class="text-xs">{{ sortOrder === 'asc' ? '▲' : '▼' }}</span>
                                     </button>
                                 </th>
+                                <th class="px-6 py-3 text-xs font-bold text-gray-700 dark:text-gray-200 text-center">
+                                    Remaining Duration
+                                </th>
                                 <th class="px-6 py-3 text-xs font-bold text-gray-700 dark:text-gray-200 text-center">Actions</th>
                             </tr>
                         </thead>
@@ -158,7 +162,12 @@
                                 v-for="document in paginatedDocuments"
                                 :key="document.id"
                                 @click="viewDocumentTransactions(document)"
-                                class="bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-150 cursor-pointer"
+                                :class="[
+                                    'transition-colors duration-150 cursor-pointer',
+                                    showTransactionsModal && documentViewingTransactions?.id === document.id 
+                                        ? 'bg-indigo-50 dark:bg-indigo-900/20 border-l-4 border-indigo-500' 
+                                        : 'bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700'
+                                ]"
                             >
                                 <!-- Tracking No Column -->
                                 <td class="px-4 py-2 text-xs font-medium text-gray-900 dark:text-gray-100">
@@ -200,6 +209,12 @@
                                     <span v-else-if="getDisplayStatus(document) === 'pending'" class="px-2 py-1 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300 rounded-full text-xs font-medium">Pending</span>
                                     <span v-else-if="getDisplayStatus(document) === 'finalized'" class="px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 rounded-full text-xs font-medium">Transaction Ended</span>
                                     <span v-else class="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300 rounded-full text-xs font-medium">{{ getDisplayStatus(document) }}</span>
+                                </td>
+                                <!-- Remaining Duration Column -->
+                                <td class="px-4 py-2 text-xs text-center font-medium">
+                                    <div :class="getTimeLeftStyles(document)">
+                                        {{ getTimeLeftText(document) }}
+                                    </div>
                                 </td>
                                 <!-- Actions Column: Contains edit/delete dropdown menu -->
                                 <td class="px-4 py-2 text-xs text-center">
@@ -382,6 +397,11 @@
                                         <option value="Annual Budget">Annual Budget</option>
                                         <option value="Supplemental Budget">Supplemental Budget</option>
                                         <option value="Budget Proposals">Budget Proposals</option>
+                                        <optgroup label="Referral">
+                                            <option value="Referral - Simple">Referral - Simple</option>
+                                            <option value="Referral - Complex">Referral - Complex</option>
+                                            <option value="Referral - Highly Technical">Referral - Highly Technical</option>
+                                        </optgroup>
                                     </select>
                                 </div>
                                 <span v-if="formErrors.document_type" class="text-red-500 text-xs">{{ formErrors.document_type }}</span>
@@ -404,10 +424,11 @@
                                 </div>
                             </div>
 
-                            <!-- Source Field: Select from Offices or Municipalities based on sourceType -->
+                            <!-- Source Field: Select from Offices or Municipalities based on sourceType, or text input for Others -->
                             <div class="space-y-2">
                                 <label for="source" class="block text-xs font-medium text-gray-700 dark:text-gray-300">Source</label>
-                                <div class="relative flex items-center">
+                                <!-- Dropdown for Internal and External -->
+                                <div v-if="formData.sourceType !== 'others'" class="relative flex items-center">
                                     <i class="fas fa-link absolute left-3 text-gray-400 text-sm"></i>
                                     <select
                                         v-model="formData.source"
@@ -421,10 +442,18 @@
                                         <option v-if="formData.sourceType === 'external'" v-for="municipality in municipalities" :key="municipality.id" :value="municipality.name">
                                             {{ municipality.name }}
                                         </option>
-                                        <option v-if="formData.sourceType === 'others'" value="Others">
-                                            Others
-                                        </option>
                                     </select>
+                                </div>
+                                <!-- Text input for Others -->
+                                <div v-if="formData.sourceType === 'others'" class="relative flex items-center">
+                                    <i class="fas fa-edit absolute left-3 text-gray-400 text-sm"></i>
+                                    <input
+                                        v-model="formData.source"
+                                        id="source"
+                                        type="text"
+                                        placeholder="Enter source"
+                                        class="block w-full pl-10 pr-4 py-2 text-xs border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:outline-none focus:border-emerald-500"
+                                    />
                                 </div>
                                 <span v-if="formErrors.source" class="text-red-500 text-xs">{{ formErrors.source }}</span>
                             </div>
@@ -525,7 +554,7 @@
                                 <span v-if="formErrors.tracking_no" class="text-red-500 text-xs">{{ formErrors.tracking_no }}</span>
                             </div>
 
-                            <!-- Date Field: Set to current date, max is current date -->
+                            <!-- Date Field: Disabled for non-Admin/Developer roles -->
                             <div class="space-y-2">
                                 <label for="edit_date" class="block text-xs font-medium text-gray-700 dark:text-gray-300">Date</label>
                                 <div class="relative flex items-center">
@@ -534,8 +563,10 @@
                                         v-model="formData.date"
                                         id="edit_date"
                                         type="date"
+                                        :disabled="!['Administrator', 'Developer'].includes(currentUser?.usertype)"
                                         :max="todayDate"
-                                        class="block w-full pl-10 pr-4 py-2 text-xs border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:outline-none focus:border-blue-500"
+                                        :class="!['Administrator', 'Developer'].includes(currentUser?.usertype) ? 'opacity-60 cursor-not-allowed' : 'focus:border-blue-500'"
+                                        class="block w-full pl-10 pr-4 py-2 text-xs border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:outline-none"
                                     />
                                 </div>
                                 <span v-if="formErrors.date" class="text-red-500 text-xs">{{ formErrors.date }}</span>
@@ -555,6 +586,11 @@
                                         <option value="Annual Budget">Annual Budget</option>
                                         <option value="Supplemental Budget">Supplemental Budget</option>
                                         <option value="Budget Proposals">Budget Proposals</option>
+                                        <optgroup label="Referral">
+                                            <option value="Referral - Simple">Referral - Simple</option>
+                                            <option value="Referral - Complex">Referral - Complex</option>
+                                            <option value="Referral - Highly Technical">Referral - Highly Technical</option>
+                                        </optgroup>
                                     </select>
                                 </div>
                                 <span v-if="formErrors.document_type" class="text-red-500 text-xs">{{ formErrors.document_type }}</span>
@@ -577,10 +613,11 @@
                                 </div>
                             </div>
 
-                            <!-- Source Field: Select from Offices or Municipalities based on sourceType -->
+                            <!-- Source Field: Select from Offices or Municipalities based on sourceType, or text input for Others -->
                             <div class="space-y-2">
                                 <label for="edit_source" class="block text-xs font-medium text-gray-700 dark:text-gray-300">Source</label>
-                                <div class="relative flex items-center">
+                                <!-- Dropdown for Internal and External -->
+                                <div v-if="formData.sourceType !== 'others'" class="relative flex items-center">
                                     <i class="fas fa-link absolute left-3 text-gray-400 text-sm"></i>
                                     <select
                                         v-model="formData.source"
@@ -594,10 +631,18 @@
                                         <option v-if="formData.sourceType === 'external'" v-for="municipality in municipalities" :key="municipality.id" :value="municipality.name">
                                             {{ municipality.name }}
                                         </option>
-                                        <option v-if="formData.sourceType === 'others'" value="Others">
-                                            Others
-                                        </option>
                                     </select>
+                                </div>
+                                <!-- Text input for Others -->
+                                <div v-if="formData.sourceType === 'others'" class="relative flex items-center">
+                                    <i class="fas fa-edit absolute left-3 text-gray-400 text-sm"></i>
+                                    <input
+                                        v-model="formData.source"
+                                        id="edit_source"
+                                        type="text"
+                                        placeholder="Enter source"
+                                        class="block w-full pl-10 pr-4 py-2 text-xs border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:outline-none focus:border-blue-500"
+                                    />
                                 </div>
                                 <span v-if="formErrors.source" class="text-red-500 text-xs">{{ formErrors.source }}</span>
                             </div>
@@ -904,7 +949,7 @@
                                 <textarea
                                     v-model="finalizeModalRemarks"
                                     id="finalize_remarks"
-                                    placeholder="Add any remarks or notes about finalizing this document..."
+                                    placeholder="Add any remarks or notes about ending transaction for this document..."
                                     rows="3"
                                     class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-blue-500 dark:focus:border-blue-500 transition-colors text-xs resize-none"
                                 ></textarea>
@@ -1122,7 +1167,7 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import PageHead from '@/Components/PageHead.vue';
 import Toast from '@/Components/Toast.vue';
-import { ref, onMounted, computed, watch } from 'vue';
+import { ref, onMounted, computed, watch, onUnmounted } from 'vue';
 
 /**
  * Document interface defines the structure of document data
@@ -1142,9 +1187,11 @@ interface Document {
     transactions?: DocumentTransaction[];
 }
 
-// ============== Toast Component Reference ==============
+/** Reactive current time for real-time updates of Processing Time and Remaining Duration */
+const currentTime = ref(new Date());
 
-/** Reference to the Toast component for displaying notifications */
+/** Stores the interval ID for cleanup on component unmount */
+let timeUpdateInterval: NodeJS.Timeout | null = null;
 const toastRef = ref<InstanceType<typeof Toast> | null>(null);
 
 // ============== Helper Functions ==============
@@ -1280,6 +1327,283 @@ interface DocumentTransaction {
 }
 
 /**
+ * Get processing time limit in days based on document type
+ */
+const getProcessingTimeLimit = (docType: string): number => {
+    const type = docType.toLowerCase().trim();
+    if (type.includes('annual')) return 25; // Annual Budget: 25 days
+    if (type.includes('supplemental')) return 12; // Supplemental Budget: 12 days
+    if (type.includes('proposal') || type.includes('proposals')) return 12; // Budget Proposals: 12 days
+    if (type.includes('referral')) {
+        if (type.includes('simple')) return 3; // Referral - Simple: 3 days
+        if (type.includes('complex')) return 7; // Referral - Complex: 7 days
+        if (type.includes('highly technical')) return 20; // Referral - Highly Technical: 20 days
+    }
+    return 30; // Default: 30 days for other types
+};
+
+/**
+ * Calculate business days (excluding weekends) between two dates
+ */
+const calculateBusinessDays = (startDate: Date, endDate: Date): number => {
+    let count = 0;
+    const current = new Date(startDate);
+    
+    while (current <= endDate) {
+        const dayOfWeek = current.getDay();
+        // 0 = Sunday, 6 = Saturday
+        if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+            count++;
+        }
+        current.setDate(current.getDate() + 1);
+    }
+    
+    return count;
+};
+
+/**
+ * Calculate business hours elapsed (excluding weekends)
+ */
+const calculateBusinessHoursElapsed = (startDate: Date, endDate: Date): number => {
+    let businessHours = 0;
+    let current = new Date(startDate); // Keep actual start time (including hours/minutes)
+    const end = new Date(endDate);
+    
+    // Iterate through each day
+    while (current < end) {
+        const dayOfWeek = current.getDay();
+        // 0 = Sunday, 6 = Saturday
+        if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+            // This is a business day
+            const nextDay = new Date(current);
+            nextDay.setDate(nextDay.getDate() + 1);
+            nextDay.setHours(0, 0, 0, 0); // Next day at midnight
+            
+            if (nextDay <= end) {
+                // Calculate hours from current time to next midnight
+                const msToMidnight = nextDay.getTime() - current.getTime();
+                businessHours += msToMidnight / (1000 * 60 * 60);
+            } else {
+                // Partial day - calculate hours from current time to end time
+                const msElapsed = end.getTime() - current.getTime();
+                businessHours += msElapsed / (1000 * 60 * 60);
+            }
+        }
+        current.setDate(current.getDate() + 1);
+        current.setHours(0, 0, 0, 0); // Set to midnight for next iteration
+    }
+    
+    return businessHours;
+};
+
+/**
+ * Calculate remaining business days and hours (excluding weekends)
+ */
+const calculateRemainingBusinessTime = (remainingHours: number): { days: number; hours: number } => {
+    let remainingBusinessHours = remainingHours;
+    let businessDays = 0;
+    const now = new Date();
+    let current = new Date(now);
+    
+    // Count how many business hours we can fit in the calendar
+    while (remainingBusinessHours > 0) {
+        const dayOfWeek = current.getDay();
+        // 0 = Sunday, 6 = Saturday
+        if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+            // This is a business day
+            if (remainingBusinessHours >= 24) {
+                remainingBusinessHours -= 24;
+                businessDays += 1;
+            } else {
+                // Remaining hours are less than a full day
+                break;
+            }
+        }
+        current.setDate(current.getDate() + 1);
+    }
+    
+    return { days: businessDays, hours: Math.round(remainingBusinessHours) };
+};
+
+/**
+ * Calculate elapsed time excluding periods when document was with office or municipality
+ */
+const calculateElapsedTimeExcluding = (document: Document, startDate: Date, endDate: Date): number => {
+    if (!document.transactions || document.transactions.length === 0) {
+        return calculateBusinessHoursElapsed(startDate, endDate);
+    }
+    
+    // Find all office/municipality forward transactions and their corresponding receive/return
+    const excludePeriods: Array<{start: Date; end: Date}> = [];
+    
+    for (let i = 0; i < document.transactions.length; i++) {
+        const transaction = document.transactions[i];
+        
+        // Check if this is a forward to office or municipality
+        if ((transaction.forwarded_to_office_id || transaction.forwarded_to_municipality_id) &&
+            transaction.action.toLowerCase().includes('forward')) {
+            
+            const forwardStart = new Date(transaction.created_at);
+            
+            // Find the corresponding received transaction or next user-to-user forward
+            let forwardEnd = endDate; // Default to end date
+            for (let j = i - 1; j >= 0; j--) {
+                const nextTransaction = document.transactions[j];
+                const isReceived = nextTransaction.action.toLowerCase().includes('received');
+                const isUserForward = nextTransaction.forwarded_to_user_id && 
+                                    !nextTransaction.forwarded_to_office_id && 
+                                    !nextTransaction.forwarded_to_municipality_id &&
+                                    nextTransaction.action.toLowerCase().includes('forward');
+                
+                if (isReceived || isUserForward) {
+                    forwardEnd = new Date(nextTransaction.created_at);
+                    break;
+                }
+            }
+            
+            // Only exclude if the period is within our time range
+            if (forwardStart < endDate && forwardEnd > startDate) {
+                excludePeriods.push({
+                    start: new Date(Math.max(forwardStart.getTime(), startDate.getTime())),
+                    end: new Date(Math.min(forwardEnd.getTime(), endDate.getTime()))
+                });
+            }
+        }
+    }
+    
+    // Calculate total elapsed time
+    let totalElapsed = calculateBusinessHoursElapsed(startDate, endDate);
+    
+    // Subtract excluded periods
+    for (const period of excludePeriods) {
+        const excludedHours = calculateBusinessHoursElapsed(period.start, period.end);
+        totalElapsed -= excludedHours;
+    }
+    
+    return Math.max(0, totalElapsed);
+};
+
+/**
+ * Calculate time left for processing and determine color
+ */
+const getTimeLeftInfo = (document: Document): { daysLeft: number; hoursLeft: number; isLapsed: boolean; percentage: number } => {
+    if (!document.transactions || document.transactions.length === 0) {
+        return { daysLeft: 0, hoursLeft: 0, isLapsed: false, percentage: 0 };
+    }
+    
+    // Get limit based on document type (in business days)
+    const limit = getProcessingTimeLimit(document.document_type);
+    
+    // Get the creation timestamp from the first transaction (has the actual time)
+    // Find the creation transaction (typically the oldest/last in the array)
+    const creationTransaction = document.transactions[document.transactions.length - 1];
+    const createdDate = new Date(creationTransaction.created_at);
+    
+    // If document is ended (finalized), freeze the time at the moment of ending
+    let now = currentTime.value; // Use currentTime for real-time updates
+    if (document.status === 'ended' || document.status === 'finalized') {
+        // Use the last transaction date as the reference point (when it was ended)
+        const lastTransaction = document.transactions[0];
+        now = new Date(lastTransaction.created_at);
+    }
+    
+    // Calculate remaining business days in hours
+    const totalHoursLimit = limit * 24; // Convert business days to hours
+    
+    // Calculate business hours elapsed (only counting weekdays), excluding office/municipality forwarding time
+    const hoursElapsed = calculateElapsedTimeExcluding(document, createdDate, now);
+    
+    // Calculate total hours left
+    const totalHoursLeft = Math.max(0, totalHoursLimit - hoursElapsed);
+    
+    // Calculate remaining business days and hours (excluding weekends)
+    const { days: daysLeft, hours: hoursLeft } = calculateRemainingBusinessTime(totalHoursLeft);
+    
+    const isLapsed = hoursElapsed > totalHoursLimit;
+    const percentage = (hoursElapsed / totalHoursLimit) * 100;
+    
+    return { daysLeft, hoursLeft, isLapsed, percentage };
+};
+
+/**
+ * Get the text to display for time left
+ */
+const getTimeLeftText = (document: Document): string => {
+    const { daysLeft, hoursLeft, isLapsed } = getTimeLeftInfo(document);
+    
+    if (isLapsed) {
+        return `Overdue`;
+    }
+    
+    if (daysLeft === 0 && hoursLeft === 0) {
+        return `No time left`;
+    }
+    
+    if (daysLeft === 0) {
+        return `${hoursLeft} hrs`;
+    }
+    
+    if (hoursLeft === 0) {
+        return `${daysLeft} days`;
+    }
+    
+    return `${daysLeft} days ${hoursLeft} hrs`;
+};
+
+/**
+ * Get the style classes for time left cell based on remaining time
+ */
+const getTimeLeftStyles = (document: Document): object => {
+    const { daysLeft, isLapsed, percentage } = getTimeLeftInfo(document);
+    
+    let bgColor = '';
+    let textColor = '';
+    let borderColor = '';
+    
+    if (isLapsed) {
+        // Red: lapsed
+        bgColor = 'bg-red-100 dark:bg-red-900/30';
+        textColor = 'text-red-800 dark:text-red-300';
+        borderColor = 'border-red-200 dark:border-red-800';
+    } else if (percentage >= 75) {
+        // Red: very urgent (75%+ of time used)
+        bgColor = 'bg-red-100 dark:bg-red-900/30';
+        textColor = 'text-red-800 dark:text-red-300';
+        borderColor = 'border-red-200 dark:border-red-800';
+    } else if (percentage >= 50) {
+        // Orange: urgent (50-75% of time used)
+        bgColor = 'bg-orange-100 dark:bg-orange-900/30';
+        textColor = 'text-orange-800 dark:text-orange-300';
+        borderColor = 'border-orange-200 dark:border-orange-800';
+    } else if (percentage >= 25) {
+        // Yellow: moderate (25-50% of time used)
+        bgColor = 'bg-yellow-100 dark:bg-yellow-900/30';
+        textColor = 'text-yellow-800 dark:text-yellow-300';
+        borderColor = 'border-yellow-200 dark:border-yellow-800';
+    } else {
+        // Green: plenty of time (< 25% of time used)
+        bgColor = 'bg-green-100 dark:bg-green-900/30';
+        textColor = 'text-green-800 dark:text-green-300';
+        borderColor = 'border-green-200 dark:border-green-800';
+    }
+    
+    return {
+        'inline-flex': true,
+        'items-center': true,
+        'gap-1': true,
+        'px-2': true,
+        'py-1': true,
+        'rounded-full': true,
+        'text-xs': true,
+        'font-medium': true,
+        'border': true,
+        [bgColor]: true,
+        [textColor]: true,
+        [borderColor]: true,
+    };
+};
+
+/**
  * Helper function to determine action type from action string
  */
 const getActionType = (action: string): 'created' | 'forwarded' | 'finalized' | 'received' => {
@@ -1331,15 +1655,11 @@ const formData = ref({
     remarks: ''
 }); 
 
-/** Watch for changes in sourceType and auto-set source to 'Others' when sourceType is 'others' */
+/** Watch for changes in sourceType and clear source when changing types */
 watch(
     () => formData.value.sourceType,
     (newSourceType) => {
-        if (newSourceType === 'others') {
-            formData.value.source = 'Others';
-        } else {
-            formData.value.source = '';
-        }
+        formData.value.source = '';
     }
 );
 
@@ -1637,6 +1957,11 @@ const getCustodianDisplay = (document: Document): string => {
  * - Handles errors and sets loading state to false on completion
  */
 onMounted(async () => {
+    // Set up real-time updates for Processing Time and Remaining Duration
+    timeUpdateInterval = setInterval(() => {
+        currentTime.value = new Date();
+    }, 1000); // Update every second
+    
     try {
         // Fetch current user with permissions
         const currentUserResponse = await fetch('/api/user/current');
@@ -1672,6 +1997,16 @@ onMounted(async () => {
         error.value = e instanceof Error ? e.message : 'An error occurred';
     } finally {
         loading.value = false;
+    }
+});
+
+/**
+ * onUnmounted: Clean up the time update interval when component is destroyed
+ */
+onUnmounted(() => {
+    if (timeUpdateInterval) {
+        clearInterval(timeUpdateInterval);
+        timeUpdateInterval = null;
     }
 });
 
@@ -1722,10 +2057,14 @@ const toggleDropdown = (documentId: number) => {
  */
 const handleEditDocument = (document: Document) => {
     editingDocument.value = document;
-    // Determine sourceType based on whether source is an office or municipality
-    let sourceType = 'internal';
-    if (document.source && municipalities.value.some(m => m.name === document.source)) {
-        sourceType = 'external';
+    // Determine sourceType based on whether source is an office, municipality, or custom
+    let sourceType = 'others'; // Default to 'others' for custom sources
+    if (document.source) {
+        if (offices.value.some(o => o.office_name === document.source)) {
+            sourceType = 'internal';
+        } else if (municipalities.value.some(m => m.name === document.source)) {
+            sourceType = 'external';
+        }
     }
     
     formData.value = {

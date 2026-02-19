@@ -70,6 +70,7 @@ class RoleService
         ],
         'Administrative' => [
             'documents.receive',
+            'documents.forward',
             'documents.view.assigned',
             'offices.view',
             'offices.edit',

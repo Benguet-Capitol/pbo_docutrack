@@ -4,9 +4,6 @@
     </IfModule>
 
     RewriteEngine On
-    
-    # Set the base path for the /docutrack subdirectory
-    RewriteBase /docutrack
 
     # Handle Authorization Header
     RewriteCond %{HTTP:Authorization} .

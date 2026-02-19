@@ -77,3 +77,8 @@ Route::middleware('auth')
 });
 
 require __DIR__.'/auth.php';
+
+// Fallback route for 404 errors - must be after all other routes
+Route::fallback(function () {
+    return Inertia::render('Errors/Error404');
+});

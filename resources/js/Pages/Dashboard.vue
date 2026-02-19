@@ -16,6 +16,7 @@
                     <div class="px-6 py-5 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
                         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
                             <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+                                <i class="fas fa-clipboard-list text-teal-600 dark:text-teal-400 mr-2"></i>
                                 Documents Summary
                             </h3>
                             <div class="flex items-center gap-3">
@@ -84,14 +85,21 @@
                                 </select>
                             </div>
 
-                            <!-- Reset Filters Button -->
-                            <div class="flex items-end pt-1">
+                            <!-- Reset Filters Button and Generate Report Button -->
+                            <div class="flex items-end pt-1 gap-2 w-full">
                                 <button
                                     @click="selectedYear = null; selectedSemester = null; selectedUser = null"
                                     class="inline-flex items-center gap-1 px-3 py-2 rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors text-xs font-medium"
                                 >
                                     <i class="fas fa-times"></i>
                                     Reset
+                                </button>
+                                <button
+                                    @click="showReportModal = true"
+                                    class="ml-auto inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors text-xs font-medium"
+                                >
+                                    <i class="fas fa-file-pdf"></i>
+                                    Budget Proposal Report
                                 </button>
                             </div>
                         </div>
@@ -143,7 +151,7 @@
                             <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
                                 <template v-if="paginatedDocuments.length > 0">
                                     <template v-for="document in paginatedDocuments" :key="document.id">
-                                        <tr class="bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-150">
+                                        <tr @click="toggleExpanded(document.id)" :class="['transition-colors duration-150 cursor-pointer', expandedDocumentId === document.id ? 'bg-indigo-50 dark:bg-indigo-900/20 border-l-4 border-indigo-500' : 'bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700']">
                                             <td class="px-4 py-2 text-xs font-medium text-gray-900 dark:text-gray-100">
                                                 {{ document.tracking_no }}
                                             </td>
@@ -182,7 +190,7 @@
                                             </td>
                                             <td class="px-4 py-2 text-xs text-center">
                                                 <button
-                                                    @click="toggleExpanded(document.id)"
+                                                    @click.stop="toggleExpanded(document.id)"
                                                     class="inline-flex items-center gap-1 px-3 py-1 rounded-lg bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-200 dark:hover:bg-indigo-900/50 transition-colors text-xs font-medium"
                                                 >
                                                     <i :class="['fas', expandedDocumentId === document.id ? 'fa-chevron-up' : 'fa-chevron-down']"></i>
@@ -365,15 +373,17 @@
                     </div>
                 </div>
 
-            <!-- Users Summary Section: Average time per transaction -->
-            <div class="mt-8 bg-white dark:bg-gray-800 rounded-lg shadow">
-                <!-- Header Section -->
-                <div class="px-6 py-5 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
-                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-                        <i class="fas fa-users text-blue-600 dark:text-blue-400"></i>
-                        Summary of Users' Average time per transaction
-                    </h3>
-                </div>
+            <!-- Statistics Panels Grid: Side-by-side layout for Users and Documents statistics -->
+            <div class="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <!-- Users Summary Section: Average Duration per Transaction -->
+                <div class="bg-white dark:bg-gray-800 rounded-lg shadow">
+                    <!-- Header Section -->
+                    <div class="px-6 py-5 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                            <i class="fas fa-users text-blue-600 dark:text-blue-400"></i>
+                            Summary of Users Average Time per Transaction
+                        </h3>
+                    </div>
 
                 <!-- User Statistics Table -->
                 <div class="overflow-x-auto">
@@ -387,7 +397,7 @@
                                     Total Transactions
                                 </th>
                                 <th class="px-6 py-3 text-xs font-bold text-gray-700 dark:text-gray-200 text-center">
-                                    Average Time
+                                    Average Duration
                                 </th>
                             </tr>
                         </thead>
@@ -396,7 +406,7 @@
                                 <template v-for="(user, userIndex) in filteredUserStatistics" :key="`user-${userIndex}`">
                                     <tr 
                                         @click="toggleUserExpanded(user.userId)"
-                                        class="bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-150 cursor-pointer"
+                                        :class="['transition-colors duration-150 cursor-pointer', expandedUserId === user.userId ? 'bg-indigo-50 dark:bg-indigo-900/20 border-l-4 border-indigo-500' : 'bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700']"
                                     >
                                         <td class="px-6 py-4 text-sm font-medium text-gray-900 dark:text-gray-100 flex items-center gap-2">
                                             <i :class="['fas', expandedUserId === user.userId ? 'fa-chevron-down' : 'fa-chevron-right', 'text-gray-400 text-xs']"></i>
@@ -482,13 +492,216 @@
                     </table>
                 </div>
             </div>
+
+            <!-- Documents Processing Time Section: Average Duration per document type -->
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow">
+                <!-- Header Section -->
+                <div class="px-6 py-5 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                        <i class="fas fa-file-alt text-purple-600 dark:text-purple-400"></i>
+                        Average Processing Time for Documents
+                    </h3>
+                </div>
+
+                <!-- Document Statistics Table -->
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead class="bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">
+                            <tr>
+                                <th class="px-6 py-3 text-xs font-bold text-gray-700 dark:text-gray-200 text-left">
+                                    Document Type
+                                </th>
+                                <th class="px-6 py-3 text-xs font-bold text-gray-700 dark:text-gray-200 text-center">
+                                    Total Documents
+                                </th>
+                                <th class="px-6 py-3 text-xs font-bold text-gray-700 dark:text-gray-200 text-center">
+                                    Average Duration
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+                            <template v-if="documentProcessingStatistics.length > 0">
+                                <template v-for="docStat in documentProcessingStatistics" :key="`doc-${docStat.documentType}`">
+                                    <tr @click="toggleDocumentTypeExpanded(docStat.documentType)" :class="['transition-colors duration-150 cursor-pointer', expandedDocumentType === docStat.documentType ? 'bg-indigo-50 dark:bg-indigo-900/20 border-l-4 border-indigo-500' : 'bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700']">
+                                        <td class="px-6 py-4 text-sm font-medium text-gray-900 dark:text-gray-100 flex items-center gap-2">
+                                            <i :class="['fas', expandedDocumentType === docStat.documentType ? 'fa-chevron-down' : 'fa-chevron-right', 'text-gray-400 text-xs']"></i>
+                                            {{ docStat.documentType }}
+                                        </td>
+                                        <td class="px-6 py-4 text-sm text-center text-gray-700 dark:text-gray-300">
+                                            <span class="inline-flex items-center justify-center px-3 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300 rounded-full text-xs font-medium">
+                                                {{ docStat.count }}
+                                            </span>
+                                        </td>
+                                        <td class="px-6 py-4 text-sm text-center font-medium">
+                                            <span class="inline-flex items-center gap-1 px-3 py-1 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-300 rounded-full text-xs font-medium">
+                                                <i class="fas fa-stopwatch"></i>
+                                                {{ formatHours(docStat.averageHours) }}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                    <!-- Expanded Document Type Details Row -->
+                                    <tr v-if="expandedDocumentType === docStat.documentType" class="bg-gray-50 dark:bg-gray-700/50">
+                                        <td :colspan="3" class="px-6 py-6">
+                                            <div class="space-y-4">
+                                                <h4 class="font-semibold text-gray-900 dark:text-white text-sm flex items-center gap-2">
+                                                    <i class="fas fa-list text-purple-600 dark:text-purple-400"></i>
+                                                    Documents of Type: {{ docStat.documentType }}
+                                                </h4>
+                                                
+                                                <!-- No Documents State -->
+                                                <div v-if="getDocumentsForType(docStat.documentType).length === 0" class="py-6 text-center">
+                                                    <i class="fas fa-inbox text-gray-400 dark:text-gray-600 text-2xl mb-2 block"></i>
+                                                    <p class="text-xs text-gray-600 dark:text-gray-400">No documents found</p>
+                                                </div>
+
+                                                <!-- Documents Table -->
+                                                <div v-else class="overflow-x-auto">
+                                                    <table class="w-full text-xs">
+                                                        <thead class="bg-gray-200 dark:bg-gray-600">
+                                                            <tr>
+                                                                <th class="px-4 py-2 text-left font-semibold text-gray-700 dark:text-gray-200">Tracking No</th>
+                                                                <th class="px-4 py-2 text-left font-semibold text-gray-700 dark:text-gray-200">Particulars</th>
+                                                                <th class="px-4 py-2 text-left font-semibold text-gray-700 dark:text-gray-200">Status</th>
+                                                                <th class="px-4 py-2 text-center font-semibold text-gray-700 dark:text-gray-200">Processing Time</th>
+                                                                <th class="px-4 py-2 text-center font-semibold text-gray-700 dark:text-gray-200">Remaining Duration</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody class="divide-y divide-gray-200 dark:divide-gray-600">
+                                                            <tr v-for="doc in getDocumentsForType(docStat.documentType)" :key="`doc-detail-${doc.id}`" class="bg-white dark:bg-gray-800">
+                                                                <td class="px-4 py-2 text-gray-900 dark:text-gray-100 font-medium">
+                                                                    {{ doc.tracking_no }}
+                                                                </td>
+                                                                <td class="px-4 py-2 text-gray-600 dark:text-gray-400 max-w-xs truncate" :title="doc.particulars || '-'">
+                                                                    {{ doc.particulars || '-' }}
+                                                                </td>
+                                                                <td class="px-4 py-2 text-gray-600 dark:text-gray-400">
+                                                                    <span v-if="doc.status === 'created'" class="px-2 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 rounded text-xs font-medium">Created</span>
+                                                                    <span v-else-if="doc.status === 'forwarded'" class="px-2 py-0.5 bg-cyan-100 dark:bg-cyan-900/30 text-cyan-800 dark:text-cyan-300 rounded text-xs font-medium">Forwarded</span>
+                                                                    <span v-else-if="doc.status === 'pending'" class="px-2 py-0.5 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300 rounded text-xs font-medium">Pending</span>
+                                                                    <span v-else-if="doc.status === 'finalized'" class="px-2 py-0.5 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 rounded text-xs font-medium">Ended</span>
+                                                                    <span v-else class="px-2 py-0.5 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300 rounded text-xs font-medium">{{ doc.status }}</span>
+                                                                </td>
+                                                                <td class="px-4 py-2 text-center text-gray-600 dark:text-gray-400">
+                                                                    {{ calculateProcessingTime(doc) }}
+                                                                </td>
+                                                                <td class="px-4 py-2 text-center">
+                                                                    <div :class="getTimeLeftStyles(doc)">
+                                                                        {{ getTimeLeftText(doc) }}
+                                                                    </div>
+                                                                </td>
+                                                            </tr>
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </template>
+                            </template>
+                            <tr v-else>
+                                <td :colspan="3" class="px-6 py-8 text-center">
+                                    <div class="text-gray-500 dark:text-gray-400">
+                                        <i class="fas fa-inbox text-3xl opacity-30 mb-2 block"></i>
+                                        <p class="text-sm">No document data available</p>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            </div>
         </div>
+
+        <!-- Report Generation Modal -->
+        <Teleport to="body" v-if="showReportModal">
+            <div class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50" @click.self="showReportModal = false">
+                <div class="relative w-full max-w-md mx-4 bg-white rounded-lg shadow-lg dark:bg-gray-800 animate-scaleInUp">
+                    <!-- Modal Header -->
+                    <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 rounded-t-lg bg-gradient-to-r from-blue-50 to-blue-100 dark:from-gray-700 dark:to-gray-600 dark:border-gray-600">
+                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                            <i class="fas fa-file-pdf text-blue-600 dark:text-blue-400"></i>
+                            Generate Report
+                        </h3>
+                        <button @click="showReportModal = false" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
+                            <i class="fas fa-times text-xl"></i>
+                        </button>
+                    </div>
+
+                    <!-- Modal Body -->
+                    <div class="px-6 py-6 space-y-4">
+                        <!-- As of Date -->
+                        <div class="space-y-2">
+                            <label for="report_as_of_date" class="block text-xs font-medium text-gray-700 dark:text-gray-300">As of Date</label>
+                            <input
+                                v-model="reportData.asOfDate"
+                                id="report_as_of_date"
+                                type="date"
+                                class="w-full px-4 py-2 text-xs border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:outline-none focus:border-blue-500"
+                            />
+                        </div>
+
+                        <!-- Reviewed By -->
+                        <div class="space-y-2">
+                            <label for="report_reviewed_by" class="block text-xs font-medium text-gray-700 dark:text-gray-300">Reviewed By</label>
+                            <select
+                                v-model.number="reportData.reviewedBy"
+                                id="report_reviewed_by"
+                                class="w-full px-4 py-2 text-xs border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:outline-none focus:border-blue-500"
+                            >
+                                <option :value="null">Select Supervisor</option>
+                                <option v-for="user in supervisorUsers" :key="user.id" :value="user.id">
+                                    {{ user.name }}
+                                </option>
+                            </select>
+                        </div>
+
+                        <!-- Certified Correct -->
+                        <div class="space-y-2">
+                            <label for="report_certified_correct" class="block text-xs font-medium text-gray-700 dark:text-gray-300">Certified Correct</label>
+                            <select
+                                v-model.number="reportData.certifiedCorrect"
+                                id="report_certified_correct"
+                                class="w-full px-4 py-2 text-xs border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:outline-none focus:border-blue-500"
+                            >
+                                <option :value="null">Select Administrator</option>
+                                <option v-for="user in administratorUsers" :key="user.id" :value="user.id">
+                                    {{ user.name }}
+                                </option>
+                            </select>
+                        </div>
+
+                        <div v-if="reportErrors.submit" class="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                            <p class="text-red-800 dark:text-red-300 text-xs">{{ reportErrors.submit }}</p>
+                        </div>
+                    </div>
+
+                    <!-- Modal Footer -->
+                    <div class="flex items-center justify-center gap-3 p-6 border-t-2 border-gray-200 rounded-b-lg dark:border-gray-600 bg-gray-50 dark:bg-gray-800">
+                        <button
+                            @click="generateReport"
+                            class="inline-flex items-center gap-2 px-5 py-3 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95"
+                        >
+                            <i class="fas fa-check"></i>
+                            Generate
+                        </button>
+                        <button
+                            @click="showReportModal = false"
+                            class="inline-flex items-center gap-2 px-5 py-3 text-xs font-medium text-gray-600 dark:text-gray-400 border border-gray-600 dark:border-gray-500 hover:text-white hover:bg-gray-600 dark:hover:bg-gray-600 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95"
+                        >
+                            <i class="fas fa-times"></i>
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </Teleport>
     </AuthenticatedLayout>
 </template>
 
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, onUnmounted, ref } from 'vue';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import PageHead from '@/Components/PageHead.vue';
 
@@ -532,16 +745,33 @@ const itemsPerPage = ref(10);
 const currentPage = ref(1);
 const expandedDocumentId = ref<number | null>(null);
 const expandedUserId = ref<number | null>(null);
+const expandedDocumentType = ref<string | null>(null);
 const loading = ref(true);
 const error = ref('');
 const selectedYear = ref<number | null>(new Date().getFullYear());
 const selectedSemester = ref<number | null>(null);
 const selectedUser = ref<number | null>(null);
 
+/** Reactive current time for real-time updates of Processing Time and Remaining Duration */
+const currentTime = ref(new Date());
+
+/** Stores the interval ID for cleanup on component unmount */
+let timeUpdateInterval: NodeJS.Timeout | null = null;
+
+// ============== Report Generation ==============
+const showReportModal = ref(false);
+const reportData = ref({
+    asOfDate: new Date().toISOString().split('T')[0],
+    reviewedBy: null as number | null,
+    certifiedCorrect: null as number | null,
+});
+const reportErrors = ref<Record<string, string>>({});
+
 // ============== Office/Municipality/User Lists ==============
 const offices = ref<Array<{id: number; office_name: string}>>([]);
 const municipalities = ref<Array<{id: number; name: string}>>([]);
-const users = ref<Array<{id: number; name: string}>>([]);
+const users = ref<Array<{id: number; name: string; usertype?: string}>>([]);
+const employees = ref<Array<{id: number; employee_id: string; name: string; office_id: number; designation: string}>>([]);
 
 // ============== Fetch Documents ==============
 const fetchDocuments = async () => {
@@ -569,6 +799,12 @@ const fetchDocuments = async () => {
         const usersResponse = await fetch('/api/users');
         if (usersResponse.ok) {
             users.value = await usersResponse.json();
+        }
+        
+        // Fetch employees for designations
+        const employeesResponse = await fetch('/api/employees');
+        if (employeesResponse.ok) {
+            employees.value = await employeesResponse.json();
         }
     } catch (e) {
         error.value = e instanceof Error ? e.message : 'An error occurred while fetching documents';
@@ -693,6 +929,20 @@ const totalPages = computed(() => {
 });
 
 /**
+ * Filter users by role: Supervisor
+ */
+const supervisorUsers = computed(() => {
+    return users.value.filter(user => user.usertype === 'Supervisor');
+});
+
+/**
+ * Filter users by role: Administrator
+ */
+const administratorUsers = computed(() => {
+    return users.value.filter(user => user.usertype === 'Administrator');
+});
+
+/**
  * Filter user statistics based on selected user
  */
 const filteredUserStatistics = computed(() => {
@@ -798,6 +1048,49 @@ const userStatistics = computed(() => {
                 currentOwner = null;
             }
         });
+    });
+    
+    return Array.from(stats.values())
+        .sort((a, b) => b.averageHours - a.averageHours); // Sort by average hours descending
+});
+
+/**
+ * Calculate document processing statistics: average processing time per document type
+ */
+const documentProcessingStatistics = computed(() => {
+    const stats = new Map<string, { documentType: string; totalHours: number; count: number; averageHours: number }>();
+    
+    documents.value.forEach(document => {
+        // Apply year and semester filters
+        if (!matchesYearAndSemester(document.date)) return;
+        
+        // Include all documents with transactions (regardless of status)
+        if (!document.transactions || document.transactions.length === 0) return;
+        
+        const docType = document.document_type || 'Other';
+        
+        // Get the creation timestamp from the first transaction (has the actual time)
+        const creationTransaction = document.transactions[document.transactions.length - 1];
+        const createdAt = new Date(creationTransaction.created_at);
+        // If document is still being processed, use current time; otherwise use latest transaction time
+        const endTime = (document.status !== 'finalized' && document.status !== 'ended') 
+            ? new Date() 
+            : new Date(document.transactions[0].created_at);
+        
+        // Calculate business hours elapsed (excluding weekends and office/municipality forwarding time)
+        const processingHours = calculateElapsedTimeExcluding(document, createdAt, endTime);
+        
+        const existing = stats.get(docType) || {
+            documentType: docType,
+            totalHours: 0,
+            count: 0,
+            averageHours: 0
+        };
+        
+        existing.totalHours += processingHours;
+        existing.count += 1;
+        existing.averageHours = existing.totalHours / existing.count;
+        stats.set(docType, existing);
     });
     
     return Array.from(stats.values())
@@ -919,22 +1212,21 @@ const calculateProcessingTime = (document: Document): string => {
         return '-';
     }
 
-    // Find the first transaction (should be 'created' action)
-    const firstTransaction = document.transactions[document.transactions.length - 1];
+    // Get the creation timestamp from the first transaction (has the actual time)
+    const creationTransaction = document.transactions[document.transactions.length - 1];
+    const createdAt = new Date(creationTransaction.created_at);
     const latestTransaction = document.transactions[0];
+    
+    // If document is still being processed, use current time; otherwise use latest transaction time
+    const endTime = (document.status !== 'finalized' && document.status !== 'ended') 
+        ? new Date() 
+        : new Date(latestTransaction.created_at);
 
-    const createdAt = new Date(firstTransaction.created_at);
-    const latestAt = new Date(latestTransaction.created_at);
-
-    const diffMs = latestAt.getTime() - createdAt.getTime();
-    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-    const diffDays = Math.floor(diffHours / 24);
-
-    if (diffDays > 0) {
-        return `${diffDays} day${diffDays > 1 ? 's' : ''} ${diffHours % 24} hr${(diffHours % 24) !== 1 ? 's' : ''}`;
-    }
-
-    return `${diffHours} hr${diffHours !== 1 ? 's' : ''}`;
+    // Calculate business hours elapsed (excluding weekends and office/municipality forwarding time)
+    const businessHoursElapsed = calculateElapsedTimeExcluding(document, createdAt, endTime);
+    
+    // Format using existing formatter
+    return formatHours(businessHoursElapsed);
 };
 
 /**
@@ -1006,6 +1298,11 @@ const getProcessingTimeLimit = (docType: string): number => {
     if (type.includes('annual')) return 25; // Annual Budget: 25 days
     if (type.includes('supplemental')) return 12; // Supplemental Budget: 12 days
     if (type.includes('proposal') || type.includes('proposals')) return 12; // Budget Proposals: 12 days
+    if (type.includes('referral')) {
+        if (type.includes('simple')) return 3; // Referral - Simple: 3 days
+        if (type.includes('complex')) return 7; // Referral - Complex: 7 days
+        if (type.includes('highly technical')) return 20; // Referral - Highly Technical: 20 days
+    }
     return 30; // Default: 30 days for other types
 };
 
@@ -1033,9 +1330,7 @@ const calculateBusinessDays = (startDate: Date, endDate: Date): number => {
  */
 const calculateBusinessHoursElapsed = (startDate: Date, endDate: Date): number => {
     let businessHours = 0;
-    const current = new Date(startDate);
-    current.setHours(0, 0, 0, 0); // Start at beginning of day
-    
+    let current = new Date(startDate); // Keep actual start time (including hours/minutes)
     const end = new Date(endDate);
     
     // Iterate through each day
@@ -1046,10 +1341,12 @@ const calculateBusinessHoursElapsed = (startDate: Date, endDate: Date): number =
             // This is a business day
             const nextDay = new Date(current);
             nextDay.setDate(nextDay.getDate() + 1);
+            nextDay.setHours(0, 0, 0, 0); // Next day at midnight
             
             if (nextDay <= end) {
-                // Full day of business hours
-                businessHours += 24;
+                // Calculate hours from current time to next midnight
+                const msToMidnight = nextDay.getTime() - current.getTime();
+                businessHours += msToMidnight / (1000 * 60 * 60);
             } else {
                 // Partial day - calculate hours from current time to end time
                 const msElapsed = end.getTime() - current.getTime();
@@ -1057,7 +1354,7 @@ const calculateBusinessHoursElapsed = (startDate: Date, endDate: Date): number =
             }
         }
         current.setDate(current.getDate() + 1);
-        current.setHours(0, 0, 0, 0);
+        current.setHours(0, 0, 0, 0); // Set to midnight for next iteration
     }
     
     return businessHours;
@@ -1093,6 +1390,64 @@ const calculateRemainingBusinessTime = (remainingHours: number): { days: number;
 };
 
 /**
+ * Calculate elapsed time excluding periods when document was with office or municipality
+ */
+const calculateElapsedTimeExcluding = (document: Document, startDate: Date, endDate: Date): number => {
+    if (!document.transactions || document.transactions.length === 0) {
+        return calculateBusinessHoursElapsed(startDate, endDate);
+    }
+    
+    // Find all office/municipality forward transactions and their corresponding receive/return
+    const excludePeriods: Array<{start: Date; end: Date}> = [];
+    
+    for (let i = 0; i < document.transactions.length; i++) {
+        const transaction = document.transactions[i];
+        
+        // Check if this is a forward to office or municipality
+        if ((transaction.forwarded_to_office_id || transaction.forwarded_to_municipality_id) &&
+            transaction.action.toLowerCase().includes('forward')) {
+            
+            const forwardStart = new Date(transaction.created_at);
+            
+            // Find the corresponding received transaction or next user-to-user forward
+            let forwardEnd = endDate; // Default to end date
+            for (let j = i - 1; j >= 0; j--) {
+                const nextTransaction = document.transactions[j];
+                const isReceived = nextTransaction.action.toLowerCase().includes('received');
+                const isUserForward = nextTransaction.forwarded_to_user_id && 
+                                    !nextTransaction.forwarded_to_office_id && 
+                                    !nextTransaction.forwarded_to_municipality_id &&
+                                    nextTransaction.action.toLowerCase().includes('forward');
+                
+                if (isReceived || isUserForward) {
+                    forwardEnd = new Date(nextTransaction.created_at);
+                    break;
+                }
+            }
+            
+            // Only exclude if the period is within our time range
+            if (forwardStart < endDate && forwardEnd > startDate) {
+                excludePeriods.push({
+                    start: new Date(Math.max(forwardStart.getTime(), startDate.getTime())),
+                    end: new Date(Math.min(forwardEnd.getTime(), endDate.getTime()))
+                });
+            }
+        }
+    }
+    
+    // Calculate total elapsed time
+    let totalElapsed = calculateBusinessHoursElapsed(startDate, endDate);
+    
+    // Subtract excluded periods
+    for (const period of excludePeriods) {
+        const excludedHours = calculateBusinessHoursElapsed(period.start, period.end);
+        totalElapsed -= excludedHours;
+    }
+    
+    return Math.max(0, totalElapsed);
+};
+
+/**
  * Calculate time left for processing and determine color
  */
 const getTimeLeftInfo = (document: Document): { daysLeft: number; hoursLeft: number; isLapsed: boolean; percentage: number } => {
@@ -1103,12 +1458,13 @@ const getTimeLeftInfo = (document: Document): { daysLeft: number; hoursLeft: num
     // Get limit based on document type (in business days)
     const limit = getProcessingTimeLimit(document.document_type);
     
-    // Get the first transaction date (document creation date)
-    const firstTransaction = document.transactions[document.transactions.length - 1];
-    const createdDate = new Date(firstTransaction.created_at);
+    // Get the creation timestamp from the first transaction (has the actual time)
+    // Find the creation transaction (typically the oldest/last in the array)
+    const creationTransaction = document.transactions[document.transactions.length - 1];
+    const createdDate = new Date(creationTransaction.created_at);
     
     // If document is ended (finalized), freeze the time at the moment of ending
-    let now = new Date();
+    let now = currentTime.value; // Use currentTime for real-time updates
     if (document.status === 'ended' || document.status === 'finalized') {
         // Use the last transaction date as the reference point (when it was ended)
         const lastTransaction = document.transactions[0];
@@ -1118,8 +1474,8 @@ const getTimeLeftInfo = (document: Document): { daysLeft: number; hoursLeft: num
     // Calculate remaining business days in hours
     const totalHoursLimit = limit * 24; // Convert business days to hours
     
-    // Calculate business hours elapsed (only counting weekdays)
-    const hoursElapsed = calculateBusinessHoursElapsed(createdDate, now);
+    // Calculate business hours elapsed (only counting weekdays), excluding office/municipality forwarding time
+    const hoursElapsed = calculateElapsedTimeExcluding(document, createdDate, now);
     
     // Calculate total hours left
     const totalHoursLeft = Math.max(0, totalHoursLimit - hoursElapsed);
@@ -1144,15 +1500,15 @@ const getTimeLeftText = (document: Document): string => {
     }
     
     if (daysLeft === 0 && hoursLeft === 0) {
-        return `No time`;
+        return `No time left`;
     }
     
     if (daysLeft === 0) {
-        return `${hoursLeft}hrs`;
+        return `${hoursLeft} hrs`;
     }
     
     if (hoursLeft === 0) {
-        return `${daysLeft}days`;
+        return `${daysLeft} days`;
     }
     
     return `${daysLeft} days ${hoursLeft} hrs`;
@@ -1241,6 +1597,219 @@ const toggleUserExpanded = (userIdOrIndex: number | { userId: number }) => {
 };
 
 /**
+ * Toggle document type expansion
+ */
+const toggleDocumentTypeExpanded = (documentType: string) => {
+    expandedDocumentType.value = expandedDocumentType.value === documentType ? null : documentType;
+};
+
+/**
+ * Get documents for a specific document type
+ */
+const getDocumentsForType = (documentType: string): Document[] => {
+    return filteredDocuments.value.filter(doc => {
+        return doc.document_type === documentType;
+    });
+};
+
+/**
+ * Generate Budget Proposals Report
+ */
+const generateReport = async () => {
+    reportErrors.value = {};
+    
+    // Validate form
+    if (!reportData.value.reviewedBy) {
+        reportErrors.value.submit = 'Please select a Supervisor (Reviewed By)';
+        return;
+    }
+    if (!reportData.value.certifiedCorrect) {
+        reportErrors.value.submit = 'Please select an Administrator (Certified Correct)';
+        return;
+    }
+    
+    try {
+        // Get year from as of date
+        const asOfDate = new Date(reportData.value.asOfDate);
+        const selectedYear = asOfDate.getFullYear();
+        
+        // Filter documents for Budget Proposals created in the selected year
+        const budgetProposals = documents.value.filter(doc => {
+            // Check if document type is Budget Proposal
+            if (!doc.document_type.toLowerCase().includes('proposal')) return false;
+            
+            // Check if document date year matches selected year
+            const docDate = new Date(doc.date);
+            return docDate.getFullYear() === selectedYear;
+        });
+        
+        // Get created and received transactions for each document
+        const reportData_items: Array<{
+            dateReceived: string;
+            trackingNo: string;
+            source: string;
+            particulars: string;
+        }> = [];
+        
+        budgetProposals.forEach(doc => {
+            if (!doc.transactions || doc.transactions.length === 0) return;
+            
+            // Find creation transaction only
+            const createdTx = doc.transactions[doc.transactions.length - 1];
+            
+            // Add creation record only
+            reportData_items.push({
+                dateReceived: formatDateToWords(createdTx.created_at),
+                trackingNo: doc.tracking_no,
+                source: doc.source || 'N/A',
+                particulars: doc.particulars || 'N/A'
+            });
+        });
+        
+        // Get signatory names and designations
+        const reviewedByUser = users.value.find(u => u.id === reportData.value.reviewedBy);
+        const certifiedByUser = users.value.find(u => u.id === reportData.value.certifiedCorrect);
+        const reviewedByDesignation = getEmployeeDesignation(reportData.value.reviewedBy);
+        const certifiedCorrectDesignation = getEmployeeDesignation(reportData.value.certifiedCorrect);
+        
+        // Generate HTML report
+        const htmlContent = `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Budget Proposals</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; line-height: 1.6; }
+        .header { text-align: center; margin-bottom: 20px; }
+        .header h2 { margin: 5px 0; font-size: 14px; }
+        .header h1 { margin: 5px 0; font-size: 16px; font-weight: bold; }
+        .as-of { text-center: right; margin-bottom: 20px; font-size: 12px; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
+        th, td { border: 1px solid #000; padding: 8px; text-align: left; font-size: 12px; }
+        th { background-color: #f0f0f0; font-weight: bold; }
+        .signature-section { margin-top: 50px; display: flex; justify-content: space-around; }
+        .signature-box { width: 30%; text-align: center; }
+        .signature-title { font-size: 12px; margin-bottom: 50px; text-align: left; }
+        .signature-line { border-top: 1px solid #000; margin: 40px 0 5px 0; }
+        .signature-name { font-weight: bold; font-size: 12px; margin-top: 5px; }
+        .signature-designation { font-size: 11px; margin-top: 3px; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <p style="text-align: center; font-size: 12px; margin: 0;">Republic of the Philippines</p>
+        <p style="text-align: center; font-size: 12px; margin: 0; font-weight: bold;">PROVINCIAL GOVERNMENT OF BENGUET</p>
+        <p style="text-align: center; font-size: 12px; margin: 0;">La Trinidad, Benguet</p>
+        <p style="text-align: center; font-size: 12px; margin: 0; font-weight: bold;">Provincial Budget Office</p>
+    </div>
+    
+    <p style="text-align: center; font-size: 12px; margin-bottom: 0; margin-top: 10px; font-weight: bold;">BUDGET PROPOSALS</p>
+    <p style="text-align: center; font-size: 12px; margin-top:0; margin-bottom: 20px;">As of ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+    
+    <table>
+        <thead>
+            <tr>
+                <th style="text-align: center;">Date Received</th>
+                <th style="text-align: center;">Tracking No</th>
+                <th style="text-align: center;">Source</th>
+                <th style="text-align: center;">Particulars</th>
+            </tr>
+        </thead>
+        <tbody>
+            ${reportData_items.length > 0 ? reportData_items.map(item => `
+            <tr>
+                <td>${item.dateReceived}</td>
+                <td>${item.trackingNo}</td>
+                <td>${item.source}</td>
+                <td>${item.particulars}</td>
+            </tr>
+            `).join('') : '<tr><td colspan="4" style="text-align: center;">No data available</td></tr>'}
+        </tbody>
+    </table>
+    
+    <div class="signature-section">
+        <div class="signature-box">
+            <div class="signature-title">Reviewed By:</div>
+            <div class="signature-line"></div>
+            <div class="signature-name">${capitalizeWords(reviewedByUser?.name || 'Not Selected')}</div>
+            <div class="signature-designation">${reviewedByDesignation}</div>
+        </div>
+        
+        <div class="signature-box">
+            <div class="signature-title">Certified Correct:</div>
+            <div class="signature-line"></div>
+            <div class="signature-name">${capitalizeWords(certifiedByUser?.name || 'Not Selected')}</div>
+            <div class="signature-designation">${certifiedCorrectDesignation}</div>
+        </div>
+    </div>
+</body>
+</html>
+        `;
+        
+        // Open print dialog
+        const reportWindow = window.open('', 'PRINT_REPORT', 'height=900,width=900');
+        if (reportWindow) {
+            reportWindow.document.write(htmlContent);
+            reportWindow.document.close();
+            reportWindow.print();
+        }
+        
+        showReportModal.value = false;
+    } catch (e) {
+        reportErrors.value.submit = e instanceof Error ? e.message : 'An error occurred';
+    }
+};
+
+/**
+ * Format date and time
+ */
+const formatDateTime = (dateString: string): string => {
+    const date = new Date(dateString);
+    return date.toLocaleString('en-US', { 
+        year: 'numeric', 
+        month: '2-digit', 
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+    });
+};
+
+/**
+ * Format date to words (e.g., February 12, 2026)
+ */
+const formatDateToWords = (dateString: string): string => {
+    const date = new Date(dateString);
+    return date.toLocaleString('en-US', { 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true
+    });
+};
+
+/**
+ * Get employee designation by user ID (match by user name)
+ */
+const getEmployeeDesignation = (userId: number | null | undefined): string => {
+    if (!userId) return 'N/A';
+    const user = users.value.find(u => u.id === userId);
+    if (!user) return 'N/A';
+    const employee = employees.value.find(e => e.name === user.name);
+    return employee?.designation || 'N/A';
+};
+
+/**
+ * Capitalize first letter of each word
+ */
+const capitalizeWords = (str: string): string => {
+    return str.toUpperCase();
+};
+
+/**
  * Change page
  */
 const changePage = (page: number) => {
@@ -1251,6 +1820,39 @@ const changePage = (page: number) => {
 
 // ============== Lifecycle ==============
 onMounted(async () => {
+    // Set up real-time updates for Processing Time and Remaining Duration
+    timeUpdateInterval = setInterval(() => {
+        currentTime.value = new Date();
+    }, 1000); // Update every second
+    
     await fetchDocuments();
 });
+
+/**
+ * onUnmounted: Clean up the time update interval when component is destroyed
+ */
+onUnmounted(() => {
+    if (timeUpdateInterval) {
+        clearInterval(timeUpdateInterval);
+        timeUpdateInterval = null;
+    }
+});
 </script>
+
+<!-- Scoped Styles: Modal animations and transitions -->
+<style scoped>
+@keyframes scaleInUp {
+    from {
+        opacity: 0;
+        transform: scale(0.9) translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+.animate-scaleInUp {
+    animation: scaleInUp 0.3s ease-out;
+}
+</style>

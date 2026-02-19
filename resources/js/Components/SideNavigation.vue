@@ -219,13 +219,16 @@ const handleSidebarHover = (hovered: boolean) => {
 
                 <!-- User Info -->
                 <div v-show="isSidebarOpen || isSidebarHovered" class="flex-1 min-w-0 transition-opacity">
-                    <div class="flex flex-col gap-0.5">
+                    <div class="flex flex-col gap-1">
                         <p class="text-sm font-semibold text-gray-900 dark:text-white truncate leading-tight">
                             {{ auth.name }}
                         </p>
                         <p class="text-xs text-gray-600 dark:text-gray-400 truncate leading-tight">
                             {{ auth.username }}
                         </p>
+                        <span v-if="usertype" class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold text-white bg-gradient-to-r from-emerald-500 to-emerald-600 dark:from-emerald-600 dark:to-emerald-700 shadow-sm w-fit whitespace-nowrap">
+                            {{ usertype }}
+                        </span>
                     </div>
                 </div>
             </div>
