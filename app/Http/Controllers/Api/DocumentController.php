@@ -74,7 +74,7 @@ class DocumentController extends Controller
                 'document_id' => $document->id,
                 'user_id' => $user->id,
                 'action' => 'Created / Received document ' . $document->particulars . ' from ' . $document->source . ' with Tracking no: ' . $document->tracking_no . ' dated ' . $document->date,
-                'remarks' => null,
+                'remarks' => $validated['remarks'] ?? null,
             ]);
             
             return response()->json($document->load('user'), 201);
