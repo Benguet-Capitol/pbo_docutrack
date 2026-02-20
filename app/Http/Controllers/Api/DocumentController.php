@@ -256,10 +256,10 @@ class DocumentController extends Controller
                     $interval = $forwardedAt->diff($now);
                     $durationHours = ($interval->days * 24) + $interval->h;
                 }
-                // Otherwise it was forwarded to a user - use that user's name
+                // Otherwise it was forwarded to a user - use the forwarder's name (the user_id from the transaction, not the recipient)
                 elseif ($lastForwardTransaction->forwarded_to_user_id) {
-                    $forwardedUser = User::find($lastForwardTransaction->forwarded_to_user_id);
-                    $receivedFromName = $forwardedUser ? $forwardedUser->name : 'Unknown User';
+                    $forwardingUser = User::find($lastForwardTransaction->user_id);
+                    $receivedFromName = $forwardingUser ? $forwardingUser->name : 'Unknown User';
                     // No duration for user-to-user forwards
                     $durationHours = null;
                 }
