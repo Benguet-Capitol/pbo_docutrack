@@ -1618,16 +1618,6 @@ const getDocumentsForType = (documentType: string): Document[] => {
 const generateReport = async () => {
     reportErrors.value = {};
     
-    // Validate form
-    if (!reportData.value.reviewedBy) {
-        reportErrors.value.submit = 'Please select a Supervisor (Reviewed By)';
-        return;
-    }
-    if (!reportData.value.certifiedCorrect) {
-        reportErrors.value.submit = 'Please select an Administrator (Certified Correct)';
-        return;
-    }
-    
     try {
         // Get year from as of date
         const asOfDate = new Date(reportData.value.asOfDate);
@@ -1728,21 +1718,27 @@ const generateReport = async () => {
         </tbody>
     </table>
     
+    ${reportData.value.reviewedBy || reportData.value.certifiedCorrect ? `
     <div class="signature-section">
+        ${reportData.value.reviewedBy ? `
         <div class="signature-box">
             <div class="signature-title">Reviewed By:</div>
             <div class="signature-line"></div>
-            <div class="signature-name">${capitalizeWords(reviewedByUser?.name || 'Not Selected')}</div>
+            <div class="signature-name">${capitalizeWords(reviewedByUser?.name || 'N/A')}</div>
             <div class="signature-designation">${reviewedByDesignation}</div>
         </div>
+        ` : ''}
         
+        ${reportData.value.certifiedCorrect ? `
         <div class="signature-box">
             <div class="signature-title">Certified Correct:</div>
             <div class="signature-line"></div>
-            <div class="signature-name">${capitalizeWords(certifiedByUser?.name || 'Not Selected')}</div>
+            <div class="signature-name">${capitalizeWords(certifiedByUser?.name || 'N/A')}</div>
             <div class="signature-designation">${certifiedCorrectDesignation}</div>
         </div>
+        ` : ''}
     </div>
+    ` : ''}
 </body>
 </html>
         `;
