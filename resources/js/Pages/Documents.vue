@@ -350,26 +350,27 @@
                     <!-- Modal Body: Contains form inputs for creating a new document -->
                     <div class="px-6 py-4 overflow-y-auto" style="max-height: calc(90vh - 200px);">
                         <div class="grid gap-4">
-                            <!-- Tracking No Field: Auto-generated with YYYY-MM- prefix -->
+                            <!-- Tracking No Field: Auto-generated as YYYY-MM-NNNN -->
                             <div class="space-y-2">
-                                <label for="tracking_no" class="block text-xs font-medium text-gray-700 dark:text-gray-300">Tracking No</label>
+                                <label for="tracking_no" class="block text-xs font-medium text-gray-700 dark:text-gray-300">Tracking No <span class="text-red-600">*</span></label>
                                 <div class="relative flex items-center">
                                     <i class="fas fa-barcode absolute left-3 text-gray-400 text-sm"></i>
                                     <input
-                                        :value="trackingNoPrefix + (formData.tracking_no.replace(trackingNoPrefix, '') || '')"
-                                        @input="formData.tracking_no = trackingNoPrefix + ($event.target as HTMLInputElement).value.replace(trackingNoPrefix, '')"
+                                        v-model="formData.tracking_no"
                                         id="tracking_no"
                                         type="text"
-                                        :placeholder="trackingNoPrefix + 'XXX'"
-                                        class="block w-full pl-10 pr-4 py-2 text-xs border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:outline-none focus:border-emerald-500"
+                                        placeholder="Auto-generated"
+                                        disabled
+                                        class="block w-full pl-10 pr-4 py-2 text-xs border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:outline-none transition-colors bg-gray-100 dark:bg-gray-600 cursor-not-allowed opacity-75 border-gray-300 focus:border-gray-300"
                                     />
                                 </div>
+                                <p class="text-xs text-gray-500 dark:text-gray-400">Auto-generated based on current date</p>
                                 <span v-if="formErrors.tracking_no" class="text-red-500 text-xs">{{ formErrors.tracking_no }}</span>
                             </div>
 
                             <!-- Date Field: Set to current date, max is current date -->
                             <div class="space-y-2">
-                                <label for="date" class="block text-xs font-medium text-gray-700 dark:text-gray-300">Date</label>
+                                <label for="date" class="block text-xs font-medium text-gray-700 dark:text-gray-300">Date <span class="text-red-600">*</span></label>
                                 <div class="relative flex items-center">
                                     <i class="fas fa-calendar absolute left-3 text-gray-400 text-sm"></i>
                                     <input
@@ -385,7 +386,7 @@
 
                             <!-- Document Type Field: Select from predefined list -->
                             <div class="space-y-2">
-                                <label for="document_type" class="block text-xs font-medium text-gray-700 dark:text-gray-300">Document Type</label>
+                                <label for="document_type" class="block text-xs font-medium text-gray-700 dark:text-gray-300">Document Type <span class="text-red-600">*</span></label>
                                 <div class="relative flex items-center">
                                     <i class="fas fa-file-alt absolute left-3 text-gray-400 text-sm"></i>
                                     <select
@@ -426,7 +427,7 @@
 
                             <!-- Source Field: Select from Offices or Municipalities based on sourceType, or text input for Others -->
                             <div class="space-y-2">
-                                <label for="source" class="block text-xs font-medium text-gray-700 dark:text-gray-300">Source</label>
+                                <label for="source" class="block text-xs font-medium text-gray-700 dark:text-gray-300">Source <span class="text-red-600">*</span></label>
                                 <!-- Dropdown for Internal and External -->
                                 <div v-if="formData.sourceType !== 'others'" class="relative flex items-center">
                                     <i class="fas fa-link absolute left-3 text-gray-400 text-sm"></i>
@@ -460,7 +461,7 @@
 
                             <!-- Particulars Field: Required -->
                             <div class="space-y-2">
-                                <label for="particulars" class="block text-xs font-medium text-gray-700 dark:text-gray-300">Particulars</label>
+                                <label for="particulars" class="block text-xs font-medium text-gray-700 dark:text-gray-300">Particulars <span class="text-red-600">*</span></label>
                                 <div class="relative flex items-start">
                                     <i class="fas fa-pen-fancy absolute left-3 text-gray-400 text-sm top-3"></i>
                                     <textarea
@@ -537,18 +538,17 @@
                     <!-- Modal Body: Contains form inputs for editing a document -->
                     <div class="px-6 py-4 overflow-y-auto" style="max-height: calc(90vh - 200px);">
                         <div class="grid gap-4">
-                            <!-- Tracking No Field: Auto-generated with YYYY-MM- prefix -->
+                            <!-- Tracking No Field: Read-only, auto-generated during creation -->
                             <div class="space-y-2">
-                                <label for="edit_tracking_no" class="block text-xs font-medium text-gray-700 dark:text-gray-300">Tracking No</label>
+                                <label for="edit_tracking_no" class="block text-xs font-medium text-gray-700 dark:text-gray-300">Tracking No <span class="text-red-600">*</span></label>
                                 <div class="relative flex items-center">
                                     <i class="fas fa-barcode absolute left-3 text-gray-400 text-sm"></i>
                                     <input
-                                        :value="trackingNoPrefix + (formData.tracking_no.replace(trackingNoPrefix, '') || '')"
-                                        @input="formData.tracking_no = trackingNoPrefix + ($event.target as HTMLInputElement).value.replace(trackingNoPrefix, '')"
+                                        v-model="formData.tracking_no"
                                         id="edit_tracking_no"
                                         type="text"
-                                        :placeholder="trackingNoPrefix + 'XXX'"
-                                        class="block w-full pl-10 pr-4 py-2 text-xs border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:outline-none focus:border-blue-500"
+                                        disabled
+                                        class="block w-full pl-10 pr-4 py-2 text-xs border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:outline-none transition-colors bg-gray-100 dark:bg-gray-600 cursor-not-allowed opacity-75 border-gray-300 focus:border-gray-300"
                                     />
                                 </div>
                                 <span v-if="formErrors.tracking_no" class="text-red-500 text-xs">{{ formErrors.tracking_no }}</span>
@@ -556,7 +556,7 @@
 
                             <!-- Date Field: Disabled for non-Admin/Developer roles -->
                             <div class="space-y-2">
-                                <label for="edit_date" class="block text-xs font-medium text-gray-700 dark:text-gray-300">Date</label>
+                                <label for="edit_date" class="block text-xs font-medium text-gray-700 dark:text-gray-300">Date <span class="text-red-600">*</span></label>
                                 <div class="relative flex items-center">
                                     <i class="fas fa-calendar absolute left-3 text-gray-400 text-sm"></i>
                                     <input
@@ -574,7 +574,7 @@
 
                             <!-- Document Type Field: Select from predefined list -->
                             <div class="space-y-2">
-                                <label for="edit_document_type" class="block text-xs font-medium text-gray-700 dark:text-gray-300">Document Type</label>
+                                <label for="edit_document_type" class="block text-xs font-medium text-gray-700 dark:text-gray-300">Document Type <span class="text-red-600">*</span></label>
                                 <div class="relative flex items-center">
                                     <i class="fas fa-file-alt absolute left-3 text-gray-400 text-sm"></i>
                                     <select
@@ -615,7 +615,7 @@
 
                             <!-- Source Field: Select from Offices or Municipalities based on sourceType, or text input for Others -->
                             <div class="space-y-2">
-                                <label for="edit_source" class="block text-xs font-medium text-gray-700 dark:text-gray-300">Source</label>
+                                <label for="edit_source" class="block text-xs font-medium text-gray-700 dark:text-gray-300">Source <span class="text-red-600">*</span></label>
                                 <!-- Dropdown for Internal and External -->
                                 <div v-if="formData.sourceType !== 'others'" class="relative flex items-center">
                                     <i class="fas fa-link absolute left-3 text-gray-400 text-sm"></i>
@@ -649,7 +649,7 @@
 
                             <!-- Particulars Field: Required -->
                             <div class="space-y-2">
-                                <label for="edit_particulars" class="block text-xs font-medium text-gray-700 dark:text-gray-300">Particulars</label>
+                                <label for="edit_particulars" class="block text-xs font-medium text-gray-700 dark:text-gray-300">Particulars <span class="text-red-600">*</span></label>
                                 <div class="relative flex items-start">
                                     <i class="fas fa-pen-fancy absolute left-3 text-gray-400 text-sm top-3"></i>
                                     <textarea
@@ -1670,10 +1670,25 @@ const todayDate = computed(() => {
 });
 
 /** Get tracking number prefix (YYYY-MM-) based on selected date */
-const trackingNoPrefix = computed(() => {
-    if (!formData.value.date) return '';
-    return formData.value.date.substring(0, 7) + '-';
-});
+/**
+ * generateTrackingNo: Auto-generates Tracking No based on current date
+ * Format: YYYY-MM-NNNN (e.g., 2026-02-0001)
+ * Counts existing documents with same year-month and increments the series
+ */
+const generateTrackingNo = async (): Promise<string> => {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const yearMonth = `${year}-${month}`;
+    
+    // Count documents with same year-month prefix
+    const sameMonthCount = documents.value.filter(d => 
+        d.tracking_no.startsWith(yearMonth)
+    ).length;
+    
+    const series = String(sameMonthCount + 1).padStart(4, '0');
+    return `${yearMonth}-${series}`;
+};
 
 /** Stores validation errors for form fields */
 const formErrors = ref<Record<string, string>>({});
@@ -2474,9 +2489,9 @@ const confirmReceiveDocument = async () => {
  * - Clears any existing form errors
  * - Sets showCreateModal to true
  */
-const openCreateModal = () => {
+const openCreateModal = async () => {
     formData.value = {
-        tracking_no: '',
+        tracking_no: await generateTrackingNo(),
         date: todayDate.value,
         document_type: '',
         particulars: '',
