@@ -34,8 +34,8 @@ const usertype = computed(() => auth.value?.usertype || '');
 const canViewItem = (item: string): boolean => {
     const role = usertype.value;
     
-    // Everyone can view Documents
-    if (item === 'documents') return true;
+    // Everyone can view Documents and Records
+    if (item === 'documents' || item === 'records') return true;
     
     // Only Developer and Administrator can view Users
     if (item === 'users') return role === 'Developer' || role === 'Administrator';
@@ -138,6 +138,21 @@ const handleSidebarHover = (hovered: boolean) => {
             >
                 <i class="fas fa-file-alt text-xl flex-shrink-0 dark:text-gray-100" aria-hidden="true"></i>
                 <span class="text-sm font-medium whitespace-nowrap" v-show="isSidebarOpen || isSidebarHovered">Documents</span>
+            </Link>
+
+            <!-- Records Link -->
+            <Link
+                v-if="canViewItem('records')"
+                :href="route('records.index')"
+                :class="[
+                    route().current('records.*')
+                        ? 'text-white bg-gradient-to-r from-emerald-500 to-emerald-600 shadow-md hover:from-emerald-600 hover:to-emerald-700'
+                        : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 hover:shadow-sm',
+                    'flex-shrink-0 flex items-center gap-3 px-3 py-2.5 transition-all rounded-lg overflow-hidden',
+                ]"
+            >
+                <i class="fas fa-archive text-xl flex-shrink-0 dark:text-gray-100" aria-hidden="true"></i>
+                <span class="text-sm font-medium whitespace-nowrap" v-show="isSidebarOpen || isSidebarHovered">Records</span>
             </Link>
 
             <!-- Auxiliary Section Divider -->

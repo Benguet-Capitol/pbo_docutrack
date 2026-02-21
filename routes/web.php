@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\EmployeeController;
 use App\Http\Controllers\Api\OfficeController;
 use App\Http\Controllers\Api\MunicipalityController;
 use App\Http\Controllers\Api\DocumentController;
+use App\Http\Controllers\Api\RecordController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -43,6 +44,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/documents', function () {
         return Inertia::render('Documents');
     })->name('documents.index');
+
+    Route::get('/records', function () {
+        return Inertia::render('Records');
+    })->name('records.index');
 });
 
 // API Routes - Stateless with Bearer token authentication (skip CSRF)
@@ -74,6 +79,11 @@ Route::middleware('auth')
     Route::post('/api/documents', [DocumentController::class, 'store']);
     Route::put('/api/documents/{id}', [DocumentController::class, 'update']);
     Route::delete('/api/documents/{id}', [DocumentController::class, 'destroy']);
+
+    Route::get('/api/records', [RecordController::class, 'index']);
+    Route::post('/api/records', [RecordController::class, 'store']);
+    Route::put('/api/records/{id}', [RecordController::class, 'update']);
+    Route::delete('/api/records/{id}', [RecordController::class, 'destroy']);
 });
 
 require __DIR__.'/auth.php';
