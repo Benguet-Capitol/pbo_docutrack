@@ -11,7 +11,9 @@
 
         <div class="py-6 px-4 sm:px-6 lg:px-8">
             <!-- HR Summary Panel: Leaves, Travel Orders, Pass Slips for Current Month -->
-            <div v-if="canViewHRSummary" class="w-full bg-white dark:bg-gray-800 rounded-lg shadow">
+            <div v-if="canViewHRSummary" class="w-full bg-white dark:bg-gray-800 rounded-lg shadow relative">
+                <!-- Loading Animation Overlay -->
+                <div v-if="hrLoading" class="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent dark:via-gray-600/30 rounded-lg hr-loading-shimmer"></div>
                 <!-- Header Section -->
                 <div class="px-6 py-5 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
                     <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
@@ -1106,6 +1108,7 @@ const expandedHRType = ref<'leaves' | 'travelOrders' | 'passSlips' | null>(null)
 const selectedHRMonth = ref<number>(new Date().getMonth()); // 0-11
 const selectedHRYear = ref<number>(new Date().getFullYear());
 const loading = ref(true);
+const hrLoading = ref(true);
 const error = ref('');
 const selectedYear = ref<number | null>(new Date().getFullYear());
 const selectedSemester = ref<number | null>(null);
@@ -3010,6 +3013,20 @@ watch(() => showSummaryModal.value, (newVal) => {
     }
 });
 
+/**
+ * Watch for HR data loading completion
+ * Set hrLoading to false when all three data arrays have been populated
+ */
+watch(
+    [() => leaves.value.length, () => travelOrders.value.length, () => passSlips.value.length],
+    ([leavesLen, toLen, psLen]) => {
+        if (leavesLen > 0 || toLen > 0 || psLen > 0) {
+            // At least one HR data type has loaded, disable loading animation
+            hrLoading.value = false;
+        }
+    }
+);
+
 // ============== Lifecycle ==============
 onMounted(async () => {
     // Set up real-time updates for Processing Time and Remaining Duration
@@ -3049,7 +3066,22 @@ onUnmounted(() => {
     }
 }
 
+@keyframes shimmer {
+    0% {
+        background-position: -1000px 0;
+    }
+    100% {
+        background-position: 1000px 0;
+    }
+}
+
 .animate-scaleInUp {
     animation: scaleInUp 0.3s ease-out;
+}
+
+/* HR Loading Animation */
+.hr-loading-shimmer {
+    animation: shimmer 2s infinite;
+    background-size: 1000px 100%;
 }
 </style>
