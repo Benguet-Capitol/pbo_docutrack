@@ -7,6 +7,9 @@ use App\Http\Controllers\Api\EmployeeController;
 use App\Http\Controllers\Api\OfficeController;
 use App\Http\Controllers\Api\MunicipalityController;
 use App\Http\Controllers\Api\DocumentController;
+use App\Http\Controllers\Api\PassSlipController;
+use App\Http\Controllers\Api\TravelOrderController;
+use App\Http\Controllers\Api\LeaveController;
 use App\Http\Controllers\Api\SyncController;
 
 // Users API
@@ -44,6 +47,30 @@ Route::middleware(['web', 'auth'])->group(function () {
     Route::post('/documents/{id}/receive', [DocumentController::class, 'receive']);
     Route::post('/documents/{id}/finalize', [DocumentController::class, 'finalize']);
     Route::delete('/documents/{id}', [DocumentController::class, 'destroy']);
+});
+
+// Pass Slips API
+Route::middleware(['web', 'auth'])->group(function () {
+    Route::get('/pass-slips', [PassSlipController::class, 'index']);
+    Route::post('/pass-slips', [PassSlipController::class, 'store']);
+    Route::put('/pass-slips/{passSlip}', [PassSlipController::class, 'update']);
+    Route::delete('/pass-slips/{passSlip}', [PassSlipController::class, 'destroy']);
+});
+
+// Travel Orders API
+Route::middleware(['web', 'auth'])->group(function () {
+    Route::get('/travel-orders', [TravelOrderController::class, 'index']);
+    Route::post('/travel-orders', [TravelOrderController::class, 'store']);
+    Route::put('/travel-orders/{travelOrder}', [TravelOrderController::class, 'update']);
+    Route::delete('/travel-orders/{travelOrder}', [TravelOrderController::class, 'destroy']);
+});
+
+// Leaves API
+Route::middleware(['web', 'auth'])->group(function () {
+    Route::get('/leaves', [LeaveController::class, 'index']);
+    Route::post('/leaves', [LeaveController::class, 'store']);
+    Route::put('/leaves/{leave}', [LeaveController::class, 'update']);
+    Route::delete('/leaves/{leave}', [LeaveController::class, 'destroy']);
 });
 
 // Sync API - Fetch and update data from pbo-registry

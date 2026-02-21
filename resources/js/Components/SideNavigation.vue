@@ -34,6 +34,11 @@ const usertype = computed(() => auth.value?.usertype || '');
 const canViewItem = (item: string): boolean => {
     const role = usertype.value;
     
+    // Only Developer, Administrator, and Administrative can view Leaves, Pass Slips, and Travel Orders
+    if (item === 'leaves' || item === 'pass-slips' || item === 'travel-orders') {
+        return ['Developer', 'Administrator', 'Administrative'].includes(role);
+    }
+    
     // Everyone can view Documents and Records
     if (item === 'documents' || item === 'records') return true;
     
@@ -153,6 +158,51 @@ const handleSidebarHover = (hovered: boolean) => {
             >
                 <i class="fas fa-archive text-xl flex-shrink-0 dark:text-gray-100" aria-hidden="true"></i>
                 <span class="text-sm font-medium whitespace-nowrap" v-show="isSidebarOpen || isSidebarHovered">Records</span>
+            </Link>
+
+            <!-- Leaves Link -->
+            <Link
+                v-if="canViewItem('leaves')"
+                :href="route('leaves.index')"
+                :class="[
+                    route().current('leaves.*')
+                        ? 'text-white bg-gradient-to-r from-emerald-500 to-emerald-600 shadow-md hover:from-emerald-600 hover:to-emerald-700'
+                        : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 hover:shadow-sm',
+                    'flex-shrink-0 flex items-center gap-3 px-3 py-2.5 transition-all rounded-lg overflow-hidden',
+                ]"
+            >
+                <i class="fas fa-calendar-alt text-xl flex-shrink-0 dark:text-gray-100" aria-hidden="true"></i>
+                <span class="text-sm font-medium whitespace-nowrap" v-show="isSidebarOpen || isSidebarHovered">Leaves</span>
+            </Link>
+
+            <!-- Travel Orders Link -->
+            <Link
+                v-if="canViewItem('travel-orders')"
+                :href="route('travel-orders.index')"
+                :class="[
+                    route().current('travel-orders.*')
+                        ? 'text-white bg-gradient-to-r from-emerald-500 to-emerald-600 shadow-md hover:from-emerald-600 hover:to-emerald-700'
+                        : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 hover:shadow-sm',
+                    'flex-shrink-0 flex items-center gap-3 px-3 py-2.5 transition-all rounded-lg overflow-hidden',
+                ]"
+            >
+                <i class="fas fa-bus text-xl flex-shrink-0 dark:text-gray-100" aria-hidden="true"></i>
+                <span class="text-sm font-medium whitespace-nowrap" v-show="isSidebarOpen || isSidebarHovered">Travel Orders</span>
+            </Link>
+
+            <!-- Pass Slips Link -->
+            <Link
+                v-if="canViewItem('pass-slips')"
+                :href="route('pass-slips.index')"
+                :class="[
+                    route().current('pass-slips.*')
+                        ? 'text-white bg-gradient-to-r from-emerald-500 to-emerald-600 shadow-md hover:from-emerald-600 hover:to-emerald-700'
+                        : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 hover:shadow-sm',
+                    'flex-shrink-0 flex items-center gap-3 px-3 py-2.5 transition-all rounded-lg overflow-hidden',
+                ]"
+            >
+                <i class="fas fa-file-contract text-xl flex-shrink-0 dark:text-gray-100" aria-hidden="true"></i>
+                <span class="text-sm font-medium whitespace-nowrap" v-show="isSidebarOpen || isSidebarHovered">Pass Slips</span>
             </Link>
 
             <!-- Auxiliary Section Divider -->

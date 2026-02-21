@@ -48,6 +48,18 @@ Route::middleware('auth')->group(function () {
     Route::get('/records', function () {
         return Inertia::render('Records');
     })->name('records.index');
+
+    Route::get('/pass-slips', function () {
+        return Inertia::render('PassSlips');
+    })->name('pass-slips.index');
+
+    Route::get('/travel-orders', function () {
+        return Inertia::render('TravelOrders');
+    })->name('travel-orders.index');
+
+    Route::get('/leaves', function () {
+        return Inertia::render('Leaves');
+    })->name('leaves.index');
 });
 
 // API Routes - Stateless with Bearer token authentication (skip CSRF)

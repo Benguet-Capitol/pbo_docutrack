@@ -22,6 +22,19 @@ class RoleService
             'offices.edit',
             'municipalities.view',
             'municipalities.edit',
+            'leaves.view',
+            'leaves.create',
+            'leaves.edit',
+            'leaves.delete',
+            'pass_slips.view',
+            'pass_slips.create',
+            'pass_slips.edit',
+            'pass_slips.delete',
+            'travel_orders.view',
+            'travel_orders.create',
+            'travel_orders.edit',
+            'travel_orders.delete',
+            'hr_summary.view',
         ],
         'Administrator' => [
             'documents.create',
@@ -35,6 +48,19 @@ class RoleService
             'offices.edit',
             'municipalities.view',
             'municipalities.edit',
+            'leaves.view',
+            'leaves.create',
+            'leaves.edit',
+            'leaves.delete',
+            'pass_slips.view',
+            'pass_slips.create',
+            'pass_slips.edit',
+            'pass_slips.delete',
+            'travel_orders.view',
+            'travel_orders.create',
+            'travel_orders.edit',
+            'travel_orders.delete',
+            'hr_summary.view',
         ],
         'Receiving' => [
             'documents.create',
@@ -76,6 +102,19 @@ class RoleService
             'offices.edit',
             'municipalities.view',
             'municipalities.edit',
+            'leaves.view',
+            'leaves.create',
+            'leaves.edit',
+            'leaves.delete',
+            'pass_slips.view',
+            'pass_slips.create',
+            'pass_slips.edit',
+            'pass_slips.delete',
+            'travel_orders.view',
+            'travel_orders.create',
+            'travel_orders.edit',
+            'travel_orders.delete',
+            'hr_summary.view',
         ],
     ];
 
@@ -181,6 +220,110 @@ class RoleService
     public static function canDeleteDocument(User $user): bool
     {
         return self::hasPermission($user, 'documents.delete');
+    }
+
+    /**
+     * Check if user can view leaves
+     */
+    public static function canViewLeaves(User $user): bool
+    {
+        return self::hasPermission($user, 'leaves.view');
+    }
+
+    /**
+     * Check if user can create leaves
+     */
+    public static function canCreateLeave(User $user): bool
+    {
+        return self::hasPermission($user, 'leaves.create');
+    }
+
+    /**
+     * Check if user can edit leaves
+     */
+    public static function canEditLeave(User $user): bool
+    {
+        return self::hasPermission($user, 'leaves.edit');
+    }
+
+    /**
+     * Check if user can delete leaves
+     */
+    public static function canDeleteLeave(User $user): bool
+    {
+        return self::hasPermission($user, 'leaves.delete');
+    }
+
+    /**
+     * Check if user can view pass slips
+     */
+    public static function canViewPassSlips(User $user): bool
+    {
+        return self::hasPermission($user, 'pass_slips.view');
+    }
+
+    /**
+     * Check if user can create pass slips
+     */
+    public static function canCreatePassSlip(User $user): bool
+    {
+        return self::hasPermission($user, 'pass_slips.create');
+    }
+
+    /**
+     * Check if user can edit pass slips
+     */
+    public static function canEditPassSlip(User $user): bool
+    {
+        return self::hasPermission($user, 'pass_slips.edit');
+    }
+
+    /**
+     * Check if user can delete pass slips
+     */
+    public static function canDeletePassSlip(User $user): bool
+    {
+        return self::hasPermission($user, 'pass_slips.delete');
+    }
+
+    /**
+     * Check if user can view travel orders
+     */
+    public static function canViewTravelOrders(User $user): bool
+    {
+        return self::hasPermission($user, 'travel_orders.view');
+    }
+
+    /**
+     * Check if user can create travel orders
+     */
+    public static function canCreateTravelOrder(User $user): bool
+    {
+        return self::hasPermission($user, 'travel_orders.create');
+    }
+
+    /**
+     * Check if user can edit travel orders
+     */
+    public static function canEditTravelOrder(User $user): bool
+    {
+        return self::hasPermission($user, 'travel_orders.edit');
+    }
+
+    /**
+     * Check if user can delete travel orders
+     */
+    public static function canDeleteTravelOrder(User $user): bool
+    {
+        return self::hasPermission($user, 'travel_orders.delete');
+    }
+
+    /**
+     * Check if user can view HR summary
+     */
+    public static function canViewHRSummary(User $user): bool
+    {
+        return self::hasPermission($user, 'hr_summary.view');
     }
 
     /**
