@@ -45,8 +45,8 @@ const canViewItem = (item: string): boolean => {
     // Only Developer and Administrator can view Users
     if (item === 'users') return role === 'Developer' || role === 'Administrator';
     
-    // Developer and Administrator can view Employees
-    if (item === 'employees') return ['Developer', 'Administrator'].includes(role);
+    // Developer, Administrator, and Administrative can view Employees
+    if (item === 'employees') return ['Developer', 'Administrator', 'Administrative'].includes(role);
     
     // Everyone except none can view Offices and Municipalities
     if (item === 'offices' || item === 'municipalities') return true;

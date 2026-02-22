@@ -1619,7 +1619,23 @@ const employeeLeavesSummary = computed(() => {
         empData.totalLeaves += 1;
     });
     
-    return Array.from(empMap.values()).sort((a, b) => a.employeeName.localeCompare(b.employeeName));
+    return Array.from(empMap.values()).sort((a, b) => {
+        // Extract last name (surname) from full name
+        const getLastName = (name: string) => {
+            const parts = name.trim().split(/\s+/);
+            return parts[parts.length - 1]; // Get the last word as surname
+        };
+        
+        const lastNameA = getLastName(a.employeeName);
+        const lastNameB = getLastName(b.employeeName);
+        
+        // Compare by last name, then by first name if last names are the same
+        const lastNameComparison = lastNameA.localeCompare(lastNameB);
+        if (lastNameComparison !== 0) return lastNameComparison;
+        
+        // If last names are the same, sort by full name
+        return a.employeeName.localeCompare(b.employeeName);
+    });
 });
 
 /**

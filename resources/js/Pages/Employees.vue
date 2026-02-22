@@ -527,18 +527,18 @@ const usertype = computed(() => page.props.auth.user?.usertype || '');
 
 /**
  * Check if current user can create/edit employees
- * Only Developer and Administrator can create/edit employees
+ * Developer, Administrator, and Administrative can create/edit employees
  */
 const canCreateEditEmployees = computed(() => {
-    return ['Developer', 'Administrator'].includes(usertype.value);
+    return ['Developer', 'Administrator', 'Administrative'].includes(usertype.value);
 });
 
 /**
  * Check if current user can delete employees
- * Only Developer and Administrator can delete employees
+ * Developer, Administrator, and Administrative can delete employees
  */
 const canDeleteEmployees = computed(() => {
-    return ['Developer', 'Administrator'].includes(usertype.value);
+    return ['Developer', 'Administrator', 'Administrative'].includes(usertype.value);
 });
 
 const filteredEmployees = computed(() => {
