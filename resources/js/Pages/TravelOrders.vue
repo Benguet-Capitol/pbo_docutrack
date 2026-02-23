@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import Toast from '@/Components/Toast.vue';
 import PageHead from '@/Components/PageHead.vue';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
@@ -31,7 +31,7 @@ const searchQuery = ref('');
 const currentPage = ref(1);
 const itemsPerPage = ref(10);
 const sortBy = ref('id');
-const sortOrder = ref<'asc' | 'desc'>('asc');
+const sortOrder = ref<'desc' | 'asc'>('desc');
 
 const showCreateModal = ref(false);
 const showEditModal = ref(false);
@@ -149,10 +149,11 @@ const fetchEmployees = async () => {
     }
 };
 
-const generateControlNo = (): string => {
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, '0');
+const generateControlNo = (dateString?: string): string => {
+    // Use provided date or current date
+    const dateToUse = dateString ? new Date(dateString) : new Date();
+    const year = dateToUse.getFullYear();
+    const month = String(dateToUse.getMonth() + 1).padStart(2, '0');
     const yearMonth = `${year}-${month}`;
     const prefix = 'TO';
     
@@ -241,12 +242,13 @@ const showToast = (message: string, type: 'success' | 'error' | 'info' = 'info')
 };
 
 const openCreateModal = async () => {
+    const today = new Date().toISOString().split('T')[0];
     formData.value = {
-        control_no: generateControlNo(),
-        date: new Date().toISOString().split('T')[0],
+        control_no: generateControlNo(today),
+        date: today,
         going_to: '',
-        from_date: new Date().toISOString().split('T')[0],
-        to_date: new Date().toISOString().split('T')[0],
+        from_date: today,
+        to_date: today,
         purpose: [],
         vehicle: 'PUJ',
         employee_ids: [],
@@ -259,6 +261,14 @@ const openCreateModal = async () => {
 const closeCreateModal = () => {
     showCreateModal.value = false;
 };
+
+// Watch for changes to date and regenerate control_no
+watch(() => formData.value.date, (newDate) => {
+    if (showCreateModal.value && newDate) {
+        // Regenerate control number based on the new date
+        formData.value.control_no = generateControlNo(newDate);
+    }
+});
 
 const addPurpose = () => {
     if (formData.value.newPurpose.trim()) {
@@ -781,7 +791,7 @@ onMounted(() => {
                                             <span class="text-xs text-gray-700 dark:text-gray-300">{{ emp.name }}</span>
                                         </label>
                                     </div>
-                                    <p v-if="formData.employee_ids.length > 0" class="text-xs text-gray-500 dark:text-gray-400">
+                                    <p v-if="formData.employee_ids.length > 0" class="text-xs text-gray-500 dark:text-gray-100">
                                         {{ formData.employee_ids.length }} employee(s) selected
                                     </p>
                                 </div>
@@ -916,7 +926,7 @@ onMounted(() => {
                                         <span class="text-xs text-gray-700 dark:text-gray-300">{{ emp.name }}</span>
                                     </label>
                                 </div>
-                                <p v-if="formData.employee_ids.length > 0">{{ formData.employee_ids.length }} employee(s) selected</p>
+                                <p v-if="formData.employee_ids.length > 0" class="text-xs text-gray-800 dark:text-gray-100">{{ formData.employee_ids.length }} employee(s) selected</p>
                             </div>
 
                             <!-- Going To Field -->

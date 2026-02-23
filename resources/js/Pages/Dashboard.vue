@@ -21,7 +21,7 @@
                         <div class="flex flex-col gap-4">
                             <h3 class="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
                                 <i class="fas fa-users text-emerald-600 dark:text-emerald-400"></i>
-                                Leaves, Travel Orders and Pass Slips Summary
+                                Leaves, Travel Orders, Pass Slips and Tardiness/Undertime Summary
                             </h3>
 
                             <!-- Month and Year Filters -->
@@ -60,13 +60,13 @@
                             class="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 transition-colors text-xs font-medium whitespace-nowrap"
                         >
                             <i class="fas fa-file-pdf"></i>
-                            Summary of Leaves, Travel Orders and Pass Slips
+                            Summary of Leaves, TOs, PS and Tardiness/Undertimes
                         </button>
                     </div>
                 </div>
 
                 <!-- Summary Cards Grid -->
-                <div class="w-full p-6 grid grid-cols-1 md:grid-cols-3 gap-6 auto-rows-max">
+                <div class="w-full p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 auto-rows-max">
                     <!-- Leaves Card -->
                     <div 
                         @click="toggleHRExpanded('leaves')"
@@ -127,6 +127,27 @@
                         </div>
                         <p class="text-sm text-gray-600 dark:text-gray-400">
                             <span class="font-medium">{{ uniqueEmployeesPassSlips.size }}</span> employees involved
+                        </p>
+                    </div>
+
+                    <!-- Tardiness/Undertime Card -->
+                    <div 
+                        @click="toggleHRExpanded('tardiness')"
+                        class="rounded-lg border-2 p-4 cursor-pointer transition-all duration-200"
+                        :class="expandedHRType === 'tardiness' ? 'bg-red-50 dark:bg-red-900/20 border-red-500' : 'bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600 hover:border-red-400'"
+                    >
+                        <div class="flex items-center justify-between mb-2">
+                            <h4 class="font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                                <i class="fas fa-hourglass-end text-red-600 dark:text-red-400"></i>
+                                Tardiness/Undertime
+                            </h4>
+                            <i :class="['fas', expandedHRType === 'tardiness' ? 'fa-chevron-up' : 'fa-chevron-down', 'text-gray-400 text-xs']"></i>
+                        </div>
+                        <div class="text-3xl font-bold text-red-600 dark:text-red-400 mb-1">
+                            {{ currentMonthTardiness.length }}
+                        </div>
+                        <p class="text-sm text-gray-600 dark:text-gray-400">
+                            <span class="font-medium">{{ uniqueEmployeesTardiness.size }}</span> employees involved
                         </p>
                     </div>
                 </div>
@@ -207,6 +228,40 @@
                                         <p v-if="slip.expected_return_time" class="text-gray-600 dark:text-gray-400">
                                             <i class="fas fa-hourglass-end text-emerald-500 mr-1"></i>
                                             Return: {{ formatTime(slip.expected_return_time) }}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tardiness/Undertime Details -->
+                    <div v-else-if="expandedHRType === 'tardiness'">
+                        <h4 class="font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                            <i class="fas fa-hourglass-end text-red-600"></i>
+                            Tardiness/Undertime by Employee
+                        </h4>
+                        <div class="space-y-3 max-h-96 overflow-y-auto">
+                            <div v-for="(records, empName) in currentMonthTardinesssByEmp" :key="empName" class="bg-red-50 dark:bg-red-900/20 p-3 rounded-lg border border-red-200 dark:border-red-800">
+                                <p class="font-medium text-gray-900 dark:text-white mb-2">{{ empName }}</p>
+                                <div class="space-y-2">
+                                    <div v-for="(record, idx) in records" :key="idx" class="bg-white dark:bg-gray-700 p-2 rounded border border-gray-200 dark:border-gray-600 text-xs">
+                                        <p class="text-gray-700 dark:text-gray-300 font-medium">{{ record.control_no }}</p>
+                                        <p class="text-gray-600 dark:text-gray-400">
+                                            <i class="fas fa-calendar text-red-500 mr-1"></i>
+                                            Date: {{ new Date(record.requested_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) }}
+                                        </p>
+                                        <p class="text-gray-600 dark:text-gray-400">
+                                            <i class="fas fa-flag text-red-500 mr-1"></i>
+                                            Type: <span class="font-medium">{{ record.type }}</span>
+                                        </p>
+                                        <p class="text-gray-600 dark:text-gray-400">
+                                            <i class="fas fa-clock text-red-500 mr-1"></i>
+                                            Time: {{ formatTime(record.requested_time) }}
+                                        </p>
+                                        <p class="text-gray-600 dark:text-gray-400 mt-1">
+                                            <i class="fas fa-note-sticky text-gray-400 mr-1"></i>
+                                            {{ record.reason }}
                                         </p>
                                     </div>
                                 </div>
@@ -998,6 +1053,20 @@
                             </select>
                         </div>
 
+                        <!-- Casual Period Selection (visible only for casual employment type) -->
+                        <div v-if="summaryData.employmentType === 'casual'" class="space-y-2">
+                            <label for="summary_casual_period" class="block text-xs font-medium text-gray-700 dark:text-gray-300">Report Period</label>
+                            <select
+                                v-model="summaryData.casualPeriod"
+                                id="summary_casual_period"
+                                class="w-full px-4 py-2 text-xs border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:outline-none focus:border-emerald-500"
+                            >
+                                <option value="">Select Period</option>
+                                <option value="1-15">As of 1-15</option>
+                                <option value="16-last">As of 16-{{ lastDayOfSelectedMonth }}</option>
+                            </select>
+                        </div>
+
                         <!-- Prepared By -->
                         <div class="space-y-2">
                             <label for="summary_prepared_by" class="block text-xs font-medium text-gray-700 dark:text-gray-300">Prepared By</label>
@@ -1026,6 +1095,18 @@
                                     {{ user.name }}
                                 </option>
                             </select>
+                        </div>
+
+                        <!-- Remarks -->
+                        <div class="space-y-2">
+                            <label for="summary_remarks" class="block text-xs font-medium text-gray-700 dark:text-gray-300">Remarks</label>
+                            <textarea
+                                v-model="summaryData.remarks"
+                                id="summary_remarks"
+                                placeholder="Add any notes or remarks for the report"
+                                rows="3"
+                                class="w-full px-4 py-2 text-xs border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:outline-none focus:border-emerald-500 resize-none"
+                            ></textarea>
                         </div>
 
                         <div v-if="summaryErrors.submit" class="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
@@ -1104,7 +1185,7 @@ const currentPage = ref(1);
 const expandedDocumentId = ref<number | null>(null);
 const expandedUserId = ref<number | null>(null);
 const expandedDocumentType = ref<string | null>(null);
-const expandedHRType = ref<'leaves' | 'travelOrders' | 'passSlips' | null>(null);
+const expandedHRType = ref<'leaves' | 'travelOrders' | 'passSlips' | 'tardiness' | null>(null);
 const selectedHRMonth = ref<number>(new Date().getMonth()); // 0-11
 const selectedHRYear = ref<number>(new Date().getFullYear());
 const loading = ref(true);
@@ -1135,8 +1216,10 @@ const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 
 const summaryData = ref({
     month: null as number | null,
     employmentType: '',
+    casualPeriod: '' as string,
     preparedBy: null as number | null,
     certifiedCorrect: null as number | null,
+    remarks: '' as string,
 });
 const summaryErrors = ref<Record<string, string>>({});
 
@@ -1148,6 +1231,7 @@ const employees = ref<Array<{id: number; employee_id: string; name: string; offi
 const leaves = ref<any[]>([]);
 const travelOrders = ref<any[]>([]);
 const passSlips = ref<any[]>([]);
+const tardiness = ref<any[]>([]);
 
 // ============== User and Permissions ==============
 const page = usePage();
@@ -1236,6 +1320,21 @@ const fetchPassSlips = async () => {
         }
     } catch (e) {
         console.error('Error fetching pass slips:', e);
+    }
+};
+
+/**
+ * Fetch tardiness/undertime from API
+ */
+const fetchTardiness = async () => {
+    try {
+        const response = await fetch('/api/tardiness');
+        if (response.ok) {
+            const result = await response.json();
+            tardiness.value = result.data || result;
+        }
+    } catch (e) {
+        console.error('Error fetching tardiness:', e);
     }
 };
 
@@ -1389,37 +1488,98 @@ const nonAdminEmployees = computed(() => {
 });
 
 /**
- * Get leaves for current month
+ * Get the last day of the selected month for casual period display
  */
-const currentMonthLeaves = computed(() => {
-    return leaves.value.filter(leave => {
-        const leaveDate = new Date(leave.date_of_filing);
-        return leaveDate.getMonth() === selectedHRMonth.value && leaveDate.getFullYear() === selectedHRYear.value;
-    });
+const lastDayOfSelectedMonth = computed(() => {
+    if (!summaryData.value.month) return 28; // Default to 28
+    const currentYear = new Date().getFullYear();
+    return new Date(currentYear, summaryData.value.month, 0).getDate();
 });
 
 /**
- * Get available years from HR data (leaves, travel orders, pass slips)
+ * Check if a leave falls within the selected month based on inclusive_dates
+ * For date ranges spanning multiple months, include in all overlapping months
+ */
+const leaveInSelectedMonth = (leave: any): boolean => {
+    if (!leave.inclusive_dates || leave.inclusive_dates.length === 0) return false;
+    
+    const monthStart = new Date(selectedHRYear.value, selectedHRMonth.value, 1);
+    const monthEnd = new Date(selectedHRYear.value, selectedHRMonth.value + 1, 0);
+    
+    for (const dateEntry of leave.inclusive_dates) {
+        if (!dateEntry) continue;
+        
+        // Handle date ranges like "2026-01-29 - 2026-02-04"
+        if (dateEntry.includes(' - ')) {
+            const [startStr, endStr] = dateEntry.split(' - ');
+            const rangeStart = new Date(startStr.trim());
+            const rangeEnd = new Date(endStr.trim());
+            
+            // Check if the date range overlaps with the selected month
+            if (rangeStart <= monthEnd && rangeEnd >= monthStart) {
+                return true;
+            }
+        } else {
+            // Handle single dates
+            const date = new Date(dateEntry.trim());
+            if (date.getMonth() === selectedHRMonth.value && date.getFullYear() === selectedHRYear.value) {
+                return true;
+            }
+        }
+    }
+    return false;
+};
+
+/**
+ * Get leaves for current month based on inclusive_dates
+ */
+const currentMonthLeaves = computed(() => {
+    return leaves.value.filter(leave => leaveInSelectedMonth(leave));
+});
+
+/**
+ * Get available years from HR data based on actual dates of activity
  */
 const availableHRYears = computed(() => {
     const yearsSet = new Set<number>();
     
-    // Get years from leaves
+    // Get years from leaves based on inclusive_dates
     leaves.value.forEach(leave => {
-        const year = new Date(leave.date_of_filing).getFullYear();
-        yearsSet.add(year);
+        if (leave.inclusive_dates && Array.isArray(leave.inclusive_dates)) {
+            leave.inclusive_dates.forEach((dateEntry: string) => {
+                if (dateEntry) {
+                    const dateStr = dateEntry.includes(' - ') ? dateEntry.split(' - ')[0] : dateEntry;
+                    const year = new Date(dateStr.trim()).getFullYear();
+                    yearsSet.add(year);
+                }
+            });
+        }
     });
     
-    // Get years from travel orders
+    // Get years from travel orders based on from_date and to_date
     travelOrders.value.forEach(to => {
-        const year = new Date(to.date).getFullYear();
-        yearsSet.add(year);
+        if (to.from_date) {
+            const year = new Date(to.from_date).getFullYear();
+            yearsSet.add(year);
+        }
+        if (to.to_date) {
+            const year = new Date(to.to_date).getFullYear();
+            yearsSet.add(year);
+        }
     });
     
     // Get years from pass slips
     passSlips.value.forEach(ps => {
         const year = new Date(ps.date).getFullYear();
         yearsSet.add(year);
+    });
+    
+    // Get years from tardiness/undertime based on date_filed
+    tardiness.value.forEach(tu => {
+        if (tu.date_filed) {
+            const year = new Date(tu.date_filed).getFullYear();
+            yearsSet.add(year);
+        }
     });
     
     return Array.from(yearsSet).sort((a, b) => a - b);
@@ -1475,13 +1635,26 @@ const currentMonthLeavesByTypeWithEmployees = computed(() => {
 });
 
 /**
- * Get travel orders for current month
+ * Check if a travel order falls within the selected month based on from_date and to_date
+ */
+const travelOrderInSelectedMonth = (to: any): boolean => {
+    if (!to.from_date || !to.to_date) return false;
+    
+    const fromDate = new Date(to.from_date);
+    const toDate = new Date(to.to_date);
+    // selectedHRMonth is 0-indexed (0 = January, 1 = February, etc.)
+    const monthStart = new Date(selectedHRYear.value, selectedHRMonth.value, 1);
+    const monthEnd = new Date(selectedHRYear.value, selectedHRMonth.value + 1, 0);
+    
+    // Check if the travel order date range overlaps with the selected month
+    return fromDate <= monthEnd && toDate >= monthStart;
+};
+
+/**
+ * Get travel orders for current month based on from_date and to_date
  */
 const currentMonthTravelOrders = computed(() => {
-    return travelOrders.value.filter(to => {
-        const toDate = new Date(to.date);
-        return toDate.getMonth() === selectedHRMonth.value && toDate.getFullYear() === selectedHRYear.value;
-    });
+    return travelOrders.value.filter(to => travelOrderInSelectedMonth(to));
 });
 
 /**
@@ -1540,6 +1713,51 @@ const uniqueEmployeesPassSlips = computed(() => {
         }
     });
     return empSet;
+});
+
+/**
+ * Check if a tardiness/undertime record falls within the selected month based on date_filed
+ */
+const tardinessInSelectedMonth = (tu: any): boolean => {
+    if (!tu.date_filed) return false;
+    
+    const tuDate = new Date(tu.date_filed);
+    return tuDate.getMonth() === selectedHRMonth.value && tuDate.getFullYear() === selectedHRYear.value;
+};
+
+/**
+ * Get tardiness/undertime for current month based on date_filed
+ */
+const currentMonthTardiness = computed(() => {
+    return tardiness.value.filter(tu => tardinessInSelectedMonth(tu));
+});
+
+/**
+ * Get unique employees from tardiness/undertime
+ */
+const uniqueEmployeesTardiness = computed(() => {
+    const empSet = new Set<string>();
+    currentMonthTardiness.value.forEach(tu => {
+        if (tu.employee) {
+            empSet.add(tu.employee.name);
+        }
+    });
+    return empSet;
+});
+
+/**
+ * Get tardiness/undertime grouped by employee
+ */
+const currentMonthTardinesssByEmp = computed(() => {
+    const grouped: Record<string, any[]> = {};
+    currentMonthTardiness.value.forEach(tu => {
+        const empName = tu.employee?.name || 'Unknown Employee';
+        if (!grouped[empName]) {
+            grouped[empName] = [];
+        }
+        grouped[empName].push(tu);
+    });
+    return grouped;
 });
 
 /**
@@ -2334,8 +2552,8 @@ const formatInclusiveDates = (dates: any): string => {
                         const startDate = new Date(rangeParts[0]);
                         const endDate = new Date(rangeParts[1]);
                         if (!isNaN(startDate.getTime()) && !isNaN(endDate.getTime())) {
-                            const startFormatted = startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-                            const endFormatted = endDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                            const startFormatted = startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                            const endFormatted = endDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
                             return `${startFormatted} - ${endFormatted}`;
                         }
                     } catch {}
@@ -2348,7 +2566,7 @@ const formatInclusiveDates = (dates: any): string => {
             try {
                 const date = new Date(elementStr);
                 if (!isNaN(date.getTime())) {
-                    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
                 }
             } catch {}
             
@@ -2365,8 +2583,8 @@ const formatInclusiveDates = (dates: any): string => {
                     const startDate = new Date(parts[0]);
                     const endDate = new Date(parts[1]);
                     if (!isNaN(startDate.getTime()) && !isNaN(endDate.getTime())) {
-                        const startFormatted = startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-                        const endFormatted = endDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                        const startFormatted = startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                        const endFormatted = endDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
                         return `${startFormatted} - ${endFormatted}`;
                     }
                 } catch {
@@ -2379,7 +2597,7 @@ const formatInclusiveDates = (dates: any): string => {
                     try {
                         const date = new Date(parts[i]);
                         if (!isNaN(date.getTime())) {
-                            formattedParts.push(date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }));
+                            formattedParts.push(date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
                         } else {
                             formattedParts.push(parts[i]);
                         }
@@ -2394,7 +2612,7 @@ const formatInclusiveDates = (dates: any): string => {
             try {
                 const date = new Date(dates);
                 if (!isNaN(date.getTime())) {
-                    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
                 }
             } catch {
                 return dates;
@@ -2489,7 +2707,7 @@ const toggleDocumentTypeExpanded = (documentType: string) => {
 /**
  * Toggle HR summary panel expansion
  */
-const toggleHRExpanded = (type: 'leaves' | 'travelOrders' | 'passSlips') => {
+const toggleHRExpanded = (type: 'leaves' | 'travelOrders' | 'passSlips' | 'tardiness') => {
     expandedHRType.value = expandedHRType.value === type ? null : type;
 };
 
@@ -2720,6 +2938,10 @@ const generateSummaryReport = async () => {
             summaryErrors.value.submit = 'Employment type is required';
             return;
         }
+        if (summaryData.value.employmentType === 'casual' && !summaryData.value.casualPeriod) {
+            summaryErrors.value.submit = 'Report period is required for casual employees';
+            return;
+        }
         if (!summaryData.value.preparedBy) {
             summaryErrors.value.submit = 'Prepared by is required';
             return;
@@ -2729,16 +2951,19 @@ const generateSummaryReport = async () => {
             return;
         }
 
-        // Fetch data for leaves, pass slips, and travel orders
-        const [leavesRes, passSlipsRes, travelOrdersRes] = await Promise.all([
+        // Fetch data for leaves, pass slips, travel orders, and tardiness
+        const [leavesRes, passSlipsRes, travelOrdersRes, tardinessRes] = await Promise.all([
             fetch('/api/leaves'),
             fetch('/api/pass-slips'),
-            fetch('/api/travel-orders')
+            fetch('/api/travel-orders'),
+            fetch('/api/tardiness')
         ]);
 
         const leaves = leavesRes.ok ? await leavesRes.json() : [];
         const passSlips = passSlipsRes.ok ? await passSlipsRes.json() : [];
         const travelOrders = travelOrdersRes.ok ? await travelOrdersRes.json() : [];
+        const tardinessData = tardinessRes.ok ? await tardinessRes.json() : { data: [] };
+        const tardiness = tardinessData.data || tardinessData;
 
         // Get current year
         const currentYear = new Date().getFullYear();
@@ -2746,10 +2971,14 @@ const generateSummaryReport = async () => {
 
         // Filter by month and employment type, then group by employee
         const employeeData = new Map<number, {
+            employee_id: string;
+            id: number;
             name: string;
+            designation: string;
             leaves: any[];
             passSlips: any[];
             travelOrders: any[];
+            tardiness: any[];
         }>();
 
         // Helper function to check if date falls in specified month
@@ -2766,9 +2995,147 @@ const generateSummaryReport = async () => {
             return designation.includes('casual') ? 'casual' : 'permanent';
         };
 
+        // Helper function to calculate time difference between two HH:MM time strings
+        const calculateTimeDifference = (startTime: string, endTime: string): { hours: number; minutes: number; display: string } => {
+            if (!startTime || !endTime) return { hours: 0, minutes: 0, display: 'N/A' };
+            
+            try {
+                // Clean the time strings
+                const startClean = String(startTime).trim();
+                const endClean = String(endTime).trim();
+                
+                if (!startClean || !endClean) return { hours: 0, minutes: 0, display: 'N/A' };
+                
+                const startParts = startClean.split(':');
+                const endParts = endClean.split(':');
+                
+                if (startParts.length < 2 || endParts.length < 2) return { hours: 0, minutes: 0, display: 'N/A' };
+                
+                const startHour = parseInt(startParts[0], 10);
+                const startMin = parseInt(startParts[1], 10);
+                const endHour = parseInt(endParts[0], 10);
+                const endMin = parseInt(endParts[1], 10);
+                
+                if (isNaN(startHour) || isNaN(startMin) || isNaN(endHour) || isNaN(endMin)) {
+                    return { hours: 0, minutes: 0, display: 'N/A' };
+                }
+                
+                let totalMinutes = (endHour * 60 + endMin) - (startHour * 60 + startMin);
+                
+                // Handle case where end time is next day (e.g., 11 PM to 1 AM)
+                if (totalMinutes < 0) {
+                    totalMinutes += 24 * 60;
+                }
+                
+                const hours = Math.floor(totalMinutes / 60);
+                const minutes = totalMinutes % 60;
+                
+                return {
+                    hours,
+                    minutes,
+                    display: hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`
+                };
+            } catch (e) {
+                console.error('Error calculating time difference:', e);
+                return { hours: 0, minutes: 0, display: 'N/A' };
+            }
+        };
+
+        // Helper function to sum two time objects
+        const sumTimes = (time1: any, time2: any): { hours: number; minutes: number; display: string } => {
+            const totalMin = (time1.hours || 0) * 60 + (time1.minutes || 0) + (time2.hours || 0) * 60 + (time2.minutes || 0);
+            const hours = Math.floor(totalMin / 60);
+            const minutes = totalMin % 60;
+            return {
+                hours,
+                minutes,
+                display: hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`
+            };
+        };
+
+        // Helper function to check if a leave falls in the specified month based on inclusive_dates
+        // For date ranges spanning multiple months, include in all overlapping months
+        const leaveInMonth = (leave: any): boolean => {
+            if (!leave.inclusive_dates || leave.inclusive_dates.length === 0) return false;
+            
+            const monthStart = new Date(currentYear, (summaryData.value.month! - 1), 1);
+            const monthEnd = new Date(currentYear, summaryData.value.month!, 0);
+            
+            for (const dateEntry of leave.inclusive_dates) {
+                if (!dateEntry) continue;
+                
+                // Handle date ranges like "2026-01-29 - 2026-02-04"
+                if (dateEntry.includes(' - ')) {
+                    const [startStr, endStr] = dateEntry.split(' - ');
+                    const rangeStart = new Date(startStr.trim());
+                    const rangeEnd = new Date(endStr.trim());
+                    
+                    // Check if the date range overlaps with the specified month
+                    if (rangeStart <= monthEnd && rangeEnd >= monthStart) {
+                        // For casual employees, also check if it overlaps with the casual period
+                        if (summaryData.value.employmentType === 'casual') {
+                            if (isDateRangeInCasualPeriod(startStr.trim(), endStr.trim())) {
+                                return true;
+                            }
+                        } else {
+                            return true;
+                        }
+                    }
+                } else {
+                    // Handle single dates
+                    const date = new Date(dateEntry.trim());
+                    if (date.getMonth() === (summaryData.value.month! - 1) && date.getFullYear() === currentYear) {
+                        // For casual employees, also check if it falls within the casual period
+                        if (summaryData.value.employmentType === 'casual') {
+                            if (isDateInCasualPeriod(dateEntry.trim())) {
+                                return true;
+                            }
+                        } else {
+                            return true;
+                        }
+                    }
+                }
+            }
+            return false;
+        };
+
+        // Helper function to check if a date falls within the casual period
+        const isDateInCasualPeriod = (dateString: string): boolean => {
+            if (!summaryData.value.casualPeriod) return true; // If not casual or no period selected, include all
+            
+            const date = new Date(dateString);
+            const day = date.getDate();
+            const lastDay = new Date(currentYear, summaryData.value.month!, 0).getDate();
+            
+            if (summaryData.value.casualPeriod === '1-15') {
+                return day >= 1 && day <= 15;
+            } else if (summaryData.value.casualPeriod === '16-last') {
+                return day >= 16 && day <= lastDay;
+            }
+            return true;
+        };
+
+        // Helper function to check if a date range overlaps with the casual period
+        const isDateRangeInCasualPeriod = (startDateString: string, endDateString: string): boolean => {
+            if (!summaryData.value.casualPeriod) return true; // If not casual or no period selected, include all
+            
+            const startDate = new Date(startDateString);
+            const endDate = new Date(endDateString);
+            const lastDay = new Date(currentYear, summaryData.value.month!, 0).getDate();
+            
+            if (summaryData.value.casualPeriod === '1-15') {
+                // Include if any part of the range is in days 1-15
+                return startDate.getDate() <= 15 || endDate.getDate() >= 1;
+            } else if (summaryData.value.casualPeriod === '16-last') {
+                // Include if any part of the range is in days 16+
+                return endDate.getDate() >= 16 && startDate.getDate() <= lastDay;
+            }
+            return true;
+        };
+
         // Process leaves
         leaves.forEach((leave: any) => {
-            if (!isInMonth(leave.date_of_filing)) return;
+            if (!leaveInMonth(leave)) return;
             
             // Find employee by ID
             const empId = leave.employee_id;
@@ -2781,10 +3148,14 @@ const generateSummaryReport = async () => {
 
             if (!employeeData.has(empId)) {
                 employeeData.set(empId, {
+                    employee_id: employee?.employee_id || '',
+                    id: empId,
                     name: employee?.name || 'N/A',
+                    designation: employee?.designation || '',
                     leaves: [],
                     passSlips: [],
-                    travelOrders: []
+                    travelOrders: [],
+                    tardiness: []
                 });
             }
             employeeData.get(empId)!.leaves.push(leave);
@@ -2793,6 +3164,9 @@ const generateSummaryReport = async () => {
         // Process pass slips
         passSlips.forEach((ps: any) => {
             if (!isInMonth(ps.date)) return;
+            
+            // For casual employees, also check if it falls within the casual period
+            if (summaryData.value.employmentType === 'casual' && !isDateInCasualPeriod(ps.date)) return;
             
             // Pass slips can have multiple employees
             const empsInPassSlip = ps.employees && Array.isArray(ps.employees) ? ps.employees : [];
@@ -2804,19 +3178,44 @@ const generateSummaryReport = async () => {
                 const empId = emp.id;
                 if (!employeeData.has(empId)) {
                     employeeData.set(empId, {
+                        employee_id: emp?.employee_id || '',
+                        id: empId,
                         name: emp?.name || 'N/A',
+                        designation: emp?.designation || '',
                         leaves: [],
                         passSlips: [],
-                        travelOrders: []
+                        travelOrders: [],
+                        tardiness: []
                     });
                 }
                 employeeData.get(empId)!.passSlips.push(ps);
             });
         });
 
+        // Helper function to check if travel order falls in the specified month based on from_date and to_date
+        // For travel orders spanning multiple months, include in all overlapping months
+        const travelOrderInMonth = (to: any): boolean => {
+            if (!to.from_date || !to.to_date) return false;
+            
+            const fromDate = new Date(to.from_date);
+            const toDate = new Date(to.to_date);
+            const monthStart = new Date(currentYear, (summaryData.value.month! - 1), 1);
+            const monthEnd = new Date(currentYear, summaryData.value.month!, 0);
+            
+            // Check if the travel order date range overlaps with the specified month
+            if (fromDate <= monthEnd && toDate >= monthStart) {
+                // For casual employees, also check if it overlaps with the casual period
+                if (summaryData.value.employmentType === 'casual') {
+                    return isDateRangeInCasualPeriod(to.from_date, to.to_date);
+                }
+                return true;
+            }
+            return false;
+        };
+
         // Process travel orders
         travelOrders.forEach((to: any) => {
-            if (!isInMonth(to.date)) return;
+            if (!travelOrderInMonth(to)) return;
             
             // Travel orders might have multiple employees, or a single employee relationship
             let empsToProcess = [];
@@ -2840,14 +3239,48 @@ const generateSummaryReport = async () => {
                 const empId = emp.id;
                 if (!employeeData.has(empId)) {
                     employeeData.set(empId, {
+                        employee_id: emp?.employee_id || '',
+                        id: empId,
                         name: emp.name || 'N/A',
+                        designation: emp?.designation || '',
                         leaves: [],
                         passSlips: [],
-                        travelOrders: []
+                        travelOrders: [],
+                        tardiness: []
                     });
                 }
                 employeeData.get(empId)!.travelOrders.push(to);
             });
+        });
+
+        // Process tardiness/undertime
+        tardiness.forEach((tu: any) => {
+            if (!isInMonth(tu.date_filed)) return;
+            
+            // For casual employees, also check if it falls within the casual period using requested_date
+            if (summaryData.value.employmentType === 'casual' && tu.requested_date && !isDateInCasualPeriod(tu.requested_date)) return;
+            
+            const empId = tu.employee_id;
+            let employee = tu.employee;
+            if (!employee && empId) {
+                employee = employees.value.find(e => e.id === empId);
+            }
+            if (!employee) return;
+            if (getEmploymentType(employee) !== summaryData.value.employmentType) return;
+
+            if (!employeeData.has(empId)) {
+                employeeData.set(empId, {
+                    employee_id: employee?.employee_id || '',
+                    id: empId,
+                    name: employee?.name || 'N/A',
+                    designation: employee?.designation || '',
+                    leaves: [],
+                    passSlips: [],
+                    travelOrders: [],
+                    tardiness: []
+                });
+            }
+            employeeData.get(empId)!.tardiness.push(tu);
         });
 
         // Get signatory names
@@ -2889,40 +3322,122 @@ const generateSummaryReport = async () => {
         <p style="font-weight: bold; margin-top: 0;">Provincial Budget Office</p>
     </div>
     
-    <p style="text-align: center; font-size: 12px; font-weight: bold; margin-bottom: 0;">SUMMARY OF LEAVES, TRAVEL ORDERS AND PASS SLIPS</p>
-    <p style="text-align: center; font-size: 12px; margin-top: 0; margin-bottom: 20px;">As of ${monthName} ${currentYear} (${summaryData.value.employmentType.charAt(0).toUpperCase() + summaryData.value.employmentType.slice(1).toLowerCase()})</p>
+    <p style="text-align: center; font-size: 12px; font-weight: bold; margin-bottom: 0;">SUMMARY OF LEAVES, TRAVEL ORDERS, PASS SLIPS AND TARDINESS/UNDERTIME</p>
+    <p style="text-align: center; font-size: 12px; margin-top: 0; margin-bottom: 20px;">As of ${summaryData.value.employmentType === 'casual' ? (summaryData.value.casualPeriod === '1-15' ? `${monthName} 1-15, ${currentYear}` : `${monthName} 16-${new Date(currentYear, summaryData.value.month!, 0).getDate()}, ${currentYear}`) : `${monthName} ${currentYear}`} (${summaryData.value.employmentType.charAt(0).toUpperCase() + summaryData.value.employmentType.slice(1).toLowerCase()})</p>
     
     ${Array.from(employeeData.values()).length > 0 ? `
     <table>
         <thead>
             <tr>
-                <th rowspan="2" style="text-align: center; font-weight: bold; vertical-align: middle; width: 12%;">Employee Name</th>
-                <th colspan="3" style="text-align: center; font-weight: bold;">Leaves</th>
-                <th colspan="2" style="text-align: center; font-weight: bold;">Travel Orders</th>
-                <th colspan="4" style="text-align: center; font-weight: bold;">Pass Slips</th>
+                <th rowspan="2" style="text-align: center; font-weight: bold; vertical-align: middle; width: 8%;">ID NO</th>
+                <th rowspan="2" style="text-align: center; font-weight: bold; vertical-align: middle; width: 12%;">NAME</th>
+                <th colspan="2" style="text-align: center; font-weight: bold;">LEAVES</th>
+                <th colspan="1" style="text-align: center; font-weight: bold;">TRAVEL ORDERS</th>
+                <th colspan="3" style="text-align: center; font-weight: bold;">PASS SLIPS</th>
+                <th colspan="7" style="text-align: center; font-weight: bold;">TARDINESS/UNDERTIME</th>
             </tr>
             <tr>
-                <th style="text-align: center; font-weight: bold; width: 7%;">Control No.</th>
-                <th style="text-align: center; font-weight: bold; width: 13%;">Type of Leave</th>
-                <th style="text-align: center; font-weight: bold; width: 10%;">Inclusive Dates</th>
-                <th style="text-align: center; font-weight: bold; width: 7%;">Control No.</th>
-                <th style="text-align: center; font-weight: bold; width: 10%;">Inclusive Dates</th>
-                <th style="text-align: center; font-weight: bold; width: 7%;">Control No.</th>
-                <th style="text-align: center; font-weight: bold; width: 8%;">Date</th>
-                <th style="text-align: center; font-weight: bold; width: 8%;">Leave Time</th>
-                <th style="text-align: center; font-weight: bold; width: 8%;">Return Time</th>
+                <th style="text-align: center; font-weight: bold; width: 10%;">Type of Leave</th>
+                <th style="text-align: center; font-weight: bold; width: 8%;">Inclusive Dates</th>
+                <th style="text-align: center; font-weight: bold; width: 8%;">Inclusive Dates</th>
+                <th style="text-align: center; font-weight: bold; width: 6%;">Date</th>
+                <th style="text-align: center; font-weight: bold; width: 6%;">Time of Departure</th>
+                <th style="text-align: center; font-weight: bold; width: 6%;">Return Time</th>
+                <th style="text-align: center; font-weight: bold; width: 5%;">Tard. Date</th>
+                <th style="text-align: center; font-weight: bold; width: 5%;">Tard. Hrs/Mins</th>
+                <th style="text-align: center; font-weight: bold; width: 4%;">Tard. Count</th>
+                <th style="text-align: center; font-weight: bold; width: 5%;">Undert. Date</th>
+                <th style="text-align: center; font-weight: bold; width: 5%;">Undert. Hrs/Mins</th>
+                <th style="text-align: center; font-weight: bold; width: 4%;">Undert. Count</th>
+                <th style="text-align: center; font-weight: bold; width: 5%;">Total Hrs/Mins</th>
             </tr>
         </thead>
         <tbody>
             ${(() => {
                 const sortedEntries = Array.from(employeeData.entries()).sort((a, b) => {
+                    // Check if either employee has "Provincial Budget Officer" designation
+                    const aIsProvincialBudgetOfficer = a[1].designation?.toLowerCase().includes('provincial budget officer') || false;
+                    const bIsProvincialBudgetOfficer = b[1].designation?.toLowerCase().includes('provincial budget officer') || false;
+                    
+                    // If one is Provincial Budget Officer and the other is not, Provincial Budget Officer comes first
+                    if (aIsProvincialBudgetOfficer && !bIsProvincialBudgetOfficer) return -1;
+                    if (!aIsProvincialBudgetOfficer && bIsProvincialBudgetOfficer) return 1;
+                    
+                    // Otherwise, sort alphabetically by last name
                     const aName = a[1].name.split(' ').pop() || '';
                     const bName = b[1].name.split(' ').pop() || '';
                     return aName.localeCompare(bName);
                 });
                 
                 return sortedEntries.map(([empId, emp]) => {
-                    const maxRows = Math.max(emp.leaves.length, emp.passSlips.length, emp.travelOrders.length);
+                    // Consolidate tardiness and undertime records
+                    const tardinessRecords = emp.tardiness.filter((r: any) => r.type === 'Tardiness');
+                    const undertimeRecords = emp.tardiness.filter((r: any) => r.type === 'Undertime');
+                    
+                    // Calculate tardiness totals
+                    let tardinessDates: string[] = [];
+                    let tardinessHoursTotal = 0;
+                    let tardinessMinutesTotal = 0;
+                    tardinessRecords.forEach((tu: any) => {
+                        const tuDate = new Date(tu.requested_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                        if (!tardinessDates.includes(tuDate)) {
+                            tardinessDates.push(tuDate);
+                        }
+                        if (tu.requested_time) {
+                            // Use 5:00 PM (17:00) for NWD, otherwise use the specific return time
+                            const returnTime = tu.return_time === 'nwd' ? '17:00' : tu.return_time;
+                            if (returnTime) {
+                                const timeDiff = calculateTimeDifference(tu.requested_time, returnTime);
+                                tardinessHoursTotal += timeDiff.hours;
+                                tardinessMinutesTotal += timeDiff.minutes;
+                            }
+                        }
+                    });
+                    // Normalize minutes
+                    tardinessHoursTotal += Math.floor(tardinessMinutesTotal / 60);
+                    tardinessMinutesTotal = tardinessMinutesTotal % 60;
+                    
+                    // Calculate undertime totals
+                    let undertimeDates: string[] = [];
+                    let undertimeHoursTotal = 0;
+                    let undertimeMinutesTotal = 0;
+                    undertimeRecords.forEach((tu: any) => {
+                        const tuDate = new Date(tu.requested_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                        if (!undertimeDates.includes(tuDate)) {
+                            undertimeDates.push(tuDate);
+                        }
+                        if (tu.requested_time) {
+                            // Use 5:00 PM (17:00) for NWD, otherwise use the specific return time
+                            const returnTime = tu.return_time === 'nwd' ? '17:00' : tu.return_time;
+                            if (returnTime) {
+                                const timeDiff = calculateTimeDifference(tu.requested_time, returnTime);
+                                undertimeHoursTotal += timeDiff.hours;
+                                undertimeMinutesTotal += timeDiff.minutes;
+                            }
+                        }
+                    });
+                    // Normalize minutes
+                    undertimeHoursTotal += Math.floor(undertimeMinutesTotal / 60);
+                    undertimeMinutesTotal = undertimeMinutesTotal % 60;
+                    
+                    // Calculate total
+                    let totalHours = tardinessHoursTotal + undertimeHoursTotal;
+                    let totalMinutes = tardinessMinutesTotal + undertimeMinutesTotal;
+                    totalHours += Math.floor(totalMinutes / 60);
+                    totalMinutes = totalMinutes % 60;
+                    
+                    // Format displays
+                    const tardinessDisplay = tardinessRecords.length > 0 
+                        ? (tardinessHoursTotal > 0 ? `${tardinessHoursTotal}h ${tardinessMinutesTotal}m` : `${tardinessMinutesTotal}m`)
+                        : '';
+                    const undertimeDisplay = undertimeRecords.length > 0 
+                        ? (undertimeHoursTotal > 0 ? `${undertimeHoursTotal}h ${undertimeMinutesTotal}m` : `${undertimeMinutesTotal}m`)
+                        : '';
+                    const totalDisplay = (tardinessRecords.length > 0 || undertimeRecords.length > 0)
+                        ? (totalHours > 0 ? `${totalHours}h ${totalMinutes}m` : `${totalMinutes}m`)
+                        : '';
+                    
+                    const maxRows = Math.max(emp.leaves.length, emp.passSlips.length, emp.travelOrders.length, 1);
                     return Array.from({length: maxRows}).map((_, rowIdx) => {
                         const leave = emp.leaves[rowIdx];
                         const ps = emp.passSlips[rowIdx];
@@ -2930,39 +3445,57 @@ const generateSummaryReport = async () => {
                         
                         let html = '<tr>';
                         
-                        // Add employee name for first row only
+                        // Add employee ID and name for first row only
                         if (rowIdx === 0) {
+                            html += '<td rowspan="' + maxRows + '" style="text-align: center; font-weight: bold; vertical-align: top; padding: 4px 3px; width: 8%;">' + emp.employee_id + '</td>';
                             html += '<td rowspan="' + maxRows + '" style="font-weight: bold; vertical-align: top; padding: 4px 3px; width: 12%;">' + emp.name + '</td>';
                         }
                         
                         // Leave columns
-                        html += '<td style="text-align: center; padding: 4px 3px; width: 7%; font-size: 11px;">' + (leave ? leave.control_no : '') + '</td>';
-                        html += '<td style="text-align: left; padding: 4px 3px; width: 13%; font-size: 11px;">' + (leave ? leave.type_of_leave : '') + '</td>';
+                        html += '<td style="text-align: center; padding: 4px 3px; width: 10%; font-size: 11px;">' + (leave ? leave.type_of_leave : '') + '</td>';
                         const inclusiveDates = leave && leave.inclusive_dates ? formatInclusiveDatesToString(leave.inclusive_dates) : '';
-                        html += '<td style="text-align: center; padding: 4px 3px; width: 10%; font-size: 11px;">' + inclusiveDates + '</td>';
+                        html += '<td style="text-align: center; padding: 4px 3px; width: 8%; font-size: 11px;">' + inclusiveDates + '</td>';
                         
                         // Travel order columns
-                        html += '<td style="text-align: center; padding: 4px 3px; width: 7%; font-size: 11px;">' + (to ? to.control_no : '') + '</td>';
                         let toDates = '';
                         if (to) {
                             if (to.inclusive_dates) {
                                 toDates = formatInclusiveDatesToString(to.inclusive_dates);
                             } else if (to.from_date && to.to_date) {
-                                const fromDate = new Date(to.from_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-                                const toDate = new Date(to.to_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                                const fromDate = new Date(to.from_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                                const toDate = new Date(to.to_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
                                 toDates = fromDate === toDate ? fromDate : `${fromDate} - ${toDate}`;
                             } else if (to.date) {
-                                toDates = new Date(to.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                                toDates = new Date(to.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
                             }
                         }
-                        html += '<td style="text-align: center; padding: 4px 3px; width: 10%; font-size: 11px;">' + toDates + '</td>';
+                        html += '<td style="text-align: center; padding: 4px 3px; width: 8%; font-size: 11px;">' + toDates + '</td>';
                         
                         // Pass slip columns
-                        html += '<td style="text-align: center; padding: 4px 3px; width: 7%; font-size: 11px;">' + (ps ? ps.control_no : '') + '</td>';
-                        const psDate = ps ? new Date(ps.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '';
-                        html += '<td style="text-align: center; padding: 4px 3px; width: 8%; font-size: 11px;">' + psDate + '</td>';
-                        html += '<td style="text-align: center; padding: 4px 3px; width: 8%; font-size: 11px;">' + (ps ? formatTime(ps.requested_time || '') : '') + '</td>';
-                        html += '<td style="text-align: center; padding: 4px 3px; width: 8%; font-size: 11px;">' + (ps ? formatTime(ps.expected_return_time || '') : '') + '</td>';
+                        const psDate = ps ? new Date(ps.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '';
+                        html += '<td style="text-align: center; padding: 4px 3px; width: 6%; font-size: 11px;">' + psDate + '</td>';
+                        html += '<td style="text-align: center; padding: 4px 3px; width: 6%; font-size: 11px;">' + (ps ? formatTime(ps.requested_time || '') : '') + '</td>';
+                        html += '<td style="text-align: center; padding: 4px 3px; width: 6%; font-size: 11px;">' + (ps ? formatTime(ps.expected_return_time || '') : '') + '</td>';
+                        
+                        // Tardiness/Undertime columns - show only in first row
+                        if (rowIdx === 0) {
+                            html += '<td style="text-align: center; padding: 4px 3px; width: 5%; font-size: 11px;">' + tardinessDates.join(', ') + '</td>';
+                            html += '<td style="text-align: center; padding: 4px 3px; width: 5%; font-size: 11px;">' + tardinessDisplay + '</td>';
+                            html += '<td style="text-align: center; padding: 4px 3px; width: 4%; font-size: 11px;">' + (tardinessRecords.length > 0 ? tardinessRecords.length : '') + '</td>';
+                            html += '<td style="text-align: center; padding: 4px 3px; width: 5%; font-size: 11px;">' + undertimeDates.join(', ') + '</td>';
+                            html += '<td style="text-align: center; padding: 4px 3px; width: 5%; font-size: 11px;">' + undertimeDisplay + '</td>';
+                            html += '<td style="text-align: center; padding: 4px 3px; width: 4%; font-size: 11px;">' + (undertimeRecords.length > 0 ? undertimeRecords.length : '') + '</td>';
+                            html += '<td style="text-align: center; padding: 4px 3px; width: 5%; font-size: 11px;">' + totalDisplay + '</td>';
+                        } else {
+                            // Empty tardiness/undertime columns for non-first rows
+                            html += '<td style="text-align: center; padding: 4px 3px; width: 5%; font-size: 11px;"></td>';
+                            html += '<td style="text-align: center; padding: 4px 3px; width: 5%; font-size: 11px;"></td>';
+                            html += '<td style="text-align: center; padding: 4px 3px; width: 4%; font-size: 11px;"></td>';
+                            html += '<td style="text-align: center; padding: 4px 3px; width: 5%; font-size: 11px;"></td>';
+                            html += '<td style="text-align: center; padding: 4px 3px; width: 5%; font-size: 11px;"></td>';
+                            html += '<td style="text-align: center; padding: 4px 3px; width: 4%; font-size: 11px;"></td>';
+                            html += '<td style="text-align: center; padding: 4px 3px; width: 5%; font-size: 11px;"></td>';
+                        }
                         
                         html += '</tr>';
                         return html;
@@ -2981,6 +3514,8 @@ const generateSummaryReport = async () => {
     </table>
     `}
     
+    ${summaryData.value.remarks ? `<p style="margin: 0; font-weight: bold; font-size: 11px;"><strong>*</strong> <em>${summaryData.value.remarks.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</em></p>` : ''}
+    
     <div class="signature-section">
         <div class="signature-box">
             <div class="signature-title">Prepared By:</div>
@@ -2990,7 +3525,7 @@ const generateSummaryReport = async () => {
         </div>
         
         <div class="signature-box">
-            <div class="signature-title">Certified Correct:</div>
+            <div class="signature-title">Reviewed/Certified Correct:</div>
             <div class="signature-line"></div>
             <div class="signature-name">${capitalizeWords(certifiedByUser?.name || 'N/A')}</div>
             <div class="signature-designation">${certifiedByEmployee?.designation || ''}</div>
@@ -3015,6 +3550,7 @@ const generateSummaryReport = async () => {
             employmentType: '',
             preparedBy: null,
             certifiedCorrect: null,
+            remarks: '',
         };
     } catch (e) {
         summaryErrors.value.submit = e instanceof Error ? e.message : 'An error occurred while generating the report';
@@ -3054,7 +3590,8 @@ onMounted(async () => {
     await Promise.all([
         fetchLeaves(),
         fetchTravelOrders(),
-        fetchPassSlips()
+        fetchPassSlips(),
+        fetchTardiness()
     ]);
 });
 

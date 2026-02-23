@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\DocumentController;
 use App\Http\Controllers\Api\PassSlipController;
 use App\Http\Controllers\Api\TravelOrderController;
 use App\Http\Controllers\Api\LeaveController;
+use App\Http\Controllers\Api\TardinessController;
 use App\Http\Controllers\Api\SyncController;
 
 // Users API
@@ -71,6 +72,14 @@ Route::middleware(['web', 'auth'])->group(function () {
     Route::post('/leaves', [LeaveController::class, 'store']);
     Route::put('/leaves/{leave}', [LeaveController::class, 'update']);
     Route::delete('/leaves/{leave}', [LeaveController::class, 'destroy']);
+});
+
+// Tardiness/Undertime API
+Route::middleware(['web', 'auth'])->group(function () {
+    Route::get('/tardiness', [TardinessController::class, 'index']);
+    Route::post('/tardiness', [TardinessController::class, 'store']);
+    Route::put('/tardiness/{tardiness}', [TardinessController::class, 'update']);
+    Route::delete('/tardiness/{tardiness}', [TardinessController::class, 'destroy']);
 });
 
 // Sync API - Fetch and update data from pbo-registry

@@ -34,6 +34,10 @@ class RoleService
             'travel_orders.create',
             'travel_orders.edit',
             'travel_orders.delete',
+            'tardiness.view',
+            'tardiness.create',
+            'tardiness.edit',
+            'tardiness.delete',
             'hr_summary.view',
         ],
         'Administrator' => [
@@ -60,6 +64,10 @@ class RoleService
             'travel_orders.create',
             'travel_orders.edit',
             'travel_orders.delete',
+            'tardiness.view',
+            'tardiness.create',
+            'tardiness.edit',
+            'tardiness.delete',
             'hr_summary.view',
         ],
         'Receiving' => [
@@ -117,6 +125,10 @@ class RoleService
             'travel_orders.create',
             'travel_orders.edit',
             'travel_orders.delete',
+            'tardiness.view',
+            'tardiness.create',
+            'tardiness.edit',
+            'tardiness.delete',
             'hr_summary.view',
         ],
     ];
@@ -319,6 +331,38 @@ class RoleService
     public static function canDeleteTravelOrder(User $user): bool
     {
         return self::hasPermission($user, 'travel_orders.delete');
+    }
+
+    /**
+     * Check if user can view tardiness/undertime records
+     */
+    public static function canViewTardiness(User $user): bool
+    {
+        return self::hasPermission($user, 'tardiness.view');
+    }
+
+    /**
+     * Check if user can create tardiness/undertime records
+     */
+    public static function canCreateTardiness(User $user): bool
+    {
+        return self::hasPermission($user, 'tardiness.create');
+    }
+
+    /**
+     * Check if user can edit tardiness/undertime records
+     */
+    public static function canEditTardiness(User $user): bool
+    {
+        return self::hasPermission($user, 'tardiness.edit');
+    }
+
+    /**
+     * Check if user can delete tardiness/undertime records
+     */
+    public static function canDeleteTardiness(User $user): bool
+    {
+        return self::hasPermission($user, 'tardiness.delete');
     }
 
     /**

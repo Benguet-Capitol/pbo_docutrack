@@ -328,9 +328,13 @@
                                                 <input type="radio" v-model="formData.returnType" value="asap" class="accent-emerald-600" />
                                                 <span class="text-xs text-gray-700 dark:text-gray-300">ASAP</span>
                                             </label>
-                                            <label class="flex items-center gap-2 cursor-pointer">
+                                            <label class="flex items-center gap-2 cursor-pointer mb-2">
                                                 <input type="radio" v-model="formData.returnType" value="nwd" class="accent-emerald-600" />
                                                 <span class="text-xs text-gray-700 dark:text-gray-300">NWD</span>
+                                            </label>
+                                            <label class="flex items-center gap-2 cursor-pointer">
+                                                <input type="radio" v-model="formData.returnType" value="time_slip" class="accent-emerald-600" />
+                                                <span class="text-xs text-gray-700 dark:text-gray-300">Time Slip</span>
                                             </label>
                                         </div>
                                     </div>
@@ -477,9 +481,13 @@
                                                 <input type="radio" v-model="formData.returnType" value="asap" class="accent-blue-600" />
                                                 <span class="text-xs text-gray-700 dark:text-gray-300">ASAP</span>
                                             </label>
-                                            <label class="flex items-center gap-2 cursor-pointer">
+                                            <label class="flex items-center gap-2 cursor-pointer mb-2">
                                                 <input type="radio" v-model="formData.returnType" value="nwd" class="accent-blue-600" />
                                                 <span class="text-xs text-gray-700 dark:text-gray-300">NWD</span>
+                                            </label>
+                                            <label class="flex items-center gap-2 cursor-pointer">
+                                                <input type="radio" v-model="formData.returnType" value="time_slip" class="accent-blue-600" />
+                                                <span class="text-xs text-gray-700 dark:text-gray-300">Time Slip</span>
                                             </label>
                                         </div>
                                     </div>
@@ -600,7 +608,7 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import PageHead from '@/Components/PageHead.vue';
 import Toast from '@/Components/Toast.vue';
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, computed, watch } from 'vue';
 
 interface Employee {
     id: number;
@@ -658,7 +666,7 @@ const formData = ref({
     expected_return_time: '',
     remarks: '',
     employee_ids: [] as number[],
-    returnType: 'time' as 'time' | 'asap' | 'nwd',
+    returnType: 'time' as 'time' | 'asap' | 'nwd' | 'time_slip',
 });
 
 const formErrors = ref<Record<string, string>>({});
@@ -740,10 +748,11 @@ const fetchEmployees = async () => {
     }
 };
 
-const generateControlNo = (): string => {
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, '0');
+const generateControlNo = (dateString?: string): string => {
+    // Use provided date or current date
+    const dateToUse = dateString ? new Date(dateString) : new Date();
+    const year = dateToUse.getFullYear();
+    const month = String(dateToUse.getMonth() + 1).padStart(2, '0');
     const yearMonth = `${year}-${month}`;
     const prefix = 'PS';
     
@@ -829,9 +838,10 @@ const validateForm = (): boolean => {
 };
 
 const openCreateModal = async () => {
+    const today = new Date().toISOString().split('T')[0];
     formData.value = {
-        control_no: generateControlNo(),
-        date: new Date().toISOString().split('T')[0],
+        control_no: generateControlNo(today),
+        date: today,
         requested_time: '08:00',
         purpose: '',
         location: '',
@@ -848,6 +858,14 @@ const closeCreateModal = () => {
     showCreateModal.value = false;
 };
 
+// Watch for changes to date and regenerate control_no
+watch(() => formData.value.date, (newDate) => {
+    if (showCreateModal.value && newDate) {
+        // Regenerate control number based on the new date
+        formData.value.control_no = generateControlNo(newDate);
+    }
+});
+
 const submitCreateForm = async () => {
     if (!validateForm()) return;
     validateReturnTime();
@@ -862,6 +880,8 @@ const submitCreateForm = async () => {
             expectedReturnTime = 'ASAP';
         } else if (formData.value.returnType === 'nwd') {
             expectedReturnTime = 'NWD';
+        } else if (formData.value.returnType === 'time_slip') {
+            expectedReturnTime = 'Time Slip';
         } else {
             // Format time to HH:MM
             expectedReturnTime = formatTimeForAPI(expectedReturnTime);
@@ -929,7 +949,7 @@ const handleEditPassSlip = (slip: PassSlip) => {
     passSlipToEdit.value = slip;
     
     // Determine return type from expected_return_time
-    let returnType: 'time' | 'asap' | 'nwd' = 'time';
+    let returnType: 'time' | 'asap' | 'nwd' | 'time_slip' = 'time';
     let returnTimeValue = slip.expected_return_time;
     
     if (slip.expected_return_time === 'ASAP') {
@@ -937,6 +957,9 @@ const handleEditPassSlip = (slip: PassSlip) => {
         returnTimeValue = '';
     } else if (slip.expected_return_time === 'NWD') {
         returnType = 'nwd';
+        returnTimeValue = '';
+    } else if (slip.expected_return_time === 'Time Slip') {
+        returnType = 'time_slip';
         returnTimeValue = '';
     }
     
@@ -985,6 +1008,8 @@ const submitEditForm = async () => {
             expectedReturnTime = 'ASAP';
         } else if (formData.value.returnType === 'nwd') {
             expectedReturnTime = 'NWD';
+        } else if (formData.value.returnType === 'time_slip') {
+            expectedReturnTime = 'Time Slip';
         } else {
             // Format time to HH:MM
             expectedReturnTime = formatTimeForAPI(expectedReturnTime);

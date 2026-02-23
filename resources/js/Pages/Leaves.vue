@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import Toast from '@/Components/Toast.vue';
 import PageHead from '@/Components/PageHead.vue';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
@@ -96,19 +96,19 @@ const hasPermission = (permission: string): boolean => {
     return true;
 };
 
-const generateControlNo = (): string => {
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, '0');
-    const yearMonth = `${year}-${month}`;
+const generateControlNo = (dateString?: string): string => {
+    // Use provided date or current date
+    const dateToUse = dateString ? new Date(dateString) : new Date();
+    const year = dateToUse.getFullYear();
     const prefix = 'L';
     
-    const sameMonthCount = leaves.value.filter(leave =>
-        leave.control_no.startsWith(`${prefix}-${yearMonth}`)
+    // Count all leaves for the entire year (not just the month)
+    const sameYearCount = leaves.value.filter(leave =>
+        leave.control_no.startsWith(`${prefix}-${year}`)
     ).length;
     
-    const series = String(sameMonthCount + 1).padStart(4, '0');
-    return `${prefix}-${yearMonth}-${series}`;
+    const series = String(sameYearCount + 1).padStart(4, '0');
+    return `${prefix}-${year}-${series}`;
 };
 
 const filteredLeaves = computed(() => {
@@ -241,10 +241,11 @@ const toggleSort = (column: string) => {
 };
 
 const openCreateModal = () => {
+    const today = new Date().toISOString().split('T')[0];
     formData.value = {
-        control_no: generateControlNo(),
+        control_no: generateControlNo(today),
         employee_id: 0,
-        date_of_filing: new Date().toISOString().split('T')[0],
+        date_of_filing: today,
         type_of_leave: 'Vacation Leave',
         number_of_working_days_applied_for: 1,
         inclusive_dates: [],
@@ -297,6 +298,14 @@ const closeEditModal = () => {
     leaveToEdit.value = null;
     formErrors.value = {};
 };
+
+// Watch for changes to date_of_filing and regenerate control_no
+watch(() => formData.value.date_of_filing, (newDate) => {
+    if (showCreateModal.value && newDate) {
+        // Regenerate control number based on the new filing date
+        formData.value.control_no = generateControlNo(newDate);
+    }
+});
 
 const addInclusiveDate = () => {
     if (formData.value.newInclusiveDate) {
