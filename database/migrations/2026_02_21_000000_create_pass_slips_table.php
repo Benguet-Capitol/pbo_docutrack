@@ -17,7 +17,7 @@ return new class extends Migration
             $table->date('date');
             $table->time('requested_time');
             $table->string('purpose');
-            $table->string('location');
+            $table->string('location')->nullable();
             $table->string('expected_return_time'); // Can be time or 'ASAP' or 'NWD'
             $table->text('remarks')->nullable();
             $table->timestamps();

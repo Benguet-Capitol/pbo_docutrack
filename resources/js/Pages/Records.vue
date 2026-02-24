@@ -536,6 +536,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import PageHead from '@/Components/PageHead.vue';
 import Toast from '@/Components/Toast.vue';
 import { ref, onMounted, computed } from 'vue';
+import { usePage } from '@inertiajs/vue3';
 
 interface Record {
     id: number;
@@ -550,9 +551,12 @@ interface Record {
 }
 
 const records = ref<Record[]>([]);
-const recordTypes = ref(['DBM Circulars', 'Memorandums', 'Annual Budget', 'Supplemental Budget', 'Budget Proposals']);
+const recordTypes = ref(['DBM Circulars', 'Administrative Orders', 'Executive Orders', 'SP Resolutions', 'Memorandums', 'Annual Budget', 'Supplemental Budget', 'Budget Proposals']);
 const recordTypeAbbreviations = {
     'DBM Circulars': 'DBM',
+    'Administrative Orders': 'AO',
+    'Executive Orders': 'EO',
+    'SP Resolutions': 'SPR',
     'Memorandums': 'MEM',
     'Annual Budget': 'ABU',
     'Supplemental Budget': 'SBU',
@@ -593,8 +597,11 @@ const toastRef = ref();
 const fileInputCreate = ref();
 const fileInputEdit = ref();
 
+const page = usePage();
+
 const hasPermission = (permission: string): boolean => {
-    return true;
+    const permissions = (page.props.auth as any)?.permissions || [];
+    return permissions.includes(permission);
 };
 
 const filteredRecords = computed(() => {
@@ -886,14 +893,14 @@ const confirmDelete = async () => {
 
 const viewFile = (record: Record) => {
     if (record.image_path) {
-        window.open(`/storage/${record.image_path}`, '_blank');
+        window.open(`/api/records/${record.id}/view`, '_blank');
     }
 };
 
 const downloadFile = (record: Record) => {
     if (record.image_path) {
         const link = document.createElement('a');
-        link.href = `/storage/${record.image_path}`;
+        link.href = `/api/records/${record.id}/download`;
         link.download = record.image_path.split('/').pop() || 'document';
         document.body.appendChild(link);
         link.click();

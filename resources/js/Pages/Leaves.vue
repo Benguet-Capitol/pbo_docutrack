@@ -39,7 +39,7 @@ const searchQuery = ref('');
 const currentPage = ref(1);
 const itemsPerPage = ref(10);
 const sortBy = ref('id');
-const sortOrder = ref<'asc' | 'desc'>('asc');
+const sortOrder = ref<'asc' | 'desc'>('desc');
 
 const showCreateModal = ref(false);
 const showEditModal = ref(false);
@@ -100,6 +100,7 @@ const generateControlNo = (dateString?: string): string => {
     // Use provided date or current date
     const dateToUse = dateString ? new Date(dateString) : new Date();
     const year = dateToUse.getFullYear();
+    const month = String(dateToUse.getMonth() + 1).padStart(2, '0');
     const prefix = 'L';
     
     // Count all leaves for the entire year (not just the month)
@@ -108,7 +109,7 @@ const generateControlNo = (dateString?: string): string => {
     ).length;
     
     const series = String(sameYearCount + 1).padStart(4, '0');
-    return `${prefix}-${year}-${series}`;
+    return `${prefix}-${year}-${month}-${series}`;
 };
 
 const filteredLeaves = computed(() => {
@@ -155,6 +156,14 @@ const filteredLeaves = computed(() => {
     });
 
     return filtered;
+});
+
+const sortedEmployees = computed(() => {
+    return employees.value.slice().sort((a, b) => {
+        const lastNameA = a.name.split(' ').pop()?.toLowerCase() || '';
+        const lastNameB = b.name.split(' ').pop()?.toLowerCase() || '';
+        return lastNameA.localeCompare(lastNameB);
+    });
 });
 
 const paginatedLeaves = computed(() => {
@@ -735,7 +744,7 @@ onMounted(() => {
                                     <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Employee <span class="text-red-500">*</span></label>
                                     <select v-model.number="formData.employee_id" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-xs dark:bg-gray-700 dark:text-white focus:outline-none focus:border-emerald-500 dark:focus:border-emerald-500">
                                         <option value="0">Select Employee</option>
-                                        <option v-for="emp in employees" :key="emp.id" :value="emp.id">{{ emp.name }}</option>
+                                        <option v-for="emp in sortedEmployees" :key="emp.id" :value="emp.id">{{ emp.name }}</option>
                                     </select>
                                     <p v-if="formErrors['employee_id']" class="mt-1 text-xs text-red-600 dark:text-red-400">{{ formErrors['employee_id'] }}</p>
                                 </div>
@@ -791,7 +800,20 @@ onMounted(() => {
                                 <!-- Off Days -->
                                 <div>
                                     <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Off Days</label>
-                                    <input v-model="formData.off_days" type="text" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-xs dark:bg-gray-700 dark:text-white focus:outline-none focus:border-emerald-500 dark:focus:border-emerald-500" />
+                                    <div class="flex gap-2 mb-2">
+                                        <input v-model="formData.newOffDay" type="text" placeholder="e.g., Monday, Tuesday" class="flex-1 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-xs dark:bg-gray-700 dark:text-white focus:outline-none focus:border-emerald-500 dark:focus:border-emerald-500" />
+                                        <button @click="addOffDay" type="button" class="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs rounded-lg font-medium transition-colors">
+                                            Add
+                                        </button>
+                                    </div>
+                                    <div v-if="formData.off_days.length > 0" class="flex flex-wrap gap-2">
+                                        <div v-for="(day, index) in formData.off_days" :key="index" class="flex items-center gap-2 bg-emerald-100 dark:bg-emerald-900 px-3 py-1 rounded-lg">
+                                            <span class="text-xs text-emerald-800 dark:text-emerald-200">{{ day }}</span>
+                                            <button @click="removeOffDay(index)" type="button" class="text-emerald-600 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300">
+                                                <i class="fas fa-times text-xs"></i>
+                                            </button>
+                                        </div>
+                                    </div>
                                 </div>
 
                                 <!-- Conditional Fields -->
@@ -907,7 +929,7 @@ onMounted(() => {
                                     <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Employee <span class="text-red-500">*</span></label>
                                     <select v-model.number="formData.employee_id" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-xs dark:bg-gray-700 dark:text-white focus:outline-none focus:border-blue-500 dark:focus:border-blue-500">
                                         <option value="0">Select Employee</option>
-                                        <option v-for="emp in employees" :key="emp.id" :value="emp.id">{{ emp.name }} ({{ emp.employee_id }})</option>
+                                        <option v-for="emp in sortedEmployees" :key="emp.id" :value="emp.id">{{ emp.name }} ({{ emp.employee_id }})</option>
                                     </select>
                                     <p v-if="formErrors['employee_id']" class="mt-1 text-xs text-red-600 dark:text-red-400">{{ formErrors['employee_id'] }}</p>
                                 </div>
@@ -963,7 +985,20 @@ onMounted(() => {
                                 <!-- Off Days -->
                                 <div>
                                     <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Off Days</label>
-                                    <input v-model="formData.off_days" type="text" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-xs dark:bg-gray-700 dark:text-white focus:outline-none focus:border-blue-500 dark:focus:border-blue-500" />
+                                    <div class="flex gap-2 mb-2">
+                                        <input v-model="formData.newOffDay" type="text" placeholder="e.g., Monday, Tuesday" class="flex-1 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-xs dark:bg-gray-700 dark:text-white focus:outline-none focus:border-blue-500 dark:focus:border-blue-500" />
+                                        <button @click="addOffDay" type="button" class="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs rounded-lg font-medium transition-colors">
+                                            Add
+                                        </button>
+                                    </div>
+                                    <div v-if="formData.off_days.length > 0" class="flex flex-wrap gap-2">
+                                        <div v-for="(day, index) in formData.off_days" :key="index" class="flex items-center gap-2 bg-blue-100 dark:bg-blue-900 px-3 py-1 rounded-lg">
+                                            <span class="text-xs text-blue-800 dark:text-blue-200">{{ day }}</span>
+                                            <button @click="removeOffDay(index)" type="button" class="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300">
+                                                <i class="fas fa-times text-xs"></i>
+                                            </button>
+                                        </div>
+                                    </div>
                                 </div>
 
                                 <!-- Conditional Fields -->

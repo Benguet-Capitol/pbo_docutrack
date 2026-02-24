@@ -100,6 +100,8 @@ Route::middleware('auth')
     Route::post('/api/records', [RecordController::class, 'store']);
     Route::put('/api/records/{id}', [RecordController::class, 'update']);
     Route::delete('/api/records/{id}', [RecordController::class, 'destroy']);
+    Route::get('/api/records/{id}/view', [RecordController::class, 'viewFile']);
+    Route::get('/api/records/{id}/download', [RecordController::class, 'downloadFile']);
 });
 
 require __DIR__.'/auth.php';

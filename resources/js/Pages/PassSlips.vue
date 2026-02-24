@@ -300,7 +300,7 @@
 
                             <!-- Location Field -->
                             <div class="space-y-2">
-                                <label for="create_location" class="block text-xs font-medium text-gray-700 dark:text-gray-300">Location <span class="text-red-600">*</span></label>
+                                <label for="create_location" class="block text-xs font-medium text-gray-700 dark:text-gray-300">Location</label>
                                 <div class="relative flex items-center">
                                     <i class="fas fa-map-marker-alt absolute left-3 text-gray-400 text-sm"></i>
                                     <input v-model="formData.location" id="create_location" type="text" placeholder="Enter location" class="block w-full pl-10 pr-4 py-2 text-xs border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:outline-none transition-colors" :class="[formErrors.location ? 'border-red-500 focus:border-red-500' : 'border-gray-300 focus:border-emerald-500']" />
@@ -332,9 +332,19 @@
                                                 <input type="radio" v-model="formData.returnType" value="nwd" class="accent-emerald-600" />
                                                 <span class="text-xs text-gray-700 dark:text-gray-300">NWD</span>
                                             </label>
-                                            <label class="flex items-center gap-2 cursor-pointer">
+                                            <label class="flex items-center gap-2 cursor-pointer mb-2">
                                                 <input type="radio" v-model="formData.returnType" value="time_slip" class="accent-emerald-600" />
                                                 <span class="text-xs text-gray-700 dark:text-gray-300">Time Slip</span>
+                                            </label>
+                                        </div>
+                                        <div class="flex-1">
+                                            <label class="flex items-center gap-2 cursor-pointer mb-2">
+                                                <input type="radio" v-model="formData.returnType" value="nom" class="accent-emerald-600" />
+                                                <span class="text-xs text-gray-700 dark:text-gray-300">NOM</span>
+                                            </label>
+                                            <label class="flex items-center gap-2 cursor-pointer">
+                                                <input type="radio" v-model="formData.returnType" value="memo" class="accent-emerald-600" />
+                                                <span class="text-xs text-gray-700 dark:text-gray-300">Memo</span>
                                             </label>
                                         </div>
                                     </div>
@@ -347,10 +357,10 @@
                                 <label for="create_employees" class="block text-xs font-medium text-gray-700 dark:text-gray-300">Requesting Employee(s) <span class="text-red-600">*</span></label>
                                 <div class="space-y-2">
                                     <div class="border border-gray-300 dark:border-gray-600 rounded-lg p-3 max-h-32 overflow-y-auto">
-                                        <div v-if="employees.length === 0" class="text-xs text-gray-500 dark:text-gray-400 py-2">
+                                        <div v-if="sortedEmployees.length === 0" class="text-xs text-gray-500 dark:text-gray-400 py-2">
                                             No employees available
                                         </div>
-                                        <label v-for="emp in employees" :key="emp.id" class="flex items-center gap-2 py-1 cursor-pointer">
+                                        <label v-for="emp in sortedEmployees" :key="emp.id" class="flex items-center gap-2 py-1 cursor-pointer">
                                             <input type="checkbox" :value="emp.id" v-model.number="formData.employee_ids" class="rounded border-gray-300 dark:border-gray-600 accent-emerald-600" />
                                             <span class="text-xs text-gray-700 dark:text-gray-300">{{ emp.name }}</span>
                                         </label>
@@ -453,7 +463,7 @@
 
                             <!-- Location Field -->
                             <div class="space-y-2">
-                                <label for="edit_location" class="block text-xs font-medium text-gray-700 dark:text-gray-300">Location <span class="text-red-600">*</span></label>
+                                <label for="edit_location" class="block text-xs font-medium text-gray-700 dark:text-gray-300">Location</label>
                                 <div class="relative flex items-center">
                                     <i class="fas fa-map-marker-alt absolute left-3 text-gray-400 text-sm"></i>
                                     <input v-model="formData.location" id="edit_location" type="text" placeholder="Enter location" class="block w-full pl-10 pr-4 py-2 text-xs border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:outline-none transition-colors" :class="[formErrors.location ? 'border-red-500 focus:border-red-500' : 'border-gray-300 focus:border-blue-500']" />
@@ -485,9 +495,19 @@
                                                 <input type="radio" v-model="formData.returnType" value="nwd" class="accent-blue-600" />
                                                 <span class="text-xs text-gray-700 dark:text-gray-300">NWD</span>
                                             </label>
-                                            <label class="flex items-center gap-2 cursor-pointer">
+                                            <label class="flex items-center gap-2 cursor-pointer mb-2">
                                                 <input type="radio" v-model="formData.returnType" value="time_slip" class="accent-blue-600" />
                                                 <span class="text-xs text-gray-700 dark:text-gray-300">Time Slip</span>
+                                            </label>
+                                        </div>
+                                        <div class="flex-1">
+                                            <label class="flex items-center gap-2 cursor-pointer mb-2">
+                                                <input type="radio" v-model="formData.returnType" value="nom" class="accent-blue-600" />
+                                                <span class="text-xs text-gray-700 dark:text-gray-300">NOM</span>
+                                            </label>
+                                            <label class="flex items-center gap-2 cursor-pointer">
+                                                <input type="radio" v-model="formData.returnType" value="memo" class="accent-blue-600" />
+                                                <span class="text-xs text-gray-700 dark:text-gray-300">Memo</span>
                                             </label>
                                         </div>
                                     </div>
@@ -500,10 +520,10 @@
                                 <label for="edit_employees" class="block text-xs font-medium text-gray-700 dark:text-gray-300">Requesting Employee(s) <span class="text-red-600">*</span></label>
                                 <div class="space-y-2">
                                     <div class="border border-gray-300 dark:border-gray-600 rounded-lg p-3 max-h-32 overflow-y-auto">
-                                        <div v-if="employees.length === 0" class="text-xs text-gray-500 dark:text-gray-400 py-2">
+                                        <div v-if="sortedEmployees.length === 0" class="text-xs text-gray-500 dark:text-gray-400 py-2">
                                             No employees available
                                         </div>
-                                        <label v-for="emp in employees" :key="emp.id" class="flex items-center gap-2 py-1 cursor-pointer">
+                                        <label v-for="emp in sortedEmployees" :key="emp.id" class="flex items-center gap-2 py-1 cursor-pointer">
                                             <input type="checkbox" :value="emp.id" v-model.number="formData.employee_ids" class="rounded border-gray-300 dark:border-gray-600 accent-blue-600" />
                                             <span class="text-xs text-gray-700 dark:text-gray-300">{{ emp.name }}</span>
                                         </label>
@@ -642,7 +662,7 @@ const searchQuery = ref('');
 const currentPage = ref(1);
 const itemsPerPage = ref(10);
 const sortBy = ref<'id' | 'control_no' | 'date' | 'requested_time' | 'purpose' | 'location'>('id');
-const sortOrder = ref<'asc' | 'desc'>('asc');
+const sortOrder = ref<'asc' | 'desc'>('desc');
 const loading = ref(true);
 const error = ref<string | null>(null);
 
@@ -666,7 +686,7 @@ const formData = ref({
     expected_return_time: '',
     remarks: '',
     employee_ids: [] as number[],
-    returnType: 'time' as 'time' | 'asap' | 'nwd' | 'time_slip',
+    returnType: 'time' as 'time' | 'asap' | 'nwd' | 'time_slip' | 'nom' | 'memo',
 });
 
 const formErrors = ref<Record<string, string>>({});
@@ -676,6 +696,14 @@ const toastRef = ref();
 const hasPermission = (permission: string): boolean => {
     return true;
 };
+
+const sortedEmployees = computed(() => {
+    return employees.value.slice().sort((a, b) => {
+        const lastNameA = a.name.split(' ').pop()?.toLowerCase() || '';
+        const lastNameB = b.name.split(' ').pop()?.toLowerCase() || '';
+        return lastNameA.localeCompare(lastNameB);
+    });
+});
 
 const filteredPassSlips = computed(() => {
     let filtered = passSlips.value;
@@ -753,15 +781,14 @@ const generateControlNo = (dateString?: string): string => {
     const dateToUse = dateString ? new Date(dateString) : new Date();
     const year = dateToUse.getFullYear();
     const month = String(dateToUse.getMonth() + 1).padStart(2, '0');
-    const yearMonth = `${year}-${month}`;
     const prefix = 'PS';
     
-    const sameMonthCount = passSlips.value.filter(slip =>
-        slip.control_no.startsWith(`${prefix}-${yearMonth}`)
+    const sameYearCount = passSlips.value.filter(slip =>
+        slip.control_no.startsWith(`${prefix}-${year}`)
     ).length;
     
-    const series = String(sameMonthCount + 1).padStart(4, '0');
-    return `${prefix}-${yearMonth}-${series}`;
+    const series = String(sameYearCount + 1).padStart(4, '0');
+    return `${prefix}-${year}-${month}-${series}`;
 };
 
 const validateReturnTime = () => {
@@ -822,10 +849,6 @@ const validateForm = (): boolean => {
         formErrors.value['purpose'] = 'Purpose is required';
     }
 
-    if (!formData.value.location.trim()) {
-        formErrors.value['location'] = 'Location is required';
-    }
-
     if (!formData.value.expected_return_time.trim() && formData.value.returnType === 'time') {
         formErrors.value['expected_return_time'] = 'Expected return time is required for specific time';
     }
@@ -882,6 +905,10 @@ const submitCreateForm = async () => {
             expectedReturnTime = 'NWD';
         } else if (formData.value.returnType === 'time_slip') {
             expectedReturnTime = 'Time Slip';
+        } else if (formData.value.returnType === 'nom') {
+            expectedReturnTime = 'NOM';
+        } else if (formData.value.returnType === 'memo') {
+            expectedReturnTime = 'Memo';
         } else {
             // Format time to HH:MM
             expectedReturnTime = formatTimeForAPI(expectedReturnTime);
@@ -949,7 +976,7 @@ const handleEditPassSlip = (slip: PassSlip) => {
     passSlipToEdit.value = slip;
     
     // Determine return type from expected_return_time
-    let returnType: 'time' | 'asap' | 'nwd' | 'time_slip' = 'time';
+    let returnType: 'time' | 'asap' | 'nwd' | 'time_slip' | 'nom' | 'memo' = 'time';
     let returnTimeValue = slip.expected_return_time;
     
     if (slip.expected_return_time === 'ASAP') {
@@ -960,6 +987,12 @@ const handleEditPassSlip = (slip: PassSlip) => {
         returnTimeValue = '';
     } else if (slip.expected_return_time === 'Time Slip') {
         returnType = 'time_slip';
+        returnTimeValue = '';
+    } else if (slip.expected_return_time === 'NOM') {
+        returnType = 'nom';
+        returnTimeValue = '';
+    } else if (slip.expected_return_time === 'Memo') {
+        returnType = 'memo';
         returnTimeValue = '';
     }
     
@@ -1010,6 +1043,10 @@ const submitEditForm = async () => {
             expectedReturnTime = 'NWD';
         } else if (formData.value.returnType === 'time_slip') {
             expectedReturnTime = 'Time Slip';
+        } else if (formData.value.returnType === 'nom') {
+            expectedReturnTime = 'NOM';
+        } else if (formData.value.returnType === 'memo') {
+            expectedReturnTime = 'Memo';
         } else {
             // Format time to HH:MM
             expectedReturnTime = formatTimeForAPI(expectedReturnTime);

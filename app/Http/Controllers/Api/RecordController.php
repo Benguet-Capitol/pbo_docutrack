@@ -35,11 +35,6 @@ class RecordController extends Controller
                 return response()->json(['error' => 'Unauthorized'], 401);
             }
 
-            // Check role permission
-            if (!RoleService::canCreateDocument($user)) {
-                return response()->json(['error' => 'You do not have permission to create records'], 403);
-            }
-
             $validated = $request->validate([
                 'record_no' => 'required|string|unique:records,record_no',
                 'record_type' => 'required|string',
@@ -78,11 +73,6 @@ class RecordController extends Controller
             $user = auth()->user();
             if (!$user) {
                 return response()->json(['error' => 'Unauthorized'], 401);
-            }
-
-            // Check role permission
-            if (!RoleService::canEditDocument($user)) {
-                return response()->json(['error' => 'You do not have permission to edit records'], 403);
             }
 
             $record = Record::findOrFail($id);
@@ -131,6 +121,60 @@ class RecordController extends Controller
 
             $record->delete();
             return response()->json(['message' => 'Record deleted successfully']);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * View a record file in the browser.
+     */
+    public function viewFile($id)
+    {
+        try {
+            $user = auth()->user();
+            if (!$user) {
+                return response()->json(['error' => 'Unauthorized'], 401);
+            }
+
+            $record = Record::findOrFail($id);
+            
+            if (!$record->image_path || !Storage::disk('public')->exists($record->image_path)) {
+                return response()->json(['error' => 'File not found'], 404);
+            }
+
+            // Get the file path
+            $filePath = Storage::disk('public')->path($record->image_path);
+            
+            // Display the file in the browser
+            return response()->file($filePath);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Download a record file.
+     */
+    public function downloadFile($id)
+    {
+        try {
+            $user = auth()->user();
+            if (!$user) {
+                return response()->json(['error' => 'Unauthorized'], 401);
+            }
+
+            $record = Record::findOrFail($id);
+            
+            if (!$record->image_path || !Storage::disk('public')->exists($record->image_path)) {
+                return response()->json(['error' => 'File not found'], 404);
+            }
+
+            // Get the file name
+            $fileName = basename($record->image_path);
+            
+            // Download the file
+            return Storage::disk('public')->download($record->image_path, $fileName);
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], 500);
         }

@@ -38,6 +38,10 @@ class RoleService
             'tardiness.create',
             'tardiness.edit',
             'tardiness.delete',
+            'records.view',
+            'records.create',
+            'records.edit',
+            'records.delete',
             'hr_summary.view',
         ],
         'Administrator' => [
@@ -68,6 +72,10 @@ class RoleService
             'tardiness.create',
             'tardiness.edit',
             'tardiness.delete',
+            'records.view',
+            'records.create',
+            'records.edit',
+            'records.delete',
             'hr_summary.view',
         ],
         'Receiving' => [
@@ -80,6 +88,10 @@ class RoleService
             'offices.edit',
             'municipalities.view',
             'municipalities.edit',
+            'records.view',
+            'records.create',
+            'records.edit',
+            'records.delete',
         ],
         'Reviewer' => [
             'documents.edit',
@@ -90,6 +102,7 @@ class RoleService
             'offices.edit',
             'municipalities.view',
             'municipalities.edit',
+            'records.view',
         ],
         'Supervisor' => [
             'documents.edit',
@@ -101,6 +114,7 @@ class RoleService
             'offices.edit',
             'municipalities.view',
             'municipalities.edit',
+            'records.view',
         ],
         'Administrative' => [
             'documents.receive',
@@ -113,6 +127,11 @@ class RoleService
             'employees.view',
             'employees.create',
             'employees.edit',
+            'employees.delete',
+            'records.view',
+            'records.create',
+            'records.edit',
+            'records.delete',
             'leaves.view',
             'leaves.create',
             'leaves.edit',
@@ -371,6 +390,38 @@ class RoleService
     public static function canViewHRSummary(User $user): bool
     {
         return self::hasPermission($user, 'hr_summary.view');
+    }
+
+    /**
+     * Check if user can view records
+     */
+    public static function canViewRecords(User $user): bool
+    {
+        return self::hasPermission($user, 'records.view');
+    }
+
+    /**
+     * Check if user can create records
+     */
+    public static function canCreateRecord(User $user): bool
+    {
+        return self::hasPermission($user, 'records.create');
+    }
+
+    /**
+     * Check if user can edit records
+     */
+    public static function canEditRecord(User $user): bool
+    {
+        return self::hasPermission($user, 'records.edit');
+    }
+
+    /**
+     * Check if user can delete records
+     */
+    public static function canDeleteRecord(User $user): bool
+    {
+        return self::hasPermission($user, 'records.delete');
     }
 
     /**

@@ -3123,12 +3123,23 @@ const generateSummaryReport = async () => {
             const endDate = new Date(endDateString);
             const lastDay = new Date(currentYear, summaryData.value.month!, 0).getDate();
             
+            // Get the portion of the date range that falls within the selected month
+            const monthStart = new Date(currentYear, (summaryData.value.month! - 1), 1);
+            const monthEnd = new Date(currentYear, summaryData.value.month!, 0);
+            
+            // Clamp the range to the month boundaries
+            const effectiveStart = startDate > monthStart ? startDate : monthStart;
+            const effectiveEnd = endDate < monthEnd ? endDate : monthEnd;
+            
+            const effectiveStartDay = effectiveStart.getDate();
+            const effectiveEndDay = effectiveEnd.getDate();
+            
             if (summaryData.value.casualPeriod === '1-15') {
-                // Include if any part of the range is in days 1-15
-                return startDate.getDate() <= 15 || endDate.getDate() >= 1;
+                // Include if the range overlaps with days 1-15
+                return effectiveStartDay <= 15 && effectiveEndDay >= 1;
             } else if (summaryData.value.casualPeriod === '16-last') {
-                // Include if any part of the range is in days 16+
-                return endDate.getDate() >= 16 && startDate.getDate() <= lastDay;
+                // Include if the range overlaps with days 16 to last day
+                return effectiveStartDay <= lastDay && effectiveEndDay >= 16;
             }
             return true;
         };
@@ -3306,20 +3317,28 @@ const generateSummaryReport = async () => {
         table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
         th, td { border: 1px solid #000; padding: 4px 3px; text-align: left; font-size: 11px; }
         th { background-color: #f0f0f0; font-weight: bold; }
-        .signature-section { margin-top: 50px; display: flex; justify-content: space-around; }
+        .signature-section { margin-top: 20px; display: flex; justify-content: space-around; }
         .signature-box { width: 30%; text-align: center; }
         .signature-title { font-size: 11px; margin-bottom: 50px; text-align: left; font-weight: bold; }
         .signature-line { border-top: 1px solid #000; margin: 40px 0 5px 0; }
         .signature-name { font-weight: bold; font-size: 11px; margin-top: 5px; }
-        .signature-designation { font-size: 10px; margin-top: 3px; }
+        .signature-designation { font-size: 11px; margin-top: 3px; }
     </style>
 </head>
 <body>
-    <div class="header">
-        <p style="margin-bottom: 0;">Republic of the Philippines</p>
-        <p style="font-weight: bold; margin-top: 0; margin-bottom: 0;">PROVINCIAL GOVERNMENT OF BENGUET</p>
-        <p style="margin-top: 0; margin-bottom: 0;">La Trinidad, Benguet</p>
-        <p style="font-weight: bold; margin-top: 0;">Provincial Budget Office</p>
+    <div class="header" style="display: flex; align-items: center; justify-content: center; gap: 20px;">
+        <div style="width: 90px; flex-shrink: 0;">
+            <img src="/benguetlogo.png" alt="Benguet Logo" style="width: 100%; height: auto;">
+        </div>
+        <div style="text-align: center;">
+            <p style="margin-bottom: 0;">Republic of the Philippines</p>
+            <p style="font-weight: bold; margin-top: 0; margin-bottom: 0;">PROVINCIAL GOVERNMENT OF BENGUET</p>
+            <p style="margin-top: 0; margin-bottom: 0;">Poblacion, La Trinidad 2601</p>
+            <p style="font-weight: bold; margin-top: 0;">Provincial Budget Office</p>
+        </div>
+        <div style="width: 90px; flex-shrink: 0;">
+            <img src="/bagongpilipinaslogo.png" alt="Bagong Pilipinas Logo" style="width: 100%; height: auto;">
+        </div>
     </div>
     
     <p style="text-align: center; font-size: 12px; font-weight: bold; margin-bottom: 0;">SUMMARY OF LEAVES, TRAVEL ORDERS, PASS SLIPS AND TARDINESS/UNDERTIME</p>
@@ -3475,7 +3494,20 @@ const generateSummaryReport = async () => {
                         const psDate = ps ? new Date(ps.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '';
                         html += '<td style="text-align: center; padding: 4px 3px; width: 6%; font-size: 11px;">' + psDate + '</td>';
                         html += '<td style="text-align: center; padding: 4px 3px; width: 6%; font-size: 11px;">' + (ps ? formatTime(ps.requested_time || '') : '') + '</td>';
-                        html += '<td style="text-align: center; padding: 4px 3px; width: 6%; font-size: 11px;">' + (ps ? formatTime(ps.expected_return_time || '') : '') + '</td>';
+                        
+                        // Format return time with remarks
+                        let returnTimeDisplay = '';
+                        if (ps) {
+                            let returnTypeLabel = ps.expected_return_time || '';
+                            
+                            // Add remarks if they exist
+                            if (ps.remarks) {
+                                returnTimeDisplay = returnTypeLabel + ' (' + ps.remarks + ')';
+                            } else {
+                                returnTimeDisplay = returnTypeLabel;
+                            }
+                        }
+                        html += '<td style="text-align: center; padding: 4px 3px; width: 6%; font-size: 11px;">' + returnTimeDisplay + '</td>';
                         
                         // Tardiness/Undertime columns - show only in first row
                         if (rowIdx === 0) {

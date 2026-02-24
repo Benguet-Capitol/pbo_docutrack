@@ -92,6 +92,7 @@
                             <col class="w-20">
                             <col class="w-20">
                             <col class="w-20">
+                            <col class="w-20">
                         </colgroup>
                         <thead class="bg-gray-100 dark:bg-gray-900 border-b-2 border-gray-300 dark:border-gray-700">
                             <tr>
@@ -101,6 +102,7 @@
                                 <th class="px-6 py-3 text-xs font-bold text-gray-700 dark:text-gray-200">Employee</th>
                                 <th class="px-6 py-3 text-xs font-bold text-gray-700 dark:text-gray-200">Requested Date</th>
                                 <th class="px-6 py-3 text-xs font-bold text-gray-700 dark:text-gray-200">Requested Time</th>
+                                <th class="px-6 py-3 text-xs font-bold text-gray-700 dark:text-gray-200">Return Time</th>
                                 <th class="px-6 py-3 text-xs font-bold text-gray-700 dark:text-gray-200">Reason</th>
                                 <th class="px-6 py-3 text-xs font-bold text-gray-700 dark:text-gray-200 text-center">Actions</th>
                             </tr>
@@ -131,6 +133,9 @@
                                 </td>
                                 <td class="px-6 py-3 text-xs text-gray-600 dark:text-gray-400">
                                     {{ formatTime(record.requested_time) }}
+                                </td>
+                                <td class="px-6 py-3 text-xs text-gray-600 dark:text-gray-400">
+                                    {{ record.return_time ? formatTime(record.return_time) : 'N/A' }}
                                 </td>
                                 <td class="px-6 py-3 text-xs text-gray-600 dark:text-gray-400 truncate" :title="record.reason">
                                     {{ record.reason }}
@@ -270,7 +275,7 @@
                                     :class="[formErrors.employee_id ? 'border-red-500 focus:border-red-500' : 'border-gray-300 focus:border-emerald-500']"
                                 >
                                     <option value="0">Select an employee</option>
-                                    <option v-for="emp in employees" :key="emp.id" :value="emp.id">
+                                    <option v-for="emp in sortedEmployees" :key="emp.id" :value="emp.id">
                                         {{ emp.name }}
                                     </option>
                                 </select>
@@ -409,7 +414,7 @@
                                     :class="[formErrors.employee_id ? 'border-red-500 focus:border-red-500' : 'border-gray-300 focus:border-blue-500']"
                                 >
                                     <option value="0">Select an employee</option>
-                                    <option v-for="emp in employees" :key="emp.id" :value="emp.id">
+                                    <option v-for="emp in sortedEmployees" :key="emp.id" :value="emp.id">
                                         {{ emp.name }}
                                     </option>
                                 </select>
@@ -588,7 +593,7 @@ const formData = ref({
     requested_time: '',
     reason: '',
     return_time: '',
-    returnType: 'time' as 'time' | 'asap' | 'nwd',
+    returnType: 'time' as 'time' | 'nwd',
 });
 
 const formErrors = ref<Record<string, string>>({});
@@ -599,7 +604,17 @@ watch(
     () => formData.value.returnType,
     (newType) => {
         if (newType === 'nwd') {
-            formData.value.return_time = '17:00'; // 5:00 PM
+            formData.value.return_time = '17:00:00'; // 5:00 PM
+        }
+    }
+);
+
+// Watch for date_filed changes to regenerate control number based on its month
+watch(
+    () => formData.value.date_filed,
+    (newDate) => {
+        if (newDate) {
+            formData.value.control_no = generateControlNo(newDate);
         }
     }
 );
@@ -619,11 +634,11 @@ const generateControlNo = (dateString?: string): string => {
     const month = String(dateToUse.getMonth() + 1).padStart(2, '0');
     const prefix = 'TU';
     
-    const sameYearMonthCount = tardiness.value.filter(record =>
-        record.control_no.startsWith(`${prefix}-${year}-${month}`)
+    const sameYearCount = tardiness.value.filter(record =>
+        record.control_no.startsWith(`${prefix}-${year}`)
     ).length;
     
-    const series = String(sameYearMonthCount + 1).padStart(4, '0');
+    const series = String(sameYearCount + 1).padStart(4, '0');
     return `${prefix}-${year}-${month}-${series}`;
 };
 
@@ -640,7 +655,16 @@ const filteredTardiness = computed(() => {
         );
     }
 
-    return filtered;
+    // Sort by ID in descending order (newest first)
+    return filtered.sort((a, b) => b.id - a.id);
+});
+
+const sortedEmployees = computed(() => {
+    return employees.value.slice().sort((a, b) => {
+        const lastNameA = a.name.split(' ').pop()?.toLowerCase() || '';
+        const lastNameB = b.name.split(' ').pop()?.toLowerCase() || '';
+        return lastNameA.localeCompare(lastNameB);
+    });
 });
 
 const totalPages = computed(() => {
@@ -778,7 +802,7 @@ const validateForm = (): boolean => {
 const openCreateModal = () => {
     const today = new Date().toISOString().split('T')[0];
     formData.value = {
-        control_no: generateControlNo(today),
+        control_no: '',
         date_filed: today,
         type: 'Undertime',
         requested_date: '',
@@ -788,6 +812,8 @@ const openCreateModal = () => {
         return_time: '',
         returnType: 'time',
     };
+    // Generate control number based on date_filed
+    formData.value.control_no = generateControlNo(today);
     formErrors.value = {};
     showCreateModal.value = true;
 };
@@ -803,10 +829,8 @@ const submitCreateForm = async () => {
         creating.value = true;
 
         let returnTime = formData.value.return_time;
-        if (formData.value.returnType === 'asap') {
-            returnTime = 'ASAP';
-        } else if (formData.value.returnType === 'nwd') {
-            returnTime = 'NWD';
+        if (formData.value.returnType === 'nwd') {
+            returnTime = '17:00:00'; // 5:00 PM for NWD
         }
 
         const submitData = {
@@ -877,7 +901,7 @@ const openEditModal = (record: TardinessRecord) => {
         requested_time: formatTimeForInput(record.requested_time),
         reason: record.reason,
         return_time: record.return_time || '',
-        returnType: record.return_time === 'ASAP' ? 'asap' : record.return_time === 'NWD' ? 'nwd' : 'time',
+        returnType: (record.return_time === 'NWD' || record.return_time === '17:00:00') ? 'nwd' : 'time',
     };
     formErrors.value = {};
     showEditModal.value = true;
@@ -895,10 +919,8 @@ const submitEditForm = async () => {
         updating.value = true;
 
         let returnTime = formData.value.return_time;
-        if (formData.value.returnType === 'asap') {
-            returnTime = 'ASAP';
-        } else if (formData.value.returnType === 'nwd') {
-            returnTime = 'NWD';
+        if (formData.value.returnType === 'nwd') {
+            returnTime = '17:00:00'; // 5:00 PM for NWD
         }
 
         const submitData = {
@@ -946,8 +968,8 @@ const submitEditForm = async () => {
 
         closeEditModal();
         toastRef.value?.add(
-            'success',
-            'Success',
+            'info',
+            'Updated',
             `Record <strong>${updatedRecord.data.control_no}</strong> updated successfully!`,
             3000
         );
@@ -993,7 +1015,7 @@ const confirmDelete = async () => {
         closeDeleteModal();
 
         toastRef.value?.add(
-            'success',
+            'error',
             'Deleted',
             `Record <strong>${controlNo}</strong> deleted successfully!`,
             3000

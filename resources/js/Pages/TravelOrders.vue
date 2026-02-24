@@ -114,6 +114,14 @@ const filteredTravelOrders = computed(() => {
     return filtered;
 });
 
+const sortedEmployees = computed(() => {
+    return employees.value.slice().sort((a, b) => {
+        const lastNameA = a.name.split(' ').pop()?.toLowerCase() || '';
+        const lastNameB = b.name.split(' ').pop()?.toLowerCase() || '';
+        return lastNameA.localeCompare(lastNameB);
+    });
+});
+
 const paginatedTravelOrders = computed(() => {
     const start = (currentPage.value - 1) * itemsPerPage.value;
     const end = start + itemsPerPage.value;
@@ -154,15 +162,14 @@ const generateControlNo = (dateString?: string): string => {
     const dateToUse = dateString ? new Date(dateString) : new Date();
     const year = dateToUse.getFullYear();
     const month = String(dateToUse.getMonth() + 1).padStart(2, '0');
-    const yearMonth = `${year}-${month}`;
     const prefix = 'TO';
     
-    const sameMonthCount = travelOrders.value.filter(order =>
-        order.control_no.startsWith(`${prefix}-${yearMonth}`)
+    const sameYearCount = travelOrders.value.filter(order =>
+        order.control_no.startsWith(`${prefix}-${year}`)
     ).length;
     
-    const series = String(sameMonthCount + 1).padStart(4, '0');
-    return `${prefix}-${yearMonth}-${series}`;
+    const series = String(sameYearCount + 1).padStart(4, '0');
+    return `${prefix}-${year}-${month}-${series}`;
 };
 
 const formatDateForDisplay = (dateStr: string): string => {
@@ -267,6 +274,14 @@ watch(() => formData.value.date, (newDate) => {
     if (showCreateModal.value && newDate) {
         // Regenerate control number based on the new date
         formData.value.control_no = generateControlNo(newDate);
+    }
+});
+
+// Watch for changes to from_date and automatically sync to_date
+watch(() => formData.value.from_date, (newFromDate) => {
+    if (newFromDate) {
+        // Set to_date to the same as from_date for easy navigation
+        formData.value.to_date = newFromDate;
     }
 });
 
@@ -786,7 +801,7 @@ onMounted(() => {
                                         <div v-if="employees.length === 0" class="text-xs text-gray-500 dark:text-gray-400 py-2">
                                             No employees available
                                         </div>
-                                        <label v-for="emp in employees" :key="emp.id" class="flex items-center gap-2 py-1 cursor-pointer">
+                                        <label v-for="emp in sortedEmployees" :key="emp.id" class="flex items-center gap-2 py-1 cursor-pointer">
                                             <input type="checkbox" :value="emp.id" v-model.number="formData.employee_ids" class="rounded border-gray-300 dark:border-gray-600 accent-emerald-600" />
                                             <span class="text-xs text-gray-700 dark:text-gray-300">{{ emp.name }}</span>
                                         </label>
@@ -921,7 +936,7 @@ onMounted(() => {
                             <div class="space-y-2">
                                 <label class="block text-xs font-medium text-gray-700 dark:text-gray-300">Requesting Employee(s)</label>
                                 <div class="border border-gray-300 dark:border-gray-600 rounded-lg p-3 max-h-32 overflow-y-auto">
-                                    <label v-for="emp in employees" :key="emp.id" class="flex items-center gap-2 py-1 cursor-pointer">
+                                    <label v-for="emp in sortedEmployees" :key="emp.id" class="flex items-center gap-2 py-1 cursor-pointer">
                                         <input type="checkbox" :value="emp.id" v-model.number="formData.employee_ids" class="rounded border-gray-300 dark:border-gray-600 accent-emerald-600" />
                                         <span class="text-xs text-gray-700 dark:text-gray-300">{{ emp.name }}</span>
                                     </label>
