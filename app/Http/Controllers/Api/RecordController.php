@@ -40,7 +40,7 @@ class RecordController extends Controller
                 'record_type' => 'required|string',
                 'title' => 'required|string',
                 'remarks' => 'nullable|string',
-                'file' => 'nullable|file|mimes:pdf,jpg,jpeg,png,gif,doc,docx,xls,xlsx|max:10240',
+                'file' => 'nullable|file|mimes:pdf,jpg,jpeg,png,gif,doc,docx,xls,xlsx|max:102400',
             ]);
 
             // Automatically set user_id to the authenticated user's numeric ID
@@ -82,7 +82,7 @@ class RecordController extends Controller
                 'record_type' => 'sometimes|string',
                 'title' => 'sometimes|string',
                 'remarks' => 'nullable|string',
-                'file' => 'nullable|file|mimes:pdf,jpg,jpeg,png,gif,doc,docx,xls,xlsx|max:10240',
+                'file' => 'nullable|file|mimes:pdf,jpg,jpeg,png,gif,doc,docx,xls,xlsx|max:102400',
             ]);
 
             // Handle file upload

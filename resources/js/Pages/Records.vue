@@ -108,7 +108,6 @@
                             <col class="w-32">
                             <col class="w-24">
                             <col class="w-20">
-                            <col class="w-20">
                         </colgroup>
                         <!-- Table Header -->
                         <thead class="bg-gray-100 dark:bg-gray-900 border-b-2 border-gray-300 dark:border-gray-700">
@@ -132,7 +131,6 @@
                                         <span v-if="sortBy === 'created_at'" class="text-xs">{{ sortOrder === 'asc' ? '▲' : '▼' }}</span>
                                     </button>
                                 </th>
-                                <th class="px-6 py-3 text-xs font-bold text-gray-700 dark:text-gray-200">File</th>
                                 <th class="px-6 py-3 text-xs font-bold text-gray-700 dark:text-gray-200 text-center">Actions</th>
                             </tr>
                         </thead>
@@ -143,10 +141,6 @@
                                 <td class="px-6 py-3 text-xs text-gray-700 dark:text-gray-300">{{ record.title }}</td>
                                 <td class="px-6 py-3 text-xs text-gray-600 dark:text-gray-400 truncate">{{ record.remarks || '-' }}</td>
                                 <td class="px-6 py-3 text-xs text-gray-600 dark:text-gray-400">{{ new Date(record.created_at).toLocaleDateString() }}</td>
-                                <td class="px-6 py-3 text-xs text-gray-600 dark:text-gray-400">
-                                    <span v-if="record.image_path">{{ record.image_path.split('/').pop() }}</span>
-                                    <span v-else class="text-gray-400 dark:text-gray-600 italic">-</span>
-                                </td>
                                 <td class="px-6 py-3 text-xs text-center">
                                     <div class="flex items-center justify-center gap-2">
                                         <!-- View Button: Visible if file exists -->
@@ -328,7 +322,7 @@
                                     <div v-if="!formData.selectedFileName">
                                         <i class="fas fa-cloud-upload-alt text-3xl text-gray-400 dark:text-gray-600 mb-2"></i>
                                         <p class="text-xs text-gray-600 dark:text-gray-400">Click to upload or drag and drop</p>
-                                        <p class="text-xs text-gray-500 dark:text-gray-500 mt-1">PDF, Images, or Documents (max 10MB)</p>
+                                        <p class="text-xs text-gray-500 dark:text-gray-500 mt-1">PDF, Images, or Documents (max 100MB)</p>
                                     </div>
                                     <div v-else class="text-sm">
                                         <i class="fas fa-file text-emerald-600 dark:text-emerald-400 text-2xl mb-2"></i>
@@ -445,7 +439,7 @@
                                     <div v-if="!formData.selectedFileName">
                                         <i class="fas fa-cloud-upload-alt text-3xl text-gray-400 dark:text-gray-600 mb-2"></i>
                                         <p class="text-xs text-gray-600 dark:text-gray-400">Click to upload or drag and drop</p>
-                                        <p class="text-xs text-gray-500 dark:text-gray-500 mt-1">PDF, Images, or Documents (max 10MB)</p>
+                                        <p class="text-xs text-gray-500 dark:text-gray-500 mt-1">PDF, Images, or Documents (max 100MB)</p>
                                     </div>
                                     <div v-else class="text-sm">
                                         <i class="fas fa-file text-blue-600 dark:text-blue-400 text-2xl mb-2"></i>
