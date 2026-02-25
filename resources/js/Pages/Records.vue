@@ -42,11 +42,12 @@
 
                 <!-- Tab Navigation -->
                 <div class="px-6 py-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-                    <div class="flex gap-2 overflow-x-auto">
+                    <!-- Main Record Types -->
+                    <div class="flex gap-2 overflow-x-auto border-b border-gray-100 dark:border-gray-700">
                         <button 
                             v-for="type in recordTypes" 
                             :key="type"
-                            @click="activeTab = type; currentPage = 1; searchQuery = ''"
+                            @click="activeTab = type; activeSubtype = null; currentPage = 1; searchQuery = ''"
                             :class="[
                                 'px-4 py-3 text-xs font-medium whitespace-nowrap border-b-2 transition-colors',
                                 activeTab === type
@@ -56,6 +57,77 @@
                         >
                             {{ type }}
                         </button>
+                    </div>
+
+                    <!-- Sub-types for selected main type (if available) -->
+                    <div v-if="recordTypesHierarchy[activeTab]?.length > 0" class="bg-gray-50 dark:bg-gray-900/30 px-4 py-3">
+                        <!-- Button style for types with few subtypes (≤ 8) -->
+                        <div v-if="recordTypesHierarchy[activeTab].length <= 8" class="flex gap-1 overflow-x-auto">
+                            <button
+                                @click="activeSubtype = null; currentPage = 1; searchQuery = ''"
+                                :class="[
+                                    'px-3 py-1 text-xs font-medium whitespace-nowrap rounded-full transition-colors',
+                                    activeSubtype === null
+                                        ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300'
+                                        : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
+                                ]"
+                            >
+                                All
+                            </button>
+                            <button
+                                v-for="subtype in recordTypesHierarchy[activeTab]"
+                                :key="subtype"
+                                @click="activeSubtype = subtype; currentPage = 1; searchQuery = ''"
+                                :class="[
+                                    'px-3 py-1 text-xs font-medium whitespace-nowrap rounded-full transition-colors',
+                                    activeSubtype === subtype
+                                        ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300'
+                                        : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
+                                ]"
+                            >
+                                {{ subtype }}
+                            </button>
+                        </div>
+
+                        <!-- Dropdown style for types with many subtypes (> 8) -->
+                        <div v-else class="flex gap-2 items-center flex-wrap">
+                            <button
+                                @click="activeSubtype = null; currentPage = 1; searchQuery = ''"
+                                :class="[
+                                    'px-3 py-1 text-xs font-medium rounded-full transition-colors',
+                                    activeSubtype === null
+                                        ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300'
+                                        : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
+                                ]"
+                            >
+                                All
+                            </button>
+
+                            <div class="relative">
+                                <select 
+                                    :value="activeSubtype || ''"
+                                    @change="(e) => {
+                                        activeSubtype = e.target.value || null;
+                                        currentPage = 1;
+                                        searchQuery = '';
+                                    }"
+                                    class="appearance-none px-3 py-1 text-xs font-medium rounded-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 cursor-pointer focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all width-auto pr-6"
+                                >
+                                    <option value="">Select a subtype...</option>
+                                    <option v-for="subtype in recordTypesHierarchy[activeTab]" :key="subtype" :value="subtype">
+                                        {{ subtype }}
+                                    </option>
+                                </select>
+                                <i class="fas fa-chevron-down absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 pointer-events-none text-xs"></i>
+                            </div>
+
+                            <div v-if="activeSubtype" class="flex items-center gap-2 px-3 py-1 bg-emerald-100 dark:bg-emerald-900/30 rounded-full">
+                                <span class="text-xs font-medium text-emerald-700 dark:text-emerald-300">{{ activeSubtype }}</span>
+                                <button @click="activeSubtype = null; currentPage = 1; searchQuery = ''" class="text-emerald-700 dark:text-emerald-300 hover:text-emerald-900 dark:hover:text-emerald-100">
+                                    <i class="fas fa-times text-xs"></i>
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -104,7 +176,7 @@
                     <table class="w-full text-left table-fixed">
                         <colgroup>
                             <col class="w-20">
-                            <col class="w-32">
+                            <col class="w-28">
                             <col class="w-32">
                             <col class="w-24">
                             <col class="w-20">
@@ -119,18 +191,18 @@
                                     </button>
                                 </th>
                                 <th class="px-6 py-3 text-xs font-bold text-gray-700 dark:text-gray-200">
-                                    <button @click="toggleSort('title')" class="flex items-center gap-2 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
-                                        Title
-                                        <span v-if="sortBy === 'title'" class="text-xs">{{ sortOrder === 'asc' ? '▲' : '▼' }}</span>
-                                    </button>
-                                </th>
-                                <th class="px-6 py-3 text-xs font-bold text-gray-700 dark:text-gray-200">Remarks</th>
-                                <th class="px-6 py-3 text-xs font-bold text-gray-700 dark:text-gray-200">
                                     <button @click="toggleSort('created_at')" class="flex items-center gap-2 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
                                         Date
                                         <span v-if="sortBy === 'created_at'" class="text-xs">{{ sortOrder === 'asc' ? '▲' : '▼' }}</span>
                                     </button>
                                 </th>
+                                <th class="px-6 py-3 text-xs font-bold text-gray-700 dark:text-gray-200">
+                                    <button @click="toggleSort('title')" class="flex items-center gap-2 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
+                                        Title
+                                        <span v-if="sortBy === 'title'" class="text-xs">{{ sortOrder === 'asc' ? '▲' : '▼' }}</span>
+                                    </button>
+                                </th>
+                                <th class="px-6 py-3 text-xs font-bold text-gray-700 dark:text-gray-200">Subtype</th>
                                 <th class="px-6 py-3 text-xs font-bold text-gray-700 dark:text-gray-200 text-center">Actions</th>
                             </tr>
                         </thead>
@@ -138,9 +210,9 @@
                         <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
                             <tr v-for="record in paginatedRecords" :key="record.id" class="bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                                 <td class="px-6 py-3 text-xs font-medium text-gray-900 dark:text-gray-100">{{ record.record_no }}</td>
-                                <td class="px-6 py-3 text-xs text-gray-700 dark:text-gray-300">{{ record.title }}</td>
-                                <td class="px-6 py-3 text-xs text-gray-600 dark:text-gray-400 truncate">{{ record.remarks || '-' }}</td>
                                 <td class="px-6 py-3 text-xs text-gray-600 dark:text-gray-400">{{ new Date(record.created_at).toLocaleDateString() }}</td>
+                                <td class="px-6 py-3 text-xs text-gray-700 dark:text-gray-300">{{ record.title }}</td>
+                                <td class="px-6 py-3 text-xs text-gray-600 dark:text-gray-400">{{ record.record_subtype || '-' }}</td>
                                 <td class="px-6 py-3 text-xs text-center">
                                     <div class="flex items-center justify-center gap-2">
                                         <!-- View Button: Visible if file exists -->
@@ -283,6 +355,18 @@
                                 <span v-if="formErrors.record_type" class="text-red-500 text-xs">{{ formErrors.record_type }}</span>
                             </div>
 
+                            <!-- Record Subtype Field -->
+                            <div v-if="recordTypesHierarchy[formData.record_type]?.length > 0" class="space-y-2">
+                                <label for="create_record_subtype" class="block text-xs font-medium text-gray-700 dark:text-gray-300">Record Subtype</label>
+                                <div class="relative flex items-center">
+                                    <i class="fas fa-layer-group absolute left-3 text-gray-400 text-sm pointer-events-none"></i>
+                                    <select v-model="formData.record_subtype" id="create_record_subtype" class="block w-full pl-10 pr-4 py-2 text-xs border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:outline-none focus:border-emerald-500 transition-colors appearance-none">
+                                        <option value="" disabled>Select a subtype</option>
+                                        <option v-for="subtype in recordTypesHierarchy[formData.record_type]" :key="subtype" :value="subtype">{{ subtype }}</option>
+                                    </select>
+                                </div>
+                            </div>
+
                             <!-- Title Field -->
                             <div class="space-y-2">
                                 <label for="create_title" class="block text-xs font-medium text-gray-700 dark:text-gray-300">Title <span class="text-red-600">*</span></label>
@@ -391,6 +475,18 @@
                                     </select>
                                 </div>
                                 <span v-if="formErrors.record_type" class="text-red-500 text-xs">{{ formErrors.record_type }}</span>
+                            </div>
+
+                            <!-- Record Subtype Field -->
+                            <div v-if="recordTypesHierarchy[formData.record_type]?.length > 0" class="space-y-2">
+                                <label for="edit_record_subtype" class="block text-xs font-medium text-gray-700 dark:text-gray-300">Record Subtype</label>
+                                <div class="relative flex items-center">
+                                    <i class="fas fa-layer-group absolute left-3 text-gray-400 text-sm pointer-events-none"></i>
+                                    <select v-model="formData.record_subtype" id="edit_record_subtype" class="block w-full pl-10 pr-4 py-2 text-xs border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:outline-none focus:border-blue-500 transition-colors appearance-none">
+                                        <option value="" disabled>Select a subtype</option>
+                                        <option v-for="subtype in recordTypesHierarchy[formData.record_type]" :key="subtype" :value="subtype">{{ subtype }}</option>
+                                    </select>
+                                </div>
                             </div>
 
                             <!-- Title Field -->
@@ -536,6 +632,7 @@ interface Record {
     id: number;
     record_no: string;
     record_type: string;
+    record_subtype: string | null;
     title: string;
     remarks: string | null;
     image_path: string | null;
@@ -545,18 +642,54 @@ interface Record {
 }
 
 const records = ref<Record[]>([]);
-const recordTypes = ref(['DBM Circulars', 'Administrative Orders', 'Executive Orders', 'SP Resolutions', 'Memorandums', 'Annual Budget', 'Supplemental Budget', 'Budget Proposals']);
+
+// Record Types with Hierarchical Structure (Types and Sub-types)
+const recordTypesHierarchy = ref({
+    'Provincial Budget': [],
+    'Municipal Budget': ['Atok', 'Bakun', 'Bokod', 'Buguias', 'Itogon', 'Kabayan', 'Kapangan', 'Kibungan', 'La Trinidad', 'Mankayan', 'Sablan', 'Tuba', 'Tublay'],
+    'Issuances / Circulars / Other References and Documents': [
+        'DILG Memorandum Circulars',
+        'DOF Department Orders',
+        'Memorandum Circulars (Office of the President)',
+        'PAG-IBIG',
+        'COMELEC Resolutions',
+        'DBM Budget Circulars',
+        'Local Budget Circulars',
+        'Local Budget Memorandums',
+        'DBM Orders / Circular Letters',
+        'Joint Circulars',
+        'Executive Orders (Office of the President)',
+        'Presidential Decrees',
+        'Republic Acts',
+        'GPPB Circulars',
+        'GSIS Memorandum Circulars',
+        'DOH Circulars / Administrative Orders',
+        'PHIC Circulars',
+        'National Budget Circulars / Memorandums',
+        'CHED Memorandum Circulars',
+        'Budget Call',
+        'Queries',
+        'Annual Budget Transmittal / Indorsement to SPO',
+        'Transmitted PPMPs to BAC',
+        'SP Indorsement to DBM (APB)',
+        'PBO Certifications to Plans / Other Reports',
+        'DBM Letters / Reports / Matters',
+        'List of Documentary Requirements',
+        'Provincial NTAs',
+        'Municipal NTAs',
+        'PLGU Annual Budget Review'
+    ]
+});
+
+const recordTypes = computed(() => Object.keys(recordTypesHierarchy.value));
+
 const recordTypeAbbreviations = {
-    'DBM Circulars': 'DBM',
-    'Administrative Orders': 'AO',
-    'Executive Orders': 'EO',
-    'SP Resolutions': 'SPR',
-    'Memorandums': 'MEM',
-    'Annual Budget': 'ABU',
-    'Supplemental Budget': 'SBU',
-    'Budget Proposals': 'BPR'
+    'Provincial Budget': 'PB',
+    'Municipal Budget': 'MB',
+    'Issuances / Circulars / Other References and Documents': 'ISO',
 };
-const activeTab = ref('DBM Circulars');
+const activeTab = ref('Provincial Budget');
+const activeSubtype = ref<string | null>(null);
 const searchQuery = ref('');
 const currentPage = ref(1);
 const itemsPerPage = ref(10);
@@ -579,6 +712,7 @@ const recordToDelete = ref<Record | null>(null);
 const formData = ref({
     record_no: '',
     record_type: '',
+    record_subtype: '',
     title: '',
     remarks: '',
     selectedFile: null as File | null,
@@ -599,13 +733,18 @@ const hasPermission = (permission: string): boolean => {
 };
 
 const filteredRecords = computed(() => {
-    let filtered = records.value.filter(record => record.record_type === activeTab.value);
+    let filtered = records.value.filter(record => {
+        const typeMatches = record.record_type === activeTab.value;
+        const subtypeMatches = activeSubtype.value === null || record.record_subtype === activeSubtype.value;
+        return typeMatches && subtypeMatches;
+    });
 
     if (searchQuery.value) {
         const query = searchQuery.value.toLowerCase();
         filtered = filtered.filter(record =>
             record.record_no.toLowerCase().includes(query) ||
             record.record_type.toLowerCase().includes(query) ||
+            (record.record_subtype?.toLowerCase() || '').includes(query) ||
             record.title.toLowerCase().includes(query)
         );
     }
@@ -711,7 +850,18 @@ const validateForm = (): boolean => {
 };
 
 const openCreateModal = async () => {
-    formData.value = { record_no: '', record_type: activeTab.value, title: '', remarks: '', selectedFile: null, selectedFileName: '' };
+    const subtypes = recordTypesHierarchy.value[activeTab.value as keyof typeof recordTypesHierarchy.value] || [];
+    const initialSubtype = subtypes.length > 0 ? subtypes[0] : null;
+    
+    formData.value = { 
+        record_no: '', 
+        record_type: activeTab.value, 
+        record_subtype: initialSubtype || '',
+        title: '', 
+        remarks: '', 
+        selectedFile: null, 
+        selectedFileName: '' 
+    };
     formErrors.value = {};
     await updateRecordNo();
     showCreateModal.value = true;
@@ -730,6 +880,7 @@ const submitCreateForm = async () => {
         const formDataObj = new FormData();
         formDataObj.append('record_no', formData.value.record_no);
         formDataObj.append('record_type', formData.value.record_type);
+        formDataObj.append('record_subtype', formData.value.record_subtype);
         formDataObj.append('title', formData.value.title);
         formDataObj.append('remarks', formData.value.remarks);
         if (formData.value.selectedFile) {
@@ -756,7 +907,7 @@ const submitCreateForm = async () => {
         toastRef.value?.add(
             'success',
             'Success',
-            `<strong>${newRecord.record_type}:</strong> ${newRecord.record_no} (<strong>${newRecord.title}</strong>) has been saved successfully!`,
+            `<strong>${newRecord.record_type}</strong> ${newRecord.record_subtype ? `(${newRecord.record_subtype}): ` : ': '}<strong>${newRecord.record_no}</strong> has been saved successfully!`,
             3000
         );
     } catch (err: any) {
@@ -774,6 +925,7 @@ const handleEditRecord = (record: Record) => {
     formData.value = { 
         record_no: record.record_no,
         record_type: record.record_type,
+        record_subtype: record.record_subtype || '',
         title: record.title,
         remarks: record.remarks || '',
         selectedFile: null,
@@ -799,6 +951,7 @@ const submitEditForm = async () => {
         const formDataObj = new FormData();
         formDataObj.append('record_no', formData.value.record_no);
         formDataObj.append('record_type', formData.value.record_type);
+        formDataObj.append('record_subtype', formData.value.record_subtype);
         formDataObj.append('title', formData.value.title);
         formDataObj.append('remarks', formData.value.remarks);
         if (formData.value.selectedFile) {
@@ -826,7 +979,7 @@ const submitEditForm = async () => {
         toastRef.value?.add(
             'info',
             'Updated',
-            `<strong>${updatedRecord.record_type}:</strong> ${updatedRecord.record_no} (<strong>${updatedRecord.title}</strong>) has been updated successfully!`,
+            `<strong>${updatedRecord.record_type}</strong> ${updatedRecord.record_subtype ? `(${updatedRecord.record_subtype}): ` : ': '}<strong>${updatedRecord.record_no}</strong> has been updated successfully!`,
             3000
         );
     } catch (err: any) {
@@ -837,7 +990,7 @@ const submitEditForm = async () => {
     } finally {
         updating.value = false;
     }
-};
+}
 
 const openDeleteModal = (record: Record) => {
     recordToDelete.value = record;

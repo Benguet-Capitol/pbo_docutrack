@@ -1708,7 +1708,14 @@ const filteredDocuments = computed(() => {
         if (permissions.value.includes('documents.view.all')) {
             // Can view all documents
             return true;
-        } else if (permissions.value.includes('documents.view.assigned')) {
+        } else if (permissions.value.includes('documents.view.pending')) {
+            // Can view all pending documents
+            if (document.status === 'pending') {
+                return true;
+            }
+        }
+        
+        if (permissions.value.includes('documents.view.assigned')) {
             // Can view documents assigned to them (user_id matches)
             if (document.user_id === currentUser.value?.id) {
                 return true;
@@ -1904,6 +1911,11 @@ const canReceiveDocument = (document: Document): boolean => {
 };
 
 const getCustodianDisplay = (document: Document): string => {
+    // For finalized/ended documents, display '-'
+    if (document.status === 'finalized') {
+        return '-';
+    }
+    
     // If no transactions, show document creator
     if (!document.transactions || document.transactions.length === 0) {
         return document.user?.name || 'Unknown';

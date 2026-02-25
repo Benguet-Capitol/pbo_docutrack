@@ -16,6 +16,7 @@ class Record extends Model
     protected $fillable = [
         'record_no',
         'record_type',
+        'record_subtype',
         'title',
         'remarks',
         'image_path',

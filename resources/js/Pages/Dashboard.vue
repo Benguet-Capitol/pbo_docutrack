@@ -2154,6 +2154,11 @@ const getActionType = (action: string): string => {
  * Get custodian display name: office/municipality/user based on latest transaction
  */
 const getCustodianName = (document: Document): string => {
+    // For finalized/ended documents, display '-'
+    if (document.status === 'finalized') {
+        return '-';
+    }
+    
     if (document.transactions.length === 0) {
         return document.user?.name || 'Unknown';
     }

@@ -38,6 +38,7 @@ class RecordController extends Controller
             $validated = $request->validate([
                 'record_no' => 'required|string|unique:records,record_no',
                 'record_type' => 'required|string',
+                'record_subtype' => 'nullable|string',
                 'title' => 'required|string',
                 'remarks' => 'nullable|string',
                 'file' => 'nullable|file|mimes:pdf,jpg,jpeg,png,gif,doc,docx,xls,xlsx|max:102400',
@@ -80,6 +81,7 @@ class RecordController extends Controller
             $validated = $request->validate([
                 'record_no' => 'sometimes|string|unique:records,record_no,' . $id,
                 'record_type' => 'sometimes|string',
+                'record_subtype' => 'nullable|string',
                 'title' => 'sometimes|string',
                 'remarks' => 'nullable|string',
                 'file' => 'nullable|file|mimes:pdf,jpg,jpeg,png,gif,doc,docx,xls,xlsx|max:102400',
