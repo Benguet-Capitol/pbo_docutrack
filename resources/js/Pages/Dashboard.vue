@@ -1907,8 +1907,7 @@ const userStatistics = computed(() => {
                 };
             } else if (action === 'forwarded' && currentOwner) {
                 // Document forwarded - stop timer for current owner and calculate pending time
-                const pendingMs = transactionTime.getTime() - currentOwner.startTime.getTime();
-                const pendingHours = pendingMs / (1000 * 60 * 60);
+                const pendingHours = calculateElapsedTimeExcluding(document, currentOwner.startTime, transactionTime);
                 
                 const existing = stats.get(currentOwner.userId) || {
                     userId: currentOwner.userId,
@@ -1943,8 +1942,7 @@ const userStatistics = computed(() => {
                 };
             } else if (action === 'finalized' && currentOwner) {
                 // Document finalized - stop timer for current owner and calculate pending time
-                const pendingMs = transactionTime.getTime() - currentOwner.startTime.getTime();
-                const pendingHours = pendingMs / (1000 * 60 * 60);
+                const pendingHours = calculateElapsedTimeExcluding(document, currentOwner.startTime, transactionTime);
                 
                 const existing = stats.get(currentOwner.userId) || {
                     userId: currentOwner.userId,
@@ -2048,8 +2046,7 @@ const selectedUserDetails = computed(() => {
                     startTime: transactionTime
                 };
             } else if (action === 'forwarded' && currentOwner && currentOwner.userId === currentSelectedUserStat.userId) {
-                const pendingMs = transactionTime.getTime() - currentOwner.startTime.getTime();
-                const pendingHours = pendingMs / (1000 * 60 * 60);
+                const pendingHours = calculateElapsedTimeExcluding(document, currentOwner.startTime, transactionTime);
                 
                 details.push({
                     documentId: document.id,
@@ -2086,8 +2083,7 @@ const selectedUserDetails = computed(() => {
                     startTime: transactionTime
                 };
             } else if (action === 'finalized' && currentOwner && currentOwner.userId === currentSelectedUserStat.userId) {
-                const pendingMs = transactionTime.getTime() - currentOwner.startTime.getTime();
-                const pendingHours = pendingMs / (1000 * 60 * 60);
+                const pendingHours = calculateElapsedTimeExcluding(document, currentOwner.startTime, transactionTime);
                 
                 details.push({
                     documentId: document.id,
@@ -2150,7 +2146,7 @@ const getActionType = (action: string): string => {
     if (action.toLowerCase().includes('created')) return 'created';
     if (action.toLowerCase().includes('forwarded')) return 'forwarded';
     if (action.toLowerCase().includes('received')) return 'received';
-    if (action.toLowerCase().includes('finalized')) return 'finalized';
+    if (action.toLowerCase().includes('ended') || action.toLowerCase().includes('finalized')) return 'finalized';
     return action;
 };
 

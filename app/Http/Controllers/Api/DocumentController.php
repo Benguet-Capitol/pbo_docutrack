@@ -169,9 +169,7 @@ class DocumentController extends Controller
                 if ($userReceiveTransaction) {
                     $receivedAt = new \DateTime($userReceiveTransaction->created_at);
                     $now = new \DateTime();
-                    $interval = $receivedAt->diff($now);
-                    // Convert total time to hours
-                    $durationHours = ($interval->days * 24) + $interval->h;
+                    $durationHours = $this->calculateBusinessHours($receivedAt, $now);
                 }
             }
 
@@ -253,8 +251,7 @@ class DocumentController extends Controller
                     // Calculate duration for office/municipality forwards
                     $forwardedAt = new \DateTime($lastForwardTransaction->created_at);
                     $now = new \DateTime();
-                    $interval = $forwardedAt->diff($now);
-                    $durationHours = ($interval->days * 24) + $interval->h;
+                    $durationHours = $this->calculateBusinessHours($forwardedAt, $now);
                 }
                 // Otherwise it was forwarded to a user - use the forwarder's name (the user_id from the transaction, not the recipient)
                 elseif ($lastForwardTransaction->forwarded_to_user_id) {
@@ -331,9 +328,7 @@ class DocumentController extends Controller
             if ($userReceiveTransaction) {
                 $receivedAt = new \DateTime($userReceiveTransaction->created_at);
                 $now = new \DateTime();
-                $interval = $receivedAt->diff($now);
-                // Convert total time to hours
-                $durationHours = ($interval->days * 24) + $interval->h;
+                $durationHours = $this->calculateBusinessHours($receivedAt, $now);
             }
             
             // Log the finalize transaction
@@ -349,6 +344,42 @@ class DocumentController extends Controller
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], 500);
         }
+    }
+
+    /**
+     * Calculate business hours between two dates, excluding weekends
+     */
+    private function calculateBusinessHours(\DateTime $startDate, \DateTime $endDate): float
+    {
+        $businessHours = 0;
+        $current = clone $startDate;
+        
+        // Iterate through each day
+        while ($current < $endDate) {
+            $dayOfWeek = (int)$current->format('w'); // 0 = Sunday, 6 = Saturday
+            
+            // Only count business days (Monday-Friday)
+            if ($dayOfWeek !== 0 && $dayOfWeek !== 6) {
+                $nextDay = clone $current;
+                $nextDay->modify('+1 day');
+                $nextDay->setTime(0, 0, 0);
+                
+                if ($nextDay <= $endDate) {
+                    // Full business day worth of hours
+                    $msToMidnight = $nextDay->getTimestamp() - $current->getTimestamp();
+                    $businessHours += $msToMidnight / 3600; // Convert seconds to hours
+                } else {
+                    // Partial day - calculate hours from current time to end time
+                    $msElapsed = $endDate->getTimestamp() - $current->getTimestamp();
+                    $businessHours += $msElapsed / 3600; // Convert seconds to hours
+                }
+            }
+            
+            $current->modify('+1 day');
+            $current->setTime(0, 0, 0);
+        }
+        
+        return $businessHours;
     }
 
     /**
