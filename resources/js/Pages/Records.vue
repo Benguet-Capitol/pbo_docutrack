@@ -179,6 +179,7 @@
                             <col class="w-28">
                             <col class="w-32">
                             <col class="w-24">
+                            <col class="w-28">
                             <col class="w-20">
                         </colgroup>
                         <!-- Table Header -->
@@ -203,6 +204,7 @@
                                     </button>
                                 </th>
                                 <th class="px-6 py-3 text-xs font-bold text-gray-700 dark:text-gray-200">Subtype</th>
+                                <th class="px-6 py-3 text-xs font-bold text-gray-700 dark:text-gray-200">File Details</th>
                                 <th class="px-6 py-3 text-xs font-bold text-gray-700 dark:text-gray-200 text-center">Actions</th>
                             </tr>
                         </thead>
@@ -213,6 +215,15 @@
                                 <td class="px-6 py-3 text-xs text-gray-600 dark:text-gray-400">{{ new Date(record.created_at).toLocaleDateString() }}</td>
                                 <td class="px-6 py-3 text-xs text-gray-700 dark:text-gray-300">{{ record.title }}</td>
                                 <td class="px-6 py-3 text-xs text-gray-600 dark:text-gray-400">{{ record.record_subtype || '-' }}</td>
+                                <td class="px-6 py-3 text-xs">
+                                    <div v-if="record.file_size" class="flex flex-col gap-1">
+                                        <span class="inline-block px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 rounded font-medium">
+                                            {{ record.file_extension || 'FILE' }}
+                                        </span>
+                                        <span class="text-gray-600 dark:text-gray-400">{{ formatFileSize(record.file_size) }}</span>
+                                    </div>
+                                    <span v-else class="text-gray-400 dark:text-gray-500">-</span>
+                                </td>
                                 <td class="px-6 py-3 text-xs text-center">
                                     <div class="flex items-center justify-center gap-2">
                                         <!-- View Button: Visible if file exists -->
@@ -406,7 +417,7 @@
                                     <div v-if="!formData.selectedFileName">
                                         <i class="fas fa-cloud-upload-alt text-3xl text-gray-400 dark:text-gray-600 mb-2"></i>
                                         <p class="text-xs text-gray-600 dark:text-gray-400">Click to upload or drag and drop</p>
-                                        <p class="text-xs text-gray-500 dark:text-gray-500 mt-1">PDF, Images, or Documents (max 100MB)</p>
+                                        <p class="text-xs text-gray-500 dark:text-gray-500 mt-1">PDF, Images, or Documents (max 200MB)</p>
                                     </div>
                                     <div v-else class="text-sm">
                                         <i class="fas fa-file text-emerald-600 dark:text-emerald-400 text-2xl mb-2"></i>
@@ -535,7 +546,7 @@
                                     <div v-if="!formData.selectedFileName">
                                         <i class="fas fa-cloud-upload-alt text-3xl text-gray-400 dark:text-gray-600 mb-2"></i>
                                         <p class="text-xs text-gray-600 dark:text-gray-400">Click to upload or drag and drop</p>
-                                        <p class="text-xs text-gray-500 dark:text-gray-500 mt-1">PDF, Images, or Documents (max 100MB)</p>
+                                        <p class="text-xs text-gray-500 dark:text-gray-500 mt-1">PDF, Images, or Documents (max 200MB)</p>
                                     </div>
                                     <div v-else class="text-sm">
                                         <i class="fas fa-file text-blue-600 dark:text-blue-400 text-2xl mb-2"></i>
@@ -730,6 +741,17 @@ const page = usePage();
 const hasPermission = (permission: string): boolean => {
     const permissions = (page.props.auth as any)?.permissions || [];
     return permissions.includes(permission);
+};
+
+/**
+ * Format file size in human-readable format
+ */
+const formatFileSize = (bytes: number): string => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i];
 };
 
 const filteredRecords = computed(() => {

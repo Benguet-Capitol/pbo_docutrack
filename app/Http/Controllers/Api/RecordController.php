@@ -18,6 +18,22 @@ class RecordController extends Controller
     {
         try {
             $records = Record::with('user')->get();
+            
+            // Add file details to each record
+            $records->each(function ($record) {
+                if ($record->image_path && Storage::disk('public')->exists($record->image_path)) {
+                    $filePath = Storage::disk('public')->path($record->image_path);
+                    $fileSize = filesize($filePath);
+                    $extension = pathinfo($record->image_path, PATHINFO_EXTENSION);
+                    
+                    $record->file_size = $fileSize;
+                    $record->file_extension = strtoupper($extension);
+                } else {
+                    $record->file_size = null;
+                    $record->file_extension = null;
+                }
+            });
+            
             return response()->json($records);
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], 500);
@@ -41,7 +57,7 @@ class RecordController extends Controller
                 'record_subtype' => 'nullable|string',
                 'title' => 'required|string',
                 'remarks' => 'nullable|string',
-                'file' => 'nullable|file|mimes:pdf,jpg,jpeg,png,gif,doc,docx,xls,xlsx|max:102400',
+                'file' => 'nullable|file|mimes:pdf,jpg,jpeg,png,gif,doc,docx,xls,xlsx|max:204800',
             ]);
 
             // Automatically set user_id to the authenticated user's numeric ID
@@ -84,7 +100,7 @@ class RecordController extends Controller
                 'record_subtype' => 'nullable|string',
                 'title' => 'sometimes|string',
                 'remarks' => 'nullable|string',
-                'file' => 'nullable|file|mimes:pdf,jpg,jpeg,png,gif,doc,docx,xls,xlsx|max:102400',
+                'file' => 'nullable|file|mimes:pdf,jpg,jpeg,png,gif,doc,docx,xls,xlsx|max:204800',
             ]);
 
             // Handle file upload

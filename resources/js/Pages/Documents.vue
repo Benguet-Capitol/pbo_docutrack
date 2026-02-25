@@ -1610,7 +1610,7 @@ const getActionType = (action: string): 'created' | 'forwarded' | 'finalized' | 
     if (action.toLowerCase().includes('created')) return 'created';
     if (action.toLowerCase().includes('forwarded')) return 'forwarded';
     if (action.toLowerCase().includes('received')) return 'received';
-    if (action.toLowerCase().includes('finalized')) return 'finalized';
+    if (action.toLowerCase().includes('ended')) return 'finalized';
     return 'created'; // default
 };
 
