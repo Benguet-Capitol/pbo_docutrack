@@ -21,10 +21,12 @@ class PassSlip extends Model
         'location',
         'expected_return_time',
         'remarks',
+        'vehicle',
+        'recommending_approval_employee_id',
     ];
 
     protected $casts = [
-        'date' => 'date',
+        'date' => 'date:Y-m-d',
     ];
 
     /**

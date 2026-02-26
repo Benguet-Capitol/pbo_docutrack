@@ -32,7 +32,9 @@ class PassSlipController extends Controller
     {
         try {
             // Validate input
-            $validated = $request->validate([                'control_no' => 'required|string|unique:pass_slips,control_no',                'date' => 'required|date',
+            $validated = $request->validate([                
+                'control_no' => 'required|string|unique:pass_slips,control_no',                
+                'date' => 'required|date',
                 'requested_time' => 'required|date_format:H:i',
                 'purpose' => 'required|string|max:255',
                 'location' => 'nullable|string|max:255',
@@ -40,6 +42,8 @@ class PassSlipController extends Controller
                 'remarks' => 'nullable|string',
                 'employee_ids' => 'required|array|min:1',
                 'employee_ids.*' => 'integer|exists:employees,id',
+                'recommending_approval_employee_id' => 'nullable|integer|exists:employees,id',
+                'vehicle' => 'required|in:RP Vehicle,PUJ',
             ]);
 
             // Control number is generated in the frontend modal
@@ -54,6 +58,8 @@ class PassSlipController extends Controller
                 'location' => $validated['location'],
                 'expected_return_time' => $validated['expected_return_time'],
                 'remarks' => $validated['remarks'] ?? null,
+                'vehicle' => $validated['vehicle'],
+                'recommending_approval_employee_id' => $validated['recommending_approval_employee_id'] ?? null,
             ]);
 
             // Attach employees
@@ -90,6 +96,8 @@ class PassSlipController extends Controller
                 'remarks' => 'nullable|string',
                 'employee_ids' => 'required|array|min:1',
                 'employee_ids.*' => 'integer|exists:employees,id',
+                'recommending_approval_employee_id' => 'nullable|integer|exists:employees,id',
+                'vehicle' => 'required|in:RP Vehicle,PUJ',
             ]);
 
             // Update pass slip
@@ -101,6 +109,8 @@ class PassSlipController extends Controller
                 'location' => $validated['location'],
                 'expected_return_time' => $validated['expected_return_time'],
                 'remarks' => $validated['remarks'] ?? null,
+                'vehicle' => $validated['vehicle'],
+                'recommending_approval_employee_id' => $validated['recommending_approval_employee_id'] ?? null,
             ]);
 
             // Sync employees (update the relationship)

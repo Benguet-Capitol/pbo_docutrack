@@ -352,6 +352,19 @@
                                 <span v-if="formErrors.expected_return_time" class="text-red-500 text-xs">{{ formErrors.expected_return_time }}</span>
                             </div>
 
+                            <!-- Vehicle to be Used Field -->
+                            <div class="space-y-2">
+                                <label for="create_vehicle" class="block text-xs font-medium text-gray-700 dark:text-gray-300">Vehicle to be Used <span class="text-red-600">*</span></label>
+                                <div class="relative flex items-center">
+                                    <i class="fas fa-van-shuttle absolute left-3 text-gray-400 text-sm pointer-events-none"></i>
+                                    <select v-model="formData.vehicle" id="create_vehicle" class="block w-full pl-10 pr-4 py-2 text-xs border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:outline-none transition-colors appearance-none" :class="[formErrors.vehicle ? 'border-red-500 focus:border-red-500' : 'border-gray-300 focus:border-emerald-500']">
+                                        <option value="RP Vehicle">RP Vehicle</option>
+                                        <option value="PUJ">PUJ</option>
+                                    </select>
+                                </div>
+                                <span v-if="formErrors.vehicle" class="text-red-500 text-xs">{{ formErrors.vehicle }}</span>
+                            </div>
+
                             <!-- Requesting Employees Field -->
                             <div class="space-y-2">
                                 <label for="create_employees" class="block text-xs font-medium text-gray-700 dark:text-gray-300">Requesting Employee(s) <span class="text-red-600">*</span></label>
@@ -370,6 +383,19 @@
                                     </p>
                                 </div>
                                 <span v-if="formErrors.employee_ids" class="text-red-500 text-xs">{{ formErrors.employee_ids }}</span>
+                            </div>
+
+                            <!-- Recommending Approval Employee Field -->
+                            <div class="space-y-2">
+                                <label for="create_recommending_approval" class="block text-xs font-medium text-gray-700 dark:text-gray-300">Recommending Approval (Supervisor)</label>
+                                <div class="relative flex items-center">
+                                    <i class="fas fa-user-check absolute left-3 text-gray-400 text-sm pointer-events-none"></i>
+                                    <select v-model.number="formData.recommending_approval_employee_id" id="create_recommending_approval" class="block w-full pl-10 pr-4 py-2 text-xs border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:outline-none transition-colors appearance-none" :class="[formErrors.recommending_approval_employee_id ? 'border-red-500 focus:border-red-500' : 'border-gray-300 focus:border-emerald-500']">
+                                        <option :value="null">Select a supervisor</option>
+                                        <option v-for="emp in sortedEmployees" :key="emp.id" :value="emp.id">{{ emp.name }}</option>
+                                    </select>
+                                </div>
+                                <span v-if="formErrors.recommending_approval_employee_id" class="text-red-500 text-xs">{{ formErrors.recommending_approval_employee_id }}</span>
                             </div>
 
                             <!-- Remarks Field -->
@@ -392,12 +418,272 @@
                     <div class="flex items-center justify-center gap-3 p-6 border-t-2 border-gray-200 rounded-b-lg dark:border-gray-600 bg-gray-50 dark:bg-gray-800">
                         <button type="submit" @click="submitCreateForm" :disabled="creating" class="inline-flex items-center gap-2 px-5 py-3 text-xs font-medium text-white bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-700 dark:hover:bg-emerald-800 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed">
                             <i v-if="creating" class="fas fa-spinner fa-spin"></i>
-                            <i v-else class="fas fa-save"></i>
-                            {{ creating ? 'Saving...' : 'Create' }}
+                            <i v-else class="fas fa-eye"></i>
+                            {{ creating ? 'Loading...' : 'Preview & Continue' }}
                         </button>
                         <button @click="closeCreateModal" type="button" class="inline-flex items-center gap-2 px-5 py-3 text-xs font-medium text-gray-600 dark:text-gray-400 border border-gray-600 dark:border-gray-500 hover:text-white hover:bg-gray-600 dark:hover:bg-gray-600 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95">
                             <i class="fas fa-times"></i>
                             Cancel
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </Teleport>
+
+        <!-- Pass Slip Preview Modal -->
+        <Teleport to="body" v-if="showPreviewModal">
+            <div class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
+                <div class="relative w-full max-w-7xl bg-white rounded-lg shadow-2xl dark:bg-gray-800 max-h-[90vh] overflow-y-auto">
+                    <!-- Modal Header -->
+                    <div class="sticky top-0 flex items-center justify-between px-6 py-4 border-b border-gray-200 rounded-t-lg bg-gradient-to-r from-emerald-50 to-emerald-100 dark:from-gray-700 dark:to-gray-600 dark:border-gray-600 z-10">
+                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                            <i class="fas fa-file-pdf text-emerald-600 dark:text-emerald-400"></i>
+                            Pass Slip Preview
+                        </h3>
+                        <button @click="closePreviewModal" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
+                            <i class="fas fa-times text-xl"></i>
+                        </button>
+                    </div>
+
+                    <!-- Preview Content - Two Column Layout -->
+                    <div class="grid grid-cols-2 gap-4 p-4" style="background-color: white;">
+                        <!-- Copy 1 -->
+                        <div>
+                        <!-- Header Section with Logos -->
+                        <div class="flex items-center justify-center gap-2 mb-4 pb-2" style="border-bottom: 3px double #050505;">
+                            <div style="width: 70px; flex-shrink: 0;">
+                                <img src="/benguetlogo.png" alt="Benguet Logo" style="width: 100%; height: auto;">
+                            </div>
+                            <div class="text-center">
+                                <p class="text-xs font-semibold text-gray-700">Republic of the Philippines</p>
+                                <p class="text-base font-bold text-gray-900">PROVINCE OF BENGUET</p>
+                                <p class="text-xs text-gray-700 mb-1">Poblacion, La Trinidad 2601</p>
+                                <p class="text-xs font-bold text-gray-900 mb-4">PROVINCIAL BUDGET OFFICE</p>
+                                <p class="text-base font-bold text-gray-900">PASS SLIP</p>
+                            </div>
+                            <div style="width: 70px; flex-shrink: 0;">
+                                <img src="/bagongpilipinaslogo.png" alt="Bagong Pilipinas Logo" style="width: 100%; height: auto;">
+                            </div>
+                        </div>
+
+                        <!-- Top Information Row -->
+                        <div class="mb-6 text-xs space-y-1">
+                            <div>
+                                <p class="font-semibold text-gray-700"><span class="w-20 inline-block text-right">Date: </span><span class="font-bold text-gray-900 w-48 border-b border-gray-400 inline-block text-center">{{ new Date(formData.date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) }}</span></p>
+                            </div>
+                            <div>
+                                <p class="font-semibold text-gray-700"><span class="w-20 inline-block text-right">Office: </span><span class="font-bold text-gray-900 w-48 border-b border-gray-400 inline-block text-center">Provincial Budget Office</span></p>
+                            </div>
+                            <div>
+                                <p class="font-semibold text-gray-700"><span class="w-20 inline-block text-right">Control No.: </span><span class="font-bold text-gray-900 w-48 border-b border-gray-400 inline-block text-center">{{ formData.control_no }}</span></p>
+                            </div>
+                        </div>
+
+                        <!-- Provincial Budget Officer Info -->
+                        <div class="text-left mb-6 w-40">
+                            <p class="font-bold text-xs text-gray-900 text-center border-b border-gray-400 w-72 uppercase">{{ getProvincialBudgetOfficer() }}</p>
+                            <p class="text-xs text-gray-700 text-center w-72">Provincial Budget Officer</p>
+                        </div>
+
+                        <!-- Main Content -->
+                        <div class="mb-8 text-xs leading-relaxed text-gray-900">
+                            <p class="mb-4">
+                                Permission is respectfully requested to leave at <span class="border-b border-gray-400 w-24 inline-block text-center">{{ formatTimeDisplay(formData.requested_time) }}</span> 
+                                on <span class="border-b border-gray-400 w-36 inline-block text-center">{{ new Date(formData.date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) }}</span> 
+                                to <span class="border-b border-gray-400 w-[560px] inline-block text-center">{{ formData.purpose }}</span> 
+                                at the <span class="border-b border-gray-400 w-96 inline-block text-center">{{ formData.location }}</span>.
+                            </p>
+                            
+                            <div class="ml-4 space-y-1">
+                                <p>
+                                    <span>Expected Time of Return: </span> 
+                                    <span class="font-bold border-b border-gray-400 w-48 inline-block text-center">
+                                        {{ formData.returnType === 'asap' ? 'As soon as possible' : 
+                                           formData.returnType === 'nwd' ? 'Next Working Day' : 
+                                           formData.returnType === 'time_slip' ? 'Time Slip' : 
+                                           formData.returnType === 'nom' ? 'NOM' : 
+                                           formData.returnType === 'memo' ? 'Memo' : 
+                                           formatTimeDisplay(formData.expected_return_time) }}
+                                    </span>
+                                </p>
+                                <p>
+                                    <span>Vehicle to be used: </span> 
+                                    <span class="font-bold border-b border-gray-400 w-48 inline-block text-center">{{ formData.vehicle }}</span>
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Requesting Employee Section -->
+                        <div class="mb-6">
+                            <p class="font-bold text-xs text-gray-900 text-center border-b border-gray-400 w-96 uppercase">
+                                {{ getEmployeeNames() }}
+                            </p>
+                            <p class="text-xs text-gray-700 text-center w-96">Requesting Employee</p>
+                        </div>
+
+                        <!-- Recommending Approval -->
+                        <div v-if="getRecommendingApprovalEmployee()" class="mb-6">
+                            <p class="text-xs text-gray-700 mb-8">Recommending Approval:</p>
+                            <div class="space-y-8">
+                                <div class="w-96">
+                                    <p class="font-bold text-xs text-center text-gray-900 w-96 uppercase">{{ getRecommendingApprovalEmployee().name }}</p>
+                                    <p class="text-xs text-center text-gray-700 border-b border-gray-400 w-96">{{ getRecommendingApprovalEmployee().designation }}</p>
+                                    <p class="text-xs text-center text-gray-700 w-96">Immediate Supervisor</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Approved Section -->
+                        <div class="mb-6 flex justify-end pr-8">
+                            <div class="w-96 text-center">
+                                <p class="text-xs text-left text-gray-900 mb-8">APPROVED:</p>
+                                <p class="text-xs text-center text-gray-900 font-bold uppercase">{{ getProvincialBudgetOfficer() }}</p>
+                                <p class="text-xs text-center text-gray-700 border-b border-gray-400">Provincial Budget Officer</p>
+                                <p class="text-xs text-center text-gray-700">Department Head</p>
+                            </div>
+                        </div>
+
+                        <!-- Certificate of Appearance -->
+                        <div class="mt-4 pt-4" style="border-top: 3px double #050505;">
+                            <p class="font-bold text-xs text-center text-gray-900 mb-2">CERTIFICATE OF APPEARANCE</p>
+                            <p class="text-xs text-gray-700 leading-relaxed">
+                                This is to CERTIFY that the above mentioned person appeared in this office on {{ new Date(formData.date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) }}.
+                            </p>
+                            
+                            <!-- Signature and Printed Name Section -->
+                            <div class="mt-4 w-96 text-center">
+                                    <p class="text-xs text-center text-gray-700 border-b border-gray-400 pb-6 mb-1"></p>
+                                    <p class="text-xs text-center text-gray-700">Signature over Printed Name</p>
+                            </div>
+                        </div>
+                        </div>
+
+                        <!-- Copy 2 (Duplicate) -->
+                        <div>
+                        <!-- Header Section with Logos -->
+                        <div class="flex items-center justify-center gap-2 mb-4 pb-2" style="border-bottom: 3px double #050505;">
+                            <div style="width: 70px; flex-shrink: 0;">
+                                <img src="/benguetlogo.png" alt="Benguet Logo" style="width: 100%; height: auto;">
+                            </div>
+                            <div class="text-center">
+                                <p class="text-xs font-semibold text-gray-700">Republic of the Philippines</p>
+                                <p class="text-base font-bold text-gray-900">PROVINCE OF BENGUET</p>
+                                <p class="text-xs text-gray-700 mb-1">Poblacion, La Trinidad 2601</p>
+                                <p class="text-xs font-bold text-gray-900 mb-4">PROVINCIAL BUDGET OFFICE</p>
+                                <p class="text-base font-bold text-gray-900">PASS SLIP</p>
+                            </div>
+                            <div style="width: 70px; flex-shrink: 0;">
+                                <img src="/bagongpilipinaslogo.png" alt="Bagong Pilipinas Logo" style="width: 100%; height: auto;">
+                            </div>
+                        </div>
+
+                         <!-- Top Information Row -->
+                        <div class="mb-6 text-xs space-y-1">
+                            <div>
+                                <p class="font-semibold text-gray-700"><span class="w-20 inline-block text-right">Date: </span><span class="font-bold text-gray-900 w-48 border-b border-gray-400 inline-block text-center">{{ new Date(formData.date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) }}</span></p>
+                            </div>
+                            <div>
+                                <p class="font-semibold text-gray-700"><span class="w-20 inline-block text-right">Office: </span><span class="font-bold text-gray-900 w-48 border-b border-gray-400 inline-block text-center">Provincial Budget Office</span></p>
+                            </div>
+                            <div>
+                                <p class="font-semibold text-gray-700"><span class="w-20 inline-block text-right">Control No.: </span><span class="font-bold text-gray-900 w-48 border-b border-gray-400 inline-block text-center">{{ formData.control_no }}</span></p>
+                            </div>
+                        </div>
+
+                        <!-- Provincial Budget Officer Info -->
+                        <div class="text-left mb-6 w-40">
+                            <p class="font-bold text-xs text-gray-900 text-center border-b border-gray-400 w-72 uppercase">{{ getProvincialBudgetOfficer() }}</p>
+                            <p class="text-xs text-gray-700 text-center w-72">Provincial Budget Officer</p>
+                        </div>
+
+                        <!-- Main Content -->
+                        <div class="mb-8 text-xs leading-relaxed text-gray-900">
+                            <p class="mb-4">
+                                Permission is respectfully requested to leave at <span class="border-b border-gray-400 w-24 inline-block text-center">{{ formatTimeDisplay(formData.requested_time) }}</span> 
+                                on <span class="border-b border-gray-400 w-36 inline-block text-center">{{ new Date(formData.date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) }}</span> 
+                                to <span class="border-b border-gray-400 w-[560px] inline-block text-center">{{ formData.purpose }}</span> 
+                                at the <span class="border-b border-gray-400 w-96 inline-block text-center">{{ formData.location }}</span>.
+                            </p>
+                            
+                            <div class="ml-4 space-y-1">
+                                <p>
+                                    <span>Expected Time of Return: </span> 
+                                    <span class="font-bold border-b border-gray-400 w-48 inline-block text-center">
+                                        {{ formData.returnType === 'asap' ? 'As soon as possible' : 
+                                           formData.returnType === 'nwd' ? 'Next Working Day' : 
+                                           formData.returnType === 'time_slip' ? 'Time Slip' : 
+                                           formData.returnType === 'nom' ? 'NOM' : 
+                                           formData.returnType === 'memo' ? 'Memo' : 
+                                           formatTimeDisplay(formData.expected_return_time) }}
+                                    </span>
+                                </p>
+                                <p>
+                                    <span>Vehicle to be used: </span> 
+                                    <span class="font-bold border-b border-gray-400 w-48 inline-block text-center">{{ formData.vehicle }}</span>
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Requesting Employee Section -->
+                        <div class="mb-6">
+                            <p class="font-bold text-xs text-gray-900 text-center border-b border-gray-400 w-96 uppercase">
+                                {{ getEmployeeNames() }}
+                            </p>
+                            <p class="text-xs text-gray-700 text-center w-96">Requesting Employee</p>
+                        </div>
+
+                        <!-- Recommending Approval -->
+                        <div v-if="getRecommendingApprovalEmployee()" class="mb-6">
+                            <p class="text-xs text-gray-700 mb-8">Recommending Approval:</p>
+                            <div class="space-y-8">
+                                <div class="w-96">
+                                    <p class="font-bold text-xs text-center text-gray-900 w-96 uppercase">{{ getRecommendingApprovalEmployee().name }}</p>
+                                    <p class="text-xs text-center text-gray-700 border-b border-gray-400 w-96">{{ getRecommendingApprovalEmployee().designation }}</p>
+                                    <p class="text-xs text-center text-gray-700 w-96">Immediate Supervisor</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Approved Section -->
+                        <div class="mb-6 flex justify-end pr-8">
+                            <div class="w-96 text-center">
+                                <p class="text-xs text-left text-gray-900 mb-8">APPROVED:</p>
+                                <p class="text-xs text-center text-gray-900 font-bold uppercase">{{ getProvincialBudgetOfficer() }}</p>
+                                <p class="text-xs text-center text-gray-700 border-b border-gray-400">Provincial Budget Officer</p>
+                                <p class="text-xs text-center text-gray-700">Department Head</p>
+                            </div>
+                        </div>
+
+                        <!-- Certificate of Appearance -->
+                        <div class="mt-4 pt-4" style="border-top: 3px double #050505;">
+                            <p class="font-bold text-xs text-center text-gray-900 mb-2">CERTIFICATE OF APPEARANCE</p>
+                            <p class="text-xs text-gray-700 leading-relaxed">
+                                This is to CERTIFY that the above mentioned person appeared in this office on {{ new Date(formData.date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) }}.
+                            </p>
+                            
+                            <!-- Signature and Printed Name Section -->
+                            <div class="mt-4 w-96 text-center">
+                                    <p class="text-xs text-center text-gray-700 border-b border-gray-400 pb-6 mb-1"></p>
+                                    <p class="text-xs text-center text-gray-700">Signature over Printed Name</p>
+                            </div>
+                        </div>
+                        </div>
+                    </div>
+
+                    <!-- Modal Footer -->
+                    <div class="flex items-center justify-center gap-3 p-6 border-t-2 border-gray-200 rounded-b-lg dark:border-gray-600 bg-gray-50 dark:bg-gray-800 sticky bottom-0">
+                        <button @click="printPassSlip" class="inline-flex items-center gap-2 px-5 py-3 text-xs font-medium text-gray-600 dark:text-gray-400 border border-gray-600 dark:border-gray-500 hover:text-white hover:bg-gray-600 dark:hover:bg-gray-600 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95">
+                            <i class="fas fa-print"></i>
+                            Print
+                        </button>
+                        <button @click="confirmPreviewAndSubmit" :disabled="creating" class="inline-flex items-center gap-2 px-5 py-3 text-xs font-medium text-white bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-700 dark:hover:bg-emerald-800 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed">
+                            <i v-if="creating" class="fas fa-spinner fa-spin"></i>
+                            <i v-else class="fas fa-check"></i>
+                            {{ creating ? 'Saving...' : 'Confirm & Save' }}
+                        </button>
+                        <button @click="closePreviewModal" type="button" :disabled="creating" class="inline-flex items-center gap-2 px-5 py-3 text-xs font-medium text-gray-600 dark:text-gray-400 border border-gray-600 dark:border-gray-500 hover:text-white hover:bg-gray-600 dark:hover:bg-gray-600 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed">
+                            <i class="fas fa-arrow-left"></i>
+                            Back to Form
                         </button>
                     </div>
                 </div>
@@ -515,6 +801,19 @@
                                 <span v-if="formErrors.expected_return_time" class="text-red-500 text-xs">{{ formErrors.expected_return_time }}</span>
                             </div>
 
+                            <!-- Vehicle to be Used Field -->
+                            <div class="space-y-2">
+                                <label for="edit_vehicle" class="block text-xs font-medium text-gray-700 dark:text-gray-300">Vehicle to be Used <span class="text-red-600">*</span></label>
+                                <div class="relative flex items-center">
+                                    <i class="fas fa-van-shuttle absolute left-3 text-gray-400 text-sm pointer-events-none"></i>
+                                    <select v-model="formData.vehicle" id="edit_vehicle" class="block w-full pl-10 pr-4 py-2 text-xs border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:outline-none transition-colors appearance-none" :class="[formErrors.vehicle ? 'border-red-500 focus:border-red-500' : 'border-gray-300 focus:border-blue-500']">
+                                        <option value="RP Vehicle">RP Vehicle</option>
+                                        <option value="PUJ">PUJ</option>
+                                    </select>
+                                </div>
+                                <span v-if="formErrors.vehicle" class="text-red-500 text-xs">{{ formErrors.vehicle }}</span>
+                            </div>
+
                             <!-- Requesting Employees Field -->
                             <div class="space-y-2">
                                 <label for="edit_employees" class="block text-xs font-medium text-gray-700 dark:text-gray-300">Requesting Employee(s) <span class="text-red-600">*</span></label>
@@ -533,6 +832,19 @@
                                     </p>
                                 </div>
                                 <span v-if="formErrors.employee_ids" class="text-red-500 text-xs">{{ formErrors.employee_ids }}</span>
+                            </div>
+
+                            <!-- Recommending Approval Employee Field -->
+                            <div class="space-y-2">
+                                <label for="edit_recommending_approval" class="block text-xs font-medium text-gray-700 dark:text-gray-300">Recommending Approval (Supervisor)</label>
+                                <div class="relative flex items-center">
+                                    <i class="fas fa-user-check absolute left-3 text-gray-400 text-sm pointer-events-none"></i>
+                                    <select v-model.number="formData.recommending_approval_employee_id" id="edit_recommending_approval" class="block w-full pl-10 pr-4 py-2 text-xs border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:outline-none transition-colors appearance-none" :class="[formErrors.recommending_approval_employee_id ? 'border-red-500 focus:border-red-500' : 'border-gray-300 focus:border-blue-500']">
+                                        <option :value="null">Select a supervisor</option>
+                                        <option v-for="emp in sortedEmployees" :key="emp.id" :value="emp.id">{{ emp.name }}</option>
+                                    </select>
+                                </div>
+                                <span v-if="formErrors.recommending_approval_employee_id" class="text-red-500 text-xs">{{ formErrors.recommending_approval_employee_id }}</span>
                             </div>
 
                             <!-- Remarks Field -->
@@ -555,8 +867,8 @@
                     <div class="flex items-center justify-center gap-3 p-6 border-t-2 border-gray-200 rounded-b-lg dark:border-gray-600 bg-gray-50 dark:bg-gray-800">
                         <button @click="submitEditForm" :disabled="updating" class="inline-flex items-center gap-2 px-5 py-3 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed">
                             <i v-if="updating" class="fas fa-spinner fa-spin"></i>
-                            <i v-else class="fas fa-save"></i>
-                            {{ updating ? 'Updating...' : 'Update' }}
+                            <i v-else class="fas fa-eye"></i>
+                            {{ updating ? 'Updating...' : 'Preview & Continue' }}
                         </button>
                         <button @click="closeEditModal" class="inline-flex items-center gap-2 px-5 py-3 text-xs font-medium text-gray-600 dark:text-gray-400 border border-gray-600 dark:border-gray-500 hover:text-white hover:bg-gray-600 dark:hover:bg-gray-600 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95">
                             <i class="fas fa-times"></i>
@@ -650,6 +962,7 @@ interface PassSlip {
     expected_return_time: string;
     remarks: string | null;
     employees: Employee[];
+    recommending_approval_employee_id: number | null;
     created_at: string;
     updated_at: string;
 }
@@ -669,6 +982,7 @@ const error = ref<string | null>(null);
 const showCreateModal = ref(false);
 const showEditModal = ref(false);
 const showDeleteModal = ref(false);
+const showPreviewModal = ref(false);
 
 const creating = ref(false);
 const updating = ref(false);
@@ -686,6 +1000,8 @@ const formData = ref({
     expected_return_time: '',
     remarks: '',
     employee_ids: [] as number[],
+    recommending_approval_employee_id: null as number | null,
+    vehicle: 'RP Vehicle' as 'RP Vehicle' | 'PUJ',
     returnType: 'time' as 'time' | 'asap' | 'nwd' | 'time_slip' | 'nom' | 'memo',
 });
 
@@ -834,6 +1150,42 @@ const formatTimeForAPI = (timeString: string): string => {
     return timeString;
 };
 
+/**
+ * Format time for display (12-hour format)
+ */
+const formatTimeDisplay = (timeString: string): string => {
+    if (!timeString) return '';
+    const [hours, minutes] = timeString.split(':');
+    const hour = parseInt(hours);
+    const ampm = hour >= 12 ? 'PM' : 'AM';
+    const displayHour = hour % 12 || 12;
+    return `${displayHour}:${minutes} ${ampm}`;
+};
+
+/**
+ * Get comma-separated employee names
+ */
+const getEmployeeNames = (): string => {
+    const selectedEmployees = sortedEmployees.value.filter(emp => 
+        formData.value.employee_ids.includes(emp.id)
+    );
+    return selectedEmployees.map(emp => emp.name).join(', ') || '[Employee Name]';
+};
+
+const getRecommendingApprovalEmployee = () => {
+    if (!formData.value.recommending_approval_employee_id) {
+        return null;
+    }
+    return employees.value.find(emp => emp.id === formData.value.recommending_approval_employee_id) || null;
+};
+
+/**
+ * Print the pass slip preview
+ */
+const printPassSlip = () => {
+    window.print();
+};
+
 const validateForm = (): boolean => {
     formErrors.value = {};
     
@@ -872,6 +1224,8 @@ const openCreateModal = async () => {
         remarks: '',
         employee_ids: [],
         returnType: 'time',
+        recommending_approval_employee_id: null,
+        vehicle: 'RP Vehicle',
     };
     formErrors.value = {};
     showCreateModal.value = true;
@@ -879,6 +1233,10 @@ const openCreateModal = async () => {
 
 const closeCreateModal = () => {
     showCreateModal.value = false;
+};
+
+const closePreviewModal = () => {
+    showPreviewModal.value = false;
 };
 
 // Watch for changes to date and regenerate control_no
@@ -894,8 +1252,16 @@ const submitCreateForm = async () => {
     validateReturnTime();
     if (Object.keys(formErrors.value).length > 0) return;
     
+    // Open preview modal instead of directly submitting
+    showPreviewModal.value = true;
+};
+
+const confirmPreviewAndSubmit = async () => {
     try {
-        creating.value = true;
+        // Check if we're updating or creating
+        const isUpdate = passSlipToEdit.value !== null;
+        const isLoading = isUpdate ? 'updating' : 'creating';
+        eval(`${isLoading}.value = true`);
         
         // Build submitData with only fields the API expects
         let expectedReturnTime = formData.value.expected_return_time;
@@ -923,10 +1289,16 @@ const submitCreateForm = async () => {
             expected_return_time: expectedReturnTime,
             remarks: formData.value.remarks,
             employee_ids: formData.value.employee_ids,
+            recommending_approval_employee_id: formData.value.recommending_approval_employee_id,
+            vehicle: formData.value.vehicle,
         };
         
-        const response = await fetch('/api/pass-slips', {
-            method: 'POST',
+        // Build the URL and method based on operation
+        const url = isUpdate ? `/api/pass-slips/${passSlipToEdit.value!.id}` : '/api/pass-slips';
+        const method = isUpdate ? 'PUT' : 'POST';
+        
+        const response = await fetch(url, {
+            method: method,
             headers: {
                 'Content-Type': 'application/json',
                 'X-Requested-With': 'XMLHttpRequest',
@@ -936,7 +1308,7 @@ const submitCreateForm = async () => {
 
         if (!response.ok) {
             const errorData = await response.json().catch(() => ({}));
-            console.error('Create error response:', errorData);
+            console.error(`${isUpdate ? 'Update' : 'Create'} error response:`, errorData);
             
             // Handle validation errors (422)
             if (response.status === 422 && errorData.errors) {
@@ -949,19 +1321,30 @@ const submitCreateForm = async () => {
                 throw new Error(errorMessages);
             }
             
-            throw new Error(errorData.error || errorData.message || 'Failed to create pass slip');
+            throw new Error(errorData.error || errorData.message || `Failed to ${isUpdate ? 'update' : 'create'} pass slip`);
         }
 
-        const newPassSlip = await response.json();
+        const result = await response.json();
         await fetchPassSlips();
-        closeCreateModal();
+        showPreviewModal.value = false;
         
-        toastRef.value?.add(
-            'success',
-            'Success',
-            `Pass slip <strong>${newPassSlip.data.control_no}</strong> has been created successfully!`,
-            3000
-        );
+        if (isUpdate) {
+            closeEditModal();
+            toastRef.value?.add(
+                'info',
+                'Updated',
+                `Pass slip <strong>${result.data.control_no}</strong> has been updated successfully!`,
+                3000
+            );
+        } else {
+            closeCreateModal();
+            toastRef.value?.add(
+                'success',
+                'Success',
+                `Pass slip <strong>${result.data.control_no}</strong> has been created successfully!`,
+                3000
+            );
+        }
     } catch (err: any) {
         const errorMsg = err instanceof Error ? err.message : 'An error occurred';
         formErrors.value['submit'] = errorMsg;
@@ -969,6 +1352,7 @@ const submitCreateForm = async () => {
         toastRef.value?.add('error', 'Error', errorMsg, 4000);
     } finally {
         creating.value = false;
+        updating.value = false;
     }
 };
 
@@ -996,13 +1380,11 @@ const handleEditPassSlip = (slip: PassSlip) => {
         returnTimeValue = '';
     }
     
-    // Format date to YYYY-MM-DD for date input
+    // Format date to YYYY-MM-DD for date input (avoid timezone issues)
     let formattedDate = slip.date;
     if (slip.date) {
-        const dateObj = new Date(slip.date);
-        if (!isNaN(dateObj.getTime())) {
-            formattedDate = dateObj.toISOString().split('T')[0];
-        }
+        // Simply extract YYYY-MM-DD part from the date string to avoid timezone conversion
+        formattedDate = slip.date.split('T')[0];
     }
     
     formData.value = {
@@ -1015,6 +1397,8 @@ const handleEditPassSlip = (slip: PassSlip) => {
         remarks: slip.remarks || '',
         employee_ids: slip.employees.map(emp => emp.id),
         returnType: returnType,
+        recommending_approval_employee_id: slip.recommending_approval_employee_id || null,
+        vehicle: slip.vehicle || 'RP Vehicle',
     };
     formErrors.value = {};
     showEditModal.value = true;
@@ -1031,83 +1415,9 @@ const submitEditForm = async () => {
     if (!validateForm()) return;
     validateReturnTime();
     if (Object.keys(formErrors.value).length > 0) return;
-
-    try {
-        updating.value = true;
-        
-        // Build submitData with only fields the API expects
-        let expectedReturnTime = formData.value.expected_return_time;
-        if (formData.value.returnType === 'asap') {
-            expectedReturnTime = 'ASAP';
-        } else if (formData.value.returnType === 'nwd') {
-            expectedReturnTime = 'NWD';
-        } else if (formData.value.returnType === 'time_slip') {
-            expectedReturnTime = 'Time Slip';
-        } else if (formData.value.returnType === 'nom') {
-            expectedReturnTime = 'NOM';
-        } else if (formData.value.returnType === 'memo') {
-            expectedReturnTime = 'Memo';
-        } else {
-            // Format time to HH:MM
-            expectedReturnTime = formatTimeForAPI(expectedReturnTime);
-        }
-        
-        const submitData = {
-            control_no: formData.value.control_no,
-            date: formData.value.date,
-            requested_time: formatTimeForAPI(formData.value.requested_time),
-            purpose: formData.value.purpose,
-            location: formData.value.location,
-            expected_return_time: expectedReturnTime,
-            remarks: formData.value.remarks,
-            employee_ids: formData.value.employee_ids,
-        };
-        
-        const response = await fetch(`/api/pass-slips/${passSlipToEdit.value.id}`, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-Requested-With': 'XMLHttpRequest',
-            },
-            body: JSON.stringify(submitData),
-        });
-
-        if (!response.ok) {
-            const errorData = await response.json().catch(() => ({}));
-            console.error('Update error response:', errorData);
-            
-            // Handle validation errors (422)
-            if (response.status === 422 && errorData.errors) {
-                Object.keys(errorData.errors).forEach(field => {
-                    formErrors.value[field] = errorData.errors[field][0];
-                });
-                const errorMessages = Object.values(errorData.errors)
-                    .flat()
-                    .join(', ');
-                throw new Error(errorMessages);
-            }
-            
-            throw new Error(errorData.error || errorData.message || 'Failed to update pass slip');
-        }
-
-        const updatedPassSlip = await response.json();
-        await fetchPassSlips();
-        closeEditModal();
-        
-        toastRef.value?.add(
-            'info',
-            'Updated',
-            `Pass slip <strong>${updatedPassSlip.data.control_no}</strong> has been updated successfully!`,
-            3000
-        );
-    } catch (err: any) {
-        const errorMsg = err instanceof Error ? err.message : 'An error occurred';
-        formErrors.value['submit'] = errorMsg;
-        
-        toastRef.value?.add('error', 'Error', errorMsg, 4000);
-    } finally {
-        updating.value = false;
-    }
+    
+    // Open preview modal instead of directly submitting
+    showPreviewModal.value = true;
 };
 
 const openDeleteModal = (slip: PassSlip) => {
@@ -1207,6 +1517,11 @@ const showToast = (message: string, type: 'success' | 'error' = 'success') => {
     }
 };
 
+const getProvincialBudgetOfficer = (): string => {
+    const pbo = employees.value.find((emp: Employee) => emp.designation === 'Provincial Budget Officer');
+    return pbo ? pbo.name : '-';
+};
+
 onMounted(() => {
     fetchPassSlips();
     fetchEmployees();
@@ -1228,5 +1543,33 @@ onMounted(() => {
 
 .animate-scaleInUp {
     animation: scaleInUp 0.3s ease-out;
+}
+
+/* Print Styles: Hide modal chrome and scrollbars */
+@media print {
+    .sticky {
+        position: static !important;
+    }
+    
+    .sticky.top-0 {
+        display: none !important;
+    }
+    
+    .sticky.bottom-0 {
+        display: none !important;
+    }
+    
+    .overflow-y-auto {
+        overflow: visible !important;
+    }
+    
+    .max-h-\[90vh\] {
+        max-height: none !important;
+    }
+    
+    body, html {
+        margin: 0 !important;
+        padding: 0 !important;
+    }
 }
 </style>
