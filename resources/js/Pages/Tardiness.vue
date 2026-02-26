@@ -76,7 +76,7 @@
                     <div class="inline-block mb-4">
                         <i class="fas fa-inbox text-gray-400 dark:text-gray-600 text-4xl"></i>
                     </div>
-                    <p class="text-lg font-medium text-gray-600 dark:text-gray-400">No records found</p>
+                    <p class="text-lg font-medium text-gray-600 dark:text-gray-400">No Tardiness/Undertime found</p>
                     <p class="text-sm text-gray-500 dark:text-gray-500 mt-1">Try adjusting your search or create a new record</p>
                 </div>
 
@@ -166,34 +166,52 @@
                 </div>
 
                 <!-- Pagination Controls -->
-                <div v-if="!loading && tardiness.length > 0" class="px-6 py-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                    <div class="text-xs text-gray-600 dark:text-gray-400">
-                        Showing <span class="font-semibold">{{ (currentPage - 1) * itemsPerPage + 1 }}</span> to <span class="font-semibold">{{ Math.min(currentPage * itemsPerPage, filteredTardiness.length) }}</span> of <span class="font-semibold">{{ filteredTardiness.length }}</span> records
-                    </div>
-                    <div class="flex items-center justify-center gap-2">
-                        <button @click="changePage(1)" :disabled="currentPage === 1" class="px-3 py-1 text-xs font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed rounded transition-colors">
-                            <i class="fas fa-chevron-left"></i>
+                <div v-if="!loading && tardiness.length > 0" class="flex items-center justify-between px-6 py-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
+                    <p class="text-xs text-gray-500 dark:text-gray-400">
+                        Showing {{ (currentPage - 1) * itemsPerPage + 1 }} to {{ Math.min(currentPage * itemsPerPage, filteredTardiness.length) }} of {{ filteredTardiness.length }} results
+                    </p>
+                    <div class="flex items-center gap-1">
+                        <button
+                            @click="currentPage = 1"
+                            :disabled="currentPage === 1"
+                            class="px-2 py-1 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
                             <i class="fas fa-chevron-left"></i>
                         </button>
-                        <button @click="changePage(currentPage - 1)" :disabled="currentPage === 1" class="px-3 py-1 text-xs font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed rounded transition-colors">
-                            <i class="fas fa-chevron-left"></i>
+                        <button
+                            @click="currentPage = currentPage - 1"
+                            :disabled="currentPage === 1"
+                            class="px-3 py-1 text-xs text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            Prev
                         </button>
-                        <span v-for="page in paginationRange" :key="page" class="text-xs">
-                            <button v-if="page !== '...'" @click="changePage(page)" :class="[
-                                'px-3 py-1 rounded transition-colors',
-                                page === currentPage 
-                                    ? 'bg-emerald-600 text-white font-semibold' 
-                                    : 'text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
-                            ]">
+                        <div class="flex gap-0.5">
+                            <button
+                                v-for="page in totalPages"
+                                :key="page"
+                                @click="currentPage = page"
+                                :class="[
+                                    'px-2 py-1 text-xs rounded transition-colors',
+                                    currentPage === page
+                                        ? 'bg-emerald-600 text-white'
+                                        : 'text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
+                                ]"
+                            >
                                 {{ page }}
                             </button>
-                            <span v-else class="px-2 py-1">{{ page }}</span>
-                        </span>
-                        <button @click="changePage(currentPage + 1)" :disabled="currentPage === totalPages" class="px-3 py-1 text-xs font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed rounded transition-colors">
-                            <i class="fas fa-chevron-right"></i>
+                        </div>
+                        <button
+                            @click="currentPage = currentPage + 1"
+                            :disabled="currentPage === totalPages"
+                            class="px-3 py-1 text-xs text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            Next
                         </button>
-                        <button @click="changePage(totalPages)" :disabled="currentPage === totalPages" class="px-3 py-1 text-xs font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed rounded transition-colors">
-                            <i class="fas fa-chevron-right"></i>
+                        <button
+                            @click="currentPage = totalPages"
+                            :disabled="currentPage === totalPages"
+                            class="px-2 py-1 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
                             <i class="fas fa-chevron-right"></i>
                         </button>
                     </div>
