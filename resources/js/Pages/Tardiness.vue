@@ -187,12 +187,15 @@
                         </button>
                         <div class="flex gap-0.5">
                             <button
-                                v-for="page in totalPages"
+                                v-for="page in paginationRange"
                                 :key="page"
-                                @click="currentPage = page"
+                                @click="page !== '...' && (currentPage = page as number)"
+                                :disabled="page === '...' || currentPage === page"
                                 :class="[
                                     'px-2 py-1 text-xs rounded transition-colors',
-                                    currentPage === page
+                                    page === '...'
+                                        ? 'text-gray-400 dark:text-gray-500 cursor-default'
+                                        : currentPage === page
                                         ? 'bg-emerald-600 text-white'
                                         : 'text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
                                 ]"

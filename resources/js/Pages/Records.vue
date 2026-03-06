@@ -309,12 +309,15 @@
                         </button>
                         <div class="flex gap-0.5">
                             <button
-                                v-for="page in totalPages"
+                                v-for="page in paginationPages"
                                 :key="page"
-                                @click="changePage(page)"
+                                @click="page !== '...' && changePage(page as number)"
+                                :disabled="page === '...' || currentPage === page"
                                 :class="[
                                     'px-2 py-1 text-xs rounded transition-colors',
-                                    currentPage === page
+                                    page === '...'
+                                        ? 'text-gray-400 dark:text-gray-500 cursor-default'
+                                        : currentPage === page
                                         ? 'bg-emerald-600 text-white'
                                         : 'text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
                                 ]"
@@ -825,6 +828,65 @@ const paginatedRecords = computed(() => {
     const start = (currentPage.value - 1) * itemsPerPage.value;
     const end = start + itemsPerPage.value;
     return filteredRecords.value.slice(start, end);
+});
+
+/**
+ * Smart pagination: Shows limited page buttons with ellipsis
+ * Format: [1, 2, ..., currentPage-1, currentPage, currentPage+1, ..., last-1, last]
+ */
+const paginationPages = computed(() => {
+    const pages: (number | string)[] = [];
+    const total = totalPages.value;
+    const current = currentPage.value;
+    const maxButtons = 5; // Maximum page buttons to show without ellipsis
+    const sidePages = 1; // Pages to show on each side of current page
+    const edgePages = 1; // Pages to show at start and end
+    
+    if (total <= maxButtons + 2) {
+        // If total pages fit, show all
+        for (let i = 1; i <= total; i++) {
+            pages.push(i);
+        }
+    } else {
+        // Always show first page(s)
+        for (let i = 1; i <= Math.min(edgePages + 1, total); i++) {
+            pages.push(i);
+        }
+        
+        // Calculate range around current page
+        const rangeStart = Math.max(edgePages + 2, current - sidePages);
+        const rangeEnd = Math.min(total - edgePages - 1, current + sidePages);
+        
+        // Add ellipsis if needed
+        if (rangeStart > edgePages + 2) {
+            if (pages[pages.length - 1] !== '...') {
+                pages.push('...');
+            }
+        }
+        
+        // Add pages around current
+        for (let i = rangeStart; i <= rangeEnd; i++) {
+            if (i > edgePages + 1 && i < total - edgePages) {
+                pages.push(i);
+            }
+        }
+        
+        // Add ellipsis if needed before last pages
+        if (rangeEnd < total - edgePages - 1) {
+            if (pages[pages.length - 1] !== '...') {
+                pages.push('...');
+            }
+        }
+        
+        // Always show last page(s)
+        for (let i = Math.max(edgePages + 2, total - edgePages); i <= total; i++) {
+            if (!pages.includes(i)) {
+                pages.push(i);
+            }
+        }
+    }
+    
+    return pages;
 });
 
 const fetchRecords = async () => {
