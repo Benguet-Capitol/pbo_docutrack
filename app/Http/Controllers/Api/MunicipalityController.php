@@ -38,6 +38,7 @@ class MunicipalityController extends Controller
             $validated = $request->validate([
                 'name' => 'required|string|unique:municipalities,name',
                 'code' => 'required|string|unique:municipalities,code',
+                'city_class' => 'nullable|string',
                 'municipal_budget_officer' => 'nullable|string',
                 'representative' => 'nullable|string',
             ]);
@@ -65,6 +66,7 @@ class MunicipalityController extends Controller
             $validated = $request->validate([
                 'name' => 'sometimes|string|unique:municipalities,name,' . $id,
                 'code' => 'sometimes|string|unique:municipalities,code,' . $id,
+                'city_class' => 'nullable|string',
                 'municipal_budget_officer' => 'nullable|string',
                 'representative' => 'nullable|string',
             ]);

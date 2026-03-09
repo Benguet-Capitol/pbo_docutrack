@@ -41,6 +41,56 @@ class RecordController extends Controller
     }
 
     /**
+     * Generate the next record number based on record type and current year.
+     * Format: ABBR-YYYY-MM-NNN (e.g., PB-2026-03-001)
+     * Finds the highest existing sequence number for the type/year across all months and increments it (handles deleted records)
+     * Numbering resets per year, not per month (all months in year share sequence)
+     */
+    public function generateRecordNo(Request $request): JsonResponse
+    {
+        try {
+            $recordType = $request->query('record_type');
+            if (!$recordType) {
+                return response()->json(['error' => 'record_type is required'], 400);
+            }
+
+            // Record type abbreviations mapping (must match Vue frontend)
+            $abbreviations = [
+                'Provincial Budget' => 'PB',
+                'Municipal Budget' => 'MB',
+                'Issuances / Circulars / Other References and Documents' => 'ISO',
+            ];
+
+            $abbr = $abbreviations[$recordType] ?? 'REC';
+            $now = new \DateTime();
+            $year = $now->format('Y');
+            $month = $now->format('m');
+            $yearPrefix = "{$abbr}-{$year}-";
+
+            // Get all records of same type in current year (all months)
+            $existingNumbers = Record::where('record_type', $recordType)
+                ->where('record_no', 'like', "{$yearPrefix}%")
+                ->pluck('record_no')
+                ->map(function($recordNo) {
+                    // Extract the numeric part after the last dash
+                    $parts = explode('-', $recordNo);
+                    return (int) end($parts);
+                })
+                ->toArray();
+
+            // Find the highest number across all months in the year, or start at 0 if none exist
+            $maxNumber = count($existingNumbers) > 0 ? max($existingNumbers) : 0;
+            
+            $series = str_pad($maxNumber + 1, 3, '0', STR_PAD_LEFT);
+            $recordNo = "{$abbr}-{$year}-{$month}-{$series}";
+
+            return response()->json(['record_no' => $recordNo]);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
      * Store a newly created record.
      */
     public function store(Request $request): JsonResponse

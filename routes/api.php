@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\EmployeeController;
 use App\Http\Controllers\Api\OfficeController;
 use App\Http\Controllers\Api\MunicipalityController;
 use App\Http\Controllers\Api\DocumentController;
+use App\Http\Controllers\Api\RecordController;
 use App\Http\Controllers\Api\PassSlipController;
 use App\Http\Controllers\Api\TravelOrderController;
 use App\Http\Controllers\Api\LeaveController;
@@ -40,6 +41,10 @@ Route::delete('/municipalities/{id}', [MunicipalityController::class, 'destroy']
 
 // Documents API
 Route::middleware(['web', 'auth'])->group(function () {
+    // More specific routes first
+    Route::get('/documents/generate/tracking-no', [DocumentController::class, 'generateTrackingNo']);
+    
+    // General routes
     Route::get('/documents', [DocumentController::class, 'index']);
     Route::post('/documents', [DocumentController::class, 'store']);
     Route::put('/documents/{id}', [DocumentController::class, 'update']);
@@ -48,6 +53,23 @@ Route::middleware(['web', 'auth'])->group(function () {
     Route::post('/documents/{id}/receive', [DocumentController::class, 'receive']);
     Route::post('/documents/{id}/finalize', [DocumentController::class, 'finalize']);
     Route::delete('/documents/{id}', [DocumentController::class, 'destroy']);
+    
+    // Document Checklist API
+    Route::get('/documents/checklist/template/{documentType}', [DocumentController::class, 'getChecklistTemplate']);
+    Route::post('/documents/{id}/checklist/save', [DocumentController::class, 'saveChecklist']);
+    Route::get('/documents/{id}/checklist/records', [DocumentController::class, 'getChecklistRecords']);
+});
+
+// Records API
+Route::middleware(['web', 'auth'])->group(function () {
+    // More specific routes first
+    Route::get('/records/generate/record-no', [RecordController::class, 'generateRecordNo']);
+    
+    // General routes
+    Route::get('/records', [RecordController::class, 'index']);
+    Route::post('/records', [RecordController::class, 'store']);
+    Route::put('/records/{id}', [RecordController::class, 'update']);
+    Route::delete('/records/{id}', [RecordController::class, 'destroy']);
 });
 
 // Pass Slips API

@@ -246,6 +246,15 @@
                                             <i class="fas fa-calendar-xmark"></i>
                                             <span class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-1 text-xs font-medium text-white bg-gray-900 dark:bg-gray-950 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-20">End Transaction</span>
                                         </button>
+                                        <!-- View Checklist Button: Visible for Annual Budget and Supplemental Budget documents -->
+                                        <button 
+                                            v-if="document.document_type === 'Annual Budget' || document.document_type === 'Supplemental Budget'"
+                                            @click.stop="viewDocumentChecklist(document)" 
+                                            class="relative p-2 text-purple-600 dark:text-purple-400 bg-purple-100 dark:bg-purple-900/30 hover:text-purple-700 dark:hover:text-purple-300 hover:bg-purple-200 dark:hover:bg-purple-900/50 rounded-lg transition-all duration-200 group"
+                                        >
+                                            <i class="fas fa-list-check"></i>
+                                            <span class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-1 text-xs font-medium text-white bg-gray-900 dark:bg-gray-950 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-20">View Checklist</span>
+                                        </button>
                                         <!-- Edit Button: Visible if user has permission -->
                                         <button 
                                             v-if="hasPermission('documents.edit')"
@@ -295,15 +304,18 @@
                         >
                             Prev
                         </button>
-                        <!-- Page Number Buttons: v-for loops through all pages, highlights current page -->
+                        <!-- Page Number Buttons: v-for loops through smart pagination pages with ellipsis -->
                         <div class="flex gap-0.5">
                             <button
-                                v-for="page in totalPages"
+                                v-for="page in paginationPages"
                                 :key="page"
-                                @click="changePage(page)"
+                                @click="page !== '...' && changePage(page as number)"
+                                :disabled="page === '...' || currentPage === page"
                                 :class="[
                                     'px-2 py-1 text-xs rounded transition-colors',
-                                    currentPage === page
+                                    page === '...'
+                                        ? 'text-gray-400 dark:text-gray-500 cursor-default'
+                                        : currentPage === page
                                         ? 'bg-emerald-600 text-white'
                                         : 'text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
                                 ]"
@@ -459,6 +471,21 @@
                                 <span v-if="formErrors.source" class="text-red-500 text-xs">{{ formErrors.source }}</span>
                             </div>
 
+                            <!-- SB No. Field: Only visible for Supplemental Budget documents -->
+                            <div v-if="formData.document_type === 'Supplemental Budget'" class="space-y-2">
+                                <label for="sb_no" class="block text-xs font-medium text-gray-700 dark:text-gray-300">SB No.</label>
+                                <div class="relative flex items-center">
+                                    <i class="fas fa-file-invoice-dollar absolute left-3 text-gray-400 text-sm"></i>
+                                    <input
+                                        v-model="formData.sb_no"
+                                        id="sb_no"
+                                        type="text"
+                                        placeholder="Enter Supplemental Budget Number"
+                                        class="block w-full pl-10 pr-4 py-2 text-xs border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:outline-none focus:border-emerald-500"
+                                    />
+                                </div>
+                            </div>
+
                             <!-- Particulars Field: Required -->
                             <div class="space-y-2">
                                 <label for="particulars" class="block text-xs font-medium text-gray-700 dark:text-gray-300">Particulars <span class="text-red-600">*</span></label>
@@ -503,8 +530,8 @@
                             @click="handleCreateDocument"
                             class="inline-flex items-center gap-2 px-5 py-3 text-xs font-medium text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95"
                         >
-                            <i class="fas fa-save"></i>
-                            Save
+                            <i :class="documentTypeHasChecklist ? 'fas fa-list-check' : 'fas fa-save'"></i>
+                            {{ documentTypeHasChecklist ? 'Continue to Checklisting' : 'Save' }}
                         </button>
                         <!-- Cancel Button: Calls closeCreateModal() to close the form -->
                         <button
@@ -647,6 +674,21 @@
                                 <span v-if="formErrors.source" class="text-red-500 text-xs">{{ formErrors.source }}</span>
                             </div>
 
+                            <!-- SB No. Field: Only visible for Supplemental Budget documents -->
+                            <div v-if="formData.document_type === 'Supplemental Budget'" class="space-y-2">
+                                <label for="edit_sb_no" class="block text-xs font-medium text-gray-700 dark:text-gray-300">SB No.</label>
+                                <div class="relative flex items-center">
+                                    <i class="fas fa-file-invoice-dollar absolute left-3 text-gray-400 text-sm"></i>
+                                    <input
+                                        v-model="formData.sb_no"
+                                        id="edit_sb_no"
+                                        type="text"
+                                        placeholder="Enter Supplemental Budget Number"
+                                        class="block w-full pl-10 pr-4 py-2 text-xs border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:outline-none focus:border-blue-500"
+                                    />
+                                </div>
+                            </div>
+
                             <!-- Particulars Field: Required -->
                             <div class="space-y-2">
                                 <label for="edit_particulars" class="block text-xs font-medium text-gray-700 dark:text-gray-300">Particulars <span class="text-red-600">*</span></label>
@@ -687,6 +729,15 @@
 
                     <!-- Modal Footer -->
                     <div class="flex items-center justify-center gap-3 p-6 border-t-2 border-gray-200 rounded-b-lg dark:border-gray-600 bg-gray-50 dark:bg-gray-800">
+                        <!-- Edit Checklist Button: Only shown for Annual Budget and Supplemental Budget documents -->
+                        <button
+                            v-if="(formData.document_type === 'Annual Budget' || formData.document_type === 'Supplemental Budget') && editingDocument"
+                            @click="openChecklistForEditing"
+                            class="inline-flex items-center gap-2 px-5 py-3 text-xs font-medium text-white bg-purple-600 hover:bg-purple-700 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95"
+                        >
+                            <i class="fas fa-list-check"></i>
+                            Edit Checklist
+                        </button>
                         <button
                             @click="handleUpdateDocument"
                             class="inline-flex items-center gap-2 px-5 py-3 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95"
@@ -1118,10 +1169,7 @@
                                                 </p>
                                                 <p v-if="transaction.duration_hours !== null && transaction.duration_hours !== undefined" class="text-gray-600 dark:text-gray-400 mt-1">
                                                     <i class="fas fa-hourglass-end text-blue-600 dark:text-blue-400 mr-1"></i>
-                                                    Duration: <span class="font-semibold">
-                                                        <span v-if="transaction.duration_hours >= 24">{{ Math.floor(transaction.duration_hours / 24) }} days {{ transaction.duration_hours % 24 }} hours</span>
-                                                        <span v-else>{{ transaction.duration_hours }} hours</span>
-                                                    </span>
+                                                    Duration: <span class="font-semibold">{{ formatDuration(transaction.duration_hours) }}</span>
                                                 </p>
                                                 <p v-if="getActionType(transaction.action) === 'forwarded' && (transaction.forwardedToUser || transaction.forwardedToOffice || transaction.forwardedToMunicipality)" class="text-gray-600 dark:text-gray-400 mt-1">
                                                     <span v-if="transaction.forwardedToUser">
@@ -1152,6 +1200,267 @@
                         <button
                             @click="closeTransactionsModal"
                             class="inline-flex items-center gap-2 px-5 py-3 text-xs font-medium text-gray-600 dark:text-gray-400 border border-gray-600 dark:border-gray-500 hover:text-white hover:bg-gray-600 dark:hover:bg-gray-600 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95"
+                        >
+                            <i class="fas fa-times"></i>
+                            Close
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </Teleport>
+
+        <!-- Document Checklist Modal: Shows checklist items before saving Annual Budget or Supplemental Budget documents -->
+        <Teleport to="body" v-if="showChecklistModal">
+            <div class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50" @click.self="closeChecklistModal">
+                <div class="relative w-full max-w-7xl mx-4 bg-white rounded-lg shadow-lg dark:bg-gray-800 animate-scaleInUp overflow-hidden flex flex-col h-screen sm:h-auto sm:max-h-screen">
+                    <!-- Modal Header with Close Button -->
+                    <div class="flex items-center justify-between px-8 py-3 border-b border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 sticky top-0 z-10">
+                        <div></div>
+                        <button @click="closeChecklistModal" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
+                            <i class="fas fa-times text-2xl"></i>
+                        </button>
+                    </div>
+
+                    <!-- Modal Body: Print-like Form Layout -->
+                    <div class="flex-1 overflow-y-auto px-8 py-6 bg-gray-100 dark:bg-gray-900">
+                        <div v-if="checklistTemplate.items && checklistTemplate.items.length > 0" class="space-y-6 max-w-6xl">
+                            <!-- Form Header Section -->
+                            <div class="bg-white dark:bg-gray-700 p-6 border border-gray-300 dark:border-gray-600">
+                                <!-- Form Number -->
+                                <div class="text-sm font-bold text-gray-900 dark:text-gray-100 mb-4">
+                                    {{ formData.document_type === 'Supplemental Budget' ? 'LBR Form No. 1B' : 'LBR Form No. 1A' }}
+                                </div>
+
+                                <!-- Title -->
+                                <div class="text-center mb-6">
+                                    <h2 class="text-base font-bold text-gray-900 dark:text-gray-100 mb-1">CHECKLIST ON DOCUMENTARY AND SIGNATURE REQUIREMENTS</h2>
+                                    <h3 class="text-base font-bold text-gray-900 dark:text-gray-100">FOR THE {{ formData.document_type === 'Supplemental Budget' ? 'SUPPLEMENTAL BUDGET' : 'ANNUAL BUDGET' }}</h3>
+                                </div>
+
+                                <!-- Document Info Section -->
+                                <div class="space-y-2 text-sm">
+                                    <div>
+                                        <span class="text-gray-700 dark:text-gray-300">Date Received: </span>
+                                        <span class="font-semibold text-gray-900 dark:text-gray-100">
+                                            {{ formData.date ? new Date(formData.date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : '' }}
+                                        </span>
+                                    </div>
+                                    
+                                    <div>
+                                        <span class="text-gray-700 dark:text-gray-300">Municipality: </span>
+                                        <span class="font-semibold text-gray-900 dark:text-gray-100">{{ formData.source || '-' }}</span>
+                                    </div>
+
+                                    <div>
+                                        <span class="text-gray-700 dark:text-gray-300">Municipality Class: </span>
+                                        <span class="font-semibold text-gray-900 dark:text-gray-100">
+                                            {{ municipalities.find((m: any) => m.name === formData.source)?.city_class || '-' }}
+                                        </span>
+                                    </div>
+
+                                    <div class="border-t border-gray-300 dark:border-gray-600 pt-3">
+                                    </div>
+
+                                    <!-- Validation Error Alert -->
+                                    <div v-if="checklistValidationError" class="mt-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-300 dark:border-red-700 rounded-lg">
+                                        <div class="flex gap-3">
+                                            <i class="fas fa-exclamation-circle text-red-600 dark:text-red-400 text-lg flex-shrink-0 mt-0.5"></i>
+                                            <div class="text-sm text-red-800 dark:text-red-300" v-html="checklistValidationError"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Checklist Table (Print-like layout) -->
+                            <div class="bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 overflow-hidden">
+                                <table class="w-full text-sm border-collapse">
+                                    <thead>
+                                        <tr class="bg-gray-200 dark:bg-gray-600 border-b-2 border-gray-400 dark:border-gray-500">
+                                            <th class="px-4 py-3 text-left text-xs font-bold text-gray-900 dark:text-gray-100 border-r border-gray-300 dark:border-gray-500 w-1/2">DOCUMENT</th>
+                                            <th class="px-4 py-3 text-left text-xs font-bold text-gray-900 dark:text-gray-100 border-r border-gray-300 dark:border-gray-500">SIGNATORY</th>
+                                            <th class="px-4 py-3 text-left text-xs font-bold text-gray-900 dark:text-gray-100">REMARKS</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <template v-for="(item, index) in checklistData" :key="item.checklist_item_id">
+                                            <!-- Main Item Row with Remarks Inline -->
+                                            <tr class="border-b border-gray-300 dark:border-gray-500 bg-gray-50 dark:bg-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-700">
+                                                <td class="px-4 py-3 text-gray-900 dark:text-gray-100 text-sm">
+                                                    <div class="flex items-start gap-2">
+                                                        <input 
+                                                            type="checkbox" 
+                                                            v-model="item.is_checked"
+                                                            @change="handleDocumentCheckboxChange(item)"
+                                                            class="w-4 h-4 cursor-pointer text-blue-600 rounded mt-0.5 flex-shrink-0"
+                                                        />
+                                                        <div>
+                                                            <span v-if="!item.is_subitem" class="font-semibold">{{ item.group_letter }}. </span>
+                                                            <span class="font-semibold">{{ item.item_name }}</span>
+                                                        </div>
+                                                    </div>
+                                                    <!-- Annexes -->
+                                                    <div v-if="item.annexes && item.annexes.length > 0" class="mt-2 ml-6 space-y-2">
+                                                        <div v-for="(annex, annexIndex) in item.annexes" :key="`${item.checklist_item_id}-annex-${annexIndex}`" class="flex items-center gap-2 text-xs text-gray-700 dark:text-gray-300">
+                                                            <input 
+                                                                type="checkbox" 
+                                                                v-model="annex.is_checked"
+                                                                class="w-4 h-4 cursor-pointer text-green-600 rounded flex-shrink-0"
+                                                            />
+                                                            <i class="fas fa-file text-green-600"></i>
+                                                            <span>{{ annex.name }}</span>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td v-if="!shouldSkipSignatoryCell(item)" :rowspan="isFirstItemOfGroupD(item) ? getGroupDRowspan() : (isFirstItemOfGroupE(item) ? getGroupERowspan() : 1)" class="px-4 py-3 text-gray-900 dark:text-gray-100 text-sm border-r border-gray-300 dark:border-gray-500">
+                                                    <!-- Signatories with Status Dropdowns -->
+                                                    <div v-if="(isPartOfGroupD(item) || isPartOfGroupE(item) ? getParentSignatories(item) : item.signatories) && (isPartOfGroupD(item) || isPartOfGroupE(item) ? getParentSignatories(item).length : item.signatories.length) > 0" class="space-y-2">
+                                                        <div v-for="(signatory, sigIndex) in (isPartOfGroupD(item) || isPartOfGroupE(item) ? getParentSignatories(item) : item.signatories)" :key="`${item.checklist_item_id}-sig-${sigIndex}`" class="flex items-center gap-2" :class="{ 'opacity-50': !getDocumentItemForSignatories(item).is_checked }">
+                                                            <input 
+                                                                type="checkbox" 
+                                                                v-model="signatory.is_checked"
+                                                                :disabled="!getDocumentItemForSignatories(item).is_checked"
+                                                                class="w-4 h-4 text-blue-600 rounded flex-shrink-0 disabled:cursor-not-allowed disabled:opacity-50"
+                                                                :class="{ 'cursor-pointer': getDocumentItemForSignatories(item).is_checked }"
+                                                            />
+                                                            <span class="text-xs flex-1">{{ signatory.name }}</span>
+                                                            <select 
+                                                                v-model="signatory.acting_status"
+                                                                :disabled="!getDocumentItemForSignatories(item).is_checked"
+                                                                class="px-1.5 py-0.5 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-600 text-gray-900 dark:text-gray-100 focus:outline-none focus:border-blue-500 flex-shrink-0 disabled:cursor-not-allowed disabled:opacity-50"
+                                                                :class="{ 'cursor-pointer': getDocumentItemForSignatories(item).is_checked }"
+                                                            >
+                                                                <option value="">Regular</option>
+                                                                <option value="Acting">Acting</option>
+                                                                <option value="OIC">OIC</option>
+                                                            </select>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td v-if="!shouldSkipRemarksCell(item)" :rowspan="isFirstItemOfGroupC(item) ? getGroupCRowspan() : (isFirstItemOfGroupD(item) ? getGroupDRowspan() : (isFirstItemOfGroupE(item) ? getGroupERowspan() : 1))" class="px-4 py-3 text-gray-900 dark:text-gray-100 text-xs">
+                                                    <!-- Remarks Fields Inline -->
+                                                    <div v-if="Object.keys(item.remarks).length > 0 && !shouldHideRemarks(item, index)" class="space-y-2" :class="{ 'opacity-50': !getDocumentItemForSignatories(item).is_checked }">
+                                                        <div v-for="(value, label, labelIndex) in item.remarks" :key="`${item.checklist_item_id}-remark-${labelIndex}`" class="flex flex-col gap-1">
+                                                            <label class="font-semibold text-gray-600 dark:text-gray-400 text-xs">{{ label }}:</label>
+                                                            <!-- Date input for date fields -->
+                                                            <input 
+                                                                v-if="label.toLowerCase().includes('date') || label.toLowerCase().includes('dated')"
+                                                                :value="item.remarks[label as string]"
+                                                                @input="(e: Event) => item.remarks[label as string] = (e.target as HTMLInputElement).value"
+                                                                type="date"
+                                                                :disabled="!getDocumentItemForSignatories(item).is_checked"
+                                                                class="px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                                                            />
+                                                            <!-- Number input for Amount -->
+                                                            <input 
+                                                                v-else-if="label.toLowerCase().includes('amount')"
+                                                                :value="item.remarks[label as string]"
+                                                                @input="(e: Event) => item.remarks[label as string] = (e.target as HTMLInputElement).value"
+                                                                type="number"
+                                                                placeholder="0.00"
+                                                                :disabled="!getDocumentItemForSignatories(item).is_checked"
+                                                                class="px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                                                            />
+                                                            <!-- Textarea for Details field -->
+                                                            <textarea 
+                                                                v-else-if="label.toLowerCase().includes('details')"
+                                                                :value="item.remarks[label as string]"
+                                                                @input="(e: Event) => item.remarks[label as string] = (e.target as HTMLTextAreaElement).value"
+                                                                placeholder="Enter details..."
+                                                                rows="3"
+                                                                :disabled="!getDocumentItemForSignatories(item).is_checked"
+                                                                class="px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:border-blue-500 resize-none disabled:opacity-50 disabled:cursor-not-allowed"
+                                                            />
+                                                            <!-- Text input for other fields -->
+                                                            <input 
+                                                                v-else
+                                                                :value="item.remarks[label as string]"
+                                                                @input="(e: Event) => item.remarks[label as string] = (e.target as HTMLInputElement).value"
+                                                                type="text"
+                                                                placeholder="Enter value..."
+                                                                :disabled="!getDocumentItemForSignatories(item).is_checked"
+                                                                class="px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                    <!-- Parent Remarks Inline (for Supplemental Budget group c, d, and e - merged remarks) -->
+                                                    <div v-else-if="isFirstItemOfGroupC(item) || isFirstItemOfGroupD(item) || isFirstItemOfGroupE(item)" class="space-y-2" :class="{ 'opacity-50': !getDocumentItemForSignatories(item).is_checked }">
+                                                        <!-- Only show Details field for merged remarks -->
+                                                        <div class="flex flex-col gap-1">
+                                                            <label class="font-semibold text-gray-600 dark:text-gray-400 text-xs">Details:</label>
+                                                            <textarea 
+                                                                :value="item.remarks['Details'] || ''"
+                                                                @input="(e: Event) => {
+                                                                    if (!item.remarks) item.remarks = {};
+                                                                    item.remarks['Details'] = (e.target as HTMLTextAreaElement).value;
+                                                                }"
+                                                                placeholder="Enter details..."
+                                                                rows="4"
+                                                                :disabled="!getDocumentItemForSignatories(item).is_checked"
+                                                                class="px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:border-blue-500 resize-none disabled:opacity-50 disabled:cursor-not-allowed"
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        </template>
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <!-- Checklist Progress Summary -->
+                            <div class="bg-white dark:bg-gray-700 p-6 border border-gray-300 dark:border-gray-600">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <p class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Checklist Completion Progress</p>
+                                        <div class="flex items-center gap-3">
+                                            <div class="flex-1 w-64 bg-gray-300 dark:bg-gray-600 rounded-full h-3">
+                                                <div 
+                                                    class="bg-blue-600 dark:bg-blue-500 h-3 rounded-full transition-all duration-300"
+                                                    :style="{ width: checklistProgress + '%' }"
+                                                ></div>
+                                            </div>
+                                            <span class="text-sm font-bold text-gray-900 dark:text-gray-100 min-w-fit">{{ checklistCheckedCount }} / {{ checklistTotalCount }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- No Checklist State -->
+                        <div v-else class="py-12 text-center bg-white dark:bg-gray-700 rounded border border-gray-300 dark:border-gray-600">
+                            <i class="fas fa-inbox text-gray-400 dark:text-gray-600 text-4xl mb-3 block"></i>
+                            <p class="text-gray-600 dark:text-gray-400">No checklist template available for this document type</p>
+                        </div>
+                    </div>
+
+                    <!-- Modal Footer -->
+                    <div class="flex items-center justify-center gap-3 p-6 border-t-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 sticky bottom-0">
+                        <button
+                            @click="printChecklist"
+                            class="inline-flex items-center gap-2 px-5 py-2.5 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95"
+                        >
+                            <i class="fas fa-print"></i>
+                            Print Checklist
+                        </button>
+                        <button
+                            v-if="editingDocument"
+                            @click="saveChecklistChanges"
+                            class="inline-flex items-center gap-2 px-5 py-2.5 text-xs font-medium text-white bg-green-600 hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-800 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95"
+                        >
+                            <i class="fas fa-save"></i>
+                            Save Checklist
+                        </button>
+                        <button
+                            v-else
+                            @click="saveDocumentWithChecklist"
+                            class="inline-flex items-center gap-2 px-5 py-2.5 text-xs font-medium text-white bg-green-600 hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-800 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95"
+                        >
+                            <i class="fas fa-save"></i>
+                            Save & Create Document
+                        </button>
+                        <button
+                            @click="closeChecklistModal"
+                            class="inline-flex items-center gap-2 px-5 py-2.5 text-xs font-medium text-gray-700 dark:text-gray-300 border border-gray-400 dark:border-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95"
                         >
                             <i class="fas fa-times"></i>
                             Close
@@ -1325,6 +1634,38 @@ interface DocumentTransaction {
     forwardedToOffice?: { id: number; office_name: string } | null;
     forwardedToMunicipality?: { id: number; name: string } | null;
 }
+
+/** Controls visibility of the Document Checklist modal */
+const showChecklistModal = ref(false);
+
+/** Stores the checklist template for the selected document type */
+const checklistTemplate = ref<any>({
+    id: null,
+    document_type: '',
+    items: []
+});
+
+/** Stores the checklist item data (checked state, remarks, and signatories) */
+const checklistData = ref<Array<{
+    checklist_item_id: number;
+    item_name: string;
+    is_checked: boolean;
+    remarks: Record<string, string>;
+    signatories: Array<{
+        name: string;
+        is_checked: boolean;
+        acting_status?: string;
+    }>;
+    annexes?: Array<{
+        name: string;
+        is_checked: boolean;
+    }>;
+    group_letter?: string;
+    is_subitem?: boolean;
+}>>([]);
+
+/** Stores checklist validation error message */
+const checklistValidationError = ref<string>('');
 
 /**
  * Get processing time limit in days based on document type
@@ -1615,6 +1956,36 @@ const getActionType = (action: string): 'created' | 'forwarded' | 'finalized' | 
 };
 
 /**
+ * formatDuration: Formats duration in hours to a human-readable string with days, hours, and minutes
+ * @param hours - Duration in hours (can be decimal, e.g., 0.583333 for 35 minutes)
+ * @returns Formatted string like "1 day 2 hours 30 minutes" or "45 minutes"
+ */
+const formatDuration = (hours: number): string => {
+    if (hours === null || hours === undefined) {
+        return '0 minutes';
+    }
+
+    const totalMinutes = Math.round(hours * 60);
+    const days = Math.floor(totalMinutes / (24 * 60));
+    const remainingMinutesAfterDays = totalMinutes % (24 * 60);
+    const durationHours = Math.floor(remainingMinutesAfterDays / 60);
+    const minutes = remainingMinutesAfterDays % 60;
+
+    const parts = [];
+    if (days > 0) {
+        parts.push(`${days} day${days > 1 ? 's' : ''}`);
+    }
+    if (durationHours > 0) {
+        parts.push(`${durationHours} hour${durationHours > 1 ? 's' : ''}`);
+    }
+    if (minutes > 0) {
+        parts.push(`${minutes} minute${minutes > 1 ? 's' : ''}`);
+    }
+
+    return parts.length > 0 ? parts.join(' ') : '0 minutes';
+};
+
+/**
  * getDisplayStatus: Get the display status based on current user's perspective
  * For forwarded documents:
  * - If forwarded to current user: "to be received"
@@ -1651,15 +2022,19 @@ const formData = ref({
     particulars: '',
     source: '',
     sourceType: 'internal', // 'internal' or 'external'
+    sb_no: '',
     status: 'pending',
     remarks: ''
 }); 
 
-/** Watch for changes in sourceType and clear source when changing types */
+/** Watch for changes in sourceType and clear source when changing types (only in create mode) */
 watch(
     () => formData.value.sourceType,
     (newSourceType) => {
-        formData.value.source = '';
+        // Only clear source when creating a new document, not when editing
+        if (showCreateModal.value) {
+            formData.value.source = '';
+        }
     }
 );
 
@@ -1669,25 +2044,57 @@ const todayDate = computed(() => {
     return today.toISOString().split('T')[0];
 });
 
+/**
+ * documentTypeHasChecklist: Check if the selected document type has a checklist
+ * Returns true if document type is 'Annual Budget' or 'Supplemental Budget', false otherwise
+ */
+const documentTypeHasChecklist = computed(() => {
+    const checklistRequiredDocuments = ['Annual Budget', 'Supplemental Budget'];
+    return checklistRequiredDocuments.includes(formData.value.document_type);
+});
+
 /** Get tracking number prefix (YYYY-MM-) based on selected date */
 /**
- * generateTrackingNo: Auto-generates Tracking No based on current date
+ * generateTrackingNo: Fetches auto-generated Tracking No from server based on highest existing number
  * Format: YYYY-MM-NNNN (e.g., 2026-02-0001)
- * Counts existing documents with same year-month and increments the series
+ * Finds the maximum existing sequence number and increments it (handles deleted records)
  */
 const generateTrackingNo = async (): Promise<string> => {
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, '0');
-    const yearMonth = `${year}-${month}`;
-    
-    // Count documents with same year-month prefix
-    const sameMonthCount = documents.value.filter(d => 
-        d.tracking_no.startsWith(yearMonth)
-    ).length;
-    
-    const series = String(sameMonthCount + 1).padStart(4, '0');
-    return `${yearMonth}-${series}`;
+    try {
+        const response = await fetch('/api/documents/generate/tracking-no', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': getCsrfToken(),
+            },
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to generate tracking number');
+        }
+
+        const data = await response.json();
+        return data.tracking_no;
+    } catch (error) {
+        console.error('Error generating tracking number:', error);
+        // Fallback: Generate locally if API fails, using max number logic
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const yearMonth = `${year}-${month}`;
+        
+        // Extract numeric parts from matching tracking numbers and find the max
+        const matchingNumbers = documents.value
+            .filter(d => d.tracking_no.startsWith(yearMonth))
+            .map(d => {
+                const parts = d.tracking_no.split('-');
+                return parseInt(parts[parts.length - 1], 10);
+            });
+        
+        const maxNumber = matchingNumbers.length > 0 ? Math.max(...matchingNumbers) : 0;
+        const series = String(maxNumber + 1).padStart(4, '0');
+        return `${yearMonth}-${series}`;
+    }
 };
 
 /** Stores validation errors for form fields */
@@ -1794,6 +2201,65 @@ const totalPages = computed(() => {
 });
 
 /**
+ * Smart pagination: Shows limited page buttons with ellipsis
+ * Format: [1, 2, ..., currentPage-1, currentPage, currentPage+1, ..., last-1, last]
+ */
+const paginationPages = computed(() => {
+    const pages: (number | string)[] = [];
+    const total = totalPages.value;
+    const current = currentPage.value;
+    const maxButtons = 5; // Maximum page buttons to show without ellipsis
+    const sidePages = 1; // Pages to show on each side of current page
+    const edgePages = 1; // Pages to show at start and end
+    
+    if (total <= maxButtons + 2) {
+        // If total pages fit, show all
+        for (let i = 1; i <= total; i++) {
+            pages.push(i);
+        }
+    } else {
+        // Always show first page(s)
+        for (let i = 1; i <= Math.min(edgePages + 1, total); i++) {
+            pages.push(i);
+        }
+        
+        // Calculate range around current page
+        const rangeStart = Math.max(edgePages + 2, current - sidePages);
+        const rangeEnd = Math.min(total - edgePages - 1, current + sidePages);
+        
+        // Add ellipsis if needed
+        if (rangeStart > edgePages + 2) {
+            if (pages[pages.length - 1] !== '...') {
+                pages.push('...');
+            }
+        }
+        
+        // Add pages around current
+        for (let i = rangeStart; i <= rangeEnd; i++) {
+            if (i > edgePages + 1 && i < total - edgePages) {
+                pages.push(i);
+            }
+        }
+        
+        // Add ellipsis if needed before last pages
+        if (rangeEnd < total - edgePages - 1) {
+            if (pages[pages.length - 1] !== '...') {
+                pages.push('...');
+            }
+        }
+        
+        // Always show last page(s)
+        for (let i = Math.max(edgePages + 2, total - edgePages); i <= total; i++) {
+            if (!pages.includes(i)) {
+                pages.push(i);
+            }
+        }
+    }
+    
+    return pages;
+});
+
+/**
  * paginatedDocuments: Slices filtered documents to show only the current page
  * Calculates start and end indices based on currentPage and itemsPerPage
  * Returns the documents for the current page only
@@ -1835,12 +2301,288 @@ const availableUsersForForward = computed(() => {
 });
 
 /**
- * Helper: Check if document was forwarded to office or municipality
- * Users can directly receive documents with this status
+ * Helper: Get parent item remarks for shared groups
+ * For Supplemental Budget groups c and d, remarks are shared with parent
  */
-const isDocumentForwardedToOfficeOrMunicipality = (document: Document): boolean => {
-    return document.status === 'forwarded';
+const getParentRemarks = (item: any): Record<string, string> => {
+    // Only for Supplemental Budget
+    if (formData.value.document_type !== 'Supplemental Budget') {
+        return {};
+    }
+    
+    // Only for sub-items in groups c, d, or e
+    if (!item.is_subitem || !['c', 'd', 'e'].includes(item.group_letter)) {
+        return {};
+    }
+    
+    // Find the parent item with the same group letter
+    const parentItem = checklistData.value.find(
+        (i: any) => i.group_letter === item.group_letter && !i.is_subitem
+    );
+    
+    return parentItem?.remarks || {};
 };
+
+/**
+ * Helper: Get parent item signatories for shared groups
+ * For Supplemental Budget group d, signatories are shared with parent
+ */
+const getParentSignatories = (item: any): any[] => {
+    // Only for Supplemental Budget
+    if (formData.value.document_type !== 'Supplemental Budget') {
+        return [];
+    }
+    
+    // Only for groups 'd' or 'e'
+    if (!['d', 'e'].includes(item.group_letter)) {
+        return [];
+    }
+    
+    // If this is the parent item, return its own signatories
+    if (!item.is_subitem) {
+        return item.signatories || [];
+    }
+    
+    // For sub-items, find the parent item with the same group letter
+    const parentItem = checklistData.value.find(
+        (i: any) => i.group_letter === item.group_letter && !i.is_subitem
+    );
+    
+    return parentItem?.signatories || [];
+};
+
+/**
+ * Helper: Check if remarks should be hidden for this item
+ * For group 'c' items in Supplemental Budget, hide remarks except on the last sub-item
+ */
+const shouldHideRemarks = (item: any, index: number): boolean => {
+    // Hide remarks for parent items of groups c, d, and e in Supplemental Budget
+    if (formData.value.document_type === 'Supplemental Budget' && ['c', 'd', 'e'].includes(item.group_letter) && !item.is_subitem) {
+        return true;
+    }
+    
+    // Hide remarks for sub-items of groups c, d, and e in Supplemental Budget (except last one)
+    if (formData.value.document_type === 'Supplemental Budget' && ['c', 'd', 'e'].includes(item.group_letter) && item.is_subitem) {
+        return !isLastSubitemOfGroup(item, index);
+    }
+    
+    return false;
+};
+
+/**
+ * Helper: Check if this is the last sub-item of a group
+ */
+const isLastSubitemOfGroup = (item: any, index: number): boolean => {
+    if (!item.is_subitem) return false;
+    
+    // Check if next item is not a sub-item with same group letter
+    const nextItem = checklistData.value[index + 1];
+    return !nextItem || nextItem.group_letter !== item.group_letter || !nextItem.is_subitem;
+};
+
+/**
+ * Helper: Check if remarks should show parent remarks below this item
+ */
+const shouldShowParentRemarksBelow = (item: any, index: number): boolean => {
+    if (formData.value.document_type !== 'Supplemental Budget') {
+        return false;
+    }
+    
+    // For last sub-items of groups c, d, or e
+    if (!['c', 'd', 'e'].includes(item.group_letter) || !item.is_subitem) {
+        return false;
+    }
+    
+    return isLastSubitemOfGroup(item, index);
+};
+
+/**
+ * Helper: Check if this is the first item of group 'c'
+ * Returns true for the parent item of group 'c'
+ */
+const isFirstItemOfGroupC = (item: any): boolean => {
+    if (item.group_letter !== 'c' || item.is_subitem) {
+        return false;
+    }
+    return true;
+};
+
+/**
+ * Helper: Check if this is the first item of group 'd'
+ * Returns true for the parent item of group 'd'
+ */
+const isFirstItemOfGroupD = (item: any): boolean => {
+    if (item.group_letter !== 'd' || item.is_subitem) {
+        return false;
+    }
+    return true;
+};
+
+/**
+ * Helper: Check if this is the first item of group 'e'
+ * Returns true for the parent item of group 'e'
+ */
+const isFirstItemOfGroupE = (item: any): boolean => {
+    if (item.group_letter !== 'e' || item.is_subitem) {
+        return false;
+    }
+    return true;
+};
+
+/**
+ * Helper: Get rowspan count for group 'c' items (parent + sub-items)
+ * For Supplemental Budget group 'c': should be 3 (1 parent + 2 sub-items)
+ */
+const getGroupCRowspan = (): number => {
+    if (formData.value.document_type !== 'Supplemental Budget') {
+        return 1;
+    }
+    
+    // Count items in group 'c'
+    const groupCItems = checklistData.value.filter((i: any) => i.group_letter === 'c');
+    return groupCItems.length;
+};
+
+/**
+ * Helper: Get rowspan count for group 'd' items (parent + sub-items)
+ */
+const getGroupDRowspan = (): number => {
+    if (formData.value.document_type !== 'Supplemental Budget') {
+        return 1;
+    }
+    
+    // Count items in group 'd'
+    const groupDItems = checklistData.value.filter((i: any) => i.group_letter === 'd');
+    return groupDItems.length;
+};
+
+/**
+ * Helper: Get rowspan count for group 'e' items (parent + sub-items)
+ */
+const getGroupERowspan = (): number => {
+    if (formData.value.document_type !== 'Supplemental Budget') {
+        return 1;
+    }
+    
+    // Count items in group 'e'
+    const groupEItems = checklistData.value.filter((i: any) => i.group_letter === 'e');
+    return groupEItems.length;
+};
+
+/**
+ * Helper: Check if this item is part of group 'c'
+ */
+const isPartOfGroupC = (item: any): boolean => {
+    return item.group_letter === 'c';
+};
+
+/**
+ * Helper: Check if this item is part of group 'd'
+ */
+const isPartOfGroupD = (item: any): boolean => {
+    return item.group_letter === 'd';
+};
+
+/**
+ * Helper: Check if this item is part of group 'e'
+ */
+const isPartOfGroupE = (item: any): boolean => {
+    return item.group_letter === 'e';
+};
+
+/**
+ * Helper: Check if we should skip the remarks cell (not first item of group c, d, or e)
+ */
+const shouldSkipRemarksCell = (item: any): boolean => {
+    if (formData.value.document_type !== 'Supplemental Budget') {
+        return false;
+    }
+    
+    // Skip remarks for all items in group 'c' except the first one
+    if (isPartOfGroupC(item) && !isFirstItemOfGroupC(item)) {
+        return true;
+    }
+    
+    // Skip remarks for all items in group 'd' except the first one
+    if (isPartOfGroupD(item) && !isFirstItemOfGroupD(item)) {
+        return true;
+    }
+    
+    // Skip remarks for all items in group 'e' except the first one
+    if (isPartOfGroupE(item) && !isFirstItemOfGroupE(item)) {
+        return true;
+    }
+    
+    return false;
+};
+
+/**
+ * Helper: Check if we should skip the signatory cell (not first item of group d or e)
+ */
+const shouldSkipSignatoryCell = (item: any): boolean => {
+    if (formData.value.document_type !== 'Supplemental Budget') {
+        return false;
+    }
+    
+    // Skip signatory for all items in group 'd' except the first one
+    if (isPartOfGroupD(item) && !isFirstItemOfGroupD(item)) {
+        return true;
+    }
+    
+    // Skip signatory for all items in group 'e' except the first one
+    if (isPartOfGroupE(item) && !isFirstItemOfGroupE(item)) {
+        return true;
+    }
+    
+    return false;
+};
+
+/**
+ * Helper: Get the document item to check for disabling signatories
+ * For Supplemental Budget items in groups d/e that are subitems, get the parent item
+ * For all other items, return the item itself
+ */
+const getDocumentItemForSignatories = (item: any): any => {
+    // For subitems in groups d or e, find and return the parent item
+    if (formData.value.document_type === 'Supplemental Budget' && ['d', 'e'].includes(item.group_letter) && item.is_subitem) {
+        const parentItem = checklistData.value.find(
+            (i: any) => i.group_letter === item.group_letter && !i.is_subitem
+        );
+        return parentItem || item;
+    }
+    
+    // For all other items, return the item itself
+    return item;
+};
+
+/**
+ * Helper: Handle document checkbox change and uncheck signatories if document is unchecked
+ * When a document checkbox is unchecked, all its signatories are automatically unchecked
+ * For items in groups d/e, also uncheck signatories of the parent item
+ */
+const handleDocumentCheckboxChange = (item: any): void => {
+    // If document is being unchecked, uncheck all its signatories
+    if (!item.is_checked) {
+        // For subitems in groups d/e, uncheck parent's signatories
+        if (formData.value.document_type === 'Supplemental Budget' && ['d', 'e'].includes(item.group_letter) && item.is_subitem) {
+            const parentItem = checklistData.value.find(
+                (i: any) => i.group_letter === item.group_letter && !i.is_subitem
+            );
+            if (parentItem && parentItem.signatories) {
+                parentItem.signatories.forEach((sig: any) => {
+                    sig.is_checked = false;
+                });
+            }
+        }
+        // For regular items, uncheck their own signatories
+        else if (item.signatories) {
+            item.signatories.forEach((sig: any) => {
+                sig.is_checked = false;
+            });
+        }
+    }
+};
+
 
 /**
  * Get custodian display name: office/municipality if forwarded to them, otherwise current user
@@ -2037,6 +2779,16 @@ onUnmounted(() => {
     }
 });
 
+/**
+ * Watch checklist data for changes and re-validate requirements
+ * This provides real-time feedback as users check/uncheck items
+ */
+watch(checklistData, () => {
+    if (showChecklistModal.value) {
+        validateChecklistRequirements();
+    }
+}, { deep: true });
+
 // ============== Utility Functions ==============
 
 /**
@@ -2101,6 +2853,7 @@ const handleEditDocument = (document: Document) => {
         particulars: document.particulars || '',
         source: document.source || '',
         sourceType: sourceType,
+        sb_no: document.sb_no || '',
         status: document.status || 'pending',
         remarks: document.remarks || ''
     };
@@ -2129,7 +2882,7 @@ const handleUpdateDocument = async () => {
     
     try {
         // Prepare data without sourceType and user_id (set server-side)
-        const submitData = {
+        const submitData: any = {
             tracking_no: formData.value.tracking_no,
             date: formData.value.date,
             document_type: formData.value.document_type,
@@ -2138,6 +2891,11 @@ const handleUpdateDocument = async () => {
             status: formData.value.status,
             remarks: formData.value.remarks
         };
+        
+        // Add sb_no only for Supplemental Budget
+        if (formData.value.document_type === 'Supplemental Budget') {
+            submitData.sb_no = formData.value.sb_no;
+        }
         
         const response = await fetch(`/api/documents/${editingDocument.value.id}`, {
             method: 'PUT',
@@ -2509,6 +3267,7 @@ const openCreateModal = async () => {
         particulars: '',
         source: '',
         sourceType: 'internal',
+        sb_no: '',
         status: 'pending',
         remarks: ''
     };
@@ -2592,18 +3351,900 @@ const closeTransactionsModal = () => {
 };
 
 /**
- * handleCreateDocument: Submits the form to create a new document
- * - Validates form data first
- * - Makes POST request to /api/documents with form data and CSRF token
- * - On success: adds the new document to the documents array, closes the modal, and shows success toast with document details
- * - On error: sets formErrors['submit'] with the error message and shows error toast
+ * handleCreateDocument: Validates form and shows checklist modal if needed
+ * - For 'Annual Budget' and 'Supplemental Budget' documents, shows the checklist modal first
+ * - For other documents, proceeds directly to saving
  */
 const handleCreateDocument = async () => {
     if (!validateForm()) return;
     
+    // Check if this document type requires a checklist
+    const checklistRequiredDocuments = ['Annual Budget', 'Supplemental Budget'];
+    if (checklistRequiredDocuments.includes(formData.value.document_type)) {
+        // Fetch the checklist template and show the modal
+        await showChecklistModalForDocument();
+    } else {
+        // No checklist required, proceed to save document directly
+        await saveDocumentDirectly();
+    }
+};
+
+/**
+ * showChecklistModalForDocument: Fetches the checklist template and shows the modal
+ */
+const showChecklistModalForDocument = async () => {
     try {
-        // Prepare data without sourceType
-        const submitData = {
+        const response = await fetch(`/api/documents/checklist/template/${formData.value.document_type}`, {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json',
+            },
+            credentials: 'include'
+        });
+
+        if (response.ok) {
+            checklistTemplate.value = await response.json();
+            
+            // Initialize checklist data with the fetched template items and signatories
+            if (checklistTemplate.value.items) {
+                // Filter out any E-1 to E-8 items that might exist as separate entries
+                const filteredItems = checklistTemplate.value.items.filter((item: any) => {
+                    const isAnnex = /^E-[1-8]:/.test(item.item_name);
+                    return !isAnnex;
+                });
+                
+                checklistData.value = filteredItems.map((item: any) => {
+                    // Parse signatories from comma-separated string
+                    const signatories = item.signatories 
+                        ? item.signatories.split(',').map((sig: string) => ({
+                            name: sig.trim(),
+                            is_checked: false,
+                            acting_status: ''
+                          }))
+                        : [];
+                    
+                    // Parse remarks from JSON or create default empty object
+                    let remarks: Record<string, string> = {};
+                    try {
+                        remarks = item.remarks ? JSON.parse(item.remarks) : {};
+                    } catch (e) {
+                        // If JSON parsing fails, create default with single field
+                        remarks = { 'Details': item.remarks || '' };
+                    }
+                    
+                    // Initialize annexes for "Annual Investment Program to include Annexes" item
+                    const annexes = item.item_name === 'Annual Investment Program to include Annexes' 
+                        ? [
+                            { name: 'E-1: GAD Plan & Budget', is_checked: false },
+                            { name: 'E-2: LDRRM Plan', is_checked: false },
+                            { name: 'E-3: HIV & AIDS Agenda', is_checked: false },
+                            { name: 'E-4: CCC Action Plan', is_checked: false },
+                            { name: 'E-5: Disaster Risk Reduction & Management', is_checked: false },
+                            { name: 'E-6: Anti-Poverty Program', is_checked: false },
+                            { name: 'E-7: Environmental Management & Protection', is_checked: false },
+                            { name: 'E-8: Support to Peace and Reconciliation', is_checked: false }
+                          ]
+                        : [];
+                    
+                    return {
+                        checklist_item_id: item.id,
+                        item_name: item.item_name,
+                        is_checked: false,
+                        remarks: remarks,
+                        signatories: signatories,
+                        annexes: annexes,
+                        group_letter: item.group_letter,
+                        is_subitem: item.is_subitem
+                    };
+                });
+            }
+
+            showChecklistModal.value = true;
+            // Validate checklist requirements when modal opens
+            validateChecklistRequirements();
+        }
+    } catch (e) {
+        const errorMsg = e instanceof Error ? e.message : 'Failed to load checklist template';
+        toastRef.value?.add('error', 'Error', errorMsg, 4000);
+    }
+};
+
+/**
+ * closeChecklistModal: Closes the checklist modal
+ */
+const closeChecklistModal = () => {
+    showChecklistModal.value = false;
+    checklistTemplate.value = { id: null, document_type: '', items: [] };
+    checklistData.value = [];
+    checklistValidationError.value = '';
+};
+
+/**
+ * viewDocumentChecklist: Opens the checklist modal to view an existing document's checklist
+ * @param document - The document whose checklist should be displayed
+ */
+const viewDocumentChecklist = async (document: Document) => {
+    const checklistRequiredDocuments = ['Annual Budget', 'Supplemental Budget'];
+    if (!checklistRequiredDocuments.includes(document.document_type)) {
+        toastRef.value?.add('error', 'Error', 'Only Annual Budget and Supplemental Budget documents have checklists', 4000);
+        return;
+    }
+
+    try {
+        // Set document context for viewing
+        editingDocument.value = document;
+        formData.value = {
+            tracking_no: document.tracking_no,
+            date: document.date,
+            document_type: document.document_type,
+            particulars: document.particulars || '',
+            source: document.source || '',
+            sourceType: 'internal',
+            sb_no: (document as any).sb_no || '',
+            status: document.status || 'pending',
+            remarks: document.remarks || ''
+        };
+
+        // Fetch the checklist template
+        const response = await fetch(`/api/documents/checklist/template/${document.document_type}`, {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json',
+            },
+            credentials: 'include'
+        });
+
+        if (response.ok) {
+            checklistTemplate.value = await response.json();
+            
+            // Fetch existing checklist records for this document
+            const checklistRecordsResponse = await fetch(`/api/documents/${document.id}/checklist/records`, {
+                method: 'GET',
+                headers: {
+                    'Accept': 'application/json',
+                },
+                credentials: 'include'
+            });
+
+            // Initialize checklist data
+            if (checklistTemplate.value.items) {
+                // Filter out annexes
+                const filteredItems = checklistTemplate.value.items.filter((item: any) => {
+                    const isAnnex = /^E-[1-8]:/.test(item.item_name);
+                    return !isAnnex;
+                });
+                
+                // If we have existing records, load them; otherwise initialize empty
+                if (checklistRecordsResponse.ok) {
+                    const existingRecords = await checklistRecordsResponse.json();
+                    
+                    // Helper to find annex checked state from existing records
+                    const findAnnexCheckedState = (annexName: string): boolean => {
+                        const annexTemplateItem = checklistTemplate.value.items.find((item: any) => item.item_name === annexName);
+                        if (annexTemplateItem) {
+                            const existingAnnex = existingRecords.find((r: any) => r.checklist_item_id === annexTemplateItem.id);
+                            return existingAnnex?.is_checked || false;
+                        }
+                        return false;
+                    };
+                    
+                    // Map existing records to checklist data
+                    checklistData.value = filteredItems.map((item: any) => {
+                        const existingRecord = existingRecords.find((r: any) => r.checklist_item_id === item.id);
+                        return {
+                            checklist_item_id: item.id,
+                            item_name: item.item_name,
+                            is_checked: existingRecord?.is_checked || false,
+                            remarks: existingRecord?.remarks 
+                                ? (typeof existingRecord.remarks === 'string' ? JSON.parse(existingRecord.remarks) : existingRecord.remarks)
+                                : (item.remarks ? JSON.parse(item.remarks) : {}),
+                            signatories: item.signatories 
+                                ? item.signatories.split(',').map((sig: string, index: number) => {
+                                    const existingSig = existingRecord?.signatories?.find((s: any) => s.name === sig.trim());
+                                    return {
+                                        name: sig.trim(),
+                                        is_checked: existingSig?.is_checked || false,
+                                        acting_status: existingSig?.acting_status || ''
+                                    };
+                                })
+                                : [],
+                            annexes: item.item_name === 'Annual Investment Program to include Annexes' 
+                                ? [
+                                    { name: 'E-1: GAD Plan & Budget', is_checked: findAnnexCheckedState('E-1: GAD Plan & Budget') },
+                                    { name: 'E-2: LDRRM Plan', is_checked: findAnnexCheckedState('E-2: LDRRM Plan') },
+                                    { name: 'E-3: HIV & AIDS Agenda', is_checked: findAnnexCheckedState('E-3: HIV & AIDS Agenda') },
+                                    { name: 'E-4: CCC Action Plan', is_checked: findAnnexCheckedState('E-4: CCC Action Plan') },
+                                    { name: 'E-5: Disaster Risk Reduction & Management', is_checked: findAnnexCheckedState('E-5: Disaster Risk Reduction & Management') },
+                                    { name: 'E-6: Anti-Poverty Program', is_checked: findAnnexCheckedState('E-6: Anti-Poverty Program') },
+                                    { name: 'E-7: Environmental Management & Protection', is_checked: findAnnexCheckedState('E-7: Environmental Management & Protection') },
+                                    { name: 'E-8: Support to Peace and Reconciliation', is_checked: findAnnexCheckedState('E-8: Support to Peace and Reconciliation') }
+                                  ]
+                                : [],
+                            group_letter: item.group_letter,
+                            is_subitem: item.is_subitem
+                        };
+                    });
+                } else {
+                    // Initialize empty checklist if no records found
+                    checklistData.value = filteredItems.map((item: any) => {
+                        return {
+                            checklist_item_id: item.id,
+                            item_name: item.item_name,
+                            is_checked: false,
+                            remarks: item.remarks ? JSON.parse(item.remarks) : {},
+                            signatories: item.signatories 
+                                ? item.signatories.split(',').map((sig: string) => ({
+                                    name: sig.trim(),
+                                    is_checked: false,
+                                    acting_status: ''
+                                  }))
+                                : [],
+                            annexes: item.item_name === 'Annual Investment Program to include Annexes' 
+                                ? [
+                                    { name: 'E-1: GAD Plan & Budget', is_checked: false },
+                                    { name: 'E-2: LDRRM Plan', is_checked: false },
+                                    { name: 'E-3: HIV & AIDS Agenda', is_checked: false },
+                                    { name: 'E-4: CCC Action Plan', is_checked: false },
+                                    { name: 'E-5: Disaster Risk Reduction & Management', is_checked: false },
+                                    { name: 'E-6: Anti-Poverty Program', is_checked: false },
+                                    { name: 'E-7: Environmental Management & Protection', is_checked: false },
+                                    { name: 'E-8: Support to Peace and Reconciliation', is_checked: false }
+                                  ]
+                                : [],
+                            group_letter: item.group_letter,
+                            is_subitem: item.is_subitem
+                        };
+                    });
+                }
+            }
+
+            showChecklistModal.value = true;
+            // Clear validation error on view
+            checklistValidationError.value = '';
+        }
+    } catch (e) {
+        const errorMsg = e instanceof Error ? e.message : 'Failed to load checklist';
+        toastRef.value?.add('error', 'Error', errorMsg, 4000);
+    }
+};
+
+/**
+ * openChecklistForEditing: Opens the checklist modal for editing an existing document's checklist
+ */
+const openChecklistForEditing = async () => {
+    const checklistRequiredDocuments = ['Annual Budget', 'Supplemental Budget'];
+    if (!editingDocument.value || !checklistRequiredDocuments.includes(formData.value.document_type)) {
+        toastRef.value?.add('error', 'Error', 'Only Annual Budget and Supplemental Budget documents have checklists', 4000);
+        return;
+    }
+
+    try {
+        // Fetch the checklist template
+        const response = await fetch(`/api/documents/checklist/template/${formData.value.document_type}`, {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json',
+            },
+            credentials: 'include'
+        });
+
+        if (response.ok) {
+            checklistTemplate.value = await response.json();
+            
+            // Fetch existing checklist records for this document
+            const checklistRecordsResponse = await fetch(`/api/documents/${editingDocument.value.id}/checklist/records`, {
+                method: 'GET',
+                headers: {
+                    'Accept': 'application/json',
+                },
+                credentials: 'include'
+            });
+
+            // Initialize checklist data
+            if (checklistTemplate.value.items) {
+                // Filter out annexes
+                const filteredItems = checklistTemplate.value.items.filter((item: any) => {
+                    const isAnnex = /^E-[1-8]:/.test(item.item_name);
+                    return !isAnnex;
+                });
+                
+                // If we have existing records, load them; otherwise initialize empty
+                if (checklistRecordsResponse.ok) {
+                    const existingRecords = await checklistRecordsResponse.json();
+                    
+                    // Helper to find annex checked state from existing records
+                    const findAnnexCheckedState = (annexName: string): boolean => {
+                        const annexTemplateItem = checklistTemplate.value.items.find((item: any) => item.item_name === annexName);
+                        if (annexTemplateItem) {
+                            const existingAnnex = existingRecords.find((r: any) => r.checklist_item_id === annexTemplateItem.id);
+                            return existingAnnex?.is_checked || false;
+                        }
+                        return false;
+                    };
+                    
+                    // Map existing records to checklist data
+                    checklistData.value = filteredItems.map((item: any) => {
+                        const existingRecord = existingRecords.find((r: any) => r.checklist_item_id === item.id);
+                        return {
+                            checklist_item_id: item.id,
+                            item_name: item.item_name,
+                            is_checked: existingRecord?.is_checked || false,
+                            remarks: existingRecord?.remarks 
+                                ? (typeof existingRecord.remarks === 'string' ? JSON.parse(existingRecord.remarks) : existingRecord.remarks)
+                                : (item.remarks ? JSON.parse(item.remarks) : {}),
+                            signatories: item.signatories 
+                                ? item.signatories.split(',').map((sig: string, index: number) => {
+                                    const existingSig = existingRecord?.signatories?.find((s: any) => s.name === sig.trim());
+                                    return {
+                                        name: sig.trim(),
+                                        is_checked: existingSig?.is_checked || false,
+                                        acting_status: existingSig?.acting_status || ''
+                                    };
+                                })
+                                : [],
+                            annexes: item.item_name === 'Annual Investment Program to include Annexes' 
+                                ? [
+                                    { name: 'E-1: GAD Plan & Budget', is_checked: findAnnexCheckedState('E-1: GAD Plan & Budget') },
+                                    { name: 'E-2: LDRRM Plan', is_checked: findAnnexCheckedState('E-2: LDRRM Plan') },
+                                    { name: 'E-3: HIV & AIDS Agenda', is_checked: findAnnexCheckedState('E-3: HIV & AIDS Agenda') },
+                                    { name: 'E-4: CCC Action Plan', is_checked: findAnnexCheckedState('E-4: CCC Action Plan') },
+                                    { name: 'E-5: Disaster Risk Reduction & Management', is_checked: findAnnexCheckedState('E-5: Disaster Risk Reduction & Management') },
+                                    { name: 'E-6: Anti-Poverty Program', is_checked: findAnnexCheckedState('E-6: Anti-Poverty Program') },
+                                    { name: 'E-7: Environmental Management & Protection', is_checked: findAnnexCheckedState('E-7: Environmental Management & Protection') },
+                                    { name: 'E-8: Support to Peace and Reconciliation', is_checked: findAnnexCheckedState('E-8: Support to Peace and Reconciliation') }
+                                  ]
+                                : [],
+                            group_letter: item.group_letter,
+                            is_subitem: item.is_subitem
+                        };
+                    });
+                } else {
+                    // Initialize empty checklist
+                    checklistData.value = filteredItems.map((item: any) => {
+                        return {
+                            checklist_item_id: item.id,
+                            item_name: item.item_name,
+                            is_checked: false,
+                            remarks: item.remarks ? JSON.parse(item.remarks) : {},
+                            signatories: item.signatories 
+                                ? item.signatories.split(',').map((sig: string) => ({
+                                    name: sig.trim(),
+                                    is_checked: false,
+                                    acting_status: ''
+                                  }))
+                                : [],
+                            annexes: item.item_name === 'Annual Investment Program to include Annexes' 
+                                ? [
+                                    { name: 'E-1: GAD Plan & Budget', is_checked: false },
+                                    { name: 'E-2: LDRRM Plan', is_checked: false },
+                                    { name: 'E-3: HIV & AIDS Agenda', is_checked: false },
+                                    { name: 'E-4: CCC Action Plan', is_checked: false },
+                                    { name: 'E-5: Disaster Risk Reduction & Management', is_checked: false },
+                                    { name: 'E-6: Anti-Poverty Program', is_checked: false },
+                                    { name: 'E-7: Environmental Management & Protection', is_checked: false },
+                                    { name: 'E-8: Support to Peace and Reconciliation', is_checked: false }
+                                  ]
+                                : [],
+                            group_letter: item.group_letter,
+                            is_subitem: item.is_subitem
+                        };
+                    });
+                }
+            }
+
+            showChecklistModal.value = true;
+            // Validate checklist requirements when modal opens
+            validateChecklistRequirements();
+        }
+    } catch (e) {
+        const errorMsg = e instanceof Error ? e.message : 'Failed to load checklist';
+        toastRef.value?.add('error', 'Error', errorMsg, 4000);
+    }
+};
+
+/**
+ * Computed property to check if all checklist items are checked
+ */
+const allChecklistItemsChecked = computed(() => {
+    return checklistData.value.length > 0 && checklistData.value.every(item => item.is_checked);
+});
+
+/**
+ * Computed property to count all checked checkboxes (items, signatories, and annexes)
+ * Only counts checkboxes that are actually displayed
+ */
+const checklistCheckedCount = computed(() => {
+    let count = 0;
+    checklistData.value.forEach(item => {
+        // Count checked items
+        if (item.is_checked) count++;
+        // Count checked signatories - but only if they're displayed (exclude empty ones)
+        if (item.signatories && item.signatories.length > 0) {
+            const isGroupDESubitem = formData.value.document_type === 'Supplemental Budget' && 
+                                    item.group_letter && 
+                                    ['d', 'e'].includes(item.group_letter) && 
+                                    item.is_subitem;
+            // Don't count sub-item signatories for groups d and e (parent's signatories are displayed)
+            if (!isGroupDESubitem) {
+                count += item.signatories.filter(sig => sig.is_checked && sig.name).length;
+            }
+        }
+        // Count checked annexes
+        if (item.annexes) {
+            count += item.annexes.filter(annex => annex.is_checked).length;
+        }
+    });
+    return count;
+});
+
+/**
+ * Computed property to calculate total number of checkboxes (items, signatories, and annexes)
+ * Only counts checkboxes that are actually displayed
+ */
+const checklistTotalCount = computed(() => {
+    let total = 0;
+    checklistData.value.forEach(item => {
+        // Count item checkbox
+        total++;
+        // Count signatory checkboxes - but only if they're displayed (exclude empty ones)
+        if (item.signatories && item.signatories.length > 0) {
+            const isGroupDESubitem = formData.value.document_type === 'Supplemental Budget' && 
+                                    item.group_letter && 
+                                    ['d', 'e'].includes(item.group_letter) && 
+                                    item.is_subitem;
+            // Don't count sub-item signatories for groups d and e (parent's signatories are displayed)
+            if (!isGroupDESubitem) {
+                total += item.signatories.filter(sig => sig.name).length;
+            }
+        }
+        // Count annex checkboxes
+        if (item.annexes) {
+            total += item.annexes.length;
+        }
+    });
+    return total;
+});
+
+/**
+ * Computed property to calculate checklist progress percentage
+ */
+const checklistProgress = computed(() => {
+    if (checklistTotalCount.value === 0) return 0;
+    return Math.round((checklistCheckedCount.value / checklistTotalCount.value) * 100);
+});
+
+/**
+ * toggleAllChecklist: Toggle all checklist items
+ */
+const toggleAllChecklist = () => {
+    const newState = !allChecklistItemsChecked.value;
+    checklistData.value.forEach(item => {
+        item.is_checked = newState;
+    });
+};
+
+/**
+ * printChecklist: Print the checklist form with document transactions
+ */
+const printChecklist = async () => {
+    const printWindow = window.open('', '_blank');
+    if (printWindow) {
+        try {
+            // Fetch document transactions
+            let transactions: DocumentTransaction[] = [];
+            if (editingDocument.value) {
+                const response = await fetch(`/api/documents/${editingDocument.value.id}/transactions`, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                    },
+                    credentials: 'include'
+                });
+                
+                if (response.ok) {
+                    transactions = await response.json();
+                }
+            }
+            
+            // Find the municipality object to get the city class
+            const selectedMunicipality = municipalities.value.find(
+                (m: any) => m.name === formData.value.source
+            );
+            const cityClass = selectedMunicipality?.city_class || '';
+            
+            // Determine form number and title based on document type
+            const formNumber = formData.value.document_type === 'Supplemental Budget' ? 'LBR Form No. 1B' : 'LBR Form No. 1A';
+            const documentTypeTitle = formData.value.document_type === 'Supplemental Budget' 
+                ? 'Supplemental Budget' 
+                : 'Annual Budget';
+            
+            let checklistHTML = `
+            <html>
+            <head>
+                <title>Documentary Checklist - ${formData.value.document_type}</title>
+                <style>
+                    body { font-family: Arial, sans-serif; margin: 20px; font-size: 12px; }
+                    .header-top { margin-bottom: 20px; }
+                    .form-number { text-align: left; font-weight: bold; margin-bottom: 10px; }
+                    .title { text-align: center; font-weight: bold; font-size: 12px; margin: 15px 0; }
+                    .detail-row { display: flex; justify-content: space-between; margin-bottom: 10px; }
+                    .detail-left { flex: 1; }
+                    .detail-right { flex: 1; text-align: right; }
+                    .center-text { text-align: center; font-weight: bold; margin: 10px 0; }
+                    .budget-info { display: flex; justify-content: space-between; margin-bottom: 20px; }
+                    .budget-left { flex: 1; margin-left: 50px; font-weight: bold; }
+                    .budget-right { flex: 1; text-align: right; margin-right: 50px; font-weight: bold; }
+                    table { width: 100%; border-collapse: collapse; margin-top: 20px; table-layout: fixed; }
+                    th { background-color: #f0f0f0; border: 1px solid #999; padding: 10px; font-size: 12px; text-align: center; font-weight: bold; }
+                    table { width: 100%; border-collapse: collapse; margin-top: 20px; table-layout: fixed; }
+                    th { background-color: #f0f0f0; border: 1px solid #999; padding: 10px; font-size: 12px; text-align: center; font-weight: bold; }
+                    td { border: 1px solid #999; padding: 10px; font-size: 11px; vertical-align: top; }
+                    th:nth-child(1), td:nth-child(1) { width: 20%; }
+                    th:nth-child(2), td:nth-child(2) { width: 15%; }
+                    th:nth-child(3), td:nth-child(3) { width: 15%; }
+                    th:nth-child(4), td:nth-child(4) { width: 20%; }
+                    th:nth-child(5), td:nth-child(5) { width: 30%; }
+                    .transactions-section { margin-top: 30px; }
+                    .transactions-title { text-align: center; font-weight: bold; font-size: 13px; margin: 20px 0 15px 0; }
+                    .footer { margin-top: 30px; text-align: center; font-size: 11px; }
+                    .underline { border-bottom: 1px solid #000; display: inline-block; min-width: 150px; }
+                    .no-transactions { font-size: 11px; color: #999; text-align: center; padding: 15px; }
+                </style>
+            </head>
+            <body>
+                <div class="header-top">
+                    <div class="form-number">${formNumber}</div>
+                    
+                    <div class="title">CHECKLIST ON DOCUMENTARY AND SIGNATURE<br/>REQUIREMENTS FOR THE <span style="text-transform: uppercase;">${documentTypeTitle}</span></div>
+                    
+                    <div class="detail-row">
+                        <div class="detail-left">
+                            Date Received: <strong>${formData.value.date ? new Date(formData.value.date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : ''}</strong>
+                        </div>
+                        <div class="detail-right">
+                            Deadline: <span class="underline"></span>
+                        </div>
+                    </div>
+                    
+                    <div style="position: relative; text-align: center; margin-bottom: 10px;">
+                        Municipality of <span class="underline"><strong>${formData.value.source || '-'}</strong></span>
+                        <span style="position: absolute; right: 0; top: 0;">
+                            ${cityClass ? `<strong>${cityClass}</strong>` : '<span class="underline"></span>'} Class Municipality
+                        </span>
+                    </div>
+                    
+                    <div class="budget-info">
+                        <div class="budget-left">
+                            ${formData.value.document_type === 'Supplemental Budget' && formData.value.sb_no ? `Supplemental Budget No. ${formData.value.sb_no}` : documentTypeTitle}
+                        </div>
+                        <div class="budget-right">
+                            ${formData.value.document_type === 'Supplemental Budget' ? '___________ Fund' : 'General Fund'}
+                        </div>
+                    </div>
+                </div>
+                
+                <table>
+                    <thead>
+                        <tr>
+                            <th>DOCUMENT</th>
+                            <th>SIGNATORY</th>
+                            <th>REMARKS</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            checklistData.value.forEach((item: any, index: number) => {
+                const isChecked = item?.is_checked ? '<span style="font-size: 16px;">☑</span>' : '<span style="font-size: 16px;">☐</span>';
+                
+                // Format remarks object into HTML with proper formatting
+                const formatRemarksValue = (value: string, label: string): string => {
+                    if (!value) return '';
+                    // Check if it's a date field
+                    if (label.toLowerCase().includes('date') || label.toLowerCase().includes('dated')) {
+                        const dateObj = new Date(value);
+                        if (!isNaN(dateObj.getTime())) {
+                            return dateObj.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+                        }
+                    }
+                    // Check if it's an amount field
+                    if (label.toLowerCase().includes('amount')) {
+                        const numValue = parseFloat(value);
+                        if (!isNaN(numValue)) {
+                            return numValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                        }
+                    }
+                    return value;
+                };
+                
+                let remarksHTML = '';
+                Object.entries(item?.remarks || {}).forEach(([key, value]: [string, any]) => {
+                    if (value) {
+                        const formattedValue = formatRemarksValue(value, key);
+                        remarksHTML += `${key}: <span style="border-bottom: 1px solid #000;">${formattedValue}</span><br/>`;
+                    }
+                });
+                
+                // Build document column content
+                let documentHTML = '';
+                if (item.is_subitem) {
+                    // Sub-items are indented without letter
+                    documentHTML = `<div style="margin-left: 20px;">${isChecked} ${item.item_name}`;
+                } else {
+                    // Main items have letter prefix
+                    documentHTML = `${isChecked} ${item.group_letter}. ${item.item_name}`;
+                }
+                
+                // Add annexes if they exist and this is not a merged subitem
+                const isMergedSubitem = formData.value.document_type === 'Supplemental Budget' && 
+                                       ['c', 'd', 'e'].includes(item.group_letter) && 
+                                       item.is_subitem;
+                
+                if (item.annexes && item.annexes.length > 0) {
+                    documentHTML += '<div style="margin-left: 20px; margin-top: 5px;">';
+                    item.annexes.forEach((annex: any) => {
+                        const annexChecked = annex.is_checked ? '<span style="font-size: 16px;">☑</span>' : '<span style="font-size: 16px;">☐</span>';
+                        documentHTML += `<div>${annexChecked} ${annex.name}</div>`;
+                    });
+                    documentHTML += '</div>';
+                }
+                
+                if (item.is_subitem) {
+                    documentHTML += '</div>';
+                }
+                
+                // Check if this is a parent of a merged group
+                const isMergedParent = formData.value.document_type === 'Supplemental Budget' && 
+                                      ['c', 'd', 'e'].includes(item.group_letter) && 
+                                      !item.is_subitem;
+                
+                // Check if this is a sub-item of groups d or e (where parent signatories are shared)
+                const isGroupDESubitem = formData.value.document_type === 'Supplemental Budget' && 
+                                        ['d', 'e'].includes(item.group_letter) && 
+                                        item.is_subitem;
+                
+                // Calculate rowspan for merged parents (d and e)
+                let rowspan = 1;
+                let remarksRowspan = 1;
+                if (isMergedParent && ['d', 'e'].includes(item.group_letter)) {
+                    const mergedItemsCount = checklistData.value.filter(
+                        (i: any) => i.group_letter === item.group_letter
+                    ).length;
+                    rowspan = mergedItemsCount;
+                    remarksRowspan = mergedItemsCount;
+                } else if (isMergedParent && item.group_letter === 'c') {
+                    // Group c: parent doesn't have signatories, but remarks spans across sub-items
+                    const mergedItemsCount = checklistData.value.filter(
+                        (i: any) => i.group_letter === item.group_letter
+                    ).length;
+                    remarksRowspan = mergedItemsCount;
+                }
+                
+                // Build signatory column content
+                let signatoryHTML = '';
+                if (item.signatories && item.signatories.length > 0) {
+                    item.signatories.forEach((signatory: any) => {
+                        const sigChecked = signatory.is_checked ? '<span style="font-size: 16px;">☑</span>' : '<span style="font-size: 16px;">☐</span>';
+                        const signatoryDisplay = signatory.acting_status 
+                            ? `${signatory.name} (${signatory.acting_status})`
+                            : signatory.name;
+                        signatoryHTML += `<div>${sigChecked} ${signatoryDisplay}</div>`;
+                    });
+                }
+                
+                const rowspanSigAttr = rowspan > 1 ? ` rowspan="${rowspan}"` : '';
+                const rowspanRemarkAttr = remarksRowspan > 1 ? ` rowspan="${remarksRowspan}"` : '';
+                
+                // Render row
+                if (isGroupDESubitem) {
+                    // Sub-items of groups d/e only show document column (signatories and remarks are spanned from parent)
+                    checklistHTML += `
+                        <tr>
+                            <td>${documentHTML}</td>
+                        </tr>
+                    `;
+                } else if (isMergedSubitem && item.group_letter === 'c') {
+                    // Group c sub-items: Show document and signatories (remarks are spanned from parent)
+                    checklistHTML += `
+                        <tr>
+                            <td>${documentHTML}</td>
+                            <td>${signatoryHTML || '&nbsp;'}</td>
+                        </tr>
+                    `;
+                } else {
+                    // Parent items or non-merged items show all columns
+                    checklistHTML += `
+                        <tr>
+                            <td>${documentHTML}</td>
+                            <td${rowspanSigAttr}>${signatoryHTML || '&nbsp;'}</td>
+                            <td${rowspanRemarkAttr}>${remarksHTML || '&nbsp;'}</td>
+                        </tr>
+                    `;
+                }
+            });
+
+            checklistHTML += `
+                    </tbody>
+                </table>
+                
+                <div class="transactions-section">
+                    <div class="transactions-title">DOCUMENT TRANSACTIONS</div>
+                    
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>USER</th>
+                                <th>DATE & TIME</th>
+                                <th>DURATION</th>
+                                <th>ACTION</th>
+                                <th>REMARKS</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+
+            // Add transactions
+            if (transactions.length === 0) {
+                checklistHTML += `<tr><td colspan="5" class="no-transactions">No transactions found</td></tr>`;
+            } else {
+                transactions.forEach((transaction: any) => {
+                    const actionDate = new Date(transaction.created_at);
+                    const actionDateStr = actionDate.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+                    const actionTimeStr = actionDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+                    const dateTimeStr = `${actionDateStr} at ${actionTimeStr}`;
+                    
+                    let durationStr = '-';
+                    if (transaction.duration_hours !== null && transaction.duration_hours !== undefined) {
+                        const totalMinutes = Math.round(transaction.duration_hours * 60);
+                        const days = Math.floor(totalMinutes / (24 * 60));
+                        const remainingMinutesAfterDays = totalMinutes % (24 * 60);
+                        const hours = Math.floor(remainingMinutesAfterDays / 60);
+                        const minutes = remainingMinutesAfterDays % 60;
+                        
+                        const parts = [];
+                        if (days > 0) {
+                            parts.push(`${days} day${days > 1 ? 's' : ''}`);
+                        }
+                        if (hours > 0) {
+                            parts.push(`${hours} hour${hours > 1 ? 's' : ''}`);
+                        }
+                        if (minutes > 0) {
+                            parts.push(`${minutes} minute${minutes > 1 ? 's' : ''}`);
+                        }
+                        
+                        durationStr = parts.length > 0 ? parts.join(' ') : '-';
+                    }
+                    
+                    let remarksStr = transaction.remarks || '-';
+                    
+                    checklistHTML += `
+                        <tr>
+                            <td>${transaction.user?.name || 'Unknown User'}</td>
+                            <td>${dateTimeStr}</td>
+                            <td>${durationStr}</td>
+                            <td>${transaction.action}</td>
+                            <td>${remarksStr}</td>
+                        </tr>
+                    `;
+                });
+            }
+
+            checklistHTML += `
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="footer">
+                    <p><span style="font-style: italic;">Generated on: ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span> <br><span style="font-weight: bold;">PBO|DocuTrack</span></p>
+                </div>
+            </body>
+            </html>
+            `;
+            
+            printWindow.document.write(checklistHTML);
+            printWindow.document.close();
+            setTimeout(() => {
+                printWindow.print();
+            }, 250);
+        } catch (e) {
+            console.error('Error preparing print document:', e);
+            printWindow?.close();
+            toastRef.value?.add('error', 'Error', 'Failed to prepare print document', 4000);
+        }
+    }
+};
+
+/**
+ * validateChecklistRequirements: Validates that required items are checked
+ * For Annual Budget: letters a, b, c must have document AND signatories checked
+ * For Supplemental Budget:
+ *   - Letters a, b, g must have document AND signatories checked
+ *   - Letter c: only parent document must be checked
+ */
+const validateChecklistRequirements = (): { valid: boolean; message: string } => {
+    const docType = formData.value.document_type;
+    let requiredItems: any[] = [];
+    let missingItems: string[] = [];
+
+    if (docType === 'Annual Budget') {
+        // Annual Budget: a, b, c all mandatory
+        requiredItems = checklistData.value.filter((item: any) => 
+            ['a', 'b', 'c'].includes(item.group_letter)
+        );
+        
+        requiredItems.forEach((item: any) => {
+            // Check document
+            if (!item.is_checked) {
+                missingItems.push(`${item.group_letter.toUpperCase()}. ${item.item_name} - Document`);
+            }
+            // Check signatories
+            if (item.signatories && item.signatories.length > 0) {
+                const uncheckedSigs = item.signatories.filter((sig: any) => !sig.is_checked || !sig.name);
+                if (uncheckedSigs.length > 0) {
+                    missingItems.push(`${item.group_letter.toUpperCase()}. ${item.item_name} - Signatory`);
+                }
+            }
+        });
+    } else if (docType === 'Supplemental Budget') {
+        // Supplemental Budget: a, b, g require document AND signatories
+        const abgItems = checklistData.value.filter((item: any) => 
+            ['a', 'b', 'g'].includes(item.group_letter)
+        );
+        
+        abgItems.forEach((item: any) => {
+            // Check document
+            if (!item.is_checked) {
+                missingItems.push(`${item.group_letter.toUpperCase()}. ${item.item_name} - Document`);
+            }
+            // Check signatories
+            if (item.signatories && item.signatories.length > 0) {
+                const uncheckedSigs = item.signatories.filter((sig: any) => !sig.is_checked || !sig.name);
+                if (uncheckedSigs.length > 0) {
+                    missingItems.push(`${item.group_letter.toUpperCase()}. ${item.item_name} - Signatory`);
+                }
+            }
+        });
+        
+        // Letter c: only parent document required (not signatories for sub-items)
+        const cParentItem = checklistData.value.find((item: any) => 
+            item.group_letter === 'c' && !item.is_subitem
+        );
+        
+        if (cParentItem && !cParentItem.is_checked) {
+            missingItems.push(`C. ${cParentItem.item_name} - Document`);
+        }
+    }
+
+    if (missingItems.length > 0) {
+        const itemsList = missingItems.map(item => `<li>${item}</li>`).join('');
+        const message = `These checkboxes are required for the document to be saved:<ul class="list-disc list-inside mt-2">${itemsList}</ul>`;
+        checklistValidationError.value = message;
+        return {
+            valid: false,
+            message: message
+        };
+    }
+
+    checklistValidationError.value = '';
+    return { valid: true, message: '' };
+};
+
+/**
+ * saveDocumentWithChecklist: Saves the document with checklist data
+ * - First creates the document via API
+ * - Then saves the checklist records
+ */
+const saveDocumentWithChecklist = async () => {
+    try {
+        // Validate checklist requirements
+        const validation = validateChecklistRequirements();
+        if (!validation.valid) {
+            toastRef.value?.add('error', 'Validation Failed', validation.message, 5000);
+            return;
+        }
+
+        // Prepare document data
+        const submitData: any = {
             tracking_no: formData.value.tracking_no,
             date: formData.value.date,
             document_type: formData.value.document_type,
@@ -2612,6 +4253,117 @@ const handleCreateDocument = async () => {
             status: formData.value.status,
             remarks: formData.value.remarks
         };
+        
+        // Add sb_no only for Supplemental Budget
+        if (formData.value.document_type === 'Supplemental Budget') {
+            submitData.sb_no = formData.value.sb_no;
+        }
+        
+        // Create the document first
+        const response = await fetch('/api/documents', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-CSRF-Token': getCsrfToken()
+            },
+            body: JSON.stringify(submitData),
+            credentials: 'include'
+        });
+        
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.message || errorData.error || 'Failed to create document');
+        }
+        
+        const newDocument = await response.json();
+        
+        // Now save the checklist data if checklist items exist
+        if (checklistData.value.length > 0) {
+            // Prepare checklist data with remarks stringified as JSON and include annexes
+            const checklistItems: any[] = [];
+            
+            checklistData.value.forEach((item: any) => {
+                // Add main item
+                checklistItems.push({
+                    checklist_item_id: item.checklist_item_id,
+                    is_checked: item.is_checked,
+                    remarks: item.remarks ? JSON.stringify(item.remarks) : null,
+                    signatories: item.signatories || []
+                });
+                
+                // Add annexes as separate items if they exist
+                if (item.annexes && item.annexes.length > 0) {
+                    item.annexes.forEach((annex: any) => {
+                        // Find the annex item in the template to get its ID
+                        const annexTemplateItem = checklistTemplate.value.items.find((tpl: any) => tpl.item_name === annex.name);
+                        if (annexTemplateItem) {
+                            checklistItems.push({
+                                checklist_item_id: annexTemplateItem.id,
+                                is_checked: annex.is_checked,
+                                remarks: null,
+                                signatories: []
+                            });
+                        }
+                    });
+                }
+            });
+
+            const checklistResponse = await fetch(`/api/documents/${newDocument.id}/checklist/save`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-Token': getCsrfToken()
+                },
+                body: JSON.stringify({
+                    checklist_items: checklistItems
+                }),
+                credentials: 'include'
+            });
+            
+            if (!checklistResponse.ok) {
+                console.error('Failed to save checklist, but document was created');
+            }
+        }
+        
+        documents.value.push(newDocument);
+        closeCreateModal();
+        closeChecklistModal();
+        
+        toastRef.value?.add(
+            'success',
+            'Success',
+            `Document: <strong>${newDocument.tracking_no}</strong> has been created successfully with checklist!`,
+            3000
+        );
+    } catch (e) {
+        const errorMsg = e instanceof Error ? e.message : 'An error occurred';
+        formErrors.value['submit'] = errorMsg;
+        
+        toastRef.value?.add('error', 'Error', errorMsg, 4000);
+    }
+};
+
+/**
+ * saveDocumentDirectly: Saves a document without checklist (for documents that don't require a checklist)
+ */
+const saveDocumentDirectly = async () => {
+    try {
+        const submitData: any = {
+            tracking_no: formData.value.tracking_no,
+            date: formData.value.date,
+            document_type: formData.value.document_type,
+            particulars: formData.value.particulars,
+            source: formData.value.source,
+            status: formData.value.status,
+            remarks: formData.value.remarks
+        };
+        
+        // Add sb_no only for Supplemental Budget
+        if (formData.value.document_type === 'Supplemental Budget') {
+            submitData.sb_no = formData.value.sb_no;
+        }
         
         const response = await fetch('/api/documents', {
             method: 'POST',
@@ -2643,6 +4395,86 @@ const handleCreateDocument = async () => {
         const errorMsg = e instanceof Error ? e.message : 'An error occurred';
         formErrors.value['submit'] = errorMsg;
         
+        toastRef.value?.add('error', 'Error', errorMsg, 4000);
+    }
+};
+
+/**
+ * saveChecklistChanges: Saves checklist changes for an existing document
+ * - Prepares checklist data with remarks as JSON strings
+ * - Makes POST request to save the checklist records
+ * - Closes the modal and shows success toast
+ */
+const saveChecklistChanges = async () => {
+    if (!editingDocument.value) {
+        toastRef.value?.add('error', 'Error', 'No document selected', 4000);
+        return;
+    }
+
+    try {
+        // Validate checklist requirements
+        const validation = validateChecklistRequirements();
+        if (!validation.valid) {
+            toastRef.value?.add('error', 'Validation Failed', validation.message, 5000);
+            return;
+        }
+        // Prepare checklist data with remarks stringified as JSON and include annexes
+        const checklistItems: any[] = [];
+        
+        checklistData.value.forEach((item: any) => {
+            // Add main item
+            checklistItems.push({
+                checklist_item_id: item.checklist_item_id,
+                is_checked: item.is_checked,
+                remarks: item.remarks ? JSON.stringify(item.remarks) : null,
+                signatories: item.signatories || []
+            });
+            
+            // Add annexes as separate items if they exist
+            if (item.annexes && item.annexes.length > 0) {
+                item.annexes.forEach((annex: any) => {
+                    // Find the annex item in the template to get its ID
+                    const annexTemplateItem = checklistTemplate.value.items.find((tpl: any) => tpl.item_name === annex.name);
+                    if (annexTemplateItem) {
+                        checklistItems.push({
+                            checklist_item_id: annexTemplateItem.id,
+                            is_checked: annex.is_checked,
+                            remarks: null,
+                            signatories: []
+                        });
+                    }
+                });
+            }
+        });
+
+        const response = await fetch(`/api/documents/${editingDocument.value.id}/checklist/save`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-CSRF-Token': getCsrfToken()
+            },
+            body: JSON.stringify({
+                checklist_items: checklistItems
+            }),
+            credentials: 'include'
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.message || errorData.error || 'Failed to save checklist');
+        }
+
+        closeChecklistModal();
+
+        toastRef.value?.add(
+            'success',
+            'Success',
+            `Checklist for <strong>${editingDocument.value.tracking_no}</strong> has been saved successfully!`,
+            3000
+        );
+    } catch (e) {
+        const errorMsg = e instanceof Error ? e.message : 'An error occurred';
         toastRef.value?.add('error', 'Error', errorMsg, 4000);
     }
 };

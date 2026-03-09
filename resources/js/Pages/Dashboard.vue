@@ -575,8 +575,7 @@
                                                                 </p>
                                                                 <p v-if="transaction.duration_hours !== null && transaction.duration_hours !== undefined" class="text-xs text-blue-600 dark:text-blue-400 font-medium whitespace-nowrap">
                                                                     <i class="fas fa-hourglass-end mr-1"></i>
-                                                                    <span v-if="transaction.duration_hours >= 24">{{ Math.floor(transaction.duration_hours / 24) }}d {{ transaction.duration_hours % 24 }}h</span>
-                                                                    <span v-else>{{ transaction.duration_hours }}h</span>
+                                                                    {{ formatDuration(transaction.duration_hours) }}
                                                                 </p>
                                                             </div>
 
@@ -1805,6 +1804,35 @@ const uniqueLeaveTypes = computed(() => {
 });
 
 /**
+ * Calculate business days (excluding weekends) from an array of dates or based on a date range
+ * @param leave - Leave object with inclusive_dates or from_date/to_date
+ * @returns Number of business days (weekdays only)
+ */
+const getLeaveBusinessDays = (leave: any): number => {
+    // If number_of_working_days_applied_for is available, use it
+    if (leave.number_of_working_days_applied_for && leave.number_of_working_days_applied_for > 0) {
+        return leave.number_of_working_days_applied_for;
+    }
+    
+    // If inclusive_dates is an array, count business days in it
+    if (Array.isArray(leave.inclusive_dates) && leave.inclusive_dates.length > 0) {
+        let businessDays = 0;
+        leave.inclusive_dates.forEach((dateStr: string) => {
+            const date = new Date(dateStr);
+            const dayOfWeek = date.getDay();
+            // 0 = Sunday, 6 = Saturday - exclude these
+            if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+                businessDays++;
+            }
+        });
+        return businessDays;
+    }
+    
+    // Fallback: return 1 (represents single leave record)
+    return 1;
+};
+
+/**
  * Get employee leaves summary grouped by employee and leave type for the selected year
  */
 const employeeLeavesSummary = computed(() => {
@@ -1823,6 +1851,9 @@ const employeeLeavesSummary = computed(() => {
         const empName = leave.employee?.name || 'Unknown Employee';
         const leaveType = leave.type_of_leave;
         
+        // Calculate business days for this leave
+        const businessDays = getLeaveBusinessDays(leave);
+        
         if (!empMap.has(empId)) {
             empMap.set(empId, {
                 employeeId: empId,
@@ -1833,8 +1864,8 @@ const employeeLeavesSummary = computed(() => {
         }
         
         const empData = empMap.get(empId)!;
-        empData.leaveTypes[leaveType] = (empData.leaveTypes[leaveType] || 0) + 1;
-        empData.totalLeaves += 1;
+        empData.leaveTypes[leaveType] = (empData.leaveTypes[leaveType] || 0) + businessDays;
+        empData.totalLeaves += businessDays;
     });
     
     return Array.from(empMap.values()).sort((a, b) => {
@@ -2148,6 +2179,36 @@ const getActionType = (action: string): string => {
     if (action.toLowerCase().includes('received')) return 'received';
     if (action.toLowerCase().includes('ended') || action.toLowerCase().includes('finalized')) return 'finalized';
     return action;
+};
+
+/**
+ * formatDuration: Formats duration in hours to a human-readable string with days, hours, and minutes
+ * @param hours - Duration in hours (can be decimal, e.g., 0.583333 for 35 minutes)
+ * @returns Formatted string like "1 day 2 hours 30 minutes" or "45 minutes"
+ */
+const formatDuration = (hours: number): string => {
+    if (hours === null || hours === undefined) {
+        return '0 minutes';
+    }
+
+    const totalMinutes = Math.round(hours * 60);
+    const days = Math.floor(totalMinutes / (24 * 60));
+    const remainingMinutesAfterDays = totalMinutes % (24 * 60);
+    const durationHours = Math.floor(remainingMinutesAfterDays / 60);
+    const minutes = remainingMinutesAfterDays % 60;
+
+    const parts = [];
+    if (days > 0) {
+        parts.push(`${days}d`);
+    }
+    if (durationHours > 0) {
+        parts.push(`${durationHours}h`);
+    }
+    if (minutes > 0) {
+        parts.push(`${minutes}m`);
+    }
+
+    return parts.length > 0 ? parts.join(' ') : '0m';
 };
 
 /**

@@ -889,6 +889,12 @@ const paginationPages = computed(() => {
     return pages;
 });
 
+/** Get CSRF token from meta tag for form submissions */
+const getCsrfToken = (): string => {
+    const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+    return token;
+};
+
 const fetchRecords = async () => {
     try {
         loading.value = true;
@@ -905,25 +911,48 @@ const fetchRecords = async () => {
 };
 
 /**
- * generateRecordNo: Auto-generates Record No based on Record Type
- * Format: ABBR-YYYY-MM-NNN (e.g., DBM-2026-02-001)
- * Counts existing records of same type in same month and increments
+ * generateRecordNo: Fetches auto-generated Record No from server based on record type and current year
+ * Format: ABBR-YYYY-MM-NNN (e.g., PB-2026-03-001)
+ * Finds the highest existing sequence number for the type/year across all months and increments it (handles deleted records)
+ * Numbering resets per year, not per month (all months in year share sequence)
  */
 const generateRecordNo = async (recordType: string): Promise<string> => {
-    const abbr = recordTypeAbbreviations[recordType as keyof typeof recordTypeAbbreviations];
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, '0');
-    const yearMonth = `${year}-${month}`;
-    
-    // Count records of same type with same year-month
-    const sameTypeCount = records.value.filter(r => 
-        r.record_type === recordType && 
-        r.record_no.includes(yearMonth)
-    ).length;
-    
-    const series = String(sameTypeCount + 1).padStart(3, '0');
-    return `${abbr}-${yearMonth}-${series}`;
+    try {
+        const response = await fetch(`/api/records/generate/record-no?record_type=${encodeURIComponent(recordType)}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': getCsrfToken(),
+            },
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to generate record number');
+        }
+
+        const data = await response.json();
+        return data.record_no;
+    } catch (error) {
+        console.error('Error generating record number:', error);
+        // Fallback: Generate locally if API fails
+        const abbr = recordTypeAbbreviations[recordType as keyof typeof recordTypeAbbreviations];
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const yearPrefix = `${abbr}-${year}-`;
+        
+        // Extract numeric parts from matching record numbers (all months in year) and find the max
+        const matchingNumbers = records.value
+            .filter(r => r.record_type === recordType && r.record_no.startsWith(yearPrefix))
+            .map(r => {
+                const parts = r.record_no.split('-');
+                return parseInt(parts[parts.length - 1], 10);
+            });
+        
+        const maxNumber = matchingNumbers.length > 0 ? Math.max(...matchingNumbers) : 0;
+        const series = String(maxNumber + 1).padStart(3, '0');
+        return `${abbr}-${year}-${month}-${series}`;
+    }
 };
 
 const updateRecordNo = async () => {

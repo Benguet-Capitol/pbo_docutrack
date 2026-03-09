@@ -20,6 +20,7 @@ class Document extends Model
         'document_type',
         'particulars',
         'source',
+        'sb_no',
         'status',
         'remarks',
         'user_id',
@@ -39,6 +40,14 @@ class Document extends Model
     public function transactions(): HasMany
     {
         return $this->hasMany(DocumentTransaction::class);
+    }
+
+    /**
+     * Get all checklist records for this document.
+     */
+    public function checklistRecords(): HasMany
+    {
+        return $this->hasMany(DocumentChecklistRecord::class);
     }
 }
 

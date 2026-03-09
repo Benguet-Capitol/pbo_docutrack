@@ -108,11 +108,11 @@
                                         <span v-if="sortBy === 'municipal_budget_officer'" class="text-xs">{{ sortOrder === 'asc' ? '▲' : '▼' }}</span>
                                     </button>
                                 </th>
-                                <!-- Representative Header: Sortable -->
+                                <!-- Municipality Class Header: Sortable -->
                                 <th class="px-6 py-3 text-xs font-bold text-gray-700 dark:text-gray-200">
-                                    <button @click="toggleSort('representative')" class="flex items-center gap-2 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
-                                        Representative
-                                        <span v-if="sortBy === 'representative'" class="text-xs">{{ sortOrder === 'asc' ? '▲' : '▼' }}</span>
+                                    <button @click="toggleSort('city_class')" class="flex items-center gap-2 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
+                                        Municipality Class
+                                        <span v-if="sortBy === 'city_class'" class="text-xs">{{ sortOrder === 'asc' ? '▲' : '▼' }}</span>
                                     </button>
                                 </th>
                                 <th class="px-6 py-3 text-xs font-bold text-gray-700 dark:text-gray-200 text-center">Actions</th>
@@ -141,9 +141,9 @@
                                     <span v-if="municipality.municipal_budget_officer">{{ municipality.municipal_budget_officer }}</span>
                                     <span v-else class="text-gray-400 dark:text-gray-600 italic">-</span>
                                 </td>
-                                <!-- Representative Column: Shows value or dash (-) if not available -->
+                                <!-- Municipality Class Column: Shows value or dash (-) if not available -->
                                 <td class="px-4 py-2 text-xs text-gray-600 dark:text-gray-400">
-                                    <span v-if="municipality.representative">{{ municipality.representative }}</span>
+                                    <span v-if="municipality.city_class">{{ municipality.city_class }}</span>
                                     <span v-else class="text-gray-400 dark:text-gray-600 italic">-</span>
                                 </td>
                                 <!-- Actions Column: Contains edit/delete dropdown menu -->
@@ -288,6 +288,21 @@
                                 <span v-if="formErrors.code" class="text-red-500 text-xs">{{ formErrors.code }}</span>
                             </div>
 
+                            <!-- Municipality Class Field: Optional -->
+                            <div class="space-y-2">
+                                <label for="municipality_class" class="block text-xs font-medium text-gray-700 dark:text-gray-300">Municipality Class</label>
+                                <div class="relative flex items-center">
+                                    <i class="fas fa-tag absolute left-3 text-gray-400 text-sm"></i>
+                                    <input
+                                        v-model="formData.city_class"
+                                        id="city_class"
+                                        type="text"
+                                        placeholder="e.g., 1st Class, 2nd Class"
+                                        class="block w-full pl-10 pr-4 py-2 text-xs border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:outline-none focus:border-emerald-500"
+                                    />
+                                </div>
+                            </div>
+
                             <!-- Municipal Budget Officer Field: Optional -->
                             <div class="space-y-2">
                                 <label for="municipal_budget_officer" class="block text-xs font-medium text-gray-700 dark:text-gray-300">Municipal Budget Officer</label>
@@ -397,6 +412,21 @@
                                     />
                                 </div>
                                 <span v-if="formErrors.code" class="text-red-500 text-xs">{{ formErrors.code }}</span>
+                            </div>
+
+                            <!-- Municipality Class Field -->
+                            <div class="space-y-2">
+                                <label for="edit_city_class" class="block text-xs font-medium text-gray-700 dark:text-gray-300">Municipality Class</label>
+                                <div class="relative flex items-center">
+                                    <i class="fas fa-tag absolute left-3 text-gray-400 text-sm"></i>
+                                    <input
+                                        v-model="formData.city_class"
+                                        id="edit_city_class"
+                                        type="text"
+                                        placeholder="e.g., 1st Class, 2nd Class"
+                                        class="block w-full pl-10 pr-4 py-2 text-xs border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:outline-none focus:border-blue-500"
+                                    />
+                                </div>
                             </div>
 
                             <!-- Municipal Budget Officer Field -->
@@ -528,6 +558,7 @@ interface Municipality {
     id: number;
     name: string;
     code: string;
+    city_class: string | null;
     municipal_budget_officer: string | null;
     representative: string | null;
 }
@@ -558,7 +589,7 @@ const currentPage = ref(1);
 const itemsPerPage = ref(10);
 
 /** The field to sort municipalities by */
-const sortBy = ref<'id' | 'name' | 'code' | 'municipal_budget_officer' | 'representative'>('id');
+const sortBy = ref<'id' | 'name' | 'code' | 'city_class' | 'municipal_budget_officer'>('id');
 
 /** Sort direction: 'asc' for ascending, 'desc' for descending */
 const sortOrder = ref<'asc' | 'desc'>('asc');
@@ -584,6 +615,7 @@ const municipalityToDelete = ref<Municipality | null>(null);
 const formData = ref({
     name: '',
     code: '',
+    city_class: '',
     municipal_budget_officer: '',
     representative: ''
 });
@@ -630,6 +662,7 @@ const filteredMunicipalities = computed(() => {
     let filtered = municipalities.value.filter(municipality => 
         municipality.name.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
         municipality.code.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
+        municipality.city_class?.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
         municipality.municipal_budget_officer?.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
         municipality.representative?.toLowerCase().includes(searchQuery.value.toLowerCase())
     );
@@ -718,7 +751,7 @@ const changePage = (page: number) => {
  * If already sorting by this field, toggles between asc/desc
  * If sorting by a different field, sets it as the new sort and resets to asc
  */
-const toggleSort = (field: 'id' | 'name' | 'code' | 'municipal_budget_officer' | 'representative') => {
+const toggleSort = (field: 'id' | 'name' | 'code' | 'city_class' | 'municipal_budget_officer') => {
     if (sortBy.value === field) {
         sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc';
     } else {
@@ -739,6 +772,7 @@ const handleEditMunicipality = (municipality: Municipality) => {
     formData.value = {
         name: municipality.name,
         code: municipality.code,
+        city_class: municipality.city_class || '',
         municipal_budget_officer: municipality.municipal_budget_officer || '',
         representative: municipality.representative || ''
     };
@@ -873,6 +907,7 @@ const openCreateModal = () => {
     formData.value = {
         name: '',
         code: '',
+        city_class: '',
         municipal_budget_officer: '',
         representative: ''
     };

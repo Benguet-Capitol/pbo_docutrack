@@ -37,6 +37,41 @@ class DocumentController extends Controller
     }
 
     /**
+     * Generate the next tracking number based on current month and highest existing number.
+     * Format: YYYY-MM-NNNN (e.g., 2026-03-0001)
+     * Finds the highest existing sequence number and increments it (handles deleted records)
+     */
+    public function generateTrackingNo(): JsonResponse
+    {
+        try {
+            $now = new \DateTime();
+            $year = $now->format('Y');
+            $month = $now->format('m');
+            $yearMonth = "{$year}-{$month}";
+
+            // Get all tracking numbers with same year-month prefix
+            $existingNumbers = Document::where('tracking_no', 'like', "{$yearMonth}-%")
+                ->pluck('tracking_no')
+                ->map(function($trackingNo) {
+                    // Extract the numeric part after the last dash
+                    $parts = explode('-', $trackingNo);
+                    return (int) end($parts);
+                })
+                ->toArray();
+
+            // Find the highest number, or start at 0 if none exist
+            $maxNumber = count($existingNumbers) > 0 ? max($existingNumbers) : 0;
+            
+            $series = str_pad($maxNumber + 1, 4, '0', STR_PAD_LEFT);
+            $trackingNo = "{$yearMonth}-{$series}";
+
+            return response()->json(['tracking_no' => $trackingNo]);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
      * Store a newly created document.
      */
     public function store(Request $request): JsonResponse
@@ -58,6 +93,7 @@ class DocumentController extends Controller
                 'document_type' => 'required|string',
                 'particulars' => 'required|string',
                 'source' => 'required|string',
+                'sb_no' => 'nullable|string',
                 'status' => 'sometimes|string|in:created,forwarded,pending,finalized',
                 'remarks' => 'nullable|string',
             ]);
@@ -107,6 +143,7 @@ class DocumentController extends Controller
                 'document_type' => 'sometimes|string',
                 'particulars' => 'sometimes|required|string',
                 'source' => 'sometimes|required|string',
+                'sb_no' => 'nullable|string',
                 'status' => 'sometimes|string|in:created,forwarded,pending,finalized',
                 'remarks' => 'nullable|string',
                 'user_id' => 'nullable|exists:users,id',
@@ -241,7 +278,7 @@ class DocumentController extends Controller
                     $forwardedAt = new \DateTime($lastForwardTransaction->created_at);
                     $now = new \DateTime();
                     $interval = $forwardedAt->diff($now);
-                    $durationHours = ($interval->days * 24) + $interval->h;
+                    $durationHours = ($interval->days * 24) + $interval->h + ($interval->i / 60);
                 }
                 // Check if it was forwarded to a municipality
                 elseif ($lastForwardTransaction->forwarded_to_municipality_id) {
@@ -251,7 +288,8 @@ class DocumentController extends Controller
                     // Calculate duration for office/municipality forwards
                     $forwardedAt = new \DateTime($lastForwardTransaction->created_at);
                     $now = new \DateTime();
-                    $durationHours = $this->calculateBusinessHours($forwardedAt, $now);
+                    $interval = $forwardedAt->diff($now);
+                    $durationHours = ($interval->days * 24) + $interval->h + ($interval->i / 60);
                 }
                 // Otherwise it was forwarded to a user - use the forwarder's name (the user_id from the transaction, not the recipient)
                 elseif ($lastForwardTransaction->forwarded_to_user_id) {
@@ -395,6 +433,118 @@ class DocumentController extends Controller
                 ->get();
             
             return response()->json($transactions);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Get checklist template for a document type
+     */
+    public function getChecklistTemplate($documentType): JsonResponse
+    {
+        try {
+            $template = \App\Models\DocumentChecklistTemplate::where('document_type', $documentType)
+                ->with(['items' => function ($query) {
+                    $query->orderBy('order', 'asc');
+                }])
+                ->first();
+            
+            if (!$template) {
+                return response()->json(['items' => []], 200);
+            }
+            
+            return response()->json($template);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Save checklist records for a document
+     */
+    public function saveChecklist(Request $request, $id): JsonResponse
+    {
+        try {
+            $user = auth()->user();
+            if (!$user) {
+                return response()->json(['error' => 'Unauthorized'], 401);
+            }
+
+            $document = Document::findOrFail($id);
+            
+            $validated = $request->validate([
+                'checklist_items' => 'required|array',
+                'checklist_items.*.checklist_item_id' => 'required|integer|exists:document_checklist_items,id',
+                'checklist_items.*.is_checked' => 'required|boolean',
+                'checklist_items.*.remarks' => 'nullable|string',
+                'checklist_items.*.signatories' => 'nullable|array',
+                'checklist_items.*.signatories.*.name' => 'required|string',
+                'checklist_items.*.signatories.*.is_checked' => 'required|boolean',
+                'checklist_items.*.signatories.*.acting_status' => 'nullable|string',
+            ]);
+
+            // Delete existing checklist records for this document (cascades to signatories)
+            $document->checklistRecords()->delete();
+
+            // Create new checklist records with signatories
+            foreach ($validated['checklist_items'] as $item) {
+                $checklistRecord = \App\Models\DocumentChecklistRecord::create([
+                    'document_id' => $document->id,
+                    'checklist_item_id' => $item['checklist_item_id'],
+                    'is_checked' => $item['is_checked'],
+                    'remarks' => $item['remarks'] ?? null,
+                ]);
+
+                // Create signatory records for this checklist item
+                if (!empty($item['signatories'])) {
+                    foreach ($item['signatories'] as $signatory) {
+                        \App\Models\DocumentChecklistSignatory::create([
+                            'checklist_record_id' => $checklistRecord->id,
+                            'signatory_name' => $signatory['name'],
+                            'is_signed' => $signatory['is_checked'],
+                            'acting_status' => $signatory['acting_status'] ?? null,
+                        ]);
+                    }
+                }
+            }
+
+            return response()->json(['message' => 'Checklist saved successfully'], 200);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Get existing checklist records for a document
+     */
+    public function getChecklistRecords($id): JsonResponse
+    {
+        try {
+            $document = Document::findOrFail($id);
+            
+            // Get checklist records with their signatories
+            $records = \App\Models\DocumentChecklistRecord::where('document_id', $document->id)
+                ->with(['checklistItem', 'signatories'])
+                ->get();
+            
+            // Transform records into the structure needed by the Vue component
+            $checklistData = $records->map(function ($record) {
+                return [
+                    'checklist_item_id' => $record->checklist_item_id,
+                    'is_checked' => $record->is_checked,
+                    'remarks' => $record->remarks ? json_decode($record->remarks, true) : [],
+                    'signatories' => $record->signatories->map(function ($signatory) {
+                        return [
+                            'name' => $signatory->signatory_name,
+                            'is_checked' => $signatory->is_signed,
+                            'acting_status' => $signatory->acting_status,
+                        ];
+                    })->toArray(),
+                ];
+            });
+            
+            return response()->json($checklistData);
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], 500);
         }
