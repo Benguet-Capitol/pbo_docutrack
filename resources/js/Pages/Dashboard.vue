@@ -3404,7 +3404,7 @@ const generateSummaryReport = async () => {
     </div>
     
     <p style="text-align: center; font-size: 12px; font-weight: bold; margin-bottom: 0;">SUMMARY OF LEAVES, TRAVEL ORDERS, PASS SLIPS AND TARDINESS/UNDERTIME</p>
-    <p style="text-align: center; font-size: 12px; margin-top: 0; margin-bottom: 20px;">As of ${summaryData.value.employmentType === 'casual' ? (summaryData.value.casualPeriod === '1-15' ? `${monthName} 1-15, ${currentYear}` : `${monthName} 16-${new Date(currentYear, summaryData.value.month!, 0).getDate()}, ${currentYear}`) : `${monthName} ${currentYear}`} (${summaryData.value.employmentType.charAt(0).toUpperCase() + summaryData.value.employmentType.slice(1).toLowerCase()})</p>
+    <p style="text-align: center; font-size: 12px; margin-top: 0; margin-bottom: 20px;">For the month of ${summaryData.value.employmentType === 'casual' ? (summaryData.value.casualPeriod === '1-15' ? `${monthName} 1-15, ${currentYear}` : `${monthName} 16-${new Date(currentYear, summaryData.value.month!, 0).getDate()}, ${currentYear}`) : `${monthName} ${currentYear}`} (${summaryData.value.employmentType.charAt(0).toUpperCase() + summaryData.value.employmentType.slice(1).toLowerCase()})</p>
     
     ${Array.from(employeeData.values()).length > 0 ? `
     <table>
