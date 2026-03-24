@@ -160,7 +160,7 @@
                             <i class="fas fa-calendar-alt text-blue-600"></i>
                             Leaves by Type
                         </h4>
-                        <div class="space-y-4">
+                        <div class="space-y-4 max-h-96 overflow-y-auto">
                             <div v-for="(data, type) in currentMonthLeavesByTypeWithEmployees" :key="type" class="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-200 dark:border-blue-800">
                                 <div class="flex items-center justify-between mb-3">
                                     <p class="font-semibold text-gray-900 dark:text-white">{{ type }}</p>
