@@ -2276,6 +2276,13 @@ const paginatedDocuments = computed(() => {
  */
 const forwardDocumentSourceType = computed(() => {
     if (!documentToForward.value) return null;
+    
+    // For Annual Budget and Supplemental Budget, allow forwarding to any type (office/municipality/user)
+    if (documentToForward.value.document_type === 'Annual Budget' || 
+        documentToForward.value.document_type === 'Supplemental Budget') {
+        return null;
+    }
+    
     const source = documentToForward.value.source;
     
     // Check if source is an office
