@@ -168,7 +168,12 @@
                                 </div>
                                 <div class="space-y-2">
                                     <div v-for="(entry, idx) in data.entries" :key="idx" class="bg-white dark:bg-gray-700 p-2 rounded border border-gray-200 dark:border-gray-600">
-                                        <p class="font-medium text-gray-900 dark:text-white text-sm">{{ entry.name }}</p>
+                                        <div class="flex items-center justify-between">
+                                            <p class="font-medium text-gray-900 dark:text-white text-sm">{{ entry.name }}</p>
+                                            <span v-if="entry.isHalfDay" class="inline-block px-2 py-0.5 bg-orange-100 dark:bg-orange-900 text-orange-800 dark:text-orange-200 rounded text-xs font-medium">
+                                                {{ entry.halfDayPeriod }}
+                                            </span>
+                                        </div>
                                         <p v-if="entry.dates" class="text-xs text-gray-600 dark:text-gray-400 mt-1">
                                             <i class="fas fa-calendar text-gray-400 mr-1"></i>
                                             {{ entry.dates }}
@@ -1600,7 +1605,7 @@ const currentMonthLeavesByType = computed(() => {
  * Get leaves grouped by type with employees and dates for current month
  */
 const currentMonthLeavesByTypeWithEmployees = computed(() => {
-    const grouped: Record<string, { count: number; entries: Array<{ name: string; dates: string }> }> = {};
+    const grouped: Record<string, { count: number; entries: Array<{ name: string; dates: string; isHalfDay: boolean; halfDayPeriod: string | null }> }> = {};
     currentMonthLeaves.value.forEach(leave => {
         const type = leave.type_of_leave;
         const empName = leave.employee?.name || 'Unknown Employee';
@@ -1623,7 +1628,12 @@ const currentMonthLeavesByTypeWithEmployees = computed(() => {
             grouped[type] = { count: 0, entries: [] };
         }
         grouped[type].count += 1;
-        grouped[type].entries.push({ name: empName, dates: datesStr });
+        grouped[type].entries.push({ 
+            name: empName, 
+            dates: datesStr,
+            isHalfDay: leave.is_half_day || false,
+            halfDayPeriod: leave.half_day_period || null
+        });
     });
     
     // Sort entries alphabetically by employee name within each type
@@ -1809,6 +1819,11 @@ const uniqueLeaveTypes = computed(() => {
  * @returns Number of business days (weekdays only)
  */
 const getLeaveBusinessDays = (leave: any): number => {
+    // If it's a half-day leave, count as 0.5
+    if (leave.is_half_day === true) {
+        return 0.5;
+    }
+    
     // If number_of_working_days_applied_for is available, use it
     if (leave.number_of_working_days_applied_for && leave.number_of_working_days_applied_for > 0) {
         return leave.number_of_working_days_applied_for;
@@ -3534,7 +3549,11 @@ const generateSummaryReport = async () => {
                         
                         // Leave columns
                         html += '<td style="text-align: center; padding: 4px 3px; width: 10%; font-size: 11px;">' + (leave ? leave.type_of_leave : '') + '</td>';
-                        const inclusiveDates = leave && leave.inclusive_dates ? formatInclusiveDatesToString(leave.inclusive_dates) : '';
+                        let inclusiveDates = leave && leave.inclusive_dates ? formatInclusiveDatesToString(leave.inclusive_dates) : '';
+                        // Append AM/PM for half-day leaves
+                        if (leave && leave.is_half_day && leave.half_day_period) {
+                            inclusiveDates += ' (' + leave.half_day_period + ')';
+                        }
                         html += '<td style="text-align: center; padding: 4px 3px; width: 8%; font-size: 11px;">' + inclusiveDates + '</td>';
                         
                         // Travel order columns

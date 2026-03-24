@@ -13,6 +13,8 @@ class Leave extends Model
         'date_of_filing',
         'type_of_leave',
         'number_of_working_days_applied_for',
+        'is_half_day',
+        'half_day_period',
         'inclusive_dates',
         'off_days',
         'within_philippines',
@@ -27,6 +29,7 @@ class Leave extends Model
         'inclusive_dates' => 'array',
         'off_days' => 'array',
         'date_of_filing' => 'date:Y-m-d',
+        'is_half_day' => 'boolean',
     ];
 
     public function employee(): BelongsTo

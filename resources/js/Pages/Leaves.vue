@@ -20,6 +20,8 @@ interface Leave {
     date_of_filing: string;
     type_of_leave: string;
     number_of_working_days_applied_for: number;
+    is_half_day: boolean;
+    half_day_period: string | null;
     inclusive_dates: string[];
     off_days: string[];
     within_philippines: boolean | null;
@@ -59,6 +61,8 @@ const formData = ref({
     date_of_filing: '',
     type_of_leave: 'Vacation Leave',
     number_of_working_days_applied_for: 1,
+    is_half_day: false,
+    half_day_period: '',
     inclusive_dates: [] as string[],
     off_days: [] as string[],
     within_philippines: true,
@@ -316,6 +320,8 @@ const openCreateModal = () => {
         date_of_filing: today,
         type_of_leave: 'Vacation Leave',
         number_of_working_days_applied_for: 1,
+        is_half_day: false,
+        half_day_period: '',
         inclusive_dates: [],
         off_days: [],
         within_philippines: true,
@@ -345,6 +351,8 @@ const openEditModal = (leave: Leave) => {
         date_of_filing: formatDateForInput(leave.date_of_filing),
         type_of_leave: leave.type_of_leave,
         number_of_working_days_applied_for: leave.number_of_working_days_applied_for,
+        is_half_day: leave.is_half_day || false,
+        half_day_period: leave.half_day_period || '',
         inclusive_dates: [...leave.inclusive_dates],
         off_days: [...(leave.off_days || [])],
         within_philippines: leave.within_philippines === true || leave.within_philippines === 1 || leave.within_philippines === "1",
@@ -457,6 +465,8 @@ const createLeave = async () => {
                 date_of_filing: formData.value.date_of_filing,
                 type_of_leave: formData.value.type_of_leave,
                 number_of_working_days_applied_for: formData.value.number_of_working_days_applied_for,
+                is_half_day: formData.value.is_half_day,
+                half_day_period: formData.value.is_half_day ? formData.value.half_day_period : null,
                 inclusive_dates: formData.value.inclusive_dates,
                 off_days: formData.value.off_days.length > 0 ? formData.value.off_days : null,
                 within_philippines: ['Vacation Leave', 'Special Privilege Leave', 'Wellness Leave'].includes(formData.value.type_of_leave) ? formData.value.within_philippines : null,
@@ -518,6 +528,8 @@ const updateLeave = async () => {
                 date_of_filing: formData.value.date_of_filing,
                 type_of_leave: formData.value.type_of_leave,
                 number_of_working_days_applied_for: formData.value.number_of_working_days_applied_for,
+                is_half_day: formData.value.is_half_day,
+                half_day_period: formData.value.is_half_day ? formData.value.half_day_period : null,
                 inclusive_dates: formData.value.inclusive_dates,
                 off_days: formData.value.off_days.length > 0 ? formData.value.off_days : null,
                 within_philippines: ['Vacation Leave', 'Special Privilege Leave', 'Wellness Leave'].includes(formData.value.type_of_leave) ? formData.value.within_philippines : null,
@@ -721,7 +733,14 @@ onMounted(() => {
                                         {{ leave.type_of_leave }}
                                     </span>
                                 </td>
-                                <td class="px-6 py-3 text-xs text-gray-700 dark:text-gray-300">{{ leave.number_of_working_days_applied_for }}</td>
+                                <td class="px-6 py-3 text-xs text-gray-700 dark:text-gray-300">
+                                    <div class="flex flex-col gap-1">
+                                        <span>{{ leave.number_of_working_days_applied_for }}</span>
+                                        <span v-if="leave.is_half_day" class="inline-block px-2 py-0.5 bg-orange-100 dark:bg-orange-900 text-orange-800 dark:text-orange-200 rounded text-xs font-medium">
+                                            {{ leave.half_day_period }}
+                                        </span>
+                                    </div>
+                                </td>
                                 <td class="px-6 py-3 text-xs">
                                     <div class="flex flex-col gap-1">
                                         <span v-for="(date, idx) in leave.inclusive_dates" :key="idx" class="text-gray-600 dark:text-gray-400">
@@ -825,7 +844,37 @@ onMounted(() => {
                                 <!-- Number of Working Days Applied For -->
                                 <div>
                                     <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Number of Working Days Applied For <span class="text-red-500">*</span></label>
-                                    <input v-model.number="formData.number_of_working_days_applied_for" type="number" min="1" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-xs dark:bg-gray-700 dark:text-white focus:outline-none focus:border-emerald-500 dark:focus:border-emerald-500" />
+                                    <input v-model.number="formData.number_of_working_days_applied_for" type="number" min="1" step="0.5" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-xs dark:bg-gray-700 dark:text-white focus:outline-none focus:border-emerald-500 dark:focus:border-emerald-500" />
+                                </div>
+
+                                <!-- Half Day Leave -->
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">Type of Leave Duration</label>
+                                    <div class="flex gap-4">
+                                        <label class="flex items-center gap-2">
+                                            <input v-model="formData.is_half_day" type="radio" :value="false" class="cursor-pointer" />
+                                            <span class="text-xs text-gray-700 dark:text-gray-300">Full Day</span>
+                                        </label>
+                                        <label class="flex items-center gap-2">
+                                            <input v-model="formData.is_half_day" type="radio" :value="true" class="cursor-pointer" />
+                                            <span class="text-xs text-gray-700 dark:text-gray-300">Half Day</span>
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <!-- Half Day Period (AM/PM) -->
+                                <div v-if="formData.is_half_day">
+                                    <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">Half Day Period <span class="text-red-500">*</span></label>
+                                    <div class="flex gap-4">
+                                        <label class="flex items-center gap-2">
+                                            <input v-model="formData.half_day_period" type="radio" value="AM" class="cursor-pointer" />
+                                            <span class="text-xs text-gray-700 dark:text-gray-300">Morning (AM)</span>
+                                        </label>
+                                        <label class="flex items-center gap-2">
+                                            <input v-model="formData.half_day_period" type="radio" value="PM" class="cursor-pointer" />
+                                            <span class="text-xs text-gray-700 dark:text-gray-300">Afternoon (PM)</span>
+                                        </label>
+                                    </div>
                                 </div>
 
                                 <!-- Inclusive Dates -->
@@ -1010,7 +1059,37 @@ onMounted(() => {
                                 <!-- Number of Working Days Applied For -->
                                 <div>
                                     <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Number of Working Days Applied For <span class="text-red-500">*</span></label>
-                                    <input v-model.number="formData.number_of_working_days_applied_for" type="number" min="1" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-xs dark:bg-gray-700 dark:text-white focus:outline-none focus:border-blue-500 dark:focus:border-blue-500" />
+                                    <input v-model.number="formData.number_of_working_days_applied_for" type="number" min="1" step="0.5" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-xs dark:bg-gray-700 dark:text-white focus:outline-none focus:border-blue-500 dark:focus:border-blue-500" />
+                                </div>
+
+                                <!-- Half Day Leave -->
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">Type of Leave Duration</label>
+                                    <div class="flex gap-4">
+                                        <label class="flex items-center gap-2">
+                                            <input v-model="formData.is_half_day" type="radio" :value="false" class="cursor-pointer" />
+                                            <span class="text-xs text-gray-700 dark:text-gray-300">Full Day</span>
+                                        </label>
+                                        <label class="flex items-center gap-2">
+                                            <input v-model="formData.is_half_day" type="radio" :value="true" class="cursor-pointer" />
+                                            <span class="text-xs text-gray-700 dark:text-gray-300">Half Day</span>
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <!-- Half Day Period (AM/PM) -->
+                                <div v-if="formData.is_half_day">
+                                    <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">Half Day Period <span class="text-red-500">*</span></label>
+                                    <div class="flex gap-4">
+                                        <label class="flex items-center gap-2">
+                                            <input v-model="formData.half_day_period" type="radio" value="AM" class="cursor-pointer" />
+                                            <span class="text-xs text-gray-700 dark:text-gray-300">Morning (AM)</span>
+                                        </label>
+                                        <label class="flex items-center gap-2">
+                                            <input v-model="formData.half_day_period" type="radio" value="PM" class="cursor-pointer" />
+                                            <span class="text-xs text-gray-700 dark:text-gray-300">Afternoon (PM)</span>
+                                        </label>
+                                    </div>
                                 </div>
 
                                 <!-- Inclusive Dates -->
