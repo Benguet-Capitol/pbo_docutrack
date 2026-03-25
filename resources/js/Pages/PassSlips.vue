@@ -281,6 +281,26 @@
                                 <span v-if="formErrors.date" class="text-red-500 text-xs">{{ formErrors.date }}</span>
                             </div>
 
+                            <!-- Requesting Employees Field -->
+                            <div class="space-y-2">
+                                <label for="create_employees" class="block text-xs font-medium text-gray-700 dark:text-gray-300">Requesting Employee(s) <span class="text-red-600">*</span></label>
+                                <div class="space-y-2">
+                                    <div class="border border-gray-300 dark:border-gray-600 rounded-lg p-3 max-h-32 overflow-y-auto">
+                                        <div v-if="sortedEmployees.length === 0" class="text-xs text-gray-500 dark:text-gray-400 py-2">
+                                            No employees available
+                                        </div>
+                                        <label v-for="emp in sortedEmployees" :key="emp.id" class="flex items-center gap-2 py-1 cursor-pointer">
+                                            <input type="checkbox" :value="emp.id" v-model.number="formData.employee_ids" class="rounded border-gray-300 dark:border-gray-600 accent-emerald-600" />
+                                            <span class="text-xs text-gray-700 dark:text-gray-300">{{ emp.name }}</span>
+                                        </label>
+                                    </div>
+                                    <p v-if="formData.employee_ids.length > 0" class="text-xs text-gray-500 dark:text-gray-400">
+                                        {{ formData.employee_ids.length }} employee(s) selected
+                                    </p>
+                                </div>
+                                <span v-if="formErrors.employee_ids" class="text-red-500 text-xs">{{ formErrors.employee_ids }}</span>
+                            </div>
+
                             <!-- Requested Time Field -->
                             <div class="space-y-2">
                                 <label for="create_requested_time" class="block text-xs font-medium text-gray-700 dark:text-gray-300">Requested to Leave At <span class="text-red-600">*</span></label>
@@ -366,26 +386,6 @@
                                     </select>
                                 </div>
                                 <span v-if="formErrors.vehicle" class="text-red-500 text-xs">{{ formErrors.vehicle }}</span>
-                            </div>
-
-                            <!-- Requesting Employees Field -->
-                            <div class="space-y-2">
-                                <label for="create_employees" class="block text-xs font-medium text-gray-700 dark:text-gray-300">Requesting Employee(s) <span class="text-red-600">*</span></label>
-                                <div class="space-y-2">
-                                    <div class="border border-gray-300 dark:border-gray-600 rounded-lg p-3 max-h-32 overflow-y-auto">
-                                        <div v-if="sortedEmployees.length === 0" class="text-xs text-gray-500 dark:text-gray-400 py-2">
-                                            No employees available
-                                        </div>
-                                        <label v-for="emp in sortedEmployees" :key="emp.id" class="flex items-center gap-2 py-1 cursor-pointer">
-                                            <input type="checkbox" :value="emp.id" v-model.number="formData.employee_ids" class="rounded border-gray-300 dark:border-gray-600 accent-emerald-600" />
-                                            <span class="text-xs text-gray-700 dark:text-gray-300">{{ emp.name }}</span>
-                                        </label>
-                                    </div>
-                                    <p v-if="formData.employee_ids.length > 0" class="text-xs text-gray-500 dark:text-gray-400">
-                                        {{ formData.employee_ids.length }} employee(s) selected
-                                    </p>
-                                </div>
-                                <span v-if="formErrors.employee_ids" class="text-red-500 text-xs">{{ formErrors.employee_ids }}</span>
                             </div>
 
                             <!-- Recommending Approval Employee Field -->
@@ -525,7 +525,7 @@
                         </div>
 
                         <!-- Recommending Approval -->
-                        <div v-if="getRecommendingApprovalEmployee()" class="mb-6">
+                        <div v-if="getRecommendingApprovalEmployee() && !isProvincialBudgetOfficerRequesting()" class="mb-6">
                             <p class="text-xs text-gray-700 mb-8">Recommending Approval:</p>
                             <div class="space-y-8">
                                 <div class="w-96">
@@ -540,8 +540,10 @@
                         <div class="mb-6 flex justify-end pr-8">
                             <div class="w-96 text-center">
                                 <p class="text-xs text-left text-gray-900 mb-8">APPROVED:</p>
-                                <p class="text-xs text-center text-gray-900 font-bold uppercase">{{ getProvincialBudgetOfficer() }}</p>
-                                <p class="text-xs text-center text-gray-700 border-b border-gray-400">Provincial Budget Officer</p>
+                                <p v-if="isProvincialBudgetOfficerRequesting() && getProvincialGovernor()" class="text-xs text-center text-gray-900 font-bold uppercase">{{ getProvincialGovernor().name }}</p>
+                                <p v-else class="text-xs text-center text-gray-900 font-bold uppercase">{{ getProvincialBudgetOfficer() }}</p>
+                                <p v-if="isProvincialBudgetOfficerRequesting() && getProvincialGovernor()" class="text-xs text-center text-gray-700 border-b border-gray-400">Provincial Governor</p>
+                                <p v-else class="text-xs text-center text-gray-700 border-b border-gray-400">Provincial Budget Officer</p>
                                 <p class="text-xs text-center text-gray-700">Department Head</p>
                             </div>
                         </div>
@@ -636,7 +638,7 @@
                         </div>
 
                         <!-- Recommending Approval -->
-                        <div v-if="getRecommendingApprovalEmployee()" class="mb-6">
+                        <div v-if="getRecommendingApprovalEmployee() && !isProvincialBudgetOfficerRequesting()" class="mb-6">
                             <p class="text-xs text-gray-700 mb-8">Recommending Approval:</p>
                             <div class="space-y-8">
                                 <div class="w-96">
@@ -651,8 +653,10 @@
                         <div class="mb-6 flex justify-end pr-8">
                             <div class="w-96 text-center">
                                 <p class="text-xs text-left text-gray-900 mb-8">APPROVED:</p>
-                                <p class="text-xs text-center text-gray-900 font-bold uppercase">{{ getProvincialBudgetOfficer() }}</p>
-                                <p class="text-xs text-center text-gray-700 border-b border-gray-400">Provincial Budget Officer</p>
+                                <p v-if="isProvincialBudgetOfficerRequesting() && getProvincialGovernor()" class="text-xs text-center text-gray-900 font-bold uppercase">{{ getProvincialGovernor().name }}</p>
+                                <p v-else class="text-xs text-center text-gray-900 font-bold uppercase">{{ getProvincialBudgetOfficer() }}</p>
+                                <p v-if="isProvincialBudgetOfficerRequesting() && getProvincialGovernor()" class="text-xs text-center text-gray-700 border-b border-gray-400">Provincial Governor</p>
+                                <p v-else class="text-xs text-center text-gray-700 border-b border-gray-400">Provincial Budget Officer</p>
                                 <p class="text-xs text-center text-gray-700">Department Head</p>
                             </div>
                         </div>
@@ -728,6 +732,26 @@
                                     <input v-model="formData.date" id="edit_date" type="date" disabled class="block w-full pl-10 pr-4 py-2 text-xs border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:outline-none transition-colors opacity-75 cursor-not-allowed bg-gray-100 dark:bg-gray-600 border-gray-300" />
                                 </div>
                                 <span v-if="formErrors.date" class="text-red-500 text-xs">{{ formErrors.date }}</span>
+                            </div>
+
+                            <!-- Requesting Employees Field -->
+                            <div class="space-y-2">
+                                <label for="edit_employees" class="block text-xs font-medium text-gray-700 dark:text-gray-300">Requesting Employee(s) <span class="text-red-600">*</span></label>
+                                <div class="space-y-2">
+                                    <div class="border border-gray-300 dark:border-gray-600 rounded-lg p-3 max-h-32 overflow-y-auto">
+                                        <div v-if="sortedEmployees.length === 0" class="text-xs text-gray-500 dark:text-gray-400 py-2">
+                                            No employees available
+                                        </div>
+                                        <label v-for="emp in sortedEmployees" :key="emp.id" class="flex items-center gap-2 py-1 cursor-pointer">
+                                            <input type="checkbox" :value="emp.id" v-model.number="formData.employee_ids" class="rounded border-gray-300 dark:border-gray-600 accent-blue-600" />
+                                            <span class="text-xs text-gray-700 dark:text-gray-300">{{ emp.name }}</span>
+                                        </label>
+                                    </div>
+                                    <p v-if="formData.employee_ids.length > 0" class="text-xs text-gray-500 dark:text-gray-400">
+                                        {{ formData.employee_ids.length }} employee(s) selected
+                                    </p>
+                                </div>
+                                <span v-if="formErrors.employee_ids" class="text-red-500 text-xs">{{ formErrors.employee_ids }}</span>
                             </div>
 
                             <!-- Requested Time Field -->
@@ -815,26 +839,6 @@
                                     </select>
                                 </div>
                                 <span v-if="formErrors.vehicle" class="text-red-500 text-xs">{{ formErrors.vehicle }}</span>
-                            </div>
-
-                            <!-- Requesting Employees Field -->
-                            <div class="space-y-2">
-                                <label for="edit_employees" class="block text-xs font-medium text-gray-700 dark:text-gray-300">Requesting Employee(s) <span class="text-red-600">*</span></label>
-                                <div class="space-y-2">
-                                    <div class="border border-gray-300 dark:border-gray-600 rounded-lg p-3 max-h-32 overflow-y-auto">
-                                        <div v-if="sortedEmployees.length === 0" class="text-xs text-gray-500 dark:text-gray-400 py-2">
-                                            No employees available
-                                        </div>
-                                        <label v-for="emp in sortedEmployees" :key="emp.id" class="flex items-center gap-2 py-1 cursor-pointer">
-                                            <input type="checkbox" :value="emp.id" v-model.number="formData.employee_ids" class="rounded border-gray-300 dark:border-gray-600 accent-blue-600" />
-                                            <span class="text-xs text-gray-700 dark:text-gray-300">{{ emp.name }}</span>
-                                        </label>
-                                    </div>
-                                    <p v-if="formData.employee_ids.length > 0" class="text-xs text-gray-500 dark:text-gray-400">
-                                        {{ formData.employee_ids.length }} employee(s) selected
-                                    </p>
-                                </div>
-                                <span v-if="formErrors.employee_ids" class="text-red-500 text-xs">{{ formErrors.employee_ids }}</span>
                             </div>
 
                             <!-- Recommending Approval Employee Field -->
@@ -949,6 +953,7 @@ interface Employee {
     id: number;
     name: string;
     office_id: number;
+    designation?: string;
     office?: {
         id: number;
         name: string;
@@ -964,6 +969,7 @@ interface PassSlip {
     location: string;
     expected_return_time: string;
     remarks: string | null;
+    vehicle?: string;
     employees: Employee[];
     recommending_approval_employee_id: number | null;
     created_at: string;
@@ -1241,11 +1247,20 @@ const getRecommendingApprovalEmployee = () => {
     return employees.value.find(emp => emp.id === formData.value.recommending_approval_employee_id) || null;
 };
 
-/**
- * Print the pass slip preview
- */
-const printPassSlip = () => {
-    window.print();
+const getProvincialGovernor = (): Employee | null => {
+    return employees.value.find((emp: Employee) => emp.designation === 'Provincial Governor') || null;
+};
+
+const getProvincialBudgetOfficer = (): string => {
+    const pbo = employees.value.find((emp: Employee) => emp.designation === 'Provincial Budget Officer');
+    return pbo ? pbo.name : '-';
+};
+
+const isProvincialBudgetOfficerRequesting = (): boolean => {
+    return formData.value.employee_ids.some(empId => {
+        const emp = employees.value.find(e => e.id === empId);
+        return emp?.designation === 'Provincial Budget Officer';
+    });
 };
 
 const validateForm = (): boolean => {
@@ -1308,6 +1323,16 @@ watch(() => formData.value.date, (newDate) => {
         formData.value.control_no = generateControlNo(newDate);
     }
 });
+
+// Watch for changes to employee_ids and auto-set recommending approval when PBO is selected
+watch(() => formData.value.employee_ids, (newEmployeeIds) => {
+    if (isProvincialBudgetOfficerRequesting()) {
+        const pgov = getProvincialGovernor();
+        if (pgov) {
+            formData.value.recommending_approval_employee_id = pgov.id;
+        }
+    }
+}, { deep: true });
 
 const submitCreateForm = async () => {
     if (!validateForm()) return;
@@ -1460,7 +1485,7 @@ const handleEditPassSlip = (slip: PassSlip) => {
         employee_ids: slip.employees.map(emp => emp.id),
         returnType: returnType,
         recommending_approval_employee_id: slip.recommending_approval_employee_id || null,
-        vehicle: slip.vehicle || 'RP Vehicle',
+        vehicle: (slip.vehicle || 'RP Vehicle') as 'RP Vehicle' | 'PUJ',
     };
     formErrors.value = {};
     showEditModal.value = true;
@@ -1579,9 +1604,11 @@ const showToast = (message: string, type: 'success' | 'error' = 'success') => {
     }
 };
 
-const getProvincialBudgetOfficer = (): string => {
-    const pbo = employees.value.find((emp: Employee) => emp.designation === 'Provincial Budget Officer');
-    return pbo ? pbo.name : '-';
+/**
+ * Print the pass slip preview
+ */
+const printPassSlip = () => {
+    window.print();
 };
 
 onMounted(() => {
