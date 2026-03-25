@@ -134,32 +134,32 @@
                         <!-- Table Body -->
                         <tbody>
                             <tr v-for="slip in paginatedPassSlips" :key="slip.id" class="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
-                                <td class="px-6 py-4 text-xs text-gray-900 dark:text-gray-100 font-semibold">
+                                <td class="px-4 py-2 text-xs text-gray-900 dark:text-gray-100 font-semibold">
                                     {{ slip.control_no }}
                                 </td>
-                                <td class="px-6 py-4 text-xs text-gray-600 dark:text-gray-400">
+                                <td class="px-4 py-2 text-xs text-gray-600 dark:text-gray-400">
                                     {{ formatDate(slip.date) }}
                                 </td>
-                                <td class="px-6 py-4 text-xs text-gray-600 dark:text-gray-400">
+                                <td class="px-4 py-2 text-xs text-gray-600 dark:text-gray-400">
                                     {{ formatTime(slip.requested_time) }}
                                 </td>
-                                <td class="px-6 py-4 text-xs text-gray-600 dark:text-gray-400">
+                                <td class="px-4 py-2 text-xs text-gray-600 dark:text-gray-400">
                                     {{ slip.purpose }}
                                 </td>
-                                <td class="px-6 py-4 text-xs text-gray-600 dark:text-gray-400">
+                                <td class="px-4 py-2 text-xs text-gray-600 dark:text-gray-400">
                                     {{ slip.location }}
                                 </td>
-                                <td class="px-6 py-4 text-xs text-gray-600 dark:text-gray-400">
+                                <td class="px-4 py-2 text-xs text-gray-600 dark:text-gray-400">
                                     {{ formatTime(slip.expected_return_time) }}
                                 </td>
-                                <td class="px-6 py-4 text-xs">
+                                <td class="px-4 py-2 text-xs">
                                     <div class="flex gap-1 flex-wrap">
                                         <span v-for="emp in slip.employees" :key="emp.id" class="inline-block px-2 py-1 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-300 rounded-full text-xs font-medium">
                                             {{ emp.name }}
                                         </span>
                                     </div>
                                 </td>
-                                <td class="px-6 py-4 text-xs">
+                                <td class="px-4 py-2 text-xs">
                                     <div class="flex items-center justify-center gap-2">
                                         <!-- Edit Button: Visible if user has permission -->
                                         <button 

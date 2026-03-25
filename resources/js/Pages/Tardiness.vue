@@ -109,13 +109,13 @@
                         </thead>
                         <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
                             <tr v-for="record in paginatedTardiness" :key="record.id" class="bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                                <td class="px-6 py-3 text-xs text-gray-900 dark:text-gray-100 font-semibold">
+                                <td class="px-4 py-2 text-xs text-gray-900 dark:text-gray-100 font-semibold">
                                     {{ record.control_no }}
                                 </td>
-                                <td class="px-6 py-3 text-xs text-gray-600 dark:text-gray-400">
+                                <td class="px-4 py-2 text-xs text-gray-600 dark:text-gray-400">
                                     {{ formatDate(record.date_filed) }}
                                 </td>
-                                <td class="px-6 py-3 text-xs">
+                                <td class="px-4 py-2 text-xs">
                                     <span :class="[
                                         'px-2 py-1 rounded-full text-xs font-medium',
                                         record.type === 'Tardiness' 
@@ -125,22 +125,22 @@
                                         {{ record.type }}
                                     </span>
                                 </td>
-                                <td class="px-6 py-3 text-xs text-gray-600 dark:text-gray-400">
+                                <td class="px-4 py-2 text-xs text-gray-600 dark:text-gray-400">
                                     {{ record.employee?.name || 'N/A' }}
                                 </td>
-                                <td class="px-6 py-3 text-xs text-gray-600 dark:text-gray-400">
+                                <td class="px-4 py-2 text-xs text-gray-600 dark:text-gray-400">
                                     {{ formatDate(record.requested_date) }}
                                 </td>
-                                <td class="px-6 py-3 text-xs text-gray-600 dark:text-gray-400">
+                                <td class="px-4 py-2 text-xs text-gray-600 dark:text-gray-400">
                                     {{ formatTime(record.requested_time) }}
                                 </td>
-                                <td class="px-6 py-3 text-xs text-gray-600 dark:text-gray-400">
+                                <td class="px-4 py-2 text-xs text-gray-600 dark:text-gray-400">
                                     {{ record.return_time ? formatTime(record.return_time) : 'N/A' }}
                                 </td>
-                                <td class="px-6 py-3 text-xs text-gray-600 dark:text-gray-400 truncate" :title="record.reason">
+                                <td class="px-4 py-2 text-xs text-gray-600 dark:text-gray-400 truncate" :title="record.reason">
                                     {{ record.reason }}
                                 </td>
-                                <td class="px-6 py-3 text-xs text-center">
+                                <td class="px-4 py-2 text-xs text-center">
                                     <div class="flex items-center justify-center gap-2">
                                         <button 
                                             v-if="hasPermission('tardiness.edit')" 

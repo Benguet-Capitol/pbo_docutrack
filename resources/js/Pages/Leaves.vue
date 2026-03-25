@@ -725,15 +725,15 @@ onMounted(() => {
                         </thead>
                         <tbody>
                             <tr v-for="leave in paginatedLeaves" :key="leave.id" class="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                                <td class="px-6 py-3 text-xs font-semibold text-gray-900 dark:text-gray-100">{{ leave.control_no }}</td>
-                                <td class="px-6 py-3 text-xs text-gray-600 dark:text-gray-400">{{ formatDateForDisplay(leave.date_of_filing) }}</td>
-                                <td class="px-6 py-3 text-xs text-gray-700 dark:text-gray-300">{{ leave.employee.name }}</td>
-                                <td class="px-6 py-3 text-xs">
+                                <td class="px-4 py-2 text-xs font-semibold text-gray-900 dark:text-gray-100">{{ leave.control_no }}</td>
+                                <td class="px-4 py-2 text-xs text-gray-600 dark:text-gray-400">{{ formatDateForDisplay(leave.date_of_filing) }}</td>
+                                <td class="px-4 py-2 text-xs text-gray-700 dark:text-gray-300">{{ leave.employee.name }}</td>
+                                <td class="px-4 py-2 text-xs">
                                     <span class="inline-block px-2 py-1 bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 rounded text-xs">
                                         {{ leave.type_of_leave }}
                                     </span>
                                 </td>
-                                <td class="px-6 py-3 text-xs text-gray-700 dark:text-gray-300">
+                                <td class="px-4 py-2 text-xs text-gray-700 dark:text-gray-300">
                                     <div class="flex flex-col gap-1">
                                         <span>{{ leave.number_of_working_days_applied_for }}</span>
                                         <span v-if="leave.is_half_day" class="inline-block px-2 py-0.5 bg-orange-100 dark:bg-orange-900 text-orange-800 dark:text-orange-200 rounded text-xs font-medium">
@@ -741,14 +741,14 @@ onMounted(() => {
                                         </span>
                                     </div>
                                 </td>
-                                <td class="px-6 py-3 text-xs">
+                                <td class="px-4 py-2 text-xs">
                                     <div class="flex flex-col gap-1">
                                         <span v-for="(date, idx) in leave.inclusive_dates" :key="idx" class="text-gray-600 dark:text-gray-400">
                                             {{ formatInclusiveDate(date) }}
                                         </span>
                                     </div>
                                 </td>
-                                <td class="px-6 py-3 text-xs text-center">
+                                <td class="px-4 py-2 text-xs text-center">
                                     <div class="flex items-center justify-center gap-2">
                                         <!-- Edit Button -->
                                         <button

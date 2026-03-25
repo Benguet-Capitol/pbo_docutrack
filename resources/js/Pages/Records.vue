@@ -228,12 +228,12 @@
                         <!-- Table Body -->
                         <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
                             <tr v-for="record in paginatedRecords" :key="record.id" class="bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                                <td class="px-6 py-3 text-xs font-medium text-gray-900 dark:text-gray-100">{{ record.record_no }}</td>
-                                <td class="px-6 py-3 text-xs text-gray-600 dark:text-gray-400">{{ new Date(record.created_at).toLocaleDateString() }}</td>
-                                <td class="px-6 py-3 text-xs text-gray-600 dark:text-gray-400">{{ record.record_subtype || '-' }}</td>
-                                <td class="px-6 py-3 text-xs text-gray-700 dark:text-gray-300">{{ record.title }}</td>
-                                <td class="px-6 py-3 text-xs text-gray-700 dark:text-gray-300">{{ record.remarks || '-' }}</td>
-                                <td class="px-6 py-3 text-xs">
+                                <td class="px-4 py-2 text-xs font-medium text-gray-900 dark:text-gray-100">{{ record.record_no }}</td>
+                                <td class="px-4 py-2 text-xs text-gray-600 dark:text-gray-400">{{ new Date(record.created_at).toLocaleDateString() }}</td>
+                                <td class="px-4 py-2 text-xs text-gray-600 dark:text-gray-400">{{ record.record_subtype || '-' }}</td>
+                                <td class="px-4 py-2 text-xs text-gray-700 dark:text-gray-300">{{ record.title }}</td>
+                                <td class="px-4 py-2 text-xs text-gray-700 dark:text-gray-300">{{ record.remarks || '-' }}</td>
+                                <td class="px-4 py-2 text-xs">
                                     <div v-if="record.file_size" class="flex flex-col gap-1">
                                         <span class="inline-block px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 rounded font-medium">
                                             {{ record.file_extension || 'FILE' }}
@@ -242,7 +242,7 @@
                                     </div>
                                     <span v-else class="text-gray-400 dark:text-gray-500">-</span>
                                 </td>
-                                <td class="px-6 py-3 text-xs text-center">
+                                <td class="px-4 py-2 text-xs text-center">
                                     <div class="flex items-center justify-center gap-2">
                                         <!-- View Button: Visible if file exists -->
                                         <button 
