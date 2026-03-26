@@ -33,7 +33,7 @@ class PassSlipController extends Controller
         try {
             // Validate input
             $validated = $request->validate([                
-                'control_no' => 'required|string|unique:pass_slips,control_no',                
+                'control_no' => 'required|string|unique:pass_slips,control_no',
                 'date' => 'required|date',
                 'requested_time' => 'required|date_format:H:i',
                 'purpose' => 'required|string|max:255',

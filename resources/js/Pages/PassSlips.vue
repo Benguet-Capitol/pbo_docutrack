@@ -491,10 +491,10 @@
                         <!-- Main Content -->
                         <div class="mb-8 text-xs leading-relaxed text-gray-900">
                             <p class="mb-4">
-                                Permission is respectfully requested to leave at <span class="border-b border-gray-400 w-24 inline-block text-center">{{ formatTimeDisplay(formData.requested_time) }}</span> 
-                                on <span class="border-b border-gray-400 w-36 inline-block text-center">{{ new Date(formData.date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) }}</span> 
-                                to <span class="border-b border-gray-400 w-[560px] inline-block text-center">{{ formData.purpose }}</span> 
-                                at the <span class="border-b border-gray-400 w-96 inline-block text-center">{{ formData.location }}</span>.
+                                Permission is respectfully requested to leave at <span class="border-b border-gray-400 w-24 inline-block text-center font-semibold">{{ formatTimeDisplay(formData.requested_time) }}</span> 
+                                on <span class="border-b border-gray-400 w-36 inline-block text-center font-semibold">{{ new Date(formData.date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) }}</span> 
+                                to <span class="border-b border-gray-400 w-[560px] inline-block text-center font-semibold">{{ formData.purpose }}</span> 
+                                at the <span class="border-b border-gray-400 w-96 inline-block text-center font-semibold">{{ formData.location }}</span>.
                             </p>
                             
                             <div class="ml-4 space-y-1">
@@ -604,10 +604,10 @@
                         <!-- Main Content -->
                         <div class="mb-8 text-xs leading-relaxed text-gray-900">
                             <p class="mb-4">
-                                Permission is respectfully requested to leave at <span class="border-b border-gray-400 w-24 inline-block text-center">{{ formatTimeDisplay(formData.requested_time) }}</span> 
-                                on <span class="border-b border-gray-400 w-36 inline-block text-center">{{ new Date(formData.date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) }}</span> 
-                                to <span class="border-b border-gray-400 w-[560px] inline-block text-center">{{ formData.purpose }}</span> 
-                                at the <span class="border-b border-gray-400 w-96 inline-block text-center">{{ formData.location }}</span>.
+                                Permission is respectfully requested to leave at <span class="border-b border-gray-400 w-24 inline-block text-center font-semibold">{{ formatTimeDisplay(formData.requested_time) }}</span> 
+                                on <span class="border-b border-gray-400 w-36 inline-block text-center font-semibold">{{ new Date(formData.date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) }}</span> 
+                                to <span class="border-b border-gray-400 w-[560px] inline-block text-center font-semibold">{{ formData.purpose }}</span> 
+                                at the <span class="border-b border-gray-400 w-96 inline-block text-center font-semibold">{{ formData.location }}</span>.
                             </p>
                             
                             <div class="ml-4 space-y-1">

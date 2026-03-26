@@ -17,6 +17,7 @@ class Tardiness extends Model
         'requested_time',
         'reason',
         'return_time',
+        'supervisor_employee_id',
     ];
 
     protected $casts = [
@@ -31,5 +32,13 @@ class Tardiness extends Model
     public function employee()
     {
         return $this->belongsTo(Employee::class);
+    }
+
+    /**
+     * Get the supervisor associated with this tardiness record
+     */
+    public function supervisor()
+    {
+        return $this->belongsTo(Employee::class, 'supervisor_employee_id');
     }
 }

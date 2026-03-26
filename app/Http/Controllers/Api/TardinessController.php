@@ -43,6 +43,7 @@ class TardinessController extends Controller
                 'requested_time' => 'required|date_format:H:i',
                 'reason' => 'required|string|max:500',
                 'return_time' => 'nullable|string',
+                'supervisor_employee_id' => 'nullable|integer|exists:employees,id',
             ]);
 
             $tardiness = Tardiness::create($validated);
@@ -97,6 +98,7 @@ class TardinessController extends Controller
                 'requested_time' => 'required|date_format:H:i',
                 'reason' => 'required|string|max:500',
                 'return_time' => 'nullable|string',
+                'supervisor_employee_id' => 'nullable|integer|exists:employees,id',
             ]);
 
             $tardiness->update($validated);

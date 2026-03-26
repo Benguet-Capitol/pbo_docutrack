@@ -137,7 +137,7 @@
                                 <td class="px-4 py-2 text-xs text-gray-600 dark:text-gray-400">
                                     {{ record.return_time ? formatTime(record.return_time) : 'N/A' }}
                                 </td>
-                                <td class="px-4 py-2 text-xs text-gray-600 dark:text-gray-400 truncate" :title="record.reason">
+                                <td class="px-4 py-2 text-xs text-gray-600 dark:text-gray-400" :title="record.reason">
                                     {{ record.reason }}
                                 </td>
                                 <td class="px-4 py-2 text-xs text-center">
@@ -343,6 +343,27 @@
                                     class="block w-full px-4 py-2 text-xs border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:outline-none focus:border-emerald-500 mt-2 transition-colors"
                                 />
                             </div>
+
+                            <!-- Supervisor Field -->
+                            <div class="space-y-2">
+                                <label for="create_supervisor" class="block text-xs font-medium text-gray-700 dark:text-gray-300">Supervisor</label>
+                                <div class="relative flex items-center">
+                                    <i class="fas fa-user-check absolute left-3 text-gray-400 text-sm pointer-events-none"></i>
+                                    <select
+                                        :value="formData.supervisor_employee_id"
+                                        @change="(e) => { formData.supervisor_employee_id = (e.target as HTMLSelectElement).value ? Number((e.target as HTMLSelectElement).value) : null }"
+                                        id="create_supervisor"
+                                        class="block w-full pl-10 pr-4 py-2 text-xs border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:outline-none transition-colors"
+                                        :class="[formErrors.supervisor_employee_id ? 'border-red-500 focus:border-red-500' : 'border-gray-300 focus:border-emerald-500']"
+                                    >
+                                        <option :value="null">Select a supervisor</option>
+                                        <option v-for="emp in sortedEmployees" :key="emp.id" :value="emp.id">
+                                            {{ emp.name }}
+                                        </option>
+                                    </select>
+                                </div>
+                                <span v-if="formErrors.supervisor_employee_id" class="text-red-500 text-xs">{{ formErrors.supervisor_employee_id }}</span>
+                            </div>
                         </div>
                     </div>
 
@@ -350,8 +371,8 @@
                     <div class="flex items-center justify-center gap-3 p-6 border-t-2 border-gray-200 rounded-b-lg dark:border-gray-600 bg-gray-50 dark:bg-gray-800">
                         <button @click="submitCreateForm" :disabled="creating" class="inline-flex items-center gap-2 px-5 py-3 text-xs font-medium text-white bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-700 dark:hover:bg-emerald-800 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed">
                             <i v-if="creating" class="fas fa-spinner fa-spin"></i>
-                            <i v-else class="fas fa-check"></i>
-                            {{ creating ? 'Creating...' : 'Create' }}
+                            <i v-else class="fas fa-eye"></i>
+                            {{ creating ? 'Loading...' : 'Preview & Continue' }}
                         </button>
                         <button @click="closeCreateModal" class="inline-flex items-center gap-2 px-5 py-3 text-xs font-medium text-gray-600 dark:text-gray-400 border border-gray-600 dark:border-gray-500 hover:text-white hover:bg-gray-600 dark:hover:bg-gray-600 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95">
                             <i class="fas fa-times"></i>
@@ -482,6 +503,27 @@
                                     class="block w-full px-4 py-2 text-xs border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:outline-none focus:border-blue-500 mt-2 transition-colors"
                                 />
                             </div>
+
+                            <!-- Supervisor Field -->
+                            <div class="space-y-2">
+                                <label for="edit_supervisor" class="block text-xs font-medium text-gray-700 dark:text-gray-300">Supervisor</label>
+                                <div class="relative flex items-center">
+                                    <i class="fas fa-user-check absolute left-3 text-gray-400 text-sm pointer-events-none"></i>
+                                    <select
+                                        :value="formData.supervisor_employee_id"
+                                        @change="(e) => { formData.supervisor_employee_id = (e.target as HTMLSelectElement).value ? Number((e.target as HTMLSelectElement).value) : null }"
+                                        id="edit_supervisor"
+                                        class="block w-full pl-10 pr-4 py-2 text-xs border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:outline-none transition-colors"
+                                        :class="[formErrors.supervisor_employee_id ? 'border-red-500 focus:border-red-500' : 'border-gray-300 focus:border-blue-500']"
+                                    >
+                                        <option :value="null">Select a supervisor</option>
+                                        <option v-for="emp in sortedEmployees" :key="emp.id" :value="emp.id">
+                                            {{ emp.name }}
+                                        </option>
+                                    </select>
+                                </div>
+                                <span v-if="formErrors.supervisor_employee_id" class="text-red-500 text-xs">{{ formErrors.supervisor_employee_id }}</span>
+                            </div>
                         </div>
                     </div>
 
@@ -489,8 +531,8 @@
                     <div class="flex items-center justify-center gap-3 p-6 border-t-2 border-gray-200 rounded-b-lg dark:border-gray-600 bg-gray-50 dark:bg-gray-800">
                         <button @click="submitEditForm" :disabled="updating" class="inline-flex items-center gap-2 px-5 py-3 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed">
                             <i v-if="updating" class="fas fa-spinner fa-spin"></i>
-                            <i v-else class="fas fa-save"></i>
-                            {{ updating ? 'Updating...' : 'Update' }}
+                            <i v-else class="fas fa-eye"></i>
+                            {{ updating ? 'Updating...' : 'Preview & Continue' }}
                         </button>
                         <button @click="closeEditModal" class="inline-flex items-center gap-2 px-5 py-3 text-xs font-medium text-gray-600 dark:text-gray-400 border border-gray-600 dark:border-gray-500 hover:text-white hover:bg-gray-600 dark:hover:bg-gray-600 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95">
                             <i class="fas fa-times"></i>
@@ -555,6 +597,230 @@
                 </div>
             </div>
         </Teleport>
+
+        <!-- Request for Undertime Preview Modal -->
+        <Teleport to="body" v-if="showPreviewModal">
+            <div class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
+                <div class="relative w-full max-w-7xl bg-white rounded-lg shadow-2xl dark:bg-gray-800 max-h-[90vh] overflow-y-auto">
+                    <!-- Modal Header -->
+                    <div class="sticky top-0 flex items-center justify-between px-6 py-4 border-b border-gray-200 rounded-t-lg bg-gradient-to-r from-emerald-50 to-emerald-100 dark:from-gray-700 dark:to-gray-600 dark:border-gray-600 z-10">
+                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                            <i class="fas fa-file-pdf text-emerald-600 dark:text-emerald-400"></i>
+                            Request for Undertime Preview
+                        </h3>
+                        <button @click="closePreviewModal" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
+                            <i class="fas fa-times text-xl"></i>
+                        </button>
+                    </div>
+
+                    <!-- Preview Content - Two Column Layout -->
+                    <div class="grid grid-cols-2 gap-4 p-4" style="background-color: white;">
+                        <!-- Copy 1 -->
+                        <div>
+                        <!-- Header Section with Logos -->
+                        <div class="flex items-center justify-center gap-2 mb-4 pb-2" style="border-bottom: 3px double #050505;">
+                            <div style="width: 70px; flex-shrink: 0;">
+                                <img src="/benguetlogo.png" alt="Benguet Logo" style="width: 100%; height: auto;">
+                            </div>
+                            <div class="text-center">
+                                <p class="text-xs font-semibold text-gray-700">Republic of the Philippines</p>
+                                <p class="text-base font-bold text-gray-900">PROVINCE OF BENGUET</p>
+                                <p class="text-xs text-gray-700 mb-1">Poblacion, La Trinidad 2601</p>
+                                <p class="text-xs font-bold text-gray-900 mb-4">PROVINCIAL BUDGET OFFICE</p>
+                                <p class="text-base font-bold text-gray-900">REQUEST FOR UNDERTIME</p>
+                            </div>
+                            <div style="width: 70px; flex-shrink: 0;">
+                                <img src="/bagongpilipinaslogo.png" alt="Bagong Pilipinas Logo" style="width: 100%; height: auto;">
+                            </div>
+                        </div>
+
+                        <!-- Top Information Row -->
+                        <div class="mb-6 text-xs space-y-1">
+                            <div>
+                                <p class="font-semibold text-gray-700"><span class="w-20 inline-block text-right">Date: </span><span class="font-bold text-gray-900 w-48 border-b border-gray-400 inline-block text-center">{{ new Date(formData.date_filed).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) }}</span></p>
+                            </div>
+                            <div>
+                                <p class="font-semibold text-gray-700"><span class="w-20 inline-block text-right">Office: </span><span class="font-bold text-gray-900 w-48 border-b border-gray-400 inline-block text-center">{{ getEmployeeOffice() }}</span></p>
+                            </div>
+                            <div>
+                                <p class="font-semibold text-gray-700"><span class="w-20 inline-block text-right">Control No.: </span><span class="font-bold text-gray-900 w-48 border-b border-gray-400 inline-block text-center">{{ formData.control_no }}</span></p>
+                            </div>
+                        </div>
+
+                        <!-- Provincial Budget Officer Info -->
+                        <div class="text-left mb-6 w-40">
+                            <p class="font-bold text-xs text-gray-900 text-center border-b border-gray-400 w-72 uppercase">{{ getProvincialBudgetOfficer()?.name || '-' }}</p>
+                            <p class="text-xs text-gray-700 text-center w-72">Provincial Budget Officer</p>
+                        </div>
+
+                        <!-- Main Content Letter -->
+                        <div class="mb-8 text-xs leading-relaxed text-gray-900">
+                            <p class="font-semibold text-left mb-4">Ma'am:</p>
+                            
+                            <p class="mb-4">
+                                May I request permission to go undertime for <span class="border-b border-gray-400 w-32 inline-block text-center font-semibold">{{ computeUndertime() }}</span> 
+                                from <span class="border-b border-gray-400 w-32 inline-block text-center font-semibold">{{ formatTimeDisplay(formData.requested_time) }}</span>
+                                on <span class="border-b border-gray-400 w-48 inline-block text-center font-semibold">{{ new Date(formData.date_filed).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) }}</span>.
+                            </p>
+
+                            <p class="mb-10">
+                                I will be leaving my work station to <span class="border-b border-gray-400 w-[410px] inline-block text-center font-semibold">{{ formData.reason }}</span> 
+                                and be back <span class="border-b border-gray-400 w-48 inline-block text-center font-semibold">{{ formData.returnType === 'nwd' ? 'Next Working Day' : formatTimeDisplay(formData.return_time) }}</span>.
+                            </p>
+
+                            <p class="mb-8 text-left">Respectfully yours,</p>
+                        </div>
+
+                        <!-- Requesting Employee Section -->
+                        <div class="mb-6">
+                            <p v-if="getRequestingEmployee()" class="font-bold text-xs text-gray-900 text-center border-b border-gray-400 uppercase w-96">
+                                {{ getRequestingEmployee()?.name }}
+                            </p>
+                            <p v-else class="font-bold text-xs text-gray-900 text-center border-b border-gray-400 w-96">[Employee Name]</p>
+                            <p v-if="getRequestingEmployee()" class="text-xs text-center text-gray-700 w-96">{{ getRequestingEmployee()?.designation }}</p>
+                            <p v-else class="text-xs text-center text-gray-700 w-96">[Designation]</p>
+                        </div>
+
+                        <!-- Recommending Approval -->
+                        <div v-if="getSupervisor() && !isRequestingEmployeeProvincialBudgetOfficer()" class="mb-6">
+                            <p class="text-xs text-gray-700 mb-8">Recommending Approval:</p>
+                            <div class="space-y-8">
+                                <div class="w-96">
+                                    <p class="font-bold text-xs text-center text-gray-900 uppercase w-96">{{ getSupervisor()?.name }}</p>
+                                    <p class="text-xs text-center text-gray-700 border-b border-gray-400 pb-1 w-96">{{ getSupervisor()?.designation }}</p>
+                                    <p class="text-xs text-center text-gray-700 w-96">Immediate Supervisor</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Approved Section -->
+                        <div class="mb-6 flex justify-end pr-8">
+                            <div class="w-96 text-center">
+                                <p class="text-xs text-left text-gray-900 mb-8">APPROVED:</p>
+                                <p v-if="isRequestingEmployeeProvincialBudgetOfficer() && getProvincialGovernor()" class="font-bold text-xs text-gray-900 uppercase w-96">{{ getProvincialGovernor()?.name }}</p>
+                                <p v-else-if="getProvincialBudgetOfficer()" class="font-bold text-xs text-gray-900 uppercase w-96">{{ getProvincialBudgetOfficer()?.name }}</p>
+                                <p v-else class="font-bold text-xs text-gray-900 uppercase w-96">-</p>
+                                
+                                <p v-if="isRequestingEmployeeProvincialBudgetOfficer() && getProvincialGovernor()" class="text-xs text-center text-gray-700 border-b border-gray-400 pb-1 w-96">Provincial Governor</p>
+                                <p v-else class="text-xs text-center text-gray-700 border-b border-gray-400 pb-1 w-96">Provincial Budget Officer</p>
+                                <p class="text-xs text-center text-gray-700">Department Head</p>
+                            </div>
+                        </div>
+                        </div>
+
+                        <!-- Copy 2 (Duplicate) -->
+                        <div>
+                        <!-- Header Section with Logos -->
+                        <div class="flex items-center justify-center gap-2 mb-4 pb-2" style="border-bottom: 3px double #050505;">
+                            <div style="width: 70px; flex-shrink: 0;">
+                                <img src="/benguetlogo.png" alt="Benguet Logo" style="width: 100%; height: auto;">
+                            </div>
+                            <div class="text-center">
+                                <p class="text-xs font-semibold text-gray-700">Republic of the Philippines</p>
+                                <p class="text-base font-bold text-gray-900">PROVINCE OF BENGUET</p>
+                                <p class="text-xs text-gray-700 mb-1">Poblacion, La Trinidad 2601</p>
+                                <p class="text-xs font-bold text-gray-900 mb-4">PROVINCIAL BUDGET OFFICE</p>
+                                <p class="text-base font-bold text-gray-900">REQUEST FOR UNDERTIME</p>
+                            </div>
+                            <div style="width: 70px; flex-shrink: 0;">
+                                <img src="/bagongpilipinaslogo.png" alt="Bagong Pilipinas Logo" style="width: 100%; height: auto;">
+                            </div>
+                        </div>
+
+                        <!-- Top Information Row -->
+                        <div class="mb-6 text-xs space-y-1">
+                            <div>
+                                <p class="font-semibold text-gray-700"><span class="w-20 inline-block text-right">Date: </span><span class="font-bold text-gray-900 w-48 border-b border-gray-400 inline-block text-center">{{ new Date(formData.date_filed).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) }}</span></p>
+                            </div>
+                            <div>
+                                <p class="font-semibold text-gray-700"><span class="w-20 inline-block text-right">Office: </span><span class="font-bold text-gray-900 w-48 border-b border-gray-400 inline-block text-center">{{ getEmployeeOffice() }}</span></p>
+                            </div>
+                            <div>
+                                <p class="font-semibold text-gray-700"><span class="w-20 inline-block text-right">Control No.: </span><span class="font-bold text-gray-900 w-48 border-b border-gray-400 inline-block text-center">{{ formData.control_no }}</span></p>
+                            </div>
+                        </div>
+
+                        <!-- Provincial Budget Officer Info -->
+                        <div class="text-left mb-6 w-40">
+                            <p class="font-bold text-xs text-gray-900 text-center border-b border-gray-400 w-72 uppercase">{{ getProvincialBudgetOfficer()?.name || '-' }}</p>
+                            <p class="text-xs text-gray-700 text-center w-72">Provincial Budget Officer</p>
+                        </div>
+
+                        <!-- Main Content Letter -->
+                        <div class="mb-8 text-xs leading-relaxed text-gray-900">
+                            <p class="font-semibold text-left mb-4">Ma'am:</p>
+                            
+                            <p class="mb-4">
+                                May I request permission to go undertime for <span class="border-b border-gray-400 w-32 inline-block text-center font-semibold">{{ computeUndertime() }}</span> 
+                                from <span class="border-b border-gray-400 w-32 inline-block text-center font-semibold">{{ formatTimeDisplay(formData.requested_time) }}</span>
+                                on <span class="border-b border-gray-400 w-48 inline-block text-center font-semibold">{{ new Date(formData.date_filed).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) }}</span>.
+                            </p>
+
+                            <p class="mb-10">
+                                I will be leaving my work station to <span class="border-b border-gray-400 w-[410px] inline-block text-center font-semibold">{{ formData.reason }}</span> 
+                                and be back <span class="border-b border-gray-400 w-48 inline-block text-center font-semibold">{{ formData.returnType === 'nwd' ? 'Next Working Day' : formatTimeDisplay(formData.return_time) }}</span>.
+                            </p>
+
+                            <p class="mb-8 text-left">Respectfully yours,</p>
+                        </div>
+
+                        <!-- Requesting Employee Section -->
+                        <div class="mb-6">
+                            <p v-if="getRequestingEmployee()" class="font-bold text-xs text-gray-900 text-center border-b border-gray-400 uppercase w-96">
+                                {{ getRequestingEmployee()?.name }}
+                            </p>
+                            <p v-else class="font-bold text-xs text-gray-900 text-center border-b border-gray-400 w-96">[Employee Name]</p>
+                            <p v-if="getRequestingEmployee()" class="text-xs text-center text-gray-700 w-96">{{ getRequestingEmployee()?.designation }}</p>
+                            <p v-else class="text-xs text-center text-gray-700 w-96">[Designation]</p>
+                        </div>
+
+                        <!-- Recommending Approval -->
+                        <div v-if="getSupervisor() && !isRequestingEmployeeProvincialBudgetOfficer()" class="mb-6">
+                            <p class="text-xs text-gray-700 mb-8">Recommending Approval:</p>
+                            <div class="space-y-8">
+                                <div class="w-96">
+                                    <p class="font-bold text-xs text-center text-gray-900 uppercase w-96">{{ getSupervisor()?.name }}</p>
+                                    <p class="text-xs text-center text-gray-700 border-b border-gray-400 pb-1 w-96">{{ getSupervisor()?.designation }}</p>
+                                    <p class="text-xs text-center text-gray-700 w-96">Immediate Supervisor</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Approved Section -->
+                        <div class="mb-6 flex justify-end pr-8">
+                            <div class="w-96 text-center">
+                                <p class="text-xs text-left text-gray-900 mb-8">APPROVED:</p>
+                                <p v-if="isRequestingEmployeeProvincialBudgetOfficer() && getProvincialGovernor()" class="font-bold text-xs text-gray-900 uppercase w-96">{{ getProvincialGovernor()?.name }}</p>
+                                <p v-else-if="getProvincialBudgetOfficer()" class="font-bold text-xs text-gray-900 uppercase w-96">{{ getProvincialBudgetOfficer()?.name }}</p>
+                                <p v-else class="font-bold text-xs text-gray-900 uppercase w-96">-</p>
+                                
+                                <p v-if="isRequestingEmployeeProvincialBudgetOfficer() && getProvincialGovernor()" class="text-xs text-center text-gray-700 border-b border-gray-400 pb-1 w-96">Provincial Governor</p>
+                                <p v-else class="text-xs text-center text-gray-700 border-b border-gray-400 pb-1 w-96">Provincial Budget Officer</p>
+                                <p class="text-xs text-center text-gray-700">Department Head</p>
+                            </div>
+                        </div>
+                        </div>
+                    </div>
+
+                    <!-- Modal Footer -->
+                    <div class="flex items-center justify-center gap-3 p-6 border-t-2 border-gray-200 rounded-b-lg dark:border-gray-600 bg-gray-50 dark:bg-gray-800 sticky bottom-0">
+                        <button @click="printTardinessRequest" class="inline-flex items-center gap-2 px-5 py-3 text-xs font-medium text-gray-600 dark:text-gray-400 border border-gray-600 dark:border-gray-500 hover:text-white hover:bg-gray-600 dark:hover:bg-gray-600 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95">
+                            <i class="fas fa-print"></i>
+                            Print
+                        </button>
+                        <button @click="confirmPreviewAndSubmit" :disabled="creating || updating" class="inline-flex items-center gap-2 px-5 py-3 text-xs font-medium text-white bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-700 dark:hover:bg-emerald-800 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed">
+                            <i v-if="creating || updating" class="fas fa-spinner fa-spin"></i>
+                            <i v-else class="fas fa-check"></i>
+                            {{ (creating || updating) ? 'Saving...' : 'Confirm & Save' }}
+                        </button>
+                        <button @click="closePreviewModal" type="button" :disabled="creating || updating" class="inline-flex items-center gap-2 px-5 py-3 text-xs font-medium text-gray-600 dark:text-gray-400 border border-gray-600 dark:border-gray-500 hover:text-white hover:bg-gray-600 dark:hover:bg-gray-600 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed">
+                            <i class="fas fa-arrow-left"></i>
+                            Back to Form
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </Teleport>
     </AuthenticatedLayout>
 </template>
 
@@ -568,6 +834,12 @@ interface Employee {
     id: number;
     name: string;
     employee_id: string;
+    designation?: string;
+    office_id?: number;
+    office?: {
+        id: number;
+        name: string;
+    };
 }
 
 interface TardinessRecord {
@@ -581,6 +853,8 @@ interface TardinessRecord {
     requested_time: string;
     reason: string;
     return_time: string | null;
+    supervisor_employee_id: number | null;
+    supervisor?: Employee;
     created_at: string;
     updated_at: string;
 }
@@ -597,6 +871,7 @@ const error = ref<string | null>(null);
 const showCreateModal = ref(false);
 const showEditModal = ref(false);
 const showDeleteModal = ref(false);
+const showPreviewModal = ref(false);
 
 const creating = ref(false);
 const updating = ref(false);
@@ -615,6 +890,7 @@ const formData = ref({
     reason: '',
     return_time: '',
     returnType: 'time' as 'time' | 'nwd',
+    supervisor_employee_id: null as number | null,
 });
 
 const formErrors = ref<Record<string, string>>({});
@@ -636,6 +912,23 @@ watch(
     (newDate) => {
         if (newDate) {
             formData.value.control_no = generateControlNo(newDate);
+        }
+    }
+);
+
+// Watch for employee_id changes to handle Provincial Budget Officer approval
+watch(
+    () => formData.value.employee_id,
+    (newEmployeeId) => {
+        if (newEmployeeId) {
+            const emp = employees.value.find(e => e.id === newEmployeeId);
+            if (emp?.designation === 'Provincial Budget Officer') {
+                // If requesting employee is PBO, auto-set approver to Provincial Governor
+                const pgov = getProvincialGovernor();
+                if (pgov) {
+                    formData.value.supervisor_employee_id = pgov.id;
+                }
+            }
         }
     }
 );
@@ -749,14 +1042,115 @@ const fetchTardiness = async () => {
     }
 };
 
-const fetchEmployees = async () => {
-    try {
-        const response = await fetch('/api/employees');
-        if (!response.ok) throw new Error('Failed to fetch employees');
-        employees.value = await response.json();
-    } catch (err: any) {
-        console.error('Failed to load employees:', err);
+const computeUndertime = (): string => {
+    // Return empty if times are not provided
+    if (!formData.value.requested_time || !formData.value.return_time) {
+        return '';
     }
+    
+    try {
+        // Parse requested_time (when employee wants to leave)
+        const [startHour, startMin] = formData.value.requested_time.split(':').map(Number);
+        // Parse return_time (when employee returns)
+        // For NWD, return_time is automatically set to 17:00:00 (5:00 PM)
+        const [endHour, endMin] = formData.value.return_time.split(':').map(Number);
+        
+        // Convert to total minutes since midnight
+        const requestedTotalMin = startHour * 60 + startMin;
+        const returnTotalMin = endHour * 60 + endMin;
+        
+        // Check if time span crosses midnight (for lunch calculation)
+        const isDayWrap = returnTotalMin < requestedTotalMin;
+        
+        // Calculate difference: return_time - requested_time
+        let diffMin = returnTotalMin - requestedTotalMin;
+        
+        // Handle case where it spans to next day (e.g., 11:00 PM to 1:00 AM)
+        if (diffMin < 0) {
+            diffMin += 24 * 60;
+        }
+        
+        // Exclude lunch break (12:00 PM to 1:00 PM)
+        const LUNCH_START = 12 * 60;  // 720 minutes
+        const LUNCH_END = 13 * 60;    // 780 minutes
+        const LUNCH_DURATION = 60;    // 1 hour
+        
+        let shouldSubtractLunch = false;
+        
+        if (isDayWrap) {
+            // Spans midnight - lunch period is always included
+            shouldSubtractLunch = true;
+        } else {
+            // Same day - check if lunch period falls within the time span
+            if (requestedTotalMin < LUNCH_START && returnTotalMin > LUNCH_END) {
+                shouldSubtractLunch = true;
+            }
+        }
+        
+        if (shouldSubtractLunch) {
+            diffMin -= LUNCH_DURATION;
+        }
+        
+        // Convert total minutes back to hours and minutes
+        const hours = Math.floor(diffMin / 60);
+        const minutes = diffMin % 60;
+        
+        // Format the result
+        if (hours === 0) {
+            return minutes > 0 ? `${minutes} mins` : '0 mins';
+        } else if (minutes === 0) {
+            return `${hours} hrs`;
+        } else {
+            return `${hours} hrs and ${minutes} mins`;
+        }
+    } catch (e) {
+        console.error('Error computing undertime:', e);
+        return '';
+    }
+};
+
+const getRequestingEmployee = (): Employee | null => {
+    if (!formData.value.employee_id) return null;
+    return employees.value.find(emp => emp.id === formData.value.employee_id) || null;
+};
+
+const getSupervisor = (): Employee | null => {
+    if (!formData.value.supervisor_employee_id) return null;
+    return employees.value.find(emp => emp.id === formData.value.supervisor_employee_id) || null;
+};
+
+const getProvincialBudgetOfficer = (): Employee | null => {
+    return employees.value.find((emp: Employee) => emp.designation === 'Provincial Budget Officer') || null;
+};
+
+const getProvincialGovernor = (): Employee | null => {
+    return employees.value.find((emp: Employee) => emp.designation === 'Provincial Governor') || null;
+};
+
+const isRequestingEmployeeProvincialBudgetOfficer = (): boolean => {
+    const emp = getRequestingEmployee();
+    return emp?.designation === 'Provincial Budget Officer';
+};
+
+const getEmployeeOffice = (): string => {
+    const emp = getRequestingEmployee();
+    return emp?.office?.name || 'Provincial Budget Office';
+};
+
+const formatDateForInput = (dateStr: string | null | undefined): string => {
+    if (!dateStr) return '';
+    // Use local date methods to avoid timezone conversion issues
+    const date = new Date(dateStr);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+};
+
+const formatTimeForInput = (timeStr: string | null | undefined): string => {
+    if (!timeStr) return '';
+    // Extract HH:mm from time string (removes seconds if present)
+    return timeStr.substring(0, 5);
 };
 
 const formatDate = (dateStr: string): string => {
@@ -774,20 +1168,23 @@ const formatTime = (timeStr: string): string => {
     return `${displayHour}:${minutes} ${ampm}`;
 };
 
-const formatDateForInput = (dateStr: string | null | undefined): string => {
-    if (!dateStr) return '';
-    // Use local date methods to avoid timezone conversion issues
-    const date = new Date(dateStr);
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
+const formatTimeDisplay = (timeStr: string): string => {
+    if (!timeStr) return '';
+    const [hours, minutes] = timeStr.split(':');
+    const hour = parseInt(hours);
+    const ampm = hour >= 12 ? 'PM' : 'AM';
+    const displayHour = hour % 12 || 12;
+    return `${displayHour}:${minutes} ${ampm}`;
 };
 
-const formatTimeForInput = (timeStr: string | null | undefined): string => {
-    if (!timeStr) return '';
-    // Extract HH:mm from time string (removes seconds if present)
-    return timeStr.substring(0, 5);
+const fetchEmployees = async () => {
+    try {
+        const response = await fetch('/api/employees');
+        if (!response.ok) throw new Error('Failed to fetch employees');
+        employees.value = await response.json();
+    } catch (err: any) {
+        console.error('Failed to load employees:', err);
+    }
 };
 
 const validateForm = (): boolean => {
@@ -832,6 +1229,7 @@ const openCreateModal = () => {
         reason: '',
         return_time: '',
         returnType: 'time',
+        supervisor_employee_id: null,
     };
     // Generate control number based on date_filed
     formData.value.control_no = generateControlNo(today);
@@ -845,10 +1243,21 @@ const closeCreateModal = () => {
 
 const submitCreateForm = async () => {
     if (!validateForm()) return;
+    
+    // Open preview modal instead of directly submitting
+    showPreviewModal.value = true;
+};
 
+const closePreviewModal = () => {
+    showPreviewModal.value = false;
+};
+
+const confirmPreviewAndSubmit = async () => {
     try {
-        creating.value = true;
-
+        const isUpdate = recordToEdit.value !== null;
+        const isLoading = isUpdate ? 'updating' : 'creating';
+        eval(`${isLoading}.value = true`);
+        
         let returnTime = formData.value.return_time;
         if (formData.value.returnType === 'nwd') {
             returnTime = '17:00:00'; // 5:00 PM for NWD
@@ -863,10 +1272,14 @@ const submitCreateForm = async () => {
             requested_time: formData.value.requested_time,
             reason: formData.value.reason,
             return_time: returnTime,
+            supervisor_employee_id: formData.value.supervisor_employee_id,
         };
 
-        const response = await fetch('/api/tardiness', {
-            method: 'POST',
+        const url = isUpdate ? `/api/tardiness/${recordToEdit.value!.id}` : '/api/tardiness';
+        const method = isUpdate ? 'PUT' : 'POST';
+
+        const response = await fetch(url, {
+            method: method,
             headers: {
                 'Content-Type': 'application/json',
                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
@@ -888,25 +1301,41 @@ const submitCreateForm = async () => {
                 throw new Error(errorMessages);
             }
             
-            throw new Error(errorData.error || errorData.message || 'Failed to create record');
+            throw new Error(errorData.error || errorData.message || `Failed to ${isUpdate ? 'update' : 'create'} record`);
         }
 
-        const newRecord = await response.json();
-        tardiness.value.push(newRecord.data);
-        closeCreateModal();
+        const result = await response.json();
+        showPreviewModal.value = false;
 
-        toastRef.value?.add(
-            'success',
-            'Success',
-            `Record <strong>${newRecord.data.control_no}</strong> created successfully!`,
-            3000
-        );
+        if (isUpdate) {
+            const index = tardiness.value.findIndex(r => r.id === recordToEdit.value!.id);
+            if (index !== -1) {
+                tardiness.value[index] = result.data;
+            }
+            closeEditModal();
+            toastRef.value?.add(
+                'info',
+                'Updated',
+                `Record <strong>${result.data.control_no}</strong> updated successfully!`,
+                3000
+            );
+        } else {
+            tardiness.value.push(result.data);
+            closeCreateModal();
+            toastRef.value?.add(
+                'success',
+                'Success',
+                `Record <strong>${result.data.control_no}</strong> created successfully!`,
+                3000
+            );
+        }
     } catch (e) {
         const errorMsg = e instanceof Error ? e.message : 'An error occurred';
         formErrors.value['submit'] = errorMsg;
         toastRef.value?.add('error', 'Error', errorMsg, 4000);
     } finally {
         creating.value = false;
+        updating.value = false;
     }
 };
 
@@ -923,6 +1352,7 @@ const openEditModal = (record: TardinessRecord) => {
         reason: record.reason,
         return_time: record.return_time || '',
         returnType: (record.return_time === 'NWD' || record.return_time === '17:00:00') ? 'nwd' : 'time',
+        supervisor_employee_id: record.supervisor_employee_id || null,
     };
     formErrors.value = {};
     showEditModal.value = true;
@@ -936,71 +1366,8 @@ const closeEditModal = () => {
 const submitEditForm = async () => {
     if (!validateForm() || !recordToEdit.value) return;
 
-    try {
-        updating.value = true;
-
-        let returnTime = formData.value.return_time;
-        if (formData.value.returnType === 'nwd') {
-            returnTime = '17:00:00'; // 5:00 PM for NWD
-        }
-
-        const submitData = {
-            control_no: formData.value.control_no,
-            date_filed: formData.value.date_filed,
-            type: formData.value.type,
-            requested_date: formData.value.requested_date,
-            employee_id: formData.value.employee_id,
-            requested_time: formData.value.requested_time,
-            reason: formData.value.reason,
-            return_time: returnTime,
-        };
-
-        const response = await fetch(`/api/tardiness/${recordToEdit.value.id}`, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
-            },
-            body: JSON.stringify(submitData),
-        });
-
-        if (!response.ok) {
-            const errorData = await response.json().catch(() => ({}));
-            
-            // Handle validation errors (422)
-            if (response.status === 422 && errorData.errors) {
-                Object.keys(errorData.errors).forEach(field => {
-                    formErrors.value[field] = errorData.errors[field][0];
-                });
-                const errorMessages = Object.values(errorData.errors)
-                    .flat()
-                    .join(', ');
-                throw new Error(errorMessages);
-            }
-            
-            throw new Error(errorData.error || errorData.message || 'Failed to update record');
-        }
-
-        const updatedRecord = await response.json();
-        const index = tardiness.value.findIndex(r => r.id === recordToEdit.value!.id);
-        if (index !== -1) {
-            tardiness.value[index] = updatedRecord.data;
-        }
-
-        closeEditModal();
-        toastRef.value?.add(
-            'info',
-            'Updated',
-            `Record <strong>${updatedRecord.data.control_no}</strong> updated successfully!`,
-            3000
-        );
-    } catch (e) {
-        const errorMsg = e instanceof Error ? e.message : 'An error occurred';
-        formErrors.value['submit'] = errorMsg;
-        toastRef.value?.add('error', 'Error', errorMsg, 4000);
-    } finally {
-        updating.value = false;
-    }
+    // Open preview modal instead of directly submitting
+    showPreviewModal.value = true;
 };
 
 const openDeleteModal = (record: TardinessRecord) => {
@@ -1055,6 +1422,13 @@ const changePage = (page: number) => {
     }
 };
 
+/**
+ * Print the undertime request preview
+ */
+const printTardinessRequest = () => {
+    window.print();
+};
+
 onMounted(() => {
     fetchTardiness();
     fetchEmployees();
@@ -1075,5 +1449,39 @@ onMounted(() => {
 
 .animate-scaleInUp {
     animation: scaleInUp 0.3s ease-out;
+}
+
+/* Print Styles: Hide modal chrome and scrollbars */
+@media print {
+    /* Hide all modal chrome and UI elements */
+    .sticky {
+        position: static !important;
+    }
+    
+    .sticky.top-0 {
+        display: none !important;
+    }
+    
+    .sticky.bottom-0 {
+        display: none !important;
+    }
+    
+    /* Remove scrollbars and margins */
+    body {
+        margin: 0 !important;
+        padding: 0 !important;
+        overflow: visible !important;
+    }
+    
+    html {
+        margin: 0 !important;
+        padding: 0 !important;
+        overflow: visible !important;
+    }
+    
+    /* Remove scroll from modal/container */
+    .overflow-y-auto {
+        overflow: visible !important;
+    }
 }
 </style>
