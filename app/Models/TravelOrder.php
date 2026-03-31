@@ -21,6 +21,7 @@ class TravelOrder extends Model
         'to_date',
         'purpose',
         'vehicle',
+        'supervisor_employee_id',
     ];
 
     protected $casts = [
@@ -46,5 +47,13 @@ class TravelOrder extends Model
     public function employees(): BelongsToMany
     {
         return $this->belongsToMany(Employee::class, 'travel_order_employee', 'travel_order_id', 'employee_id');
+    }
+
+    /**
+     * Get the supervisor associated with this travel order
+     */
+    public function supervisor()
+    {
+        return $this->belongsTo(Employee::class, 'supervisor_employee_id');
     }
 }

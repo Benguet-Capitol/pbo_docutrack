@@ -43,6 +43,7 @@ class TravelOrderController extends Controller
                 'vehicle' => 'required|in:PUJ,RP Vehicle',
                 'employee_ids' => 'required|array|min:1',
                 'employee_ids.*' => 'integer|exists:employees,id',
+                'supervisor_employee_id' => 'nullable|integer|exists:employees,id',
             ]);
 
             // Create travel order
@@ -54,6 +55,7 @@ class TravelOrderController extends Controller
                 'to_date' => $validated['to_date'],
                 'purpose' => $validated['purpose'],
                 'vehicle' => $validated['vehicle'],
+                'supervisor_employee_id' => $validated['supervisor_employee_id'] ?? null,
             ]);
 
             // Attach employees
@@ -91,6 +93,7 @@ class TravelOrderController extends Controller
                 'vehicle' => 'required|in:PUJ,RP Vehicle',
                 'employee_ids' => 'required|array|min:1',
                 'employee_ids.*' => 'integer|exists:employees,id',
+                'supervisor_employee_id' => 'nullable|integer|exists:employees,id',
             ]);
 
             // Update travel order
@@ -102,6 +105,7 @@ class TravelOrderController extends Controller
                 'to_date' => $validated['to_date'],
                 'purpose' => $validated['purpose'],
                 'vehicle' => $validated['vehicle'],
+                'supervisor_employee_id' => $validated['supervisor_employee_id'] ?? null,
             ]);
 
             // Sync employees (update the relationship)

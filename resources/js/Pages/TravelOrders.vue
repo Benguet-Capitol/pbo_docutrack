@@ -8,6 +8,12 @@ interface Employee {
     id: number;
     name: string;
     employee_id: string;
+    designation?: string;
+    office_id?: number;
+    office?: {
+        id: number;
+        name: string;
+    };
 }
 
 interface TravelOrder {
@@ -19,7 +25,10 @@ interface TravelOrder {
     to_date: string;
     purpose: string[];
     vehicle: string;
+    plate_number?: string;
     employees: Employee[];
+    supervisor_employee_id: number | null;
+    supervisor?: Employee;
     created_at: string;
     updated_at: string;
 }
@@ -36,6 +45,7 @@ const sortOrder = ref<'desc' | 'asc'>('desc');
 const showCreateModal = ref(false);
 const showEditModal = ref(false);
 const showDeleteModal = ref(false);
+const showPreviewModal = ref(false);
 
 const creating = ref(false);
 const updating = ref(false);
@@ -56,9 +66,11 @@ const formData = ref({
     from_date: '',
     to_date: '',
     purpose: [] as string[],
-    vehicle: 'PUJ' as 'PUJ' | 'RP Vehicle',
+    vehicle: 'RP Vehicle' as 'PUJ' | 'RP Vehicle',
+    plate_number: '',
     employee_ids: [] as number[],
     newPurpose: '',
+    supervisor_employee_id: null as number | null,
 });
 
 const formErrors = ref<Record<string, string>>({});
@@ -237,6 +249,12 @@ const formatDateForDisplay = (dateStr: string): string => {
     return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
 };
 
+const formatDateForDisplayFull = (dateStr: string): string => {
+    if (!dateStr) return '';
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+};
+
 const formatDateForInput = (dateStr: string | null | undefined): string => {
     if (!dateStr) return '';
     // Ensure we get YYYY-MM-DD format for HTML date input
@@ -316,9 +334,11 @@ const openCreateModal = async () => {
         from_date: today,
         to_date: today,
         purpose: [],
-        vehicle: 'PUJ',
+        vehicle: 'RP Vehicle',
+        plate_number: '',
         employee_ids: [],
         newPurpose: '',
+        supervisor_employee_id: null,
     };
     formErrors.value = {};
     showCreateModal.value = true;
@@ -376,8 +396,22 @@ const cancelEditPurpose = () => {
 const submitCreateForm = async () => {
     if (!validateForm()) return;
     
+    // Open preview modal instead of directly submitting
+    showPreviewModal.value = true;
+};
+
+const closePreviewModal = () => {
+    showPreviewModal.value = false;
+};
+
+const confirmPreviewAndSubmit = async () => {
     try {
-        creating.value = true;
+        const isUpdate = travelOrderToEdit.value !== null;
+        if (isUpdate) {
+            updating.value = true;
+        } else {
+            creating.value = true;
+        }
         
         const submitData = {
             control_no: formData.value.control_no,
@@ -387,11 +421,16 @@ const submitCreateForm = async () => {
             to_date: formData.value.to_date,
             purpose: formData.value.purpose,
             vehicle: formData.value.vehicle,
+            plate_number: formData.value.plate_number,
             employee_ids: formData.value.employee_ids,
+            supervisor_employee_id: formData.value.supervisor_employee_id,
         };
-        
-        const response = await fetch('/api/travel-orders', {
-            method: 'POST',
+
+        const url = isUpdate ? `/api/travel-orders/${travelOrderToEdit.value!.id}` : '/api/travel-orders';
+        const method = isUpdate ? 'PUT' : 'POST';
+
+        const response = await fetch(url, {
+            method: method,
             headers: {
                 'Content-Type': 'application/json',
                 'X-Requested-With': 'XMLHttpRequest',
@@ -401,7 +440,6 @@ const submitCreateForm = async () => {
 
         if (!response.ok) {
             const errorData = await response.json().catch(() => ({}));
-            console.error('Create error response:', errorData);
             
             if (response.status === 422 && errorData.errors) {
                 Object.keys(errorData.errors).forEach(field => {
@@ -413,25 +451,41 @@ const submitCreateForm = async () => {
                 throw new Error(errorMessages);
             }
             
-            throw new Error(errorData.error || errorData.message || 'Failed to create travel order');
+            throw new Error(errorData.error || errorData.message || `Failed to ${isUpdate ? 'update' : 'create'} travel order`);
         }
 
-        const newTravelOrder = await response.json();
-        await fetchTravelOrders();
-        closeCreateModal();
-        
-        toastRef.value?.add(
-            'success',
-            'Success',
-            `Travel order <strong>${newTravelOrder.data.control_no}</strong> has been created successfully!`,
-            3000
-        );
-    } catch (err: any) {
-        const errorMsg = err instanceof Error ? err.message : 'An error occurred';
+        const result = await response.json();
+        showPreviewModal.value = false;
+
+        if (isUpdate) {
+            const index = travelOrders.value.findIndex(t => t.id === travelOrderToEdit.value!.id);
+            if (index !== -1) {
+                travelOrders.value[index] = result.data;
+            }
+            closeEditModal();
+            toastRef.value?.add(
+                'info',
+                'Updated',
+                `Travel order <strong>${result.data.control_no}</strong> updated successfully!`,
+                3000
+            );
+        } else {
+            travelOrders.value.push(result.data);
+            closeCreateModal();
+            toastRef.value?.add(
+                'success',
+                'Success',
+                `Travel order <strong>${result.data.control_no}</strong> created successfully!`,
+                3000
+            );
+        }
+    } catch (e) {
+        const errorMsg = e instanceof Error ? e.message : 'An error occurred';
         formErrors.value['submit'] = errorMsg;
         toastRef.value?.add('error', 'Error', errorMsg, 4000);
     } finally {
         creating.value = false;
+        updating.value = false;
     }
 };
 
@@ -449,8 +503,10 @@ const handleEditTravelOrder = (order: TravelOrder) => {
         to_date: formatDateForInput(order.to_date),
         purpose: [...order.purpose],
         vehicle: order.vehicle as 'PUJ' | 'RP Vehicle',
+        plate_number: order.plate_number || '',
         employee_ids: order.employees.map(emp => emp.id),
         newPurpose: '',
+        supervisor_employee_id: order.supervisor_employee_id || null,
     };
     
     console.log('Form data after assignment:', formData.value.date, formData.value.from_date, formData.value.to_date);
@@ -468,63 +524,8 @@ const submitEditForm = async () => {
     
     if (!validateForm()) return;
 
-    try {
-        updating.value = true;
-        
-        const submitData = {
-            control_no: formData.value.control_no,
-            date: formData.value.date,
-            going_to: formData.value.going_to,
-            from_date: formData.value.from_date,
-            to_date: formData.value.to_date,
-            purpose: formData.value.purpose,
-            vehicle: formData.value.vehicle,
-            employee_ids: formData.value.employee_ids,
-        };
-        
-        const response = await fetch(`/api/travel-orders/${travelOrderToEdit.value.id}`, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-Requested-With': 'XMLHttpRequest',
-            },
-            body: JSON.stringify(submitData),
-        });
-
-        if (!response.ok) {
-            const errorData = await response.json().catch(() => ({}));
-            console.error('Update error response:', errorData);
-            
-            if (response.status === 422 && errorData.errors) {
-                Object.keys(errorData.errors).forEach(field => {
-                    formErrors.value[field] = errorData.errors[field][0];
-                });
-                const errorMessages = Object.values(errorData.errors)
-                    .flat()
-                    .join(', ');
-                throw new Error(errorMessages);
-            }
-            
-            throw new Error(errorData.error || errorData.message || 'Failed to update travel order');
-        }
-
-        const updatedTravelOrder = await response.json();
-        await fetchTravelOrders();
-        closeEditModal();
-        
-        toastRef.value?.add(
-            'info',
-            'Updated',
-            `Travel order <strong>${updatedTravelOrder.data.control_no}</strong> has been updated successfully!`,
-            3000
-        );
-    } catch (err: any) {
-        const errorMsg = err instanceof Error ? err.message : 'An error occurred';
-        formErrors.value['submit'] = errorMsg;
-        toastRef.value?.add('error', 'Error', errorMsg, 4000);
-    } finally {
-        updating.value = false;
-    }
+    // Open preview modal instead of directly submitting
+    showPreviewModal.value = true;
 };
 
 const openDeleteModal = (order: TravelOrder) => {
@@ -569,6 +570,43 @@ const submitDeleteForm = async () => {
     } finally {
         deleting.value = false;
     }
+};
+
+// Helper functions for preview modal
+const getRequestingEmployeeNames = (): string => {
+    if (!formData.value.employee_ids || formData.value.employee_ids.length === 0) return '';
+    const names = formData.value.employee_ids
+        .map(id => employees.value.find(e => e.id === id)?.name || '')
+        .filter(name => name);
+    return names.join('\n');
+};
+
+const isRequestingEmployeePBO = (): boolean => {
+    if (!formData.value.employee_ids || formData.value.employee_ids.length === 0) return false;
+    // Check if any requesting employee is PBO
+    return formData.value.employee_ids.some(id => {
+        const employee = employees.value.find(e => e.id === id);
+        return employee?.designation === 'Provincial Budget Officer';
+    });
+};
+
+const getApproverName = (): string => {
+    if (isRequestingEmployeePBO()) {
+        // If requesting is PBO, approver should be Governor
+        const governor = employees.value.find(e => e.designation === 'Provincial Governor');
+        return governor?.name || 'Provincial Governor';
+    } else {
+        // Otherwise approver is PBO
+        const pbo = employees.value.find(e => e.designation === 'Provincial Budget Officer');
+        return pbo?.name || 'Provincial Budget Officer';
+    }
+};
+
+/**
+ * Print the travel order preview
+ */
+const printPreview = () => {
+    window.print();
 };
 
 onMounted(() => {
@@ -938,6 +976,37 @@ onMounted(() => {
                                 <span v-if="formErrors.vehicle" class="text-red-500 text-xs">{{ formErrors.vehicle }}</span>
                             </div>
 
+                            <!-- Plate Number Field (RP Vehicle Only) -->
+                            <div v-if="formData.vehicle === 'RP Vehicle'" class="space-y-2">
+                                <label for="create_plate_number" class="block text-xs font-medium text-gray-700 dark:text-gray-300">Plate Number</label>
+                                <div class="relative flex items-center">
+                                    <i class="fas fa-hashtag absolute left-3 text-gray-400 text-sm"></i>
+                                    <input v-model="formData.plate_number" id="create_plate_number" type="text" placeholder="Enter plate number" class="block w-full pl-10 pr-4 py-2 text-xs border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:outline-none transition-colors" :class="[formErrors.plate_number ? 'border-red-500 focus:border-red-500' : 'border-gray-300 focus:border-emerald-500']" />
+                                </div>
+                                <span v-if="formErrors.plate_number" class="text-red-500 text-xs">{{ formErrors.plate_number }}</span>
+                            </div>
+
+                            <!-- Supervisor Field -->
+                            <div class="space-y-2">
+                                <label for="create_supervisor" class="block text-xs font-medium text-gray-700 dark:text-gray-300">Supervisor</label>
+                                <div class="relative flex items-center">
+                                    <i class="fas fa-user-check absolute left-3 text-gray-400 text-sm pointer-events-none"></i>
+                                    <select
+                                        :value="formData.supervisor_employee_id"
+                                        @change="(e) => { formData.supervisor_employee_id = (e.target as HTMLSelectElement).value ? Number((e.target as HTMLSelectElement).value) : null }"
+                                        id="create_supervisor"
+                                        class="block w-full pl-10 pr-4 py-2 text-xs border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:outline-none transition-colors"
+                                        :class="[formErrors.supervisor_employee_id ? 'border-red-500 focus:border-red-500' : 'border-gray-300 focus:border-emerald-500']"
+                                    >
+                                        <option :value="null">Select a supervisor</option>
+                                        <option v-for="emp in sortedEmployees" :key="emp.id" :value="emp.id">
+                                            {{ emp.name }}
+                                        </option>
+                                    </select>
+                                </div>
+                                <span v-if="formErrors.supervisor_employee_id" class="text-red-500 text-xs">{{ formErrors.supervisor_employee_id }}</span>
+                            </div>
+
                             <span v-if="formErrors.submit" class="text-red-500 text-xs">{{ formErrors.submit }}</span>
                         </div>
                     </div>
@@ -946,8 +1015,8 @@ onMounted(() => {
                     <div class="flex items-center justify-center gap-3 p-6 border-t-2 border-gray-200 rounded-b-lg dark:border-gray-600 bg-gray-50 dark:bg-gray-800">
                         <button @click="submitCreateForm" :disabled="creating" class="inline-flex items-center gap-2 px-5 py-3 text-xs font-medium text-white bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-700 dark:hover:bg-emerald-800 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed">
                             <i v-if="creating" class="fas fa-spinner fa-spin"></i>
-                            <i v-else class="fas fa-check"></i>
-                            {{ creating ? 'Creating...' : 'Create' }}
+                            <i v-else class="fas fa-eye"></i>
+                            {{ creating ? 'Loading...' : 'Preview & Continue' }}
                         </button>
                         <button @click="closeCreateModal" class="inline-flex items-center gap-2 px-5 py-3 text-xs font-medium text-gray-600 dark:text-gray-400 border border-gray-600 dark:border-gray-500 hover:text-white hover:bg-gray-600 dark:hover:bg-gray-600 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95">
                             <i class="fas fa-times"></i>
@@ -1073,6 +1142,37 @@ onMounted(() => {
                                     </select>
                                 </div>
                                 <span v-if="formErrors.vehicle" class="text-red-500 text-xs">{{ formErrors.vehicle }}</span>
+
+                                <!-- Plate Number Field (RP Vehicle Only) -->
+                                <div v-if="formData.vehicle === 'RP Vehicle'" class="space-y-2 mt-3">
+                                    <label for="edit_plate_number" class="block text-xs font-medium text-gray-700 dark:text-gray-300">Plate Number</label>
+                                    <div class="relative flex items-center">
+                                        <i class="fas fa-hashtag absolute left-3 text-gray-400 text-sm"></i>
+                                        <input v-model="formData.plate_number" id="edit_plate_number" type="text" placeholder="Enter plate number" class="block w-full pl-10 pr-4 py-2 text-xs border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:outline-none transition-colors" :class="[formErrors.plate_number ? 'border-red-500 focus:border-red-500' : 'border-gray-300 focus:border-blue-500']" />
+                                    </div>
+                                    <span v-if="formErrors.plate_number" class="text-red-500 text-xs">{{ formErrors.plate_number }}</span>
+                                </div>
+                            </div>
+
+                            <!-- Supervisor Field -->
+                            <div class="space-y-2">
+                                <label for="edit_supervisor" class="block text-xs font-medium text-gray-700 dark:text-gray-300">Supervisor</label>
+                                <div class="relative flex items-center">
+                                    <i class="fas fa-user-check absolute left-3 text-gray-400 text-sm pointer-events-none"></i>
+                                    <select
+                                        :value="formData.supervisor_employee_id"
+                                        @change="(e) => { formData.supervisor_employee_id = (e.target as HTMLSelectElement).value ? Number((e.target as HTMLSelectElement).value) : null }"
+                                        id="edit_supervisor"
+                                        class="block w-full pl-10 pr-4 py-2 text-xs border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:outline-none transition-colors"
+                                        :class="[formErrors.supervisor_employee_id ? 'border-red-500 focus:border-red-500' : 'border-gray-300 focus:border-blue-500']"
+                                    >
+                                        <option :value="null">Select a supervisor</option>
+                                        <option v-for="emp in sortedEmployees" :key="emp.id" :value="emp.id">
+                                            {{ emp.name }}
+                                        </option>
+                                    </select>
+                                </div>
+                                <span v-if="formErrors.supervisor_employee_id" class="text-red-500 text-xs">{{ formErrors.supervisor_employee_id }}</span>
                             </div>
 
                             <span v-if="formErrors.submit" class="text-red-500 text-xs">{{ formErrors.submit }}</span>
@@ -1083,8 +1183,8 @@ onMounted(() => {
                     <div class="flex items-center justify-center gap-3 p-6 border-t-2 border-gray-200 rounded-b-lg dark:border-gray-600 bg-gray-50 dark:bg-gray-800">
                         <button @click="submitEditForm" :disabled="updating" class="inline-flex items-center gap-2 px-5 py-3 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed">
                             <i v-if="updating" class="fas fa-spinner fa-spin"></i>
-                            <i v-else class="fas fa-save"></i>
-                            {{ updating ? 'Updating...' : 'Update' }}
+                            <i v-else class="fas fa-eye"></i>
+                            {{ updating ? 'Updating...' : 'Preview & Continue' }}
                         </button>
                         <button @click="closeEditModal" class="inline-flex items-center gap-2 px-5 py-3 text-xs font-medium text-gray-600 dark:text-gray-400 border border-gray-600 dark:border-gray-500 hover:text-white hover:bg-gray-600 dark:hover:bg-gray-600 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95">
                             <i class="fas fa-times"></i>
@@ -1149,6 +1249,158 @@ onMounted(() => {
                 </div>
             </div>
         </Teleport>
+
+        <!-- Preview Modal -->
+        <Teleport to="body" v-if="showPreviewModal">
+            <div class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
+                <div class="relative w-full max-w-3xl bg-white rounded-lg shadow-2xl dark:bg-gray-800 max-h-[90vh] overflow-y-auto">
+                    <!-- Modal Header -->
+                    <div class="sticky top-0 flex items-center justify-between px-6 py-4 border-b border-gray-200 rounded-t-lg bg-gradient-to-r from-emerald-50 to-emerald-100 dark:from-gray-700 dark:to-gray-600 dark:border-gray-600 z-10">
+                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                            <i class="fas fa-file-pdf text-emerald-600 dark:text-emerald-400"></i>
+                            Travel Order Preview
+                        </h3>
+                        <button @click="closePreviewModal" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
+                            <i class="fas fa-times text-xl"></i>
+                        </button>
+                    </div>
+
+                    <!-- Modal Body - Single Copy Preview -->
+                    <div class="p-4" style="background-color: white;">
+                        <!-- Header Section with Logos -->
+                        <div class="flex items-center justify-center gap-2 mb-6 pb-2" style="border-bottom: 3px double #050505;">
+                            <div style="width: 70px; flex-shrink: 0;">
+                                <img src="/benguetlogo.png" alt="Benguet Logo" style="width: 100%; height: auto;">
+                            </div>
+                            <div class="text-center">
+                                <p class="text-xs font-semibold text-gray-700">Republic of the Philippines</p>
+                                <p class="text-base font-bold text-gray-900">PROVINCE OF BENGUET</p>
+                                <p class="text-xs text-gray-700 mb-1">Poblacion, La Trinidad 2601</p>
+                                <p class="text-xs font-bold text-gray-900 mb-6">PROVINCIAL BUDGET OFFICE</p>
+                                <p class="text-base font-bold text-gray-900">TRAVEL ORDER</p>
+                            </div>
+                            <div style="width: 70px; flex-shrink: 0;">
+                                <img src="/bagongpilipinaslogo.png" alt="Bagong Pilipinas Logo" style="width: 100%; height: auto;">
+                            </div>
+                        </div>
+                        
+                        <!-- Date -->
+                        <div class="mb-6 flex justify-end pr-8">
+                            <div class="text-center">
+                                <p class="font-bold text-xs text-gray-900 text-center border-b border-gray-400 w-56">{{ formatDateForDisplayFull(formData.date) }}</p>
+                                <p class="text-xs text-gray-700 text-center w-56">Date</p>
+                            </div>
+                        </div>
+
+                        <div class="mb-6 text-xs space-y-1">
+                            <div>
+                                <p><span class="w-26 inline-block text-right">TRAVEL ORDER NO. </span><span class="font-bold text-gray-900 w-48 border-b border-gray-400 inline-block text-center">{{ formData.control_no }}</span></p>
+                            </div>
+                        </div>
+
+                        <!-- Travel Order No and Requesting Employees -->
+                        <div class="space-y-2 text-xs">
+                            <div class="space-y-1">
+                                <div v-if="formData.employee_ids && formData.employee_ids.length" class="space-y-1 mb-6">
+                                    <div class="flex gap-4 items-start">
+                                        <p>TO:</p>
+                                        <span class="w-56 text-center font-semibold border-b border-gray-400 uppercase">{{ employees.find(e => e.id === formData.employee_ids[0])?.name || '' }}</span>
+                                    </div>
+                                    <div v-for="(empId, index) in formData.employee_ids.slice(1)" :key="empId" class="flex gap-2">
+                                        <span class="w-7"></span>
+                                        <span class="w-56 text-center font-semibold border-b border-gray-400 uppercase">{{ employees.find(e => e.id === empId)?.name || '' }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Body Content -->
+                        <div class="space-y-2 text-xs mb-6">
+                            <p class="space-y-2">
+                                <span class="inline-block indent-8">You are hereby authorized to go to </span> 
+                                <span class="border-b border-gray-400 w-[480px] inline-block text-center font-semibold pr-8">{{ formData.going_to }}</span> 
+                                effective 
+                                <span class="border-b border-gray-400 w-40 inline-block text-center font-semibold">{{ formatDateForDisplayFull(formData.from_date) }}</span>
+                                <span v-if="formData.to_date && formData.to_date !== formData.from_date"> to <span class="border-b border-gray-400 w-40 inline-block text-center font-semibold">{{ formatDateForDisplayFull(formData.to_date) }}</span></span>
+                                for the following official duties, viz:
+                            </p>
+                        </div>
+
+                        <!-- Purpose List -->
+                        <div class="space-y-2 text-xs mb-6">
+                            <ol v-if="formData.purpose && formData.purpose.length" class="list-decimal pl-8 list-outside space-y-3">
+                                <li v-for="(purpose, idx) in formData.purpose" :key="idx" class="ml-4"><span class="border-b border-gray-400 font-semibold text-left" style="display: inline; box-decoration-break: clone; -webkit-box-decoration-break: clone; max-width: 750px; line-height: 1.8;">{{ purpose }}</span></li>
+                            </ol>
+                        </div>
+
+                                
+                        <p class="text-justify indent-8 space-y-2 text-xs mb-6">
+                            You are expected to report on your mission immediately upon your return.
+                        </p>
+
+                        <!-- Vehicle -->
+                        <div class="text-xs flex items-start gap-2 mb-6">
+                            <p>VEHICLE:</p>
+                            <p class="border-b border-gray-400 w-40 inline-block text-center font-semibold" v-if="formData.vehicle === 'RP Vehicle' && formData.plate_number">{{ formData.vehicle }} - {{ formData.plate_number }}</p>
+                            <p class="border-b border-gray-400 w-40 inline-block text-center font-semibold"v-else>{{ formData.vehicle }}</p>
+                        </div>
+
+                        <!-- Approved -->
+                        <div class="mb-6 flex justify-end pr-8">
+                            <div class="w-72 text-center">
+                                <p class="text-xs text-left text-gray-900 mb-8">APPROVED:</p>
+                                <p class="text-xs text-center text-gray-700"></p>
+                                <p class="text-xs text-center text-gray-900 border-b border-gray-400 pb-1 font-bold uppercase">{{ getApproverName() }}</p>
+                                <p class="text-xs text-center text-gray-700">Provincial {{ isRequestingEmployeePBO() ? 'Governor' : 'Budget Officer' }}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Certificate of Appearance -->
+                    <div class="mb-6" style="border-top: 3px double #050505;">
+                        <p class="font-bold text-xs text-center text-gray-900 mt-4 mb-2">CERTIFICATE OF APPEARANCE</p>
+                        <p class="text-xs text-gray-700 leading-relaxed mb-2 indent-2"> TO WHOM IT MAY CONCERN:</p>
+                        <p class="text-xs text-gray-700 leading-relaxed indent-8 space-y-2 text-justify mb-6">
+                            This is to CERTIFY that the above mentioned personnel appeared in this office on <span v-if="formData.from_date === formData.to_date">{{ formatDateForDisplayFull(formData.from_date) }}</span><span v-else>{{ formatDateForDisplayFull(formData.from_date) }} to {{ formatDateForDisplayFull(formData.to_date) }}</span>.
+                        </p>
+                        
+                        <!-- Signature and Printed Name Section -->
+                        <div class="flex justify-end mb-6 pr-8">
+                            <div class="w-72">
+                                <p class="text-xs text-center text-gray-700 border-b border-gray-400 pb-6 mb-1"></p>
+                                <p class="text-xs text-center text-gray-700">Signature over Printed Name</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Modal Footer -->
+                    <div class="flex items-center justify-center gap-3 p-6 border-t-2 border-gray-200 rounded-b-lg dark:border-gray-600 bg-gray-50 dark:bg-gray-800 sticky bottom-0">
+                        <button @click="printPreview" class="inline-flex items-center gap-2 px-5 py-3 text-xs font-medium text-gray-600 dark:text-gray-400 border border-gray-600 dark:border-gray-500 hover:text-white hover:bg-gray-600 dark:hover:bg-gray-600 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95">
+                            <i class="fas fa-print"></i>
+                            Print
+                        </button>
+                        <button
+                            @click="confirmPreviewAndSubmit"
+                            :disabled="creating || updating"
+                            class="inline-flex items-center gap-2 px-5 py-3 text-xs font-medium text-white bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-700 dark:hover:bg-emerald-800 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            <i v-if="creating || updating" class="fas fa-spinner fa-spin"></i>
+                            <i v-else class="fas fa-check"></i>
+                            {{ (creating || updating) ? 'Saving...' : 'Confirm & Save' }}
+                        </button>
+                        <button
+                            @click="closePreviewModal"
+                            type="button"
+                            :disabled="creating || updating"
+                            class="inline-flex items-center gap-2 px-5 py-3 text-xs font-medium text-gray-600 dark:text-gray-400 border border-gray-600 dark:border-gray-500 hover:text-white hover:bg-gray-600 dark:hover:bg-gray-600 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            <i class="fas fa-arrow-left"></i>
+                            Back to Form
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </Teleport>
     </AuthenticatedLayout>
 </template>
 
@@ -1166,5 +1418,37 @@ onMounted(() => {
 
 .animate-scaleInUp {
     animation: scaleInUp 0.3s ease-out;
+}
+
+@media print {
+    .sticky {
+        position: static !important;
+    }
+    
+    .sticky.top-0 {
+        display: none !important;
+    }
+    
+    .sticky.bottom-0 {
+        display: none !important;
+    }
+    
+    .overflow-y-auto {
+        overflow: visible !important;
+    }
+    
+    .max-h-\[90vh\] {
+        max-height: none !important;
+    }
+    
+    body, html {
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+    
+    .fixed.inset-0.flex.items-center.justify-center {
+        align-items: flex-start !important;
+        padding-top: 0 !important;
+    }
 }
 </style>
