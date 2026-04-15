@@ -1660,5 +1660,14 @@ onMounted(() => {
         margin: 0 !important;
         padding: 0 !important;
     }
+
+    /* Remove shadows from printed form */
+    .shadow-2xl {
+        box-shadow: none !important;
+    }
+    
+    [class*="shadow"] {
+        box-shadow: none !important;
+    }
 }
 </style>

@@ -1483,5 +1483,14 @@ onMounted(() => {
     .overflow-y-auto {
         overflow: visible !important;
     }
+    
+    /* Remove shadows from printed form */
+    .shadow-2xl {
+        box-shadow: none !important;
+    }
+    
+    [class*="shadow"] {
+        box-shadow: none !important;
+    }
 }
 </style>

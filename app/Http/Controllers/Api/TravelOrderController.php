@@ -41,9 +41,12 @@ class TravelOrderController extends Controller
                 'purpose' => 'required|array|min:1',
                 'purpose.*' => 'string|max:255',
                 'vehicle' => 'required|in:PUJ,RP Vehicle',
+                'plate_number' => 'nullable|string|max:255',
+                'driver' => 'nullable|string|max:255',
                 'employee_ids' => 'required|array|min:1',
                 'employee_ids.*' => 'integer|exists:employees,id',
                 'supervisor_employee_id' => 'nullable|integer|exists:employees,id',
+                'approver_employee_id' => 'nullable|integer|exists:employees,id',
             ]);
 
             // Create travel order
@@ -55,7 +58,10 @@ class TravelOrderController extends Controller
                 'to_date' => $validated['to_date'],
                 'purpose' => $validated['purpose'],
                 'vehicle' => $validated['vehicle'],
+                'plate_number' => $validated['plate_number'] ?? null,
+                'driver' => $validated['driver'] ?? null,
                 'supervisor_employee_id' => $validated['supervisor_employee_id'] ?? null,
+                'approver_employee_id' => $validated['approver_employee_id'] ?? null,
             ]);
 
             // Attach employees
@@ -91,9 +97,12 @@ class TravelOrderController extends Controller
                 'purpose' => 'required|array|min:1',
                 'purpose.*' => 'string|max:255',
                 'vehicle' => 'required|in:PUJ,RP Vehicle',
+                'plate_number' => 'nullable|string|max:255',
+                'driver' => 'nullable|string|max:255',
                 'employee_ids' => 'required|array|min:1',
                 'employee_ids.*' => 'integer|exists:employees,id',
                 'supervisor_employee_id' => 'nullable|integer|exists:employees,id',
+                'approver_employee_id' => 'nullable|integer|exists:employees,id',
             ]);
 
             // Update travel order
@@ -105,7 +114,10 @@ class TravelOrderController extends Controller
                 'to_date' => $validated['to_date'],
                 'purpose' => $validated['purpose'],
                 'vehicle' => $validated['vehicle'],
+                'plate_number' => $validated['plate_number'] ?? null,
+                'driver' => $validated['driver'] ?? null,
                 'supervisor_employee_id' => $validated['supervisor_employee_id'] ?? null,
+                'approver_employee_id' => $validated['approver_employee_id'] ?? null,
             ]);
 
             // Sync employees (update the relationship)

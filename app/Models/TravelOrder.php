@@ -21,7 +21,10 @@ class TravelOrder extends Model
         'to_date',
         'purpose',
         'vehicle',
+        'plate_number',
+        'driver',
         'supervisor_employee_id',
+        'approver_employee_id',
     ];
 
     protected $casts = [
