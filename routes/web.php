@@ -58,7 +58,7 @@ Route::middleware('auth')->group(function () {
     })->name('travel-orders.index');
 
     Route::get('/leaves', function () {
-        return Inertia::render('Leaves');
+        return Inertia::render('Leaves/Index');
     })->name('leaves.index');
 
     Route::get('/tardiness', function () {
