@@ -1,100 +1,215 @@
 <template>
-    <Toast ref="toastRef" />
-    <PageHead />
     <AuthenticatedLayout>
         <template #header>
-            <h2 class="text-xl font-semibold leading-tight text-gray-800 dark:text-gray-200">
-                Offices
-            </h2>
+            <h2 class="text-2xl font-bold text-gray-900 dark:text-white">Offices</h2>
         </template>
 
-        <div class="py-6 px-4 sm:px-6 lg:px-8">
-            <div class="bg-white dark:bg-gray-800 rounded-lg shadow">
-                <!-- Header Section: Contains Create button, search bar, and items-per-page selector -->
-                <div class="px-6 py-5 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
-                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                        <!-- Create Office Button: Calls openCreateModal() to show the create form modal -->
-                        <button v-if="canCreateOffices" @click="openCreateModal" class="inline-flex items-center gap-2 px-5 py-2.5 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-700 dark:hover:bg-emerald-800 rounded-lg transition-colors duration-200">
-                            <i class="fas fa-plus"></i>
-                            Create Office
-                        </button>
-                        <div :class="['flex items-center gap-3', !canCreateOffices && 'sm:ml-auto']">
-                                <i class="fas fa-search text-gray-400"></i>
-                                <!-- Search Input: v-model binds to searchQuery, triggers filter recomputation -->
-                                <input
-                                    v-model="searchQuery"
-                                    type="text"
-                                    placeholder="Search offices..."
-                                    class="border border-gray-300 rounded-lg px-4 py-2 text-xs flex-1 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white w-80"
-                                />
-                            <!-- Items Per Page Selector: Controls number of items displayed per page -->
-                            <select
-                                v-model.number="itemsPerPage"
-                                class="border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 rounded-lg px-3 py-2 text-xs text-gray-900 dark:text-white focus:outline-none focus:border-emerald-500 dark:focus:border-emerald-500 transition-colors cursor-pointer"
-                            >
-                                <option value="10">10</option>
-                                <option value="25">25</option>
-                                <option value="50">50</option>
-                                <option value="100">100</option>
-                                <option value="999999">All</option>
-                            </select>
-                        </div>
-                    </div>
+        <div class="py-6">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <!-- Header Section -->
+                <Header 
+                    :search-query="searchQuery"
+                    :items-per-page="itemsPerPage"
+                    :can-create-offices="canCreateOffices"
+                    @update:search-query="searchQuery = $event"
+                    @update:items-per-page="itemsPerPage = Number($event)"
+                    @create-click="openCreateModal"
+                />
+
+                <!-- Loading State -->
+                <LoadingState v-if="loading" />
+
+                <!-- Error State -->
+                <ErrorState v-else-if="error" :error="error" />
+
+                <!-- Empty State -->
+                <EmptyState v-else-if="!loading && offices.length === 0 && !searchQuery" />
+
+                <!-- Empty Search Results -->
+                <div v-else-if="paginatedOffices.length === 0" class="bg-white dark:bg-gray-800 rounded-lg shadow p-8 text-center">
+                    <i class="fas fa-search text-gray-400 text-4xl mb-4"></i>
+                    <p class="text-gray-600 dark:text-gray-400">No offices found matching your search criteria.</p>
                 </div>
 
-                <!-- Loading State: v-if shows spinner while data is being fetched -->
-                <div v-if="loading" class="px-6 py-12 text-center">
-                    <div class="inline-block">
-                        <i class="fas fa-spinner fa-spin text-emerald-600 dark:text-emerald-400 text-4xl"></i>
-                    </div>
-                    <p class="mt-4 text-lg font-medium text-gray-600 dark:text-gray-400">Loading offices...</p>
-                    <p class="mt-2 text-sm text-gray-500 dark:text-gray-500">Please wait</p>
-                </div>
+                <!-- Office Table -->
+                <Table
+                    v-else
+                    :offices="paginatedOffices"
+                    :can-edit-offices="canEditOffices"
+                    :can-delete-offices="canDeleteOffices"
+                    :sort-by="sortBy"
+                    :sort-order="sortOrder"
+                    @sort="toggleSort"
+                    @edit="openEditModal"
+                    @delete="openDeleteModal"
+                />
 
-                <!-- Error State: v-else-if displays error message if fetch fails -->
-                <div v-else-if="error" class="px-6 py-6 bg-red-50 dark:bg-red-900/20 border-2 border-red-200 dark:border-red-900/40 rounded-lg">
-                    <div class="flex items-start gap-4">
-                        <div class="flex-shrink-0">
-                            <i class="fas fa-exclamation-circle text-red-600 dark:text-red-400 text-2xl"></i>
-                        </div>
-                        <div>
-                            <h3 class="font-bold text-red-900 dark:text-red-200 text-sm">Error Loading Offices</h3>
-                            <!-- Displays the error message from error ref -->
-                            <p class="text-red-700 dark:text-red-300 text-sm mt-1">{{ error }}</p>
-                        </div>
-                    </div>
-                </div>
+                <!-- Pagination -->
+                <Pagination
+                    v-if="!loading && offices.length > 0"
+                    :current-page="currentPage"
+                    :total-pages="totalPages"
+                    :items-per-page="itemsPerPage"
+                    :total-count="filteredOffices.length"
+                    @page-change="changePage"
+                />
+            </div>
+        </div>
 
-                <!-- Empty State: v-else-if shows when no offices exist -->
-                <div v-else-if="offices.length === 0" class="px-6 py-12 text-center">
-                    <div class="inline-block mb-4">
-                        <i class="fas fa-inbox text-gray-400 dark:text-gray-600 text-4xl"></i>
-                    </div>
-                    <p class="text-lg font-medium text-gray-600 dark:text-gray-400">No offices found</p>
-                    <p class="text-sm text-gray-500 dark:text-gray-500 mt-1">Get started by creating a new office</p>
-                </div>
+        <!-- Create Modal -->
+        <CreateModal
+            :show-create-modal="showCreateModal"
+            :form-data="formData"
+            :form-errors="formErrors"
+            @close="closeCreateModal"
+            @save="handleCreateOffice"
+        />
 
-                <!-- Data Table: v-else shows when offices data is loaded -->
-                <div v-else class="overflow-x-auto">
-                    <table class="w-full text-left table-fixed">
-                        <colgroup>
-                            <col class="w-40">
-                            <col class="w-20">
-                            <col class="w-20">
-                            <col class="w-20">
-                            <col class="w-20">
-                            <col class="w-20">
-                            <col class="w-10">
-                        </colgroup>
-                        <!-- Table Header: Contains sortable column headers -->
-                        <thead class="bg-gray-100 dark:bg-gray-900 border-b-2 border-gray-300 dark:border-gray-700">
-                            <tr>
-                                <!-- Office Name Header: Sortable, calls toggleSort('office_name') when clicked -->
-                                <th class="px-6 py-3 text-xs font-bold text-gray-700 dark:text-gray-200">
-                                    <button @click="toggleSort('office_name')" class="flex items-center gap-2 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
-                                        Office Name
-                                        <span v-if="sortBy === 'office_name'" class="text-xs">{{ sortOrder === 'asc' ? '▲' : '▼' }}</span>
-                                    </button>
+        <!-- Edit Modal -->
+        <EditModal
+            :show-edit-modal="showEditModal"
+            :form-data="formData"
+            :form-errors="formErrors"
+            @close="closeEditModal"
+            @save="handleUpdateOffice"
+        />
+
+        <!-- Delete Modal -->
+        <DeleteModal
+            :show-delete-modal="showDeleteModal"
+            :office-to-delete="officeToDelete"
+            @close="closeDeleteModal"
+            @confirm="handleDeleteOffice"
+        />
+    </AuthenticatedLayout>
+</template>
+
+<script setup lang="ts">
+import { ref, onMounted } from 'vue';
+import { useOfficeData, type Office } from './Offices/Composables/useOfficeData';
+import { useOfficeForm } from './Offices/Composables/useOfficeForm';
+import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import Header from './Offices/Partials/Header.vue';
+import Table from './Offices/Partials/Table.vue';
+import CreateModal from './Offices/Partials/CreateModal.vue';
+import EditModal from './Offices/Partials/EditModal.vue';
+import DeleteModal from './Offices/Partials/DeleteModal.vue';
+import Pagination from './Offices/Partials/Pagination.vue';
+import LoadingState from './Offices/Partials/LoadingState.vue';
+import ErrorState from './Offices/Partials/ErrorState.vue';
+import EmptyState from './Offices/Partials/EmptyState.vue';
+
+const {
+    offices,
+    loading,
+    error,
+    searchQuery,
+    currentPage,
+    itemsPerPage,
+    sortBy,
+    sortOrder,
+    filteredOffices,
+    totalPages,
+    paginatedOffices,
+    fetchOffices,
+    changePage,
+    toggleSort,
+    addOffice,
+    updateOffice,
+    deleteOffice
+} = useOfficeData();
+
+const {
+    showCreateModal,
+    showEditModal,
+    showDeleteModal,
+    editingOffice,
+    officeToDelete,
+    formData,
+    formErrors,
+    canCreateOffices,
+    canEditOffices,
+    canDeleteOffices,
+    openCreateModal,
+    closeCreateModal,
+    openEditModal,
+    closeEditModal,
+    openDeleteModal,
+    closeDeleteModal,
+    createOffice,
+    updateOffice: updateOfficeAPI,
+    deleteOffice: deleteOfficeAPI
+} = useOfficeForm();
+
+// Handle create office
+const handleCreateOffice = async () => {
+    try {
+        const newOffice = await createOffice();
+        if (newOffice) {
+            addOffice(newOffice);
+            closeCreateModal();
+            // Show success notification
+            alert('Office created successfully!');
+        }
+    } catch (e) {
+        console.error('Error creating office:', e);
+    }
+};
+
+// Handle update office
+const handleUpdateOffice = async () => {
+    try {
+        if (editingOffice.value) {
+            const updated = await updateOfficeAPI(editingOffice.value.id);
+            if (updated) {
+                updateOffice(editingOffice.value.id, updated);
+                closeEditModal();
+                alert('Office updated successfully!');
+            }
+        }
+    } catch (e) {
+        console.error('Error updating office:', e);
+    }
+};
+
+// Handle delete office
+const handleDeleteOffice = async () => {
+    try {
+        if (officeToDelete.value) {
+            const success = await deleteOfficeAPI(officeToDelete.value.id);
+            if (success) {
+                deleteOffice(officeToDelete.value.id);
+                closeDeleteModal();
+                alert('Office deleted successfully!');
+            }
+        }
+    } catch (e) {
+        console.error('Error deleting office:', e);
+    }
+};
+
+// Fetch offices on mount
+onMounted(() => {
+    fetchOffices();
+});
+</script>
+
+<style scoped>
+@keyframes scaleInUp {
+    from {
+        opacity: 0;
+        transform: scale(0.9) translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+.animate-scaleInUp {
+    animation: scaleInUp 0.3s ease-out;
+}
+</style>
                                 </th>
                                 <th class="px-6 py-3 text-xs font-bold text-gray-700 dark:text-gray-200">
                                     <button @click="toggleSort('office_abbreviation')" class="flex items-center gap-2 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
@@ -1095,10 +1210,8 @@ const handleCreateOffice = async () => {
         toastRef.value?.add('error', 'Error', errorMsg, 4000);
     }
 };
-</script>
-
 <!-- Scoped Styles: Modal animations and transitions -->
-<style scoped>
+
 @keyframes scaleInUp {
     from {
         opacity: 0;
@@ -1112,5 +1225,5 @@ const handleCreateOffice = async () => {
 
 .animate-scaleInUp {
     animation: scaleInUp 0.3s ease-out;
-}
+
 </style>

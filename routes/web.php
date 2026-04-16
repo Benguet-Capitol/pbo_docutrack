@@ -26,19 +26,19 @@ Route::middleware('auth')->group(function () {
 
     // User Management Routes
     Route::get('/users', function () {
-        return Inertia::render('Users');
+        return Inertia::render('Users/Index');
     })->name('users.index');
 
     Route::get('/employees', function () {
-        return Inertia::render('Employees');
+        return Inertia::render('Employees/Index');
     })->name('employees.index');
 
     Route::get('/offices', function () {
-        return Inertia::render('Offices');
+        return Inertia::render('Offices/Index');
     })->name('offices.index');
 
     Route::get('/municipalities', function () {
-        return Inertia::render('Municipalities');
+        return Inertia::render('Municipalities/Index');
     })->name('municipalities.index');
 
     Route::get('/documents', function () {
@@ -50,11 +50,11 @@ Route::middleware('auth')->group(function () {
     })->name('records.index');
 
     Route::get('/pass-slips', function () {
-        return Inertia::render('PassSlips');
+        return Inertia::render('PassSlips/Index');
     })->name('pass-slips.index');
 
     Route::get('/travel-orders', function () {
-        return Inertia::render('TravelOrders');
+        return Inertia::render('TravelOrders/Index');
     })->name('travel-orders.index');
 
     Route::get('/leaves', function () {
@@ -62,7 +62,7 @@ Route::middleware('auth')->group(function () {
     })->name('leaves.index');
 
     Route::get('/tardiness', function () {
-        return Inertia::render('Tardiness');
+        return Inertia::render('Tardiness/Index');
     })->name('tardiness.index');
 });
 

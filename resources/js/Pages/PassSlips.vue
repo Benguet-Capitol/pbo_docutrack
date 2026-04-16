@@ -461,12 +461,15 @@
                                 <p class="text-xs font-semibold text-gray-700">Republic of the Philippines</p>
                                 <p class="text-base font-bold text-gray-900">PROVINCE OF BENGUET</p>
                                 <p class="text-xs text-gray-700 mb-1">Poblacion, La Trinidad 2601</p>
-                                <p class="text-xs font-bold text-gray-900 mb-4">PROVINCIAL BUDGET OFFICE</p>
-                                <p class="text-base font-bold text-gray-900">PASS SLIP</p>
+                                <p class="text-xs font-bold text-gray-900 mb-2">PROVINCIAL BUDGET OFFICE</p>
                             </div>
                             <div style="width: 70px; flex-shrink: 0;">
                                 <img src="/bagongpilipinaslogo.png" alt="Bagong Pilipinas Logo" style="width: 100%; height: auto;">
                             </div>
+                        </div>
+
+                        <div>
+                            <p class="font-bold text-lg text-center text-gray-900 mb-6">PASS SLIP</p>
                         </div>
 
                         <!-- Top Information Row -->
@@ -489,11 +492,11 @@
                         </div>
 
                         <!-- Main Content -->
-                        <div class="mb-8 text-xs leading-relaxed text-gray-900">
+                        <div class="mb-4 text-xs leading-relaxed text-gray-900">
                             <p class="mb-4">
                                 Permission is respectfully requested to leave at <span class="border-b border-gray-400 w-24 inline-block text-center font-semibold">{{ formatTimeDisplay(formData.requested_time) }}</span> 
                                 on <span class="border-b border-gray-400 w-36 inline-block text-center font-semibold">{{ new Date(formData.date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) }}</span> 
-                                to <span class="border-b border-gray-400 w-[560px] inline-block text-center font-semibold">{{ formData.purpose }}</span> 
+                                to <span :class="`border-b border-gray-400 inline-block text-center font-semibold ${getPurposeSpanClass()}`">{{ formData.purpose }}</span> 
                                 at the <span class="border-b border-gray-400 w-96 inline-block text-center font-semibold">{{ formData.location }}</span>.
                             </p>
                             
@@ -518,10 +521,15 @@
 
                         <!-- Requesting Employee Section -->
                         <div class="mb-6">
-                            <p class="font-bold text-xs text-gray-900 text-center border-b border-gray-400 w-96 uppercase">
-                                {{ getEmployeeNames() }}
-                            </p>
-                            <p class="text-xs text-gray-700 text-center w-96">Requesting Employee</p>
+                            <p class="text-xs text-gray-700 mb-6">Requesting Employee:</p>
+                            <div class="flex flex-wrap gap-3">
+                                <div v-for="empId in formData.employee_ids" :key="empId" class="text-center">
+                                    <div class="w-48">
+                                        <p class="font-bold text-xs text-gray-900 border-b border-gray-400 text-center uppercase">{{ getEmployeeName(empId) }}</p>
+                                        <p class="text-xs text-gray-700 text-center">{{ getEmployeeDesignation(empId) }}</p>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
 
                         <!-- Recommending Approval -->
@@ -574,12 +582,15 @@
                                 <p class="text-xs font-semibold text-gray-700">Republic of the Philippines</p>
                                 <p class="text-base font-bold text-gray-900">PROVINCE OF BENGUET</p>
                                 <p class="text-xs text-gray-700 mb-1">Poblacion, La Trinidad 2601</p>
-                                <p class="text-xs font-bold text-gray-900 mb-4">PROVINCIAL BUDGET OFFICE</p>
-                                <p class="text-base font-bold text-gray-900">PASS SLIP</p>
+                                <p class="text-xs font-bold text-gray-900 mb-2">PROVINCIAL BUDGET OFFICE</p>
                             </div>
                             <div style="width: 70px; flex-shrink: 0;">
                                 <img src="/bagongpilipinaslogo.png" alt="Bagong Pilipinas Logo" style="width: 100%; height: auto;">
                             </div>
+                        </div>
+
+                        <div>
+                            <p class="font-bold text-lg text-center text-gray-900 mb-6">PASS SLIP</p>
                         </div>
 
                          <!-- Top Information Row -->
@@ -602,11 +613,11 @@
                         </div>
 
                         <!-- Main Content -->
-                        <div class="mb-8 text-xs leading-relaxed text-gray-900">
+                        <div class="mb-4 text-xs leading-relaxed text-gray-900">
                             <p class="mb-4">
                                 Permission is respectfully requested to leave at <span class="border-b border-gray-400 w-24 inline-block text-center font-semibold">{{ formatTimeDisplay(formData.requested_time) }}</span> 
                                 on <span class="border-b border-gray-400 w-36 inline-block text-center font-semibold">{{ new Date(formData.date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) }}</span> 
-                                to <span class="border-b border-gray-400 w-[560px] inline-block text-center font-semibold">{{ formData.purpose }}</span> 
+                                to <span :class="`border-b border-gray-400 inline-block text-center font-semibold ${getPurposeSpanClass()}`">{{ formData.purpose }}</span> 
                                 at the <span class="border-b border-gray-400 w-96 inline-block text-center font-semibold">{{ formData.location }}</span>.
                             </p>
                             
@@ -631,10 +642,15 @@
 
                         <!-- Requesting Employee Section -->
                         <div class="mb-6">
-                            <p class="font-bold text-xs text-gray-900 text-center border-b border-gray-400 w-96 uppercase">
-                                {{ getEmployeeNames() }}
-                            </p>
-                            <p class="text-xs text-gray-700 text-center w-96">Requesting Employee</p>
+                            <p class="text-xs text-gray-700 mb-6">Requesting Employee:</p>
+                            <div class="flex flex-wrap gap-3">
+                                <div v-for="empId in formData.employee_ids" :key="empId" class="text-center">
+                                    <div class="w-48">
+                                        <p class="font-bold text-xs text-gray-900 border-b border-gray-400 text-center uppercase">{{ getEmployeeName(empId) }}</p>
+                                        <p class="text-xs text-gray-700 text-center">{{ getEmployeeDesignation(empId) }}</p>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
 
                         <!-- Recommending Approval -->
@@ -1238,6 +1254,31 @@ const getEmployeeNames = (): string => {
         formData.value.employee_ids.includes(emp.id)
     );
     return selectedEmployees.map(emp => emp.name).join(', ') || '[Employee Name]';
+};
+
+/**
+ * Get individual employee name by ID
+ */
+const getEmployeeName = (empId: number): string => {
+    const employee = employees.value.find(emp => emp.id === empId);
+    return employee ? employee.name : '[Employee Name]';
+};
+
+/**
+ * Get employee designation by ID
+ */
+const getEmployeeDesignation = (empId: number): string => {
+    const employee = employees.value.find(emp => emp.id === empId);
+    return employee ? employee.designation : '';
+};
+
+/**
+ * Get purpose span class - use fixed width for short text, wrap for long text
+ */
+const getPurposeSpanClass = (): string => {
+    return formData.value.purpose.length > 70 
+        ? 'max-w-[560px] break-words whitespace-normal' 
+        : 'w-[560px]';
 };
 
 const getRecommendingApprovalEmployee = () => {

@@ -626,12 +626,15 @@
                                 <p class="text-xs font-semibold text-gray-700">Republic of the Philippines</p>
                                 <p class="text-base font-bold text-gray-900">PROVINCE OF BENGUET</p>
                                 <p class="text-xs text-gray-700 mb-1">Poblacion, La Trinidad 2601</p>
-                                <p class="text-xs font-bold text-gray-900 mb-4">PROVINCIAL BUDGET OFFICE</p>
-                                <p class="text-base font-bold text-gray-900">REQUEST FOR UNDERTIME</p>
+                                <p class="text-xs font-bold text-gray-900 mb-2">PROVINCIAL BUDGET OFFICE</p>
                             </div>
                             <div style="width: 70px; flex-shrink: 0;">
                                 <img src="/bagongpilipinaslogo.png" alt="Bagong Pilipinas Logo" style="width: 100%; height: auto;">
                             </div>
+                        </div>
+
+                        <div>
+                            <p class="font-bold text-lg text-center text-gray-900 mb-6">REQUEST FOR UNDERTIME</p>
                         </div>
 
                         <!-- Top Information Row -->
@@ -719,12 +722,15 @@
                                 <p class="text-xs font-semibold text-gray-700">Republic of the Philippines</p>
                                 <p class="text-base font-bold text-gray-900">PROVINCE OF BENGUET</p>
                                 <p class="text-xs text-gray-700 mb-1">Poblacion, La Trinidad 2601</p>
-                                <p class="text-xs font-bold text-gray-900 mb-4">PROVINCIAL BUDGET OFFICE</p>
-                                <p class="text-base font-bold text-gray-900">REQUEST FOR UNDERTIME</p>
+                                <p class="text-xs font-bold text-gray-900 mb-2">PROVINCIAL BUDGET OFFICE</p>
                             </div>
                             <div style="width: 70px; flex-shrink: 0;">
                                 <img src="/bagongpilipinaslogo.png" alt="Bagong Pilipinas Logo" style="width: 100%; height: auto;">
                             </div>
+                        </div>
+
+                        <div>
+                            <p class="font-bold text-lg text-center text-gray-900 mb-6">REQUEST FOR UNDERTIME</p>
                         </div>
 
                         <!-- Top Information Row -->
