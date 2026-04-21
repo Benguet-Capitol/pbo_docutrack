@@ -6,6 +6,9 @@ use Illuminate\Foundation\Configuration\Middleware;
 use Inertia\Inertia;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Illuminate\Auth\AuthorizationException;
+use Illuminate\Auth\AuthenticationException;
+use Illuminate\Session\TokenMismatchException;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -31,7 +34,13 @@ return Application::configure(basePath: dirname(__DIR__))
             // Determine status code from exception
             $statusCode = 500;
             
-            if ($e instanceof HttpException) {
+            if ($e instanceof AuthorizationException) {
+                $statusCode = 403;
+            } elseif ($e instanceof AuthenticationException) {
+                $statusCode = 401;
+            } elseif ($e instanceof TokenMismatchException) {
+                $statusCode = 419;
+            } elseif ($e instanceof HttpException) {
                 $statusCode = $e->getStatusCode();
             } elseif ($e instanceof NotFoundHttpException) {
                 $statusCode = 404;

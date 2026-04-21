@@ -46,7 +46,7 @@ Route::middleware('auth')->group(function () {
     })->name('documents.index');
 
     Route::get('/records', function () {
-        return Inertia::render('Records');
+        return Inertia::render('Records/Index');
     })->name('records.index');
 
     Route::get('/pass-slips', function () {
