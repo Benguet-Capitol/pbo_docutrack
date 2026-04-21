@@ -2855,7 +2855,7 @@ const generateReport = async () => {
     <meta charset="utf-8">
     <title>Budget Proposals</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 40px; line-height: 1.6; }
+        body { font-family: Arial, sans-serif; margin: 10px; line-height: 1.6; }
         .header { text-align: center; margin-bottom: 20px; }
         .header h2 { margin: 5px 0; font-size: 14px; }
         .header h1 { margin: 5px 0; font-size: 16px; font-weight: bold; }
@@ -3385,7 +3385,7 @@ const generateSummaryReport = async () => {
     <meta charset="utf-8">
     <title>Summary of Leaves, Pass Slips and Travel Orders</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 40px; line-height: 1.6; }
+        body { font-family: Arial, sans-serif; margin: 10px; line-height: 1.6; }
         .header { text-align: center; margin-bottom: 20px; }
         .header p { margin: 5px 0; font-size: 12px; }
         .header h1 { margin: 5px 0; font-size: 14px; font-weight: bold; }
