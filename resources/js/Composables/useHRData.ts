@@ -149,8 +149,18 @@ export const useHRData = () => {
         });
 
         passSlips.value.forEach(ps => {
-            const year = new Date(ps.date).getFullYear();
-            yearsSet.add(year);
+            if (ps.inclusive_dates && Array.isArray(ps.inclusive_dates)) {
+                ps.inclusive_dates.forEach((dateEntry: string) => {
+                    if (dateEntry) {
+                        const dateStr = dateEntry.includes(' - ') ? dateEntry.split(' - ')[0] : dateEntry;
+                        const year = new Date(dateStr.trim()).getFullYear();
+                        yearsSet.add(year);
+                    }
+                });
+            } else {
+                const year = new Date(ps.date).getFullYear();
+                yearsSet.add(year);
+            }
         });
 
         tardiness.value.forEach(tu => {
@@ -260,13 +270,48 @@ export const useHRData = () => {
     });
 
     /**
+     * Check if a pass slip falls within the selected month
+     */
+    const passSlipInSelectedMonth = (ps: any): boolean => {
+        // If inclusive_dates exist, use them; otherwise fall back to date
+        if (ps.inclusive_dates && Array.isArray(ps.inclusive_dates) && ps.inclusive_dates.length > 0) {
+            const monthStart = new Date(selectedHRYear.value, selectedHRMonth.value, 1);
+            const monthEnd = new Date(selectedHRYear.value, selectedHRMonth.value + 1, 0);
+            
+            for (const dateEntry of ps.inclusive_dates) {
+                if (!dateEntry) continue;
+                
+                if (dateEntry.includes(' - ')) {
+                    const [startStr, endStr] = dateEntry.split(' - ');
+                    const rangeStart = new Date(startStr.trim());
+                    const rangeEnd = new Date(endStr.trim());
+                    
+                    if (rangeStart <= monthEnd && rangeEnd >= monthStart) {
+                        return true;
+                    }
+                } else {
+                    const date = new Date(dateEntry.trim());
+                    if (date.getMonth() === selectedHRMonth.value && date.getFullYear() === selectedHRYear.value) {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+        
+        // Fallback to date if inclusive_dates not available
+        const psDate = new Date(ps.date);
+        return psDate.getMonth() === selectedHRMonth.value && psDate.getFullYear() === selectedHRYear.value;
+    };
+
+    /**
      * Get pass slips for current month
      */
     const currentMonthPassSlips = computed(() => {
-        return passSlips.value.filter(ps => {
-            const psDate = new Date(ps.date);
-            return psDate.getMonth() === selectedHRMonth.value && psDate.getFullYear() === selectedHRYear.value;
-        });
+        // Explicitly reference selectedHRMonth and selectedHRYear to ensure reactivity
+        const month = selectedHRMonth.value;
+        const year = selectedHRYear.value;
+        return passSlips.value.filter(ps => passSlipInSelectedMonth(ps));
     });
 
     /**

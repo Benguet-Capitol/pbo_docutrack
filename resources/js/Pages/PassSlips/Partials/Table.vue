@@ -4,6 +4,7 @@
             <colgroup>
                 <col class="w-20">
                 <col class="w-16">
+                <col class="w-28">
                 <col class="w-24">
                 <col class="w-40">
                 <col class="w-20">
@@ -16,6 +17,7 @@
                 <tr>
                     <th class="px-6 py-3 text-xs font-bold text-gray-700 dark:text-gray-200">Control No</th>
                     <th class="px-6 py-3 text-xs font-bold text-gray-700 dark:text-gray-200">Date</th>
+                    <th class="px-6 py-3 text-xs font-bold text-gray-700 dark:text-gray-200">Inclusive Dates</th>
                     <th class="px-6 py-3 text-xs font-bold text-gray-700 dark:text-gray-200">Leave Time</th>
                     <th class="px-6 py-3 text-xs font-bold text-gray-700 dark:text-gray-200">Purpose</th>
                     <th class="px-6 py-3 text-xs font-bold text-gray-700 dark:text-gray-200">Location</th>
@@ -32,6 +34,14 @@
                     </td>
                     <td class="px-4 py-2 text-xs text-gray-600 dark:text-gray-400">
                         {{ formatDate(slip.date) }}
+                    </td>
+                    <td class="px-4 py-2 text-xs text-gray-600 dark:text-gray-400">
+                        <div v-if="slip.inclusive_dates && slip.inclusive_dates.length > 0" class="flex flex-col gap-1">
+                            <span v-for="(entry, idx) in slip.inclusive_dates" :key="idx" class="text-xs">
+                                {{ formatInclusiveDate(entry) }}
+                            </span>
+                        </div>
+                        <span v-else class="text-gray-400 italic">—</span>
                     </td>
                     <td class="px-4 py-2 text-xs text-gray-600 dark:text-gray-400">
                         {{ formatTime(slip.requested_time) }}
@@ -110,6 +120,21 @@ const formatTime = (timeStr: string): string => {
         return `${displayHour}:${minutes} ${ampm}`;
     } catch {
         return timeStr;
+    }
+};
+
+const formatInclusiveDate = (dateEntry: string): string => {
+    if (!dateEntry) return '';
+    if (dateEntry.includes(' - ')) {
+        const [startStr, endStr] = dateEntry.split(' - ');
+        const startDate = new Date(startStr.trim());
+        const endDate = new Date(endStr.trim());
+        const start = startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        const end = endDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        return `${start} - ${end}`;
+    } else {
+        const date = new Date(dateEntry.trim());
+        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
     }
 };
 </script>

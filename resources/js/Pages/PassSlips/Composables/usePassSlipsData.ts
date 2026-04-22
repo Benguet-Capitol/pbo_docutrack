@@ -16,6 +16,7 @@ export interface PassSlip {
     id: number;
     control_no: string;
     date: string;
+    inclusive_dates?: string[];
     requested_time: string;
     purpose: string;
     location: string;

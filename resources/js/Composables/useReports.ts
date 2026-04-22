@@ -403,6 +403,52 @@ export const useReports = (
                 return false;
             };
 
+            // Helper function to check if a pass slip falls in the specified month (based on inclusive_dates)
+            const passSlipInMonth = (ps: any): boolean => {
+                // If inclusive_dates exist, use them; otherwise fall back to date
+                if (ps.inclusive_dates && Array.isArray(ps.inclusive_dates) && ps.inclusive_dates.length > 0) {
+                    const monthStart = new Date(currentYear, (summaryData.value.month! - 1), 1);
+                    const monthEnd = new Date(currentYear, summaryData.value.month!, 0);
+                    
+                    for (const dateEntry of ps.inclusive_dates) {
+                        if (!dateEntry) continue;
+                        
+                        if (dateEntry.includes(' - ')) {
+                            const [startStr, endStr] = dateEntry.split(' - ');
+                            const rangeStart = new Date(startStr.trim());
+                            const rangeEnd = new Date(endStr.trim());
+                            
+                            if (rangeStart <= monthEnd && rangeEnd >= monthStart) {
+                                if (summaryData.value.employmentType === 'casual') {
+                                    if (isDateRangeInCasualPeriod(startStr.trim(), endStr.trim())) {
+                                        return true;
+                                    }
+                                } else {
+                                    return true;
+                                }
+                            }
+                        } else {
+                            const date = new Date(dateEntry.trim());
+                            if (date.getMonth() === (summaryData.value.month! - 1) && date.getFullYear() === currentYear) {
+                                if (summaryData.value.employmentType === 'casual') {
+                                    if (isDateInCasualPeriod(dateEntry.trim())) {
+                                        return true;
+                                    }
+                                } else {
+                                    return true;
+                                }
+                            }
+                        }
+                    }
+                    return false;
+                }
+                
+                // Fallback to date if inclusive_dates not available
+                if (!isInMonth(ps.date)) return false;
+                if (summaryData.value.employmentType === 'casual' && !isDateInCasualPeriod(ps.date)) return false;
+                return true;
+            };
+
             // Helper function to check if a date range overlaps with the casual period
             const isDateRangeInCasualPeriod = (startDateString: string, endDateString: string): boolean => {
                 if (!summaryData.value.casualPeriod) return true;
@@ -487,9 +533,8 @@ export const useReports = (
 
             // Process pass slips
             passSilpsData.forEach((ps: any) => {
-                if (!isInMonth(ps.date)) return;
-                
-                if (summaryData.value.employmentType === 'casual' && !isDateInCasualPeriod(ps.date)) return;
+                // Check if pass slip falls in the specified month based on inclusive_dates
+                if (!passSlipInMonth(ps)) return;
                 
                 const empsInPassSlip = ps.employees && Array.isArray(ps.employees) ? ps.employees : [];
                 
@@ -510,7 +555,19 @@ export const useReports = (
                             tardiness: []
                         });
                     }
-                    employeeData.get(empId)!.passSlips.push(ps);
+                    
+                    // If pass slip has inclusive_dates, create separate entries for each date
+                    if (ps.inclusive_dates && Array.isArray(ps.inclusive_dates) && ps.inclusive_dates.length > 0) {
+                        ps.inclusive_dates.forEach((dateEntry: string) => {
+                            employeeData.get(empId)!.passSlips.push({
+                                ...ps,
+                                date: dateEntry  // Override with individual date for display
+                            });
+                        });
+                    } else {
+                        // Fallback to regular date field
+                        employeeData.get(empId)!.passSlips.push(ps);
+                    }
                 });
             });
 
@@ -764,7 +821,18 @@ export const useReports = (
                         }
                         html += '<td style="text-align: center; padding: 4px 3px; width: 8%; font-size: 11px;">' + toDates + '</td>';
                         
-                        const psDate = ps ? new Date(ps.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '';
+                        let psDate = '';
+                        if (ps && ps.date) {
+                            // Handle both single dates and date ranges in the date field
+                            if (ps.date.includes(' - ')) {
+                                const [startStr, endStr] = ps.date.split(' - ');
+                                const startDate = new Date(startStr.trim()).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                                const endDate = new Date(endStr.trim()).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                                psDate = startDate + ' - ' + endDate;
+                            } else {
+                                psDate = new Date(ps.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                            }
+                        }
                         html += '<td style="text-align: center; padding: 4px 3px; width: 6%; font-size: 11px;">' + psDate + '</td>';
                         html += '<td style="text-align: center; padding: 4px 3px; width: 6%; font-size: 11px;">' + (ps ? formatTime(ps.requested_time || '') : '') + '</td>';
                         

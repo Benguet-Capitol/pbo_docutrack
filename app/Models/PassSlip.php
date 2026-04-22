@@ -16,6 +16,7 @@ class PassSlip extends Model
     protected $fillable = [
         'control_no',
         'date',
+        'inclusive_dates',
         'requested_time',
         'purpose',
         'location',
@@ -27,6 +28,7 @@ class PassSlip extends Model
 
     protected $casts = [
         'date' => 'date:Y-m-d',
+        'inclusive_dates' => 'array',
     ];
 
     /**

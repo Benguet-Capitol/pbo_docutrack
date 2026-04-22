@@ -248,6 +248,7 @@ const handleConfirmPreviewAndSubmit = async () => {
         const submitData = {
             control_no: formComposable.formData.value.control_no,
             date: formComposable.formData.value.date,
+            inclusive_dates: formComposable.formData.value.inclusive_dates,
             requested_time: formComposable.formData.value.requested_time,
             purpose: formComposable.formData.value.purpose,
             location: formComposable.formData.value.location,

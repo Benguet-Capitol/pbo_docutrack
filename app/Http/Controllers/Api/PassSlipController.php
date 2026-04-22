@@ -35,6 +35,8 @@ class PassSlipController extends Controller
             $validated = $request->validate([                
                 'control_no' => 'required|string|unique:pass_slips,control_no',
                 'date' => 'required|date',
+                'inclusive_dates' => 'nullable|array',
+                'inclusive_dates.*' => 'string',
                 'requested_time' => 'required|date_format:H:i',
                 'purpose' => 'required|string|max:255',
                 'location' => 'nullable|string|max:255',
@@ -53,6 +55,7 @@ class PassSlipController extends Controller
             $passSlip = PassSlip::create([
                 'control_no' => $controlNo,
                 'date' => $validated['date'],
+                'inclusive_dates' => $validated['inclusive_dates'] ?? [],
                 'requested_time' => $validated['requested_time'],
                 'purpose' => $validated['purpose'],
                 'location' => $validated['location'],
@@ -89,6 +92,8 @@ class PassSlipController extends Controller
             $validated = $request->validate([
                 'control_no' => 'required|string|unique:pass_slips,control_no,' . $passSlip->id,
                 'date' => 'required|date',
+                'inclusive_dates' => 'nullable|array',
+                'inclusive_dates.*' => 'string',
                 'requested_time' => 'required|date_format:H:i',
                 'purpose' => 'required|string|max:255',
                 'location' => 'nullable|string|max:255',
@@ -104,6 +109,7 @@ class PassSlipController extends Controller
             $passSlip->update([
                 'control_no' => $validated['control_no'],
                 'date' => $validated['date'],
+                'inclusive_dates' => $validated['inclusive_dates'] ?? [],
                 'requested_time' => $validated['requested_time'],
                 'purpose' => $validated['purpose'],
                 'location' => $validated['location'],

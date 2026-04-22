@@ -69,7 +69,11 @@
                     <div class="space-y-2">
                         <div v-for="(slip, idx) in slips" :key="idx" class="bg-white dark:bg-gray-700 p-2 rounded border border-gray-200 dark:border-gray-600 text-xs">
                             <p class="text-gray-700 dark:text-gray-300 font-medium">{{ slip.control_no }}</p>
-                            <p v-if="slip.date" class="text-gray-600 dark:text-gray-400">
+                            <p v-if="slip.inclusive_dates && slip.inclusive_dates.length > 0" class="text-gray-600 dark:text-gray-400">
+                                <i class="fas fa-calendar text-emerald-500 mr-1"></i>
+                                {{ formatInclusiveDatesForDisplay(slip.inclusive_dates) }}
+                            </p>
+                            <p v-else-if="slip.date" class="text-gray-600 dark:text-gray-400">
                                 <i class="fas fa-calendar text-emerald-500 mr-1"></i>
                                 {{ new Date(slip.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) }}
                             </p>
@@ -134,4 +138,27 @@ defineProps({
     formatTime: Function,
     formatInclusiveDates: Function,
 });
+
+const formatInclusiveDatesForDisplay = (inclusiveDates: string[] | undefined): string => {
+    if (!inclusiveDates || !Array.isArray(inclusiveDates) || inclusiveDates.length === 0) {
+        return '';
+    }
+    
+    const formattedDates = inclusiveDates.map((dateEntry: string) => {
+        if (!dateEntry) return '';
+        if (dateEntry.includes(' - ')) {
+            const [startStr, endStr] = dateEntry.split(' - ');
+            const startDate = new Date(startStr.trim());
+            const endDate = new Date(endStr.trim());
+            const start = startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            const end = endDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            return `${start} - ${end}`;
+        } else {
+            const date = new Date(dateEntry.trim());
+            return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        }
+    }).filter((d: string) => d);
+    
+    return formattedDates.join(', ');
+};
 </script>

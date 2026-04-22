@@ -5,6 +5,9 @@ export function usePassSlipsForm(employees: any, passSlips: any) {
     const formData = ref({
         control_no: '',
         date: '',
+        inclusive_dates: [] as string[],
+        newInclusiveDate: '',
+        newInclusiveDateRange: '',
         requested_time: '',
         purpose: '',
         location: '',
@@ -259,6 +262,9 @@ export function usePassSlipsForm(employees: any, passSlips: any) {
         formData.value = {
             control_no: generateControlNo(today),
             date: today,
+            inclusive_dates: [],
+            newInclusiveDate: '',
+            newInclusiveDateRange: '',
             requested_time: '08:00',
             purpose: '',
             location: '',
@@ -290,6 +296,9 @@ export function usePassSlipsForm(employees: any, passSlips: any) {
         formData.value = {
             control_no: slip.control_no,
             date: formatDateForInput(slip.date),
+            inclusive_dates: slip.inclusive_dates ? [...slip.inclusive_dates] : [],
+            newInclusiveDate: '',
+            newInclusiveDateRange: '',
             requested_time: formatTimeForAPI(slip.requested_time),
             purpose: slip.purpose,
             location: slip.location,
@@ -327,6 +336,9 @@ export function usePassSlipsForm(employees: any, passSlips: any) {
         formData.value = {
             control_no: '',
             date: '',
+            inclusive_dates: [],
+            newInclusiveDate: '',
+            newInclusiveDateRange: '',
             requested_time: '',
             purpose: '',
             location: '',

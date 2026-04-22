@@ -50,6 +50,33 @@
                                 <span v-if="formErrors.employee_ids" class="text-red-500 text-xs">{{ formErrors.employee_ids }}</span>
                             </div>
 
+                            <!-- Inclusive Dates -->
+                            <div class="space-y-2">
+                                <label class="block text-xs font-medium text-gray-700 dark:text-gray-300">Inclusive Dates</label>
+                                <div class="space-y-2">
+                                    <div class="flex gap-2 items-end">
+                                        <div class="flex-1">
+                                            <label class="block text-xs text-gray-600 dark:text-gray-400 mb-1">Date</label>
+                                            <input v-model="formData.newInclusiveDate" type="date" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-xs dark:bg-gray-700 dark:text-white focus:outline-none focus:border-emerald-500 dark:focus:border-emerald-500" />
+                                        </div>
+                                        <div class="flex-1">
+                                            <label class="block text-xs text-gray-600 dark:text-gray-400 mb-1">To Date (optional)</label>
+                                            <input v-model="formData.newInclusiveDateRange" type="date" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-xs dark:bg-gray-700 dark:text-white focus:outline-none focus:border-emerald-500 dark:focus:border-emerald-500" />
+                                        </div>
+                                        <button @click.prevent="addInclusiveDate" class="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors text-xs font-medium">
+                                            <i class="fas fa-plus"></i>
+                                        </button>
+                                    </div>
+                                    <div class="flex flex-wrap gap-2">
+                                        <span v-for="(entry, idx) in formData.inclusive_dates" :key="idx" @click="editInclusiveDate(idx)" class="inline-flex items-center gap-2 px-3 py-1.5 bg-emerald-100 dark:bg-emerald-900 text-emerald-800 dark:text-emerald-200 rounded text-xs cursor-pointer hover:bg-emerald-200 dark:hover:bg-emerald-800 transition-colors">
+                                            <i class="fas fa-edit text-emerald-600 dark:text-emerald-400"></i>
+                                            {{ formatInclusiveDate(entry) }}
+                                            <button @click.stop="removeInclusiveDate(idx)" class="text-emerald-600 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-200 font-bold">×</button>
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+
                             <!-- Requested to Leave At Field -->
                             <div class="space-y-2">
                                 <label for="requested_time" class="block text-xs font-medium text-gray-700 dark:text-gray-300">Requested to Leave At <span class="text-red-600">*</span></label>
@@ -182,7 +209,7 @@
 <script setup lang="ts">
 import type { PassSlip, Employee } from '../Composables/usePassSlipsData';
 
-defineProps<{
+const props = defineProps<{
     show: boolean;
     recordToEdit: PassSlip | null;
     formData: {
@@ -194,6 +221,9 @@ defineProps<{
         expected_return_time: string;
         remarks: string;
         employee_ids: number[];
+        inclusive_dates: string[];
+        newInclusiveDate: string;
+        newInclusiveDateRange: string;
         recommending_approval_employee_id: number | null;
         vehicle: 'RP Vehicle' | 'PUJ';
         returnType: 'time' | 'asap' | 'nwd' | 'time_slip' | 'nom' | 'memo';
@@ -203,11 +233,75 @@ defineProps<{
     updating: boolean;
 }>();
 
-defineEmits<{
+const emit = defineEmits<{
     'update:formData': [data: any];
     submit: [];
     close: [];
 }>();
+
+const formatInclusiveDate = (dateEntry: string): string => {
+    if (!dateEntry) return '';
+    if (dateEntry.includes(' - ')) {
+        const [startStr, endStr] = dateEntry.split(' - ');
+        const startDate = new Date(startStr.trim());
+        const endDate = new Date(endStr.trim());
+        const start = startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        const end = endDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        return `${start} - ${end}`;
+    } else {
+        const date = new Date(dateEntry.trim());
+        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    }
+};
+
+const addInclusiveDate = () => {
+    if (!props.formData.newInclusiveDate) return;
+
+    let entry = props.formData.newInclusiveDate;
+    if (props.formData.newInclusiveDateRange) {
+        entry = `${props.formData.newInclusiveDate} - ${props.formData.newInclusiveDateRange}`;
+    }
+
+    const newInclusiveDates = [...props.formData.inclusive_dates];
+    if (!newInclusiveDates.includes(entry)) {
+        newInclusiveDates.push(entry);
+    }
+
+    const newFormData = {
+        ...props.formData,
+        inclusive_dates: newInclusiveDates,
+        newInclusiveDate: '',
+        newInclusiveDateRange: '',
+    };
+    emit('update:formData', newFormData);
+};
+
+const editInclusiveDate = (index: number) => {
+    const entry = props.formData.inclusive_dates[index];
+    if (entry.includes(' - ')) {
+        const [startStr, endStr] = entry.split(' - ');
+        emit('update:formData', {
+            ...props.formData,
+            newInclusiveDate: startStr.trim(),
+            newInclusiveDateRange: endStr.trim(),
+        });
+    } else {
+        emit('update:formData', {
+            ...props.formData,
+            newInclusiveDate: entry.trim(),
+            newInclusiveDateRange: '',
+        });
+    }
+    removeInclusiveDate(index);
+};
+
+const removeInclusiveDate = (index: number) => {
+    const newInclusiveDates = props.formData.inclusive_dates.filter((_: string, idx: number) => idx !== index);
+    emit('update:formData', {
+        ...props.formData,
+        inclusive_dates: newInclusiveDates,
+    });
+};
 </script>
 
 <style scoped>

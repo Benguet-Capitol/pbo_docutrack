@@ -1,7 +1,7 @@
 <template>
     <Teleport to="body" v-if="show && formData">
         <div class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
-            <div class="relative w-full max-w-7xl bg-white rounded-lg shadow-2xl dark:bg-gray-800 max-h-[90vh] overflow-y-auto">
+            <div class="relative w-full max-w-6xl bg-white rounded-lg shadow-2xl dark:bg-gray-800 max-h-[90vh] overflow-y-auto">
                 <!-- Modal Header -->
                 <div class="sticky top-0 flex items-center justify-between px-6 py-4 border-b border-gray-200 rounded-t-lg bg-gradient-to-r from-emerald-50 to-emerald-100 dark:from-gray-700 dark:to-gray-600 dark:border-gray-600 z-10 print:hidden">
                     <h3 class="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
@@ -18,57 +18,56 @@
                     <!-- Copy 1 -->
                     <div>
                     <!-- Header Section with Logos -->
-                    <div class="flex items-center justify-center gap-2 mb-4 pb-2" style="border-bottom: 3px double #050505;">
+                    <div class="flex items-center justify-center gap-2 pb-2" style="border-bottom: 3px double #050505;">
                         <div style="width: 70px; flex-shrink: 0;">
                             <img src="/benguetlogo.png" alt="Benguet Logo" style="width: 100%; height: auto;">
                         </div>
                         <div class="text-center">
-                            <p class="text-xs font-semibold text-gray-700 mb-1">Republic of the Philippines</p>
+                            <p class="text-xs font-semibold text-gray-900 mb-1">Republic of the Philippines</p>
                             <p class="text-xs font-bold text-gray-900">PROVINCE OF BENGUET</p>
                             <p class="text-base font-bold text-gray-900">PROVINCIAL BUDGET OFFICE</p>
-                            <p class="text-xs text-gray-700 mb-1">Poblacion, La Trinidad, Benguet 2601</p>
+                            <p class="text-xs text-gray-900 mb-1">Poblacion, La Trinidad, Benguet 2601</p>
                         </div>
                         <div style="width: 70px; flex-shrink: 0;">
                             <img src="/bagongpilipinaslogo.png" alt="Bagong Pilipinas Logo" style="width: 100%; height: auto;">
                         </div>
                     </div>
 
-                    <div>
-                        <p class="font-bold text-lg text-center text-gray-900 mb-6">PASS SLIP</p>
+                    <p class="font-bold text-sm text-blue-800">PBO COPY</p>
+
+                    <div class="flex items-center justify-center mb-6">
+                        <p class="font-bold text-lg text-gray-900">PASS SLIP</p>
                     </div>
 
                     <!-- Top Information Row -->
                     <div class="mb-6 text-xs space-y-1">
                         <div>
-                            <p class="font-semibold text-gray-700"><span class="w-20 inline-block text-right">Date: </span><span class="font-bold text-gray-900 w-48 border-b border-gray-400 inline-block text-center">{{ new Date(formData.date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) }}</span></p>
+                            <p class="font-semibold text-gray-700"><span class="w-20 inline-block text-right">Date: </span><span class="font-bold text-gray-900 w-48 border-b border-gray-900 inline-block text-center">{{ new Date(formData.date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) }}</span></p>
                         </div>
                         <div>
-                            <p class="font-semibold text-gray-700"><span class="w-20 inline-block text-right">Office: </span><span class="font-bold text-gray-900 w-48 border-b border-gray-400 inline-block text-center">Provincial Budget Office</span></p>
-                        </div>
-                        <div>
-                            <p class="font-semibold text-gray-700"><span class="w-20 inline-block text-right">Control No.: </span><span class="font-bold text-gray-900 w-48 border-b border-gray-400 inline-block text-center">{{ formData.control_no }}</span></p>
+                            <p class="font-semibold text-gray-700"><span class="w-20 inline-block text-right">Control No.: </span><span class="font-bold text-gray-900 w-48 border-b border-gray-900 inline-block text-center">{{ formData.control_no }}</span></p>
                         </div>
                     </div>
 
                     <!-- Provincial Budget Officer Info -->
                     <div class="text-left mb-6 w-40">
-                        <p class="font-bold text-xs text-gray-900 text-center border-b border-gray-400 w-72 uppercase">{{ getProvincialBudgetOfficer() }}</p>
+                        <p class="font-bold text-xs text-gray-900 text-center border-b border-gray-900 w-72 uppercase">{{ getProvincialBudgetOfficer() }}</p>
                         <p class="text-xs text-gray-700 text-center w-72">Provincial Budget Officer</p>
                     </div>
 
                     <!-- Main Content -->
-                    <div class="mb-4 text-xs leading-relaxed text-gray-900">
+                    <div class="mb-4 text-xs leading-relaxed text-gray-700">
                         <p class="mb-4">
-                            Permission is respectfully requested to leave at <span class="border-b border-gray-400 w-24 inline-block text-center font-semibold">{{ formatTimeDisplay(formData.requested_time) }}</span> 
-                            on <span class="border-b border-gray-400 w-36 inline-block text-center font-semibold">{{ new Date(formData.date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) }}</span> 
-                            to <span :class="`border-b border-gray-400 inline-block text-center font-semibold ${getPurposeSpanClass()}`">{{ formData.purpose }}</span> 
-                            at the <span class="border-b border-gray-400 w-96 inline-block text-center font-semibold">{{ formData.location }}</span>.
+                            Permission is respectfully requested to leave at <span class="border-b border-gray-900 w-24 inline-block text-center font-semibold">{{ formatTimeDisplay(formData.requested_time) }}</span> 
+                            on <span class="border-b border-gray-900 w-40 inline-block text-center font-semibold">{{ formatInclusiveDatesForDisplay() }}</span> 
+                            to <span class="border-b border-gray-900 inline-block text-center font-semibold" :class="getPurposeSpanClass()" :style="getPurposeSpanStyle()">{{ formData.purpose }}</span> 
+                            at the <span class="border-b border-gray-900 w-96 inline-block text-center font-semibold">{{ formData.location }}</span>.
                         </p>
                         
                         <div class="ml-4 space-y-1">
                             <p>
                                 <span>Expected Time of Return: </span> 
-                                <span class="font-bold border-b border-gray-400 w-48 inline-block text-center">
+                                <span class="font-bold border-b border-gray-900 w-48 inline-block text-center">
                                     {{ formData.returnType === 'asap' ? 'As soon as possible' : 
                                        formData.returnType === 'nwd' ? 'Next Working Day' : 
                                        formData.returnType === 'time_slip' ? 'Time Slip' : 
@@ -79,7 +78,7 @@
                             </p>
                             <p>
                                 <span>Vehicle to be used: </span> 
-                                <span class="font-bold border-b border-gray-400 w-48 inline-block text-center">{{ formData.vehicle }}</span>
+                                <span class="font-bold border-b border-gray-900 w-48 inline-block text-center">{{ formData.vehicle }}</span>
                             </p>
                         </div>
                     </div>
@@ -90,7 +89,7 @@
                         <div class="flex flex-wrap gap-3">
                             <div v-for="empId in formData.employee_ids" :key="empId" class="text-center">
                                 <div class="w-48">
-                                    <p class="font-bold text-xs text-gray-900 border-b border-gray-400 text-center uppercase">{{ getEmployeeName(empId) }}</p>
+                                    <p class="font-bold text-xs text-gray-900 border-b border-gray-900 text-center uppercase">{{ getEmployeeName(empId) }}</p>
                                     <p class="text-xs text-gray-700 text-center">{{ getEmployeeDesignation(empId) }}</p>
                                 </div>
                             </div>
@@ -99,11 +98,11 @@
 
                     <!-- Recommending Approval -->
                     <div v-if="getRecommendingApprovalEmployee() && !isProvincialBudgetOfficerRequesting()" class="mb-6">
-                        <p class="text-xs text-gray-700 mb-8">Recommending Approval:</p>
+                        <p class="text-xs text-gray-900 mb-8">Recommending Approval:</p>
                         <div class="space-y-8">
                             <div class="w-96">
                                 <p class="font-bold text-xs text-center text-gray-900 w-96 uppercase">{{ getRecommendingApprovalEmployee().name }}</p>
-                                <p class="text-xs text-center text-gray-700 border-b border-gray-400 w-96">{{ getRecommendingApprovalEmployee().designation }}</p>
+                                <p class="text-xs text-center text-gray-700 border-b border-gray-900 w-96">{{ getRecommendingApprovalEmployee().designation }}</p>
                                 <p class="text-xs text-center text-gray-700 w-96">Immediate Supervisor</p>
                             </div>
                         </div>
@@ -115,8 +114,8 @@
                             <p class="text-xs text-left text-gray-900 mb-8">APPROVED:</p>
                             <p v-if="isProvincialBudgetOfficerRequesting() && getProvincialGovernor()" class="text-xs text-center text-gray-900 font-bold uppercase">{{ getProvincialGovernor().name }}</p>
                             <p v-else class="text-xs text-center text-gray-900 font-bold uppercase">{{ getProvincialBudgetOfficer() }}</p>
-                            <p v-if="isProvincialBudgetOfficerRequesting() && getProvincialGovernor()" class="text-xs text-center text-gray-700 border-b border-gray-400">Provincial Governor</p>
-                            <p v-else class="text-xs text-center text-gray-700 border-b border-gray-400">Provincial Budget Officer</p>
+                            <p v-if="isProvincialBudgetOfficerRequesting() && getProvincialGovernor()" class="text-xs text-center text-gray-700 border-b border-gray-900">Provincial Governor</p>
+                            <p v-else class="text-xs text-center text-gray-700 border-b border-gray-900">Provincial Budget Officer</p>
                             <p class="text-xs text-center text-gray-700">Department Head</p>
                         </div>
                     </div>
@@ -125,12 +124,12 @@
                     <div class="mt-4 pt-4" style="border-top: 3px double #050505;">
                         <p class="font-bold text-xs text-center text-gray-900 mb-2">CERTIFICATE OF APPEARANCE</p>
                         <p class="text-xs text-gray-700 leading-relaxed">
-                            This is to CERTIFY that the above mentioned person appeared in this office on {{ new Date(formData.date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) }}.
+                            This is to CERTIFY that the above mentioned person appeared in this office on {{ formatInclusiveDatesForDisplay() }}.
                         </p>
                         
                         <!-- Signature and Printed Name Section -->
                         <div class="mt-4 w-96 text-center">
-                                <p class="text-xs text-center text-gray-700 border-b border-gray-400 pb-6 mb-1"></p>
+                                <p class="text-xs text-center text-gray-700 border-b border-gray-900 pb-6 mb-1"></p>
                                 <p class="text-xs text-center text-gray-700">Signature over Printed Name</p>
                         </div>
                     </div>
@@ -139,57 +138,56 @@
                     <!-- Copy 2 (Duplicate) -->
                     <div>
                     <!-- Header Section with Logos -->
-                    <div class="flex items-center justify-center gap-2 mb-4 pb-2" style="border-bottom: 3px double #050505;">
+                    <div class="flex items-center justify-center gap-2 pb-2" style="border-bottom: 3px double #050505;">
                         <div style="width: 70px; flex-shrink: 0;">
                             <img src="/benguetlogo.png" alt="Benguet Logo" style="width: 100%; height: auto;">
                         </div>
                         <div class="text-center">
-                            <p class="text-xs font-semibold text-gray-700 mb-1">Republic of the Philippines</p>
+                            <p class="text-xs font-semibold text-gray-900 mb-1">Republic of the Philippines</p>
                             <p class="text-xs font-bold text-gray-900">PROVINCE OF BENGUET</p>
                             <p class="text-base font-bold text-gray-900">PROVINCIAL BUDGET OFFICE</p>
-                            <p class="text-xs text-gray-700 mb-1">Poblacion, La Trinidad, Benguet 2601</p>
+                            <p class="text-xs text-gray-900 mb-1">Poblacion, La Trinidad, Benguet 2601</p>
                         </div>
                         <div style="width: 70px; flex-shrink: 0;">
                             <img src="/bagongpilipinaslogo.png" alt="Bagong Pilipinas Logo" style="width: 100%; height: auto;">
                         </div>
                     </div>
 
-                    <div>
-                        <p class="font-bold text-lg text-center text-gray-900 mb-6">PASS SLIP</p>
+                    <p class="font-bold text-sm text-blue-800">PHRMDO COPY</p>
+
+                    <div class="flex items-center justify-center mb-6">
+                        <p class="font-bold text-lg text-gray-900">PASS SLIP</p>
                     </div>
 
                      <!-- Top Information Row -->
                     <div class="mb-6 text-xs space-y-1">
                         <div>
-                            <p class="font-semibold text-gray-700"><span class="w-20 inline-block text-right">Date: </span><span class="font-bold text-gray-900 w-48 border-b border-gray-400 inline-block text-center">{{ new Date(formData.date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) }}</span></p>
+                            <p class="font-semibold text-gray-700"><span class="w-20 inline-block text-right">Date: </span><span class="font-bold text-gray-900 w-48 border-b border-gray-900 inline-block text-center">{{ new Date(formData.date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) }}</span></p>
                         </div>
                         <div>
-                            <p class="font-semibold text-gray-700"><span class="w-20 inline-block text-right">Office: </span><span class="font-bold text-gray-900 w-48 border-b border-gray-400 inline-block text-center">Provincial Budget Office</span></p>
-                        </div>
-                        <div>
-                            <p class="font-semibold text-gray-700"><span class="w-20 inline-block text-right">Control No.: </span><span class="font-bold text-gray-900 w-48 border-b border-gray-400 inline-block text-center">{{ formData.control_no }}</span></p>
+                            <p class="font-semibold text-gray-700"><span class="w-20 inline-block text-right">Control No.: </span><span class="font-bold text-gray-900 w-48 border-b border-gray-900 inline-block text-center">{{ formData.control_no }}</span></p>
                         </div>
                     </div>
 
                     <!-- Provincial Budget Officer Info -->
                     <div class="text-left mb-6 w-40">
-                        <p class="font-bold text-xs text-gray-900 text-center border-b border-gray-400 w-72 uppercase">{{ getProvincialBudgetOfficer() }}</p>
+                        <p class="font-bold text-xs text-gray-900 text-center border-b border-gray-900 w-72 uppercase">{{ getProvincialBudgetOfficer() }}</p>
                         <p class="text-xs text-gray-700 text-center w-72">Provincial Budget Officer</p>
                     </div>
 
                     <!-- Main Content -->
-                    <div class="mb-4 text-xs leading-relaxed text-gray-900">
+                    <div class="mb-4 text-xs leading-relaxed text-gray-700">
                         <p class="mb-4">
-                            Permission is respectfully requested to leave at <span class="border-b border-gray-400 w-24 inline-block text-center font-semibold">{{ formatTimeDisplay(formData.requested_time) }}</span> 
-                            on <span class="border-b border-gray-400 w-36 inline-block text-center font-semibold">{{ new Date(formData.date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) }}</span> 
-                            to <span :class="`border-b border-gray-400 inline-block text-center font-semibold ${getPurposeSpanClass()}`">{{ formData.purpose }}</span> 
-                            at the <span class="border-b border-gray-400 w-96 inline-block text-center font-semibold">{{ formData.location }}</span>.
+                            Permission is respectfully requested to leave at <span class="border-b border-gray-900 w-24 inline-block text-center font-semibold">{{ formatTimeDisplay(formData.requested_time) }}</span> 
+                            on <span class="border-b border-gray-900 w-40 inline-block text-center font-semibold">{{ formatInclusiveDatesForDisplay() }}</span> 
+                            to <span class="border-b border-gray-900 inline-block text-center font-semibold" :class="getPurposeSpanClass()" :style="getPurposeSpanStyle()">{{ formData.purpose }}</span> 
+                            at the <span class="border-b border-gray-900 w-96 inline-block text-center font-semibold">{{ formData.location }}</span>.
                         </p>
                         
                         <div class="ml-4 space-y-1">
                             <p>
                                 <span>Expected Time of Return: </span> 
-                                <span class="font-bold border-b border-gray-400 w-48 inline-block text-center">
+                                <span class="font-bold border-b border-gray-900 w-48 inline-block text-center">
                                     {{ formData.returnType === 'asap' ? 'As soon as possible' : 
                                        formData.returnType === 'nwd' ? 'Next Working Day' : 
                                        formData.returnType === 'time_slip' ? 'Time Slip' : 
@@ -200,7 +198,7 @@
                             </p>
                             <p>
                                 <span>Vehicle to be used: </span> 
-                                <span class="font-bold border-b border-gray-400 w-48 inline-block text-center">{{ formData.vehicle }}</span>
+                                <span class="font-bold border-b border-gray-900 w-48 inline-block text-center">{{ formData.vehicle }}</span>
                             </p>
                         </div>
                     </div>
@@ -211,7 +209,7 @@
                         <div class="flex flex-wrap gap-3">
                             <div v-for="empId in formData.employee_ids" :key="empId" class="text-center">
                                 <div class="w-48">
-                                    <p class="font-bold text-xs text-gray-900 border-b border-gray-400 text-center uppercase">{{ getEmployeeName(empId) }}</p>
+                                    <p class="font-bold text-xs text-gray-900 border-b border-gray-900 text-center uppercase">{{ getEmployeeName(empId) }}</p>
                                     <p class="text-xs text-gray-700 text-center">{{ getEmployeeDesignation(empId) }}</p>
                                 </div>
                             </div>
@@ -224,7 +222,7 @@
                         <div class="space-y-8">
                             <div class="w-96">
                                 <p class="font-bold text-xs text-center text-gray-900 w-96 uppercase">{{ getRecommendingApprovalEmployee().name }}</p>
-                                <p class="text-xs text-center text-gray-700 border-b border-gray-400 w-96">{{ getRecommendingApprovalEmployee().designation }}</p>
+                                <p class="text-xs text-center text-gray-700 border-b border-gray-900 w-96">{{ getRecommendingApprovalEmployee().designation }}</p>
                                 <p class="text-xs text-center text-gray-700 w-96">Immediate Supervisor</p>
                             </div>
                         </div>
@@ -236,8 +234,8 @@
                             <p class="text-xs text-left text-gray-900 mb-8">APPROVED:</p>
                             <p v-if="isProvincialBudgetOfficerRequesting() && getProvincialGovernor()" class="text-xs text-center text-gray-900 font-bold uppercase">{{ getProvincialGovernor().name }}</p>
                             <p v-else class="text-xs text-center text-gray-900 font-bold uppercase">{{ getProvincialBudgetOfficer() }}</p>
-                            <p v-if="isProvincialBudgetOfficerRequesting() && getProvincialGovernor()" class="text-xs text-center text-gray-700 border-b border-gray-400">Provincial Governor</p>
-                            <p v-else class="text-xs text-center text-gray-700 border-b border-gray-400">Provincial Budget Officer</p>
+                            <p v-if="isProvincialBudgetOfficerRequesting() && getProvincialGovernor()" class="text-xs text-center text-gray-700 border-b border-gray-900">Provincial Governor</p>
+                            <p v-else class="text-xs text-center text-gray-700 border-b border-gray-900">Provincial Budget Officer</p>
                             <p class="text-xs text-center text-gray-700">Department Head</p>
                         </div>
                     </div>
@@ -246,12 +244,12 @@
                     <div class="mt-4 pt-4" style="border-top: 3px double #050505;">
                         <p class="font-bold text-xs text-center text-gray-900 mb-2">CERTIFICATE OF APPEARANCE</p>
                         <p class="text-xs text-gray-700 leading-relaxed">
-                            This is to CERTIFY that the above mentioned person appeared in this office on {{ new Date(formData.date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) }}.
+                            This is to CERTIFY that the above mentioned person appeared in this office on {{ formatInclusiveDatesForDisplay() }}.
                         </p>
                         
                         <!-- Signature and Printed Name Section -->
                         <div class="mt-4 w-96 text-center">
-                                <p class="text-xs text-center text-gray-700 border-b border-gray-400 pb-6 mb-1"></p>
+                                <p class="text-xs text-center text-gray-900 border-b border-gray-900 pb-6 mb-1"></p>
                                 <p class="text-xs text-center text-gray-700">Signature over Printed Name</p>
                         </div>
                     </div>
@@ -341,7 +339,47 @@ const isProvincialBudgetOfficerRequesting = (): boolean => {
 
 const getPurposeSpanClass = (): string => {
     const purpose = props.formData?.purpose || '';
-    return purpose.length > 30 ? 'w-auto' : 'w-[560px]';
+    // Return w-auto for long purposes that exceed 560px width
+    const estimatedWidth = purpose.length * 8; // rough estimate: ~8px per character
+    return estimatedWidth > 560 ? 'w-auto' : '';
+};
+
+const getPurposeSpanStyle = (): string => {
+    const purpose = props.formData?.purpose || '';
+    // Estimate if text exceeds 560px (roughly 70 characters)
+    const estimatedWidth = purpose.length * 8;
+    // Short purposes: fixed 560px width; Long purposes: auto
+    return estimatedWidth > 560 ? 'width: auto;' : 'width: 560px;';
+};
+
+const formatInclusiveDatesForDisplay = (): string => {
+    if (!props.formData) return '';
+    
+    // If inclusive_dates exist, use them; otherwise fall back to single date
+    if (props.formData.inclusive_dates && Array.isArray(props.formData.inclusive_dates) && props.formData.inclusive_dates.length > 0) {
+        const formattedDates = props.formData.inclusive_dates.map((dateEntry: string) => {
+            if (!dateEntry) return '';
+            if (dateEntry.includes(' - ')) {
+                const [startStr, endStr] = dateEntry.split(' - ');
+                const startDate = new Date(startStr.trim());
+                const endDate = new Date(endStr.trim());
+                const start = startDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
+                const end = endDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
+                return `${start} - ${end}`;
+            } else {
+                const date = new Date(dateEntry.trim());
+                return date.toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
+            }
+        }).filter((d: string) => d);
+        return formattedDates.join(', ');
+    }
+    
+    // Fallback to single date
+    if (props.formData.date) {
+        return new Date(props.formData.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
+    }
+    
+    return '';
 };
 
 const printPassSlip = (): void => {
