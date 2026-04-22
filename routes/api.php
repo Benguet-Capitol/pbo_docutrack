@@ -13,6 +13,7 @@ use App\Http\Controllers\Api\TravelOrderController;
 use App\Http\Controllers\Api\LeaveController;
 use App\Http\Controllers\Api\TardinessController;
 use App\Http\Controllers\Api\SyncController;
+use App\Http\Controllers\Api\ReportController;
 
 // Users API
 Route::get('/users', [UserController::class, 'index']);
@@ -102,6 +103,12 @@ Route::middleware(['web', 'auth'])->group(function () {
     Route::post('/tardiness', [TardinessController::class, 'store']);
     Route::put('/tardiness/{tardiness}', [TardinessController::class, 'update']);
     Route::delete('/tardiness/{tardiness}', [TardinessController::class, 'destroy']);
+});
+
+// Reports API
+Route::middleware(['web', 'auth'])->group(function () {
+    Route::post('/reports/summary', [ReportController::class, 'generateSummaryReport']);
+    Route::post('/reports/budget-proposal', [ReportController::class, 'generateBudgetProposalReport']);
 });
 
 // Sync API - Fetch and update data from pbo-registry

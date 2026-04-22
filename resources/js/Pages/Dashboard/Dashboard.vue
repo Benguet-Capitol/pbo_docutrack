@@ -1,4 +1,4 @@
-<template>
+﻿<template>
     <PageHead />
     <AuthenticatedLayout>
         <template #header>
@@ -431,13 +431,13 @@
                                     <th class="px-6 py-3 text-xs font-bold text-gray-700 dark:text-gray-200 text-left">
                                         <button @click="sortBy = 'tracking_no'; sortOrder = sortOrder === 'asc' ? 'desc' : 'asc'" class="flex items-center gap-2 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
                                             Tracking No
-                                            <span v-if="sortBy === 'tracking_no'" class="text-xs">{{ sortOrder === 'asc' ? '▲' : '▼' }}</span>
+                                            <span v-if="sortBy === 'tracking_no'" class="text-xs">{{ sortOrder === 'asc' ? 'Γû▓' : 'Γû╝' }}</span>
                                         </button>
                                     </th>
                                     <th class="px-6 py-3 text-xs font-bold text-gray-700 dark:text-gray-200 text-left">
                                         <button @click="sortBy = 'date'; sortOrder = sortOrder === 'asc' ? 'desc' : 'asc'" class="flex items-center gap-2 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
                                             Date
-                                            <span v-if="sortBy === 'date'" class="text-xs">{{ sortOrder === 'asc' ? '▲' : '▼' }}</span>
+                                            <span v-if="sortBy === 'date'" class="text-xs">{{ sortOrder === 'asc' ? 'Γû▓' : 'Γû╝' }}</span>
                                         </button>
                                     </th>
                                     <th class="px-6 py-3 text-xs font-bold text-gray-700 dark:text-gray-200 text-left">
