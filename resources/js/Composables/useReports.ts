@@ -333,9 +333,15 @@ export const useReports = (
             const currentYear = summaryData.value.year || new Date().getFullYear();
             const monthName = months[summaryData.value.month - 1];
 
+            // Helper function to parse date string to Date object (handling timezone correctly)
+            const parseDateString = (dateString: string): Date => {
+                const [year, month, day] = dateString.trim().split('-').map(Number);
+                return new Date(year, month - 1, day);
+            };
+
             // Helper function to check if date falls in specified month
             const isInMonth = (dateString: string) => {
-                const date = new Date(dateString);
+                const date = parseDateString(dateString);
                 return date.getMonth() === (summaryData.value.month! - 1) && 
                        date.getFullYear() === currentYear;
             };
@@ -351,7 +357,7 @@ export const useReports = (
             const isDateInCasualPeriod = (dateString: string): boolean => {
                 if (!summaryData.value.casualPeriod) return true;
                 
-                const date = new Date(dateString);
+                const date = parseDateString(dateString);
                 const day = date.getDate();
                 const lastDay = new Date(currentYear, summaryData.value.month!, 0).getDate();
                 
@@ -375,8 +381,8 @@ export const useReports = (
                     
                     if (dateEntry.includes(' - ')) {
                         const [startStr, endStr] = dateEntry.split(' - ');
-                        const rangeStart = new Date(startStr.trim());
-                        const rangeEnd = new Date(endStr.trim());
+                        const rangeStart = parseDateString(startStr);
+                        const rangeEnd = parseDateString(endStr);
                         
                         if (rangeStart <= monthEnd && rangeEnd >= monthStart) {
                             if (summaryData.value.employmentType === 'casual') {
@@ -388,7 +394,7 @@ export const useReports = (
                             }
                         }
                     } else {
-                        const date = new Date(dateEntry.trim());
+                        const date = parseDateString(dateEntry);
                         if (date.getMonth() === (summaryData.value.month! - 1) && date.getFullYear() === currentYear) {
                             if (summaryData.value.employmentType === 'casual') {
                                 if (isDateInCasualPeriod(dateEntry.trim())) {
@@ -403,7 +409,40 @@ export const useReports = (
                 return false;
             };
 
-            // Helper function to check if a pass slip falls in the specified month (based on inclusive_dates)
+            // Helper function to check if a single date entry overlaps with the selected month
+            const dateEntryOverlapsMonth = (dateEntry: string): boolean => {
+                const monthStart = new Date(currentYear, (summaryData.value.month! - 1), 1);
+                const monthEnd = new Date(currentYear, summaryData.value.month!, 0);
+                
+                if (!dateEntry) return false;
+                
+                if (dateEntry.includes(' - ')) {
+                    // Date range
+                    const [startStr, endStr] = dateEntry.split(' - ');
+                    const rangeStart = parseDateString(startStr);
+                    const rangeEnd = parseDateString(endStr);
+                    return rangeStart <= monthEnd && rangeEnd >= monthStart;
+                } else {
+                    // Single date
+                    const date = parseDateString(dateEntry);
+                    return date.getMonth() === (summaryData.value.month! - 1) && date.getFullYear() === currentYear;
+                }
+            };
+
+            // Helper function to check if a date entry overlaps with casual period
+            const dateEntryInCasualPeriod = (dateEntry: string): boolean => {
+                if (!summaryData.value.casualPeriod) return true;
+                
+                const lastDay = new Date(currentYear, summaryData.value.month!, 0).getDate();
+                
+                if (dateEntry.includes(' - ')) {
+                    const [startStr, endStr] = dateEntry.split(' - ');
+                    return isDateRangeInCasualPeriod(startStr.trim(), endStr.trim());
+                } else {
+                    return isDateInCasualPeriod(dateEntry.trim());
+                }
+            };
+
             const passSlipInMonth = (ps: any): boolean => {
                 // If inclusive_dates exist, use them; otherwise fall back to date
                 if (ps.inclusive_dates && Array.isArray(ps.inclusive_dates) && ps.inclusive_dates.length > 0) {
@@ -415,8 +454,8 @@ export const useReports = (
                         
                         if (dateEntry.includes(' - ')) {
                             const [startStr, endStr] = dateEntry.split(' - ');
-                            const rangeStart = new Date(startStr.trim());
-                            const rangeEnd = new Date(endStr.trim());
+                            const rangeStart = parseDateString(startStr);
+                            const rangeEnd = parseDateString(endStr);
                             
                             if (rangeStart <= monthEnd && rangeEnd >= monthStart) {
                                 if (summaryData.value.employmentType === 'casual') {
@@ -428,7 +467,7 @@ export const useReports = (
                                 }
                             }
                         } else {
-                            const date = new Date(dateEntry.trim());
+                            const date = parseDateString(dateEntry);
                             if (date.getMonth() === (summaryData.value.month! - 1) && date.getFullYear() === currentYear) {
                                 if (summaryData.value.employmentType === 'casual') {
                                     if (isDateInCasualPeriod(dateEntry.trim())) {
@@ -453,8 +492,8 @@ export const useReports = (
             const isDateRangeInCasualPeriod = (startDateString: string, endDateString: string): boolean => {
                 if (!summaryData.value.casualPeriod) return true;
                 
-                const startDate = new Date(startDateString);
-                const endDate = new Date(endDateString);
+                const startDate = parseDateString(startDateString);
+                const endDate = parseDateString(endDateString);
                 const lastDay = new Date(currentYear, summaryData.value.month!, 0).getDate();
                 
                 const monthStart = new Date(currentYear, (summaryData.value.month! - 1), 1);
@@ -478,8 +517,8 @@ export const useReports = (
             const travelOrderInMonth = (to: any): boolean => {
                 if (!to.from_date || !to.to_date) return false;
                 
-                const fromDate = new Date(to.from_date);
-                const toDate = new Date(to.to_date);
+                const fromDate = parseDateString(to.from_date);
+                const toDate = parseDateString(to.to_date);
                 const monthStart = new Date(currentYear, (summaryData.value.month! - 1), 1);
                 const monthEnd = new Date(currentYear, summaryData.value.month!, 0);
                 
@@ -528,7 +567,22 @@ export const useReports = (
                         tardiness: []
                     });
                 }
-                employeeData.get(empId)!.leaves.push(leave);
+                
+                // If leave has inclusive_dates, create separate entries for each date that falls in the selected month
+                if (leave.inclusive_dates && Array.isArray(leave.inclusive_dates) && leave.inclusive_dates.length > 0) {
+                    leave.inclusive_dates.forEach((dateEntry: string) => {
+                        // Only include dates that overlap with the selected month
+                        if (!dateEntryOverlapsMonth(dateEntry)) return;
+                        
+                        // Check casual period if applicable
+                        if (summaryData.value.employmentType === 'casual' && !dateEntryInCasualPeriod(dateEntry)) return;
+                        
+                        employeeData.get(empId)!.leaves.push({
+                            ...leave,
+                            inclusive_dates: [dateEntry]  // Override with individual date entry for display
+                        });
+                    });
+                }
             });
 
             // Process pass slips
@@ -556,9 +610,15 @@ export const useReports = (
                         });
                     }
                     
-                    // If pass slip has inclusive_dates, create separate entries for each date
+                    // If pass slip has inclusive_dates, create separate entries for each date that falls in the selected month
                     if (ps.inclusive_dates && Array.isArray(ps.inclusive_dates) && ps.inclusive_dates.length > 0) {
                         ps.inclusive_dates.forEach((dateEntry: string) => {
+                            // Only include dates that overlap with the selected month
+                            if (!dateEntryOverlapsMonth(dateEntry)) return;
+                            
+                            // Check casual period if applicable
+                            if (summaryData.value.employmentType === 'casual' && !dateEntryInCasualPeriod(dateEntry)) return;
+                            
                             employeeData.get(empId)!.passSlips.push({
                                 ...ps,
                                 date: dateEntry  // Override with individual date for display
@@ -605,7 +665,25 @@ export const useReports = (
                             tardiness: []
                         });
                     }
-                    employeeData.get(empId)!.travelOrders.push(to);
+                    
+                    // If travel order has inclusive_dates array, create separate entries for each date that falls in the selected month
+                    if (to.inclusive_dates && Array.isArray(to.inclusive_dates) && to.inclusive_dates.length > 0) {
+                        to.inclusive_dates.forEach((dateEntry: string) => {
+                            // Only include dates that overlap with the selected month
+                            if (!dateEntryOverlapsMonth(dateEntry)) return;
+                            
+                            // Check casual period if applicable
+                            if (summaryData.value.employmentType === 'casual' && !dateEntryInCasualPeriod(dateEntry)) return;
+                            
+                            employeeData.get(empId)!.travelOrders.push({
+                                ...to,
+                                date: dateEntry  // Override with individual date for display
+                            });
+                        });
+                    } else {
+                        // Standard travel order with from_date and to_date
+                        employeeData.get(empId)!.travelOrders.push(to);
+                    }
                 });
             });
 

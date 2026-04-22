@@ -103,6 +103,9 @@
                 />
             </div>
 
+            <!-- Records Summary Panel Component -->
+            <RecordsSummaryPanel />
+
             <!-- Report Modals Component -->
             <ReportModals
                 :showReportModal="showReportModal"
@@ -137,6 +140,7 @@ import HRSummaryPanel from '@/Components/Dashboard/HRSummaryPanel.vue';
 import DocumentsSection from '@/Components/Dashboard/DocumentsSection.vue';
 import UserStatisticsSection from '@/Components/Dashboard/UserStatisticsSection.vue';
 import DocumentStatisticsSection from '@/Components/Dashboard/DocumentStatisticsSection.vue';
+import RecordsSummaryPanel from '@/Components/Dashboard/RecordsSummaryPanel.vue';
 import ReportModals from '@/Components/Dashboard/ReportModals.vue';
 import { useDocuments } from '@/Composables/useDocuments';
 import { useHRData } from '@/Composables/useHRData';
