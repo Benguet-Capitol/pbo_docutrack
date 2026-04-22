@@ -32,6 +32,8 @@
             <div
                 v-for="record in recordSummary"
                 :key="record.record_type"
+                @mouseenter="hoveredRecord = record.record_type"
+                @mouseleave="hoveredRecord = null"
                 class="rounded-lg border-2 p-4 cursor-pointer transition-all duration-200"
                 :class="getCardClass(record.record_type)"
             >
@@ -74,6 +76,7 @@ import { onMounted, ref, computed } from 'vue';
 const loading = ref(false);
 const error = ref('');
 const records = ref<any[]>([]);
+const hoveredRecord = ref<string | null>(null);
 
 // ============== Computed ==============
 const recordSummary = computed(() => {
@@ -106,16 +109,24 @@ const getRecordIcon = (recordType: string): string => {
 };
 
 const getCardClass = (recordType: string): string => {
-    const classMap: Record<string, string> = {
-        'Provincial Budget': 'bg-purple-50 dark:bg-purple-900/20 border-purple-200 dark:border-purple-800 hover:border-purple-400',
-        'Municipal Budget': 'bg-orange-50 dark:bg-orange-900/20 border-orange-200 dark:border-orange-800 hover:border-orange-400',
-        'Issuances / Circulars / Other References and Documents': 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800 hover:border-blue-400',
-    };
+    const isHovered = hoveredRecord.value === recordType;
     
-    return classMap[recordType] || 'bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600 hover:border-gray-400';
+    if (isHovered) {
+        // Hovered state with colored background and border
+        const colorMap: Record<string, string> = {
+            'Provincial Budget': 'bg-purple-50 dark:bg-purple-900/20 border-purple-500',
+            'Municipal Budget': 'bg-orange-50 dark:bg-orange-900/20 border-orange-500',
+            'Issuances / Circulars / Other References and Documents': 'bg-blue-50 dark:bg-blue-900/20 border-blue-500',
+        };
+        return colorMap[recordType] || 'bg-gray-50 dark:bg-gray-700 border-gray-400';
+    } else {
+        // Default state - white/gray background with gray border
+        return 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-600';
+    }
 };
 
 const getNumberColor = (recordType: string): string => {
+    // Always show colored numbers (don't change on hover)
     const colorMap: Record<string, string> = {
         'Provincial Budget': 'text-purple-600 dark:text-purple-400',
         'Municipal Budget': 'text-orange-600 dark:text-orange-400',
@@ -126,6 +137,7 @@ const getNumberColor = (recordType: string): string => {
 };
 
 const getIconTextColor = (recordType: string): string => {
+    // Always show colored icons (don't change on hover)
     const colorMap: Record<string, string> = {
         'Provincial Budget': 'text-purple-600 dark:text-purple-400',
         'Municipal Budget': 'text-orange-600 dark:text-orange-400',
