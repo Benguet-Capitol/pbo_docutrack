@@ -106,7 +106,7 @@
                                 <template v-if="formData.inclusive_dates && formData.inclusive_dates.length > 0">
                                     <template v-for="(entry, idx) in formData.inclusive_dates" :key="idx">
                                         <template v-if="idx > 0">, </template>
-                                        <span class="border-b border-gray-900 inline-block text-center font-semibold w-36">
+                                        <span class="border-b border-gray-900 inline-block text-center font-semibold w-56">
                                             <template v-if="entry.includes(' - ')">
                                                 {{ formatInclusiveDateForBodyDisplay(entry).start }} to {{ formatInclusiveDateForBodyDisplay(entry).end }}
                                             </template>
