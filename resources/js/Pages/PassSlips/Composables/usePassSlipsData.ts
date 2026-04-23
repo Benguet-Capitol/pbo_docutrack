@@ -35,7 +35,7 @@ export function usePassSlipsData() {
     const searchQuery = ref('');
     const currentPage = ref(1);
     const itemsPerPage = ref(10);
-    const sortBy = ref<'id' | 'control_no' | 'date' | 'requested_time' | 'purpose' | 'location'>('id');
+    const sortBy = ref<'id' | 'control_no' | 'date' | 'requested_time' | 'purpose' | 'location'>('control_no');
     const sortOrder = ref<'asc' | 'desc'>('desc');
     const loading = ref(false);
     const error = ref<string | null>(null);
