@@ -66,7 +66,7 @@ export function useTravelOrdersForm(employees: any, travelOrders: any) {
             });
     });
 
-    const requestingEmployees = computed(() => pboOfficeEmployees.value);
+    const requestingEmployees = computed(() => sortedEmployees.value);
 
     const supervisorOptions = computed(() => pboOfficeEmployees.value);
 

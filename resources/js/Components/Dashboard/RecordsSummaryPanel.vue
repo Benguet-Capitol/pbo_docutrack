@@ -87,10 +87,21 @@ const recordSummary = computed(() => {
         summary[type] = (summary[type] || 0) + 1;
     });
     
-    // Convert to array and sort by count descending
+    // Define the desired order of record types
+    const orderMap: Record<string, number> = {
+        'Provincial Budget': 0,
+        'Municipal Budget': 1,
+        'Issuances / Circulars / Other References and Documents': 2,
+    };
+    
+    // Convert to array and sort by the defined order
     return Object.entries(summary)
         .map(([record_type, count]) => ({ record_type, count }))
-        .sort((a, b) => b.count - a.count);
+        .sort((a, b) => {
+            const orderA = orderMap[a.record_type] ?? 999;
+            const orderB = orderMap[b.record_type] ?? 999;
+            return orderA - orderB;
+        });
 });
 
 const totalRecords = computed(() => {
