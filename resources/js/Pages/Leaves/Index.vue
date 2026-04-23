@@ -169,14 +169,19 @@ const {
 
 const leaveTypes = [
     'Vacation Leave',
+    'Mandatory/Forced Leave',
     'Sick Leave',
-    'Bereavement Leave',
+    'Maternity Leave',
+    'Paternity Leave',
     'Special Privilege Leave',
-    'Witness Leave',
     'Study Leave',
-    'Wellness Leave',
+    '10-Day VAWC Leave',
+    'Rehabilitation Leave',
     'Special Leave Benefits for Women',
-    'Others',
+    'Special Emergency (Calamity) Leave',
+    'Adoption Leave',
+    'Wellness Leave',
+    'Others'
 ];
 
 // Track the current record being deleted
