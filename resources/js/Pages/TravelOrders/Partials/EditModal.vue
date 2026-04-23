@@ -103,7 +103,7 @@
                                 <div v-if="formData.purpose.length > 0" class="flex flex-wrap gap-2">
                                     <div v-for="(p, index) in formData.purpose" :key="index" class="inline-flex items-center gap-2 px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full text-xs">
                                         <span v-if="editingPurposeIndex !== index">{{ p }}</span>
-                                        <textarea v-else v-model="editingPurposeValue" class="bg-blue-200 dark:bg-blue-800 border-0 px-2 py-1 rounded text-blue-900 dark:text-blue-900 text-xs focus:outline-none resize-none" rows="4" @keyup.enter="saveEditPurpose(index)" @keyup.escape="cancelEditPurpose"></textarea>
+                                        <textarea v-else v-model="editingPurposeValue" class="bg-blue-200 dark:bg-blue-800 border-0 px-2 py-1 rounded text-blue-900 dark:text-blue-200 text-xs focus:outline-none resize-none" rows="4" @keyup.enter="saveEditPurpose(index)" @keyup.escape="cancelEditPurpose"></textarea>
                                         <div class="flex gap-1">
                                             <button v-if="editingPurposeIndex !== index" @click="startEditPurpose(index)" type="button" class="hover:text-blue-600 dark:hover:text-blue-300 transition-colors">
                                                 <i class="fas fa-edit text-xs"></i>
