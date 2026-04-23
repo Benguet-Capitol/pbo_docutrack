@@ -211,21 +211,34 @@ export const useReports = (
     const formatInclusiveDatesToString = (inclusiveDates: any[]): string => {
         if (!inclusiveDates || inclusiveDates.length === 0) return '';
         
+        // Helper to parse date string using local time
+        const parseDate = (dateStr: string): Date => {
+            const [year, month, day] = dateStr.trim().split('-').map(Number);
+            return new Date(year, month - 1, day);
+        };
+        
         return inclusiveDates.map((date: any) => {
             if (!date) return '';
             
             // Handle date ranges like "2026-01-29 - 2026-02-04"
             if (typeof date === 'string' && date.includes(' - ')) {
-                const [startStr, endStr] = date.split(' - ');
-                const startDate = new Date(startStr.trim());
-                const endDate = new Date(endStr.trim());
-                const start = startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-                const end = endDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-                return `${start} - ${end}`;
-            } else {
-                const d = new Date(date);
+                const parts = date.split(' - ');
+                if (parts.length === 2) {
+                    const startStr = parts[0].trim();
+                    const endStr = parts[1].trim();
+                    if (startStr.match(/^\d{4}-\d{2}-\d{2}$/) && endStr.match(/^\d{4}-\d{2}-\d{2}$/)) {
+                        const startDate = parseDate(startStr);
+                        const endDate = parseDate(endStr);
+                        const start = startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                        const end = endDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                        return `${start} - ${end}`;
+                    }
+                }
+            } else if (typeof date === 'string' && date.match(/^\d{4}-\d{2}-\d{2}$/)) {
+                const d = parseDate(date);
                 return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
             }
+            return '';
         }).filter(d => d).join(', ');
     };
 
@@ -515,18 +528,47 @@ export const useReports = (
 
             // Helper function to check if travel order falls in the specified month
             const travelOrderInMonth = (to: any): boolean => {
-                if (!to.from_date || !to.to_date) return false;
+                if (!to.inclusive_dates || !Array.isArray(to.inclusive_dates) || to.inclusive_dates.length === 0) return false;
                 
-                const fromDate = parseDateString(to.from_date);
-                const toDate = parseDateString(to.to_date);
                 const monthStart = new Date(currentYear, (summaryData.value.month! - 1), 1);
                 const monthEnd = new Date(currentYear, summaryData.value.month!, 0);
                 
-                if (fromDate <= monthEnd && toDate >= monthStart) {
-                    if (summaryData.value.employmentType === 'casual') {
-                        return isDateRangeInCasualPeriod(to.from_date, to.to_date);
+                for (const dateEntry of to.inclusive_dates) {
+                    if (!dateEntry) continue;
+                    
+                    // Handle date ranges like "2026-01-29 - 2026-02-04"
+                    if (dateEntry.includes(' - ')) {
+                        const parts = dateEntry.split(' - ');
+                        if (parts.length === 2) {
+                            const startStr = parts[0].trim();
+                            const endStr = parts[1].trim();
+                            
+                            // Verify both parts look like dates (YYYY-MM-DD format)
+                            if (startStr.match(/^\d{4}-\d{2}-\d{2}$/) && endStr.match(/^\d{4}-\d{2}-\d{2}$/)) {
+                                const rangeStart = parseDateString(startStr);
+                                const rangeEnd = parseDateString(endStr);
+                                
+                                // Check if the date range overlaps with the selected month
+                                if (rangeStart <= monthEnd && rangeEnd >= monthStart) {
+                                    if (summaryData.value.employmentType === 'casual') {
+                                        return isDateRangeInCasualPeriod(startStr, endStr);
+                                    }
+                                    return true;
+                                }
+                            }
+                        }
+                    } else {
+                        // Handle single dates
+                        if (dateEntry.match(/^\d{4}-\d{2}-\d{2}$/)) {
+                            const date = parseDateString(dateEntry);
+                            if (date.getMonth() === (summaryData.value.month! - 1) && date.getFullYear() === currentYear) {
+                                if (summaryData.value.employmentType === 'casual') {
+                                    return isDateRangeInCasualPeriod(dateEntry, dateEntry);
+                                }
+                                return true;
+                            }
+                        }
                     }
-                    return true;
                 }
                 return false;
             };
@@ -680,9 +722,6 @@ export const useReports = (
                                 date: dateEntry  // Override with individual date for display
                             });
                         });
-                    } else {
-                        // Standard travel order with from_date and to_date
-                        employeeData.get(empId)!.travelOrders.push(to);
                     }
                 });
             });
@@ -780,9 +819,9 @@ export const useReports = (
                 <th style="text-align: center; font-weight: bold; width: 10%;">Type of Leave</th>
                 <th style="text-align: center; font-weight: bold; width: 8%;">Inclusive Dates</th>
                 <th style="text-align: center; font-weight: bold; width: 8%;">Inclusive Dates</th>
-                <th style="text-align: center; font-weight: bold; width: 6%;">Date</th>
-                <th style="text-align: center; font-weight: bold; width: 6%;">Time of Departure</th>
-                <th style="text-align: center; font-weight: bold; width: 6%;">Return Time</th>
+                <th style="text-align: center; font-weight: bold; width: 8%;">Inclusive Dates</th>
+                <th style="text-align: center; font-weight: bold; width: 5%;">Time of Departure</th>
+                <th style="text-align: center; font-weight: bold; width: 5%;">Return Time</th>
                 <th style="text-align: center; font-weight: bold; width: 5%;">Tard. Date</th>
                 <th style="text-align: center; font-weight: bold; width: 5%;">Tard. Hrs/Mins</th>
                 <th style="text-align: center; font-weight: bold; width: 4%;">Tard. Count</th>
@@ -887,14 +926,23 @@ export const useReports = (
                         
                         let toDates = '';
                         if (to) {
-                            if (to.inclusive_dates) {
+                            // If this TO has a 'date' field (individual date entry we stored), use that
+                            if (to.date) {
+                                // This is the individual date/range for this specific row
+                                if (to.date.includes(' - ')) {
+                                    const [startStr, endStr] = to.date.split(' - ');
+                                    const startDate = new Date(startStr.trim()).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                                    const endDate = new Date(endStr.trim()).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                                    toDates = startDate + ' - ' + endDate;
+                                } else {
+                                    toDates = new Date(to.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                                }
+                            } else if (to.inclusive_dates) {
                                 toDates = formatInclusiveDatesToString(to.inclusive_dates);
                             } else if (to.from_date && to.to_date) {
                                 const fromDate = new Date(to.from_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
                                 const toDate = new Date(to.to_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
                                 toDates = fromDate === toDate ? fromDate : fromDate + ' - ' + toDate;
-                            } else if (to.date) {
-                                toDates = new Date(to.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
                             }
                         }
                         html += '<td style="text-align: center; padding: 4px 3px; width: 8%; font-size: 11px;">' + toDates + '</td>';

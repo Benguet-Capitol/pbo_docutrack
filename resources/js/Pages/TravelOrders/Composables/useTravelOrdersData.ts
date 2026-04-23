@@ -19,6 +19,7 @@ export interface TravelOrder {
     going_to: string;
     from_date: string;
     to_date: string;
+    inclusive_dates?: string[];
     purpose: string[];
     vehicle: string;
     plate_number?: string;

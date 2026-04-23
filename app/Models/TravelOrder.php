@@ -19,6 +19,7 @@ class TravelOrder extends Model
         'going_to',
         'from_date',
         'to_date',
+        'inclusive_dates',
         'purpose',
         'vehicle',
         'plate_number',
@@ -31,6 +32,7 @@ class TravelOrder extends Model
         'date' => 'datetime:Y-m-d',
         'from_date' => 'datetime:Y-m-d',
         'to_date' => 'datetime:Y-m-d',
+        'inclusive_dates' => 'array',
         'purpose' => 'array',
     ];
 

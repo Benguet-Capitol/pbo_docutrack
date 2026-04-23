@@ -63,26 +63,34 @@
                                 <span v-if="formErrors.going_to" class="text-red-500 text-xs">{{ formErrors.going_to }}</span>
                             </div>
 
-                            <!-- Date Range -->
-                            <div class="grid grid-cols-2 gap-4">
+                            <!-- Inclusive Dates Field -->
+                            <div class="space-y-2">
+                                <label class="block text-xs font-medium text-gray-700 dark:text-gray-300">Inclusive Dates <span class="text-red-600">*</span></label>
                                 <div class="space-y-2">
-                                    <label for="edit_from_date" class="block text-xs font-medium text-gray-700 dark:text-gray-300">From <span class="text-red-600">*</span></label>
-                                    <div class="relative flex items-center">
-                                        <i class="fas fa-calendar absolute left-3 text-gray-400 text-sm pointer-events-none"></i>
-                                        <input :value="formData.from_date" @input="$emit('update:form-data', { ...formData, from_date: ($event.target as HTMLInputElement).value })" id="edit_from_date" type="date" class="block w-full pl-10 pr-4 py-2 text-xs border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:outline-none transition-colors" :class="[formErrors.from_date ? 'border-red-500 focus:border-red-500' : 'border-gray-300 focus:border-blue-500']" />
+                                    <div class="flex gap-2 items-end">
+                                        <div class="flex-1">
+                                            <label class="block text-xs text-gray-600 dark:text-gray-400 mb-1">Date</label>
+                                            <input v-model="newInclusiveDate" type="date" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-xs dark:bg-gray-700 dark:text-white focus:outline-none focus:border-blue-500 dark:focus:border-blue-500" />
+                                        </div>
+                                        <div class="flex-1">
+                                            <label class="block text-xs text-gray-600 dark:text-gray-400 mb-1">To Date (optional)</label>
+                                            <input v-model="newInclusiveDateRange" type="date" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-xs dark:bg-gray-700 dark:text-white focus:outline-none focus:border-blue-500 dark:focus:border-blue-500" />
+                                        </div>
+                                        <button @click.prevent="addInclusiveDate" type="button" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-xs font-medium">
+                                            <i class="fas fa-plus"></i>
+                                        </button>
                                     </div>
-                                    <span v-if="formErrors.from_date" class="text-red-500 text-xs">{{ formErrors.from_date }}</span>
-                                </div>
-                                <div class="space-y-2">
-                                    <label for="edit_to_date" class="block text-xs font-medium text-gray-700 dark:text-gray-300">To <span class="text-red-600">*</span></label>
-                                    <div class="relative flex items-center">
-                                        <i class="fas fa-calendar absolute left-3 text-gray-400 text-sm pointer-events-none"></i>
-                                        <input :value="formData.to_date" @input="$emit('update:form-data', { ...formData, to_date: ($event.target as HTMLInputElement).value })" id="edit_to_date" type="date" class="block w-full pl-10 pr-4 py-2 text-xs border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:outline-none transition-colors" :class="[formErrors.to_date ? 'border-red-500 focus:border-red-500' : 'border-gray-300 focus:border-blue-500']" />
+                                    <div class="flex flex-wrap gap-2">
+                                        <span v-for="(entry, idx) in formData.inclusive_dates" :key="idx" @click="editInclusiveDate(idx)" class="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded text-xs cursor-pointer hover:bg-blue-200 dark:hover:bg-blue-800 transition-colors">
+                                            <i class="fas fa-edit text-blue-600 dark:text-blue-400"></i>
+                                            {{ formatInclusiveDate(entry) }}
+                                            <button @click.stop="removeInclusiveDate(idx)" class="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200 font-bold">×</button>
+                                        </span>
                                     </div>
-                                    <span v-if="formErrors.to_date" class="text-red-500 text-xs">{{ formErrors.to_date }}</span>
                                 </div>
+                                <span v-if="formErrors.inclusive_dates" class="text-red-500 text-xs">{{ formErrors.inclusive_dates }}</span>
                             </div>
-
+                            
                             <!-- Purpose Field -->
                             <div class="space-y-2">
                                 <label class="block text-xs font-medium text-gray-700 dark:text-gray-300">Purpose <span class="text-red-600">*</span></label>
@@ -228,6 +236,8 @@ defineEmits<{
 const newPurpose = ref('');
 const editingPurposeIndex = ref<number | null>(null);
 const editingPurposeValue = ref('');
+const newInclusiveDate = ref('');
+const newInclusiveDateRange = ref('');
 
 const addPurpose = () => {
     if (newPurpose.value?.trim()) {
@@ -256,6 +266,57 @@ const saveEditPurpose = (index: number) => {
 const cancelEditPurpose = () => {
     editingPurposeIndex.value = null;
     editingPurposeValue.value = '';
+};
+
+const addInclusiveDate = () => {
+    if (!newInclusiveDate.value) return;
+
+    let entry = newInclusiveDate.value;
+    if (newInclusiveDateRange.value) {
+        entry = `${newInclusiveDate.value} - ${newInclusiveDateRange.value}`;
+    }
+
+    const newInclusiveDates = [...props.formData.inclusive_dates];
+    if (!newInclusiveDates.includes(entry)) {
+        newInclusiveDates.push(entry);
+    }
+
+    props.formData.inclusive_dates = newInclusiveDates;
+    newInclusiveDate.value = '';
+    newInclusiveDateRange.value = '';
+};
+
+const editInclusiveDate = (index: number) => {
+    const entry = props.formData.inclusive_dates[index];
+    if (entry.includes(' - ')) {
+        const [startStr, endStr] = entry.split(' - ');
+        newInclusiveDate.value = startStr.trim();
+        newInclusiveDateRange.value = endStr.trim();
+    } else {
+        newInclusiveDate.value = entry.trim();
+        newInclusiveDateRange.value = '';
+    }
+    removeInclusiveDate(index);
+};
+
+const removeInclusiveDate = (index: number) => {
+    props.formData.inclusive_dates = props.formData.inclusive_dates.filter((_: any, i: number) => i !== index);
+};
+
+const formatInclusiveDate = (dateEntry: string): string => {
+    if (!dateEntry) return '';
+    
+    if (dateEntry.includes(' - ')) {
+        const [startStr, endStr] = dateEntry.split(' - ');
+        const startDate = new Date(startStr.trim());
+        const endDate = new Date(endStr.trim());
+        const start = startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        const end = endDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        return `${start} - ${end}`;
+    } else {
+        const date = new Date(dateEntry.trim());
+        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    }
 };
 </script>
 

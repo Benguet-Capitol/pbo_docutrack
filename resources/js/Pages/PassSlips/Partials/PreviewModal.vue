@@ -97,21 +97,21 @@
                     </div>
 
                     <!-- Recommending Approval -->
-                    <div v-if="getRecommendingApprovalEmployee() && !isProvincialBudgetOfficerRequesting()" class="mb-6">
-                        <p class="text-xs text-gray-900 mb-8">Recommending Approval:</p>
+                    <div v-if="getRecommendingApprovalEmployee() && !isProvincialBudgetOfficerRequesting()" class="mb-4">
+                        <p class="text-xs text-gray-900 mb-6">Recommending Approval:</p>
                         <div class="space-y-8">
-                            <div class="w-96">
-                                <p class="font-bold text-xs text-center text-gray-900 w-96 uppercase">{{ getRecommendingApprovalEmployee().name }}</p>
-                                <p class="text-xs text-center text-gray-700 border-b border-gray-900 w-96">{{ getRecommendingApprovalEmployee().designation }}</p>
-                                <p class="text-xs text-center text-gray-700 w-96">Immediate Supervisor</p>
+                            <div class="w-72">
+                                <p class="font-bold text-xs text-center text-gray-900 w-72 uppercase">{{ getRecommendingApprovalEmployee().name }}</p>
+                                <p class="text-xs text-center text-gray-700 border-b border-gray-900 w-72">{{ getRecommendingApprovalEmployee().designation }}</p>
+                                <p class="text-xs text-center text-gray-700 w-72">Immediate Supervisor</p>
                             </div>
                         </div>
                     </div>
 
                     <!-- Approved Section -->
                     <div class="mb-6 flex justify-end pr-8">
-                        <div class="w-96 text-center">
-                            <p class="text-xs text-left text-gray-900 mb-8">APPROVED:</p>
+                        <div class="w-72 text-center">
+                            <p class="text-xs text-left text-gray-900 mb-6">APPROVED:</p>
                             <p v-if="isProvincialBudgetOfficerRequesting() && getProvincialGovernor()" class="text-xs text-center text-gray-900 font-bold uppercase">{{ getProvincialGovernor().name }}</p>
                             <p v-else class="text-xs text-center text-gray-900 font-bold uppercase">{{ getProvincialBudgetOfficer() }}</p>
                             <p v-if="isProvincialBudgetOfficerRequesting() && getProvincialGovernor()" class="text-xs text-center text-gray-700 border-b border-gray-900">Provincial Governor</p>
@@ -121,14 +121,14 @@
                     </div>
 
                     <!-- Certificate of Appearance -->
-                    <div class="mt-4 pt-4" style="border-top: 3px double #050505;">
+                    <div class="mt-2 pt-4" style="border-top: 3px double #050505;">
                         <p class="font-bold text-xs text-center text-gray-900 mb-2">CERTIFICATE OF APPEARANCE</p>
                         <p class="text-xs text-gray-700 leading-relaxed">
                             This is to CERTIFY that the above mentioned person appeared in this office on {{ formatInclusiveDatesForDisplay() }}.
                         </p>
                         
                         <!-- Signature and Printed Name Section -->
-                        <div class="mt-4 w-96 text-center">
+                        <div class="mt-2 w-72 text-center">
                                 <p class="text-xs text-center text-gray-700 border-b border-gray-900 pb-6 mb-1"></p>
                                 <p class="text-xs text-center text-gray-700">Signature over Printed Name</p>
                         </div>
@@ -217,21 +217,21 @@
                     </div>
 
                     <!-- Recommending Approval -->
-                    <div v-if="getRecommendingApprovalEmployee() && !isProvincialBudgetOfficerRequesting()" class="mb-6">
-                        <p class="text-xs text-gray-700 mb-8">Recommending Approval:</p>
+                    <div v-if="getRecommendingApprovalEmployee() && !isProvincialBudgetOfficerRequesting()" class="mb-4">
+                        <p class="text-xs text-gray-700 mb-6">Recommending Approval:</p>
                         <div class="space-y-8">
-                            <div class="w-96">
-                                <p class="font-bold text-xs text-center text-gray-900 w-96 uppercase">{{ getRecommendingApprovalEmployee().name }}</p>
-                                <p class="text-xs text-center text-gray-700 border-b border-gray-900 w-96">{{ getRecommendingApprovalEmployee().designation }}</p>
-                                <p class="text-xs text-center text-gray-700 w-96">Immediate Supervisor</p>
+                            <div class="w-72">
+                                <p class="font-bold text-xs text-center text-gray-900 w-72 uppercase">{{ getRecommendingApprovalEmployee().name }}</p>
+                                <p class="text-xs text-center text-gray-700 border-b border-gray-900 w-72">{{ getRecommendingApprovalEmployee().designation }}</p>
+                                <p class="text-xs text-center text-gray-700 w-72">Immediate Supervisor</p>
                             </div>
                         </div>
                     </div>
 
                     <!-- Approved Section -->
                     <div class="mb-6 flex justify-end pr-8">
-                        <div class="w-96 text-center">
-                            <p class="text-xs text-left text-gray-900 mb-8">APPROVED:</p>
+                        <div class="w-72 text-center">
+                            <p class="text-xs text-left text-gray-900 mb-6">APPROVED:</p>
                             <p v-if="isProvincialBudgetOfficerRequesting() && getProvincialGovernor()" class="text-xs text-center text-gray-900 font-bold uppercase">{{ getProvincialGovernor().name }}</p>
                             <p v-else class="text-xs text-center text-gray-900 font-bold uppercase">{{ getProvincialBudgetOfficer() }}</p>
                             <p v-if="isProvincialBudgetOfficerRequesting() && getProvincialGovernor()" class="text-xs text-center text-gray-700 border-b border-gray-900">Provincial Governor</p>
@@ -241,14 +241,14 @@
                     </div>
 
                     <!-- Certificate of Appearance -->
-                    <div class="mt-4 pt-4" style="border-top: 3px double #050505;">
+                    <div class="mt-2 pt-4" style="border-top: 3px double #050505;">
                         <p class="font-bold text-xs text-center text-gray-900 mb-2">CERTIFICATE OF APPEARANCE</p>
                         <p class="text-xs text-gray-700 leading-relaxed">
                             This is to CERTIFY that the above mentioned person appeared in this office on {{ formatInclusiveDatesForDisplay() }}.
                         </p>
                         
                         <!-- Signature and Printed Name Section -->
-                        <div class="mt-4 w-96 text-center">
+                        <div class="mt-2 w-72 text-center">
                                 <p class="text-xs text-center text-gray-900 border-b border-gray-900 pb-6 mb-1"></p>
                                 <p class="text-xs text-center text-gray-700">Signature over Printed Name</p>
                         </div>

@@ -15,7 +15,7 @@
                     </div>
 
                     <!-- Modal Body - Document Preview -->
-                    <div class="p-4" style="background-color: white;">
+                    <div class="p-4 flex flex-col" style="background-color: white; min-height: 1200px;">
                         <!-- Header Section with Logos -->
                         <div class="flex items-center justify-center gap-2 mb-6 pb-2" style="border-bottom: 3px double #050505;">
                             <div style="width: 85px; flex-shrink: 0;">
@@ -34,15 +34,15 @@
                         </div>
                         
                         <div>
-                            <p class="font-bold text-2xl text-center text-gray-900 mb-6">TRAVEL ORDER</p>
+                            <p class="font-bold text-3xl text-center text-gray-900 mb-6">TRAVEL ORDER</p>
                         </div>
 
                         <!-- Date & Control Numbers -->
                         <div class="mb-1 flex justify-end pr-8">
                             <div class="text-center text-sm">
-                                <p><span class="w-26 inline-block text-right">PBO CONTROL NO.: </span><span class="font-bold text-gray-900 w-48 border-b border-gray-400 inline-block text-center">{{ formData.control_no }}</span></p>
-                                <p v-if="isApproverProvincialGovernor()" class="mt-2"><span class="w-26 inline-block text-right">PGO CONTROL NO.: </span><span class="font-bold text-gray-900 w-48 border-b border-gray-400 inline-block text-center">   </span></p>
-                                <p class="mt-1"><span class="w-26 inline-block text-right">DATE: </span><span class="font-bold text-gray-900 w-48 border-b border-gray-400 inline-block text-center">{{ formatDateForDisplayFull(formData.date) }}</span></p>
+                                <p><span class="w-26 inline-block text-right">PBO CONTROL NO.: </span><span class="font-bold text-gray-900 w-48 border-b border-gray-900 inline-block text-center">{{ formData.control_no }}</span></p>
+                                <p v-if="isApproverProvincialGovernor()" class="mt-2"><span class="w-26 inline-block text-right">PGO CONTROL NO.: </span><span class="font-bold text-gray-900 w-48 border-b border-gray-900 inline-block text-center">   </span></p>
+                                <p class="mt-1"><span class="w-26 inline-block text-right">DATE: </span><span class="font-bold text-gray-900 w-48 border-b border-gray-900 inline-block text-center">{{ formatDateForDisplayFull(formData.date) }}</span></p>
                             </div>
                         </div>
 
@@ -93,17 +93,33 @@
 
                         <!-- Nature of Travel -->
                         <div class="space-y-2 text-sm mb-6">
-                            <p><span class="inline-block">NATURE OF TRAVEL:</span><span class="border-b border-gray-400 w-40 inline-block text-center font-semibold">OFFICIAL BUSINESS</span></p>
+                            <p><span class="inline-block">NATURE OF TRAVEL:</span><span class="border-b border-gray-900 w-40 inline-block text-center font-semibold">OFFICIAL BUSINESS</span></p>
                         </div>
 
                         <!-- Body Content -->
                         <div class="space-y-2 text-sm mb-6">
                             <p class="space-y-2">
                                 <span class="inline-block indent-8">You are hereby authorized to go to </span> 
-                                <span class="border-b border-gray-400 w-[540px] inline-block text-center font-semibold pr-8">{{ formData.going_to }}</span> 
+                                <span class="border-b border-gray-900 w-[540px] inline-block text-center font-semibold pr-8">{{ formData.going_to }}</span> 
                                 on
-                                <span class="border-b border-gray-400 w-40 inline-block text-center font-semibold">{{ formatDateForDisplayFull(formData.from_date) }}</span>
-                                <span v-if="formData.to_date && formData.to_date !== formData.from_date"> to <span class="border-b border-gray-400 w-40 inline-block text-center font-semibold">{{ formatDateForDisplayFull(formData.to_date) }}</span></span>
+                                <!-- If inclusive_dates exist, show them; otherwise show from_date and to_date -->
+                                <template v-if="formData.inclusive_dates && formData.inclusive_dates.length > 0">
+                                    <template v-for="(entry, idx) in formData.inclusive_dates" :key="idx">
+                                        <template v-if="idx > 0">, </template>
+                                        <span class="border-b border-gray-900 inline-block text-center font-semibold w-36">
+                                            <template v-if="entry.includes(' - ')">
+                                                {{ formatInclusiveDateForBodyDisplay(entry).start }} to {{ formatInclusiveDateForBodyDisplay(entry).end }}
+                                            </template>
+                                            <template v-else>
+                                                {{ formatInclusiveDateForBodyDisplay(entry).start }}
+                                            </template>
+                                        </span>
+                                    </template>
+                                </template>
+                                <template v-else>
+                                    <span class="border-b border-gray-900 w-40 inline-block text-center font-semibold">{{ formatDateForDisplayFull(formData.from_date) }}</span>
+                                    <span v-if="formData.to_date && formData.to_date !== formData.from_date"> to <span class="border-b border-gray-900 w-40 inline-block text-center font-semibold">{{ formatDateForDisplayFull(formData.to_date) }}</span></span>
+                                </template>
                                 for the following official duties, viz:
                             </p>
                         </div>
@@ -111,7 +127,7 @@
                         <!-- Purpose List -->
                         <div class="space-y-2 text-sm mb-6">
                             <ol v-if="formData.purpose && formData.purpose.length" class="list-decimal pl-8 list-outside space-y-3">
-                                <li v-for="(purpose, idx) in formData.purpose" :key="idx" class="ml-4"><span class="border-b border-gray-400 font-semibold text-left pb-1" style="display: inline; box-decoration-break: clone; -webkit-box-decoration-break: clone; max-width: 750px; line-height: 1.8;">{{ purpose }}</span></li>
+                                <li v-for="(purpose, idx) in formData.purpose" :key="idx" class="ml-4"><span class="border-b border-gray-900 font-semibold text-left pb-1" :style="{ display: 'inline', boxDecorationBreak: 'clone', WebkitBoxDecorationBreak: 'clone', maxWidth: getPurposeMaxWidth(purpose), lineHeight: '1.8' }">{{ purpose }}</span></li>
                             </ol>
                         </div>
 
@@ -122,14 +138,14 @@
                         <!-- Driver -->
                         <div v-if="formData.driver" class="text-sm flex items-start gap-2 mb-2">
                             <p>DRIVER:</p>
-                            <p class="border-b border-gray-400 w-40 inline-block text-center font-semibold uppercase">{{ formData.driver }}</p>
+                            <p class="border-b border-gray-900 w-40 inline-block text-center font-semibold uppercase">{{ formData.driver }}</p>
                         </div>
 
                         <!-- Vehicle -->
                         <div class="text-sm flex items-start gap-2 mb-8">
                             <p>VEHICLE:</p>
-                            <p class="border-b border-gray-400 w-40 inline-block text-center font-semibold" v-if="formData.vehicle === 'RP Vehicle' && formData.plate_number">{{ formData.vehicle }} - {{ formData.plate_number }}</p>
-                            <p class="border-b border-gray-400 w-40 inline-block text-center font-semibold" v-else>{{ formData.vehicle }}</p>
+                            <p class="border-b border-gray-900 w-40 inline-block text-center font-semibold" v-if="formData.vehicle === 'RP Vehicle' && formData.plate_number">{{ formData.vehicle }} - {{ formData.plate_number }}</p>
+                            <p class="border-b border-gray-900 w-40 inline-block text-center font-semibold" v-else>{{ formData.vehicle }}</p>
                         </div>
 
                         <!-- Recommending Approval -->
@@ -137,8 +153,8 @@
                             <p class="text-sm text-gray-900 mb-8">RECOMMENDING APPROVAL:</p>
                             <div class="space-y-8">
                                 <div class="w-72">
-                                    <p class="font-bold text-sm text-center text-gray-900 w-72 uppercase" :class="{ 'border-b border-gray-400 pb-1': isApproverProvincialGovernor() }">{{ getRecommendingApprovalSignatory()?.name }}</p>
-                                    <p v-if="!isApproverProvincialGovernor()" class="text-sm text-center text-gray-700 border-b border-gray-400 w-72">{{ getRecommendingApprovalSignatory()?.designation }}</p>
+                                    <p class="font-bold text-sm text-center text-gray-900 w-72 uppercase" :class="{ 'border-b border-gray-900 pb-1': isApproverProvincialGovernor() }">{{ getRecommendingApprovalSignatory()?.name }}</p>
+                                    <p v-if="!isApproverProvincialGovernor()" class="text-sm text-center text-gray-700 border-b border-gray-900 w-72">{{ getRecommendingApprovalSignatory()?.designation }}</p>
                                     <p class="text-sm text-center text-gray-700 w-72">{{ getRecommendingApprovalDesignation() }}</p>
                                 </div>
                             </div>
@@ -149,14 +165,14 @@
                             <div class="w-72 text-center">
                                 <p class="text-sm text-left text-gray-900 mb-8">APPROVED:</p>
                                 <p class="text-sm text-center text-gray-700"></p>
-                                <p class="text-sm text-center text-gray-900 border-b border-gray-400 pb-1 font-bold uppercase">{{ getApproverName() }}</p>
+                                <p class="text-sm text-center text-gray-900 border-b border-gray-900 pb-1 font-bold uppercase">{{ getApproverName() }}</p>
                                 <p class="text-sm text-center text-gray-700">{{ getApproverRole() }}</p>
                             </div>
                         </div>
 
                         <!-- Footer -->
-                        <div class="mb-6" style="border-top: 3px double #050505;">
-                            <div class="flex justify-between items-center mt-2">
+                        <div class="mb-6 mt-auto" style="border-top: 3px double #050505;">
+                            <div class="flex justify-between items-center mt-2" style="line-height: 1;">
                                 <p v-if="!isApproverProvincialGovernor()"><span class="font-semibold text-sm">PBO Telephone No.:</span> <span class="text-sm text-gray-900">(074) 422-1378, Local: 134</span></p>
                                 <p v-else><span class="font-semibold text-sm">Benguet Capitol Trunklines:</span> <span class="text-sm text-gray-900">(074) 422-5657; 422-1116; 422-2306; 422-5760; Local: 134</span></p>
                                 <p><span class="font-semibold text-sm">Website:</span> <span class="text-sm font-semibold text-blue-800 underline">www.benguet.gov.ph</span></p>
@@ -255,6 +271,44 @@ const formatDateForDisplayFull = (date: string) => {
     return d.toLocaleDateString('en-US', options);
 };
 
+const formatInclusiveDateForDisplay = (dateEntry: string): string => {
+    if (!dateEntry) return '';
+    
+    if (dateEntry.includes(' - ')) {
+        const [startStr, endStr] = dateEntry.split(' - ');
+        const startDate = new Date(startStr.trim() + 'T00:00:00');
+        const endDate = new Date(endStr.trim() + 'T00:00:00');
+        const startFmt = startDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+        const endFmt = endDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+        return `${startFmt} - ${endFmt}`;
+    } else {
+        const date = new Date(dateEntry.trim() + 'T00:00:00');
+        return date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+    }
+};
+
+const formatInclusiveDateForBodyDisplay = (dateEntry: string): { start: string; end?: string } => {
+    if (!dateEntry) return { start: '' };
+    
+    if (dateEntry.includes(' - ')) {
+        const [startStr, endStr] = dateEntry.split(' - ');
+        const startDate = new Date(startStr.trim() + 'T00:00:00');
+        const endDate = new Date(endStr.trim() + 'T00:00:00');
+        const startFmt = startDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
+        const endFmt = endDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
+        return { start: startFmt, end: endFmt };
+    } else {
+        const date = new Date(dateEntry.trim() + 'T00:00:00');
+        const dateFmt = date.toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
+        return { start: dateFmt };
+    }
+};
+
+const getPurposeMaxWidth = (purpose: string): string => {
+    // If purpose text is short (less than 80 characters), use 750px, otherwise none (no max-width constraint)
+    return purpose.length < 80 ? '750px' : 'none'
+};
+
 const printPreview = () => {
     window.print();
 };
@@ -277,6 +331,7 @@ const printPreview = () => {
 }
 
 @media print {
+
     .sticky {
         position: static !important;
     }

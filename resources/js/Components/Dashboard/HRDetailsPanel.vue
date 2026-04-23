@@ -47,9 +47,9 @@
                                 <i class="fas fa-map-pin text-orange-500 mr-1"></i>
                                 {{ order.destination }}
                             </p>
-                            <p v-if="formatDateRange(order.from_date, order.to_date)" class="text-gray-600 dark:text-gray-400">
+                            <p v-if="order.inclusive_dates && Array.isArray(order.inclusive_dates) && order.inclusive_dates.length > 0" class="text-gray-600 dark:text-gray-400">
                                 <i class="fas fa-calendar text-orange-500 mr-1"></i>
-                                {{ formatDateRange(order.from_date, order.to_date) }}
+                                {{ formatInclusiveDatesForDisplay(order.inclusive_dates) }}
                             </p>
                         </div>
                     </div>
@@ -144,19 +144,30 @@ const formatInclusiveDatesForDisplay = (inclusiveDates: string[] | undefined): s
         return '';
     }
     
+    // Helper function to parse date string in YYYY-MM-DD format using local time
+    const parseDateString = (dateString: string): Date => {
+        const [year, month, day] = dateString.trim().split('-').map(Number);
+        return new Date(year, month - 1, day);
+    };
+    
     const formattedDates = inclusiveDates.map((dateEntry: string) => {
         if (!dateEntry) return '';
         if (dateEntry.includes(' - ')) {
-            const [startStr, endStr] = dateEntry.split(' - ');
-            const startDate = new Date(startStr.trim());
-            const endDate = new Date(endStr.trim());
-            const start = startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-            const end = endDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-            return `${start} - ${end}`;
+            const parts = dateEntry.split(' - ');
+            if (parts.length === 2) {
+                const startStr = parts[0].trim();
+                const endStr = parts[1].trim();
+                const startDate = parseDateString(startStr);
+                const endDate = parseDateString(endStr);
+                const start = startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                const end = endDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                return `${start} - ${end}`;
+            }
         } else {
-            const date = new Date(dateEntry.trim());
+            const date = parseDateString(dateEntry);
             return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
         }
+        return '';
     }).filter((d: string) => d);
     
     return formattedDates.join(', ');

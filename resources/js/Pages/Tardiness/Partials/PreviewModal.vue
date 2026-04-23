@@ -40,19 +40,16 @@
                         <!-- Top Information Row -->
                         <div class="mb-6 text-xs space-y-1">
                             <div>
-                                <p class="font-semibold text-gray-700"><span class="w-20 inline-block text-right">Date: </span><span class="font-bold text-gray-900 w-48 border-b border-gray-400 inline-block text-center">{{ formatDateDisplay(formData.date_filed) }}</span></p>
+                                <p class="font-semibold text-gray-700"><span class="w-20 inline-block text-right">Date: </span><span class="font-bold text-gray-900 w-48 border-b border-gray-900 inline-block text-center">{{ formatDateDisplay(formData.date_filed) }}</span></p>
                             </div>
                             <div>
-                                <p class="font-semibold text-gray-700"><span class="w-20 inline-block text-right">Office: </span><span class="font-bold text-gray-900 w-48 border-b border-gray-400 inline-block text-center">{{ getEmployeeOffice() }}</span></p>
-                            </div>
-                            <div>
-                                <p class="font-semibold text-gray-700"><span class="w-20 inline-block text-right">Control No.: </span><span class="font-bold text-gray-900 w-48 border-b border-gray-400 inline-block text-center">{{ formData.control_no }}</span></p>
+                                <p class="font-semibold text-gray-700"><span class="w-20 inline-block text-right">Control No.: </span><span class="font-bold text-gray-900 w-48 border-b border-gray-900 inline-block text-center">{{ formData.control_no }}</span></p>
                             </div>
                         </div>
 
                         <!-- Provincial Budget Officer Info -->
                         <div class="text-left mb-4 w-40">
-                            <p class="font-bold text-xs text-gray-900 text-center border-b border-gray-400 w-72 uppercase">{{ getProvincialBudgetOfficer()?.name || '-' }}</p>
+                            <p class="font-bold text-xs text-gray-900 text-center border-b border-gray-900 w-72 uppercase">{{ getProvincialBudgetOfficer()?.name || '-' }}</p>
                             <p class="text-xs text-gray-700 text-center w-72">Provincial Budget Officer</p>
                         </div>
 
@@ -61,14 +58,14 @@
                             <p class="font-semibold text-left mb-4">Ma'am:</p>
 
                             <p class="mb-4">
-                                May I request permission to go undertime for <span class="border-b border-gray-400 w-32 inline-block text-center font-semibold">{{ computeUndertime() }}</span>
-                                from <span class="border-b border-gray-400 w-32 inline-block text-center font-semibold">{{ formatTimeDisplay(formData.requested_time) }}</span>
-                                on <span class="border-b border-gray-400 w-48 inline-block text-center font-semibold">{{ formatDateDisplay(formData.date_filed) }}</span>.
+                                May I request permission to go undertime for <span class="border-b border-gray-900 w-32 inline-block text-center font-semibold">{{ computeUndertime() }}</span>
+                                from <span class="border-b border-gray-900 w-32 inline-block text-center font-semibold">{{ formatTimeDisplay(formData.requested_time) }}</span>
+                                on <span class="border-b border-gray-900 w-48 inline-block text-center font-semibold">{{ formatDateDisplay(formData.date_filed) }}</span>.
                             </p>
 
                             <p class="mb-10">
-                                I will be leaving my work station to <span class="border-b border-gray-400 w-[410px] inline-block text-center font-semibold">{{ formData.reason }}</span>
-                                and be back <span class="border-b border-gray-400 w-48 inline-block text-center font-semibold">{{ formData.returnType === 'nwd' ? 'Next Working Day' : formatTimeDisplay(formData.return_time) }}</span>.
+                                I will be leaving my work station to <span class="border-b border-gray-900 w-[410px] inline-block text-center font-semibold">{{ formData.reason }}</span>
+                                and be back <span class="border-b border-gray-900 w-48 inline-block text-center font-semibold">{{ formData.returnType === 'nwd' ? 'Next Working Day' : formatTimeDisplay(formData.return_time) }}</span>.
                             </p>
 
                             <p class="mb-8 text-left">Respectfully yours,</p>
@@ -76,22 +73,22 @@
 
                         <!-- Requesting Employee Section -->
                         <div class="mb-6">
-                            <p v-if="getRequestingEmployee()" class="font-bold text-xs text-gray-900 text-center border-b border-gray-400 uppercase w-96 pb-1">
+                            <p v-if="getRequestingEmployee()" class="font-bold text-xs text-gray-900 text-center border-b border-gray-900 uppercase w-72 pb-1">
                                 {{ getRequestingEmployee()?.name }}
                             </p>
-                            <p v-else class="font-bold text-xs text-gray-900 text-center border-b border-gray-400 w-96 pb-1">[Employee Name]</p>
-                            <p v-if="getRequestingEmployee()" class="text-xs text-center text-gray-700 w-96">{{ getRequestingEmployee()?.designation }}</p>
-                            <p v-else class="text-xs text-center text-gray-700 w-96">[Designation]</p>
+                            <p v-else class="font-bold text-xs text-gray-900 text-center border-b border-gray-400 w-72 pb-1">[Employee Name]</p>
+                            <p v-if="getRequestingEmployee()" class="text-xs text-center text-gray-700 w-72">{{ getRequestingEmployee()?.designation }}</p>
+                            <p v-else class="text-xs text-center text-gray-700 w-72">[Designation]</p>
                         </div>
 
                         <!-- Recommending Approval -->
                         <div v-if="getSupervisor() && !isRequestingEmployeeProvincialBudgetOfficer()" class="mb-6">
                             <p class="text-xs text-gray-700 mb-8">Recommending Approval:</p>
                             <div class="space-y-8">
-                                <div class="w-96">
-                                    <p class="font-bold text-xs text-center text-gray-900 uppercase w-96">{{ getSupervisor()?.name }}</p>
-                                    <p class="text-xs text-center text-gray-700 border-b border-gray-400 pb-1 w-96">{{ getSupervisor()?.designation }}</p>
-                                    <p class="text-xs text-center text-gray-700 w-96">Immediate Supervisor</p>
+                                <div class="w-72">
+                                    <p class="font-bold text-xs text-center text-gray-900 uppercase w-72">{{ getSupervisor()?.name }}</p>
+                                    <p class="text-xs text-center text-gray-700 border-b border-gray-900 pb-1 w-72">{{ getSupervisor()?.designation }}</p>
+                                    <p class="text-xs text-center text-gray-700 w-72">Immediate Supervisor</p>
                                 </div>
                             </div>
                         </div>
@@ -100,13 +97,13 @@
                         <div class="mb-6 flex justify-end">
                             <div class="w-96 text-center">
                                 <p class="text-xs text-left text-gray-900 mb-8">APPROVED:</p>
-                                <p v-if="isRequestingEmployeeProvincialBudgetOfficer() && getProvincialGovernor()" class="font-bold text-xs text-gray-900 uppercase w-96">{{ getProvincialGovernor()?.name }}</p>
-                                <p v-else-if="getProvincialBudgetOfficer()" class="font-bold text-xs text-gray-900 uppercase w-96">{{ getProvincialBudgetOfficer()?.name }}</p>
-                                <p v-else class="font-bold text-xs text-gray-900 uppercase w-96">-</p>
+                                <p v-if="isRequestingEmployeeProvincialBudgetOfficer() && getProvincialGovernor()" class="font-bold text-xs text-gray-900 uppercase w-72">{{ getProvincialGovernor()?.name }}</p>
+                                <p v-else-if="getProvincialBudgetOfficer()" class="font-bold text-xs text-gray-900 uppercase w-72">{{ getProvincialBudgetOfficer()?.name }}</p>
+                                <p v-else class="font-bold text-xs text-gray-900 uppercase w-72">-</p>
 
-                                <p v-if="isRequestingEmployeeProvincialBudgetOfficer() && getProvincialGovernor()" class="text-xs text-center text-gray-700 border-b border-gray-400 pb-1 w-96">Provincial Governor</p>
-                                <p v-else class="text-xs text-center text-gray-700 border-b border-gray-400 pb-1 w-96">Provincial Budget Officer</p>
-                                <p class="text-xs text-center text-gray-700">Department Head</p>
+                                <p v-if="isRequestingEmployeeProvincialBudgetOfficer() && getProvincialGovernor()" class="text-xs text-center text-gray-700 border-b border-gray-400 pb-1 w-72">Provincial Governor</p>
+                                <p v-else class="text-xs text-center text-gray-700 border-b border-gray-900 pb-1 w-72">Provincial Budget Officer</p>
+                                <p class="text-xs text-center text-gray-700 w-72">Department Head</p>
                             </div>
                         </div>
                     </div>
@@ -136,19 +133,16 @@
                         <!-- Top Information Row -->
                         <div class="mb-6 text-xs space-y-1">
                             <div>
-                                <p class="font-semibold text-gray-700"><span class="w-20 inline-block text-right">Date: </span><span class="font-bold text-gray-900 w-48 border-b border-gray-400 inline-block text-center">{{ formatDateDisplay(formData.date_filed) }}</span></p>
+                                <p class="font-semibold text-gray-700"><span class="w-20 inline-block text-right">Date: </span><span class="font-bold text-gray-900 w-48 border-b border-gray-900 inline-block text-center">{{ formatDateDisplay(formData.date_filed) }}</span></p>
                             </div>
                             <div>
-                                <p class="font-semibold text-gray-700"><span class="w-20 inline-block text-right">Office: </span><span class="font-bold text-gray-900 w-48 border-b border-gray-400 inline-block text-center">{{ getEmployeeOffice() }}</span></p>
-                            </div>
-                            <div>
-                                <p class="font-semibold text-gray-700"><span class="w-20 inline-block text-right">Control No.: </span><span class="font-bold text-gray-900 w-48 border-b border-gray-400 inline-block text-center">{{ formData.control_no }}</span></p>
+                                <p class="font-semibold text-gray-700"><span class="w-20 inline-block text-right">Control No.: </span><span class="font-bold text-gray-900 w-48 border-b border-gray-900 inline-block text-center">{{ formData.control_no }}</span></p>
                             </div>
                         </div>
 
                         <!-- Provincial Budget Officer Info -->
                         <div class="text-left mb-4 w-40">
-                            <p class="font-bold text-xs text-gray-900 text-center border-b border-gray-400 w-72 uppercase">{{ getProvincialBudgetOfficer()?.name || '-' }}</p>
+                            <p class="font-bold text-xs text-gray-900 text-center border-b border-gray-900 w-72 uppercase">{{ getProvincialBudgetOfficer()?.name || '-' }}</p>
                             <p class="text-xs text-gray-700 text-center w-72">Provincial Budget Officer</p>
                         </div>
 
@@ -157,14 +151,14 @@
                             <p class="font-semibold text-left mb-4">Ma'am:</p>
 
                             <p class="mb-4">
-                                May I request permission to go undertime for <span class="border-b border-gray-400 w-32 inline-block text-center font-semibold">{{ computeUndertime() }}</span>
-                                from <span class="border-b border-gray-400 w-32 inline-block text-center font-semibold">{{ formatTimeDisplay(formData.requested_time) }}</span>
-                                on <span class="border-b border-gray-400 w-48 inline-block text-center font-semibold">{{ formatDateDisplay(formData.date_filed) }}</span>.
+                                May I request permission to go undertime for <span class="border-b border-gray-900 w-32 inline-block text-center font-semibold">{{ computeUndertime() }}</span>
+                                from <span class="border-b border-gray-900 w-32 inline-block text-center font-semibold">{{ formatTimeDisplay(formData.requested_time) }}</span>
+                                on <span class="border-b border-gray-900 w-48 inline-block text-center font-semibold">{{ formatDateDisplay(formData.date_filed) }}</span>.
                             </p>
 
                             <p class="mb-10">
-                                I will be leaving my work station to <span class="border-b border-gray-400 w-[410px] inline-block text-center font-semibold">{{ formData.reason }}</span>
-                                and be back <span class="border-b border-gray-400 w-48 inline-block text-center font-semibold">{{ formData.returnType === 'nwd' ? 'Next Working Day' : formatTimeDisplay(formData.return_time) }}</span>.
+                                I will be leaving my work station to <span class="border-b border-gray-900 w-[410px] inline-block text-center font-semibold">{{ formData.reason }}</span>
+                                and be back <span class="border-b border-gray-900 w-48 inline-block text-center font-semibold">{{ formData.returnType === 'nwd' ? 'Next Working Day' : formatTimeDisplay(formData.return_time) }}</span>.
                             </p>
 
                             <p class="mb-8 text-left">Respectfully yours,</p>
@@ -172,22 +166,22 @@
 
                         <!-- Requesting Employee Section -->
                         <div class="mb-6">
-                            <p v-if="getRequestingEmployee()" class="font-bold text-xs text-gray-900 text-center border-b border-gray-400 uppercase w-96 pb-1">
+                            <p v-if="getRequestingEmployee()" class="font-bold text-xs text-gray-900 text-center border-b border-gray-900 uppercase w-72 pb-1">
                                 {{ getRequestingEmployee()?.name }}
                             </p>
-                            <p v-else class="font-bold text-xs text-gray-900 text-center border-b border-gray-400 w-96 pb-1">[Employee Name]</p>
-                            <p v-if="getRequestingEmployee()" class="text-xs text-center text-gray-700 w-96">{{ getRequestingEmployee()?.designation }}</p>
-                            <p v-else class="text-xs text-center text-gray-700 w-96">[Designation]</p>
+                            <p v-else class="font-bold text-xs text-gray-900 text-center border-b border-gray-900 w-72 pb-1">[Employee Name]</p>
+                            <p v-if="getRequestingEmployee()" class="text-xs text-center text-gray-700 w-72">{{ getRequestingEmployee()?.designation }}</p>
+                            <p v-else class="text-xs text-center text-gray-700 w-72">[Designation]</p>
                         </div>
 
                         <!-- Recommending Approval -->
                         <div v-if="getSupervisor() && !isRequestingEmployeeProvincialBudgetOfficer()" class="mb-6">
                             <p class="text-xs text-gray-700 mb-8">Recommending Approval:</p>
                             <div class="space-y-8">
-                                <div class="w-96">
-                                    <p class="font-bold text-xs text-center text-gray-900 uppercase w-96">{{ getSupervisor()?.name }}</p>
-                                    <p class="text-xs text-center text-gray-700 border-b border-gray-400 pb-1 w-96">{{ getSupervisor()?.designation }}</p>
-                                    <p class="text-xs text-center text-gray-700 w-96">Immediate Supervisor</p>
+                                <div class="w-72">
+                                    <p class="font-bold text-xs text-center text-gray-900 uppercase w-72">{{ getSupervisor()?.name }}</p>
+                                    <p class="text-xs text-center text-gray-700 border-b border-gray-900 pb-1 w-72">{{ getSupervisor()?.designation }}</p>
+                                    <p class="text-xs text-center text-gray-700 w-72">Immediate Supervisor</p>
                                 </div>
                             </div>
                         </div>
@@ -196,13 +190,13 @@
                         <div class="mb-6 flex justify-end">
                             <div class="w-96 text-center">
                                 <p class="text-xs text-left text-gray-900 mb-8">APPROVED:</p>
-                                <p v-if="isRequestingEmployeeProvincialBudgetOfficer() && getProvincialGovernor()" class="font-bold text-xs text-gray-900 uppercase w-96">{{ getProvincialGovernor()?.name }}</p>
-                                <p v-else-if="getProvincialBudgetOfficer()" class="font-bold text-xs text-gray-900 uppercase w-96">{{ getProvincialBudgetOfficer()?.name }}</p>
-                                <p v-else class="font-bold text-xs text-gray-900 uppercase w-96">-</p>
+                                <p v-if="isRequestingEmployeeProvincialBudgetOfficer() && getProvincialGovernor()" class="font-bold text-xs text-gray-900 uppercase w-72">{{ getProvincialGovernor()?.name }}</p>
+                                <p v-else-if="getProvincialBudgetOfficer()" class="font-bold text-xs text-gray-900 uppercase w-72">{{ getProvincialBudgetOfficer()?.name }}</p>
+                                <p v-else class="font-bold text-xs text-gray-900 uppercase w-72">-</p>
 
-                                <p v-if="isRequestingEmployeeProvincialBudgetOfficer() && getProvincialGovernor()" class="text-xs text-center text-gray-700 border-b border-gray-400 pb-1 w-96">Provincial Governor</p>
-                                <p v-else class="text-xs text-center text-gray-700 border-b border-gray-400 pb-1 w-96">Provincial Budget Officer</p>
-                                <p class="text-xs text-center text-gray-700">Department Head</p>
+                                <p v-if="isRequestingEmployeeProvincialBudgetOfficer() && getProvincialGovernor()" class="text-xs text-center text-gray-700 border-b border-gray-400 pb-1 w-72">Provincial Governor</p>
+                                <p v-else class="text-xs text-center text-gray-700 border-b border-gray-900 pb-1 w-72">Provincial Budget Officer</p>
+                                <p class="text-xs text-center text-gray-700 w-72">Department Head</p>
                             </div>
                         </div>
                     </div>

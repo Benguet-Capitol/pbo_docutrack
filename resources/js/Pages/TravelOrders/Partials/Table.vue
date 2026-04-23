@@ -38,7 +38,7 @@
                             <span v-if="sortBy === 'going_to'" class="text-xs">{{ sortOrder === 'asc' ? '▲' : '▼' }}</span>
                         </button>
                     </th>
-                    <th class="px-6 py-3 text-xs font-bold text-gray-700 dark:text-gray-200">Dates</th>
+                    <th class="px-6 py-3 text-xs font-bold text-gray-700 dark:text-gray-200">Inclusive Dates</th>
                     <th class="px-6 py-3 text-xs font-bold text-gray-700 dark:text-gray-200">Purpose</th>
                     <th class="px-6 py-3 text-xs font-bold text-gray-700 dark:text-gray-200">Vehicle</th>
                     <th class="px-6 py-3 text-xs font-bold text-gray-700 dark:text-gray-200 text-center">Actions</th>
@@ -57,12 +57,22 @@
                         </div>
                     </td>
                     <td class="px-4 py-2 text-xs text-gray-700 dark:text-gray-300">{{ order.going_to }}</td>
-                    <td class="px-4 py-2 text-xs text-gray-600 dark:text-gray-400">
-                        <span v-if="order.from_date === order.to_date">
-                            {{ formatDateForDisplay(order.from_date) }}
-                        </span>
-                        <span v-else>
-                            {{ formatDateForDisplay(order.from_date) }} - {{ formatDateForDisplay(order.to_date) }}
+                    <td class="px-4 py-2 text-xs">
+                        <div v-if="order.inclusive_dates && order.inclusive_dates.length > 0" class="flex flex-wrap gap-1">
+                            <span v-for="(date, idx) in order.inclusive_dates" :key="idx" class="inline-block px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded text-xs">
+                                {{ formatInclusiveDateForTable(date) }}
+                            </span>
+                        </div>
+                        <span v-else class="text-gray-600 dark:text-gray-400">
+                            <span v-if="order.from_date && order.to_date">
+                                <span v-if="order.from_date === order.to_date">
+                                    {{ formatDateForDisplay(order.from_date) }}
+                                </span>
+                                <span v-else>
+                                    {{ formatDateForDisplay(order.from_date) }} - {{ formatDateForDisplay(order.to_date) }}
+                                </span>
+                            </span>
+                            <span v-else>-</span>
                         </span>
                     </td>
                     <td class="px-4 py-2 text-xs">
@@ -118,5 +128,21 @@ const formatDateForDisplay = (dateStr: string): string => {
     if (!dateStr) return '';
     const date = new Date(dateStr);
     return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+};
+
+const formatInclusiveDateForTable = (dateEntry: string): string => {
+    if (!dateEntry) return '';
+    
+    if (dateEntry.includes(' - ')) {
+        const [startStr, endStr] = dateEntry.split(' - ');
+        const startDate = new Date(startStr.trim());
+        const endDate = new Date(endStr.trim());
+        const start = startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        const end = endDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        return `${start} - ${end}`;
+    } else {
+        const date = new Date(dateEntry.trim());
+        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    }
 };
 </script>

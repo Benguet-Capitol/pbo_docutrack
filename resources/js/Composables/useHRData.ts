@@ -80,6 +80,14 @@ export const useHRData = () => {
     };
 
     /**
+     * Parse date string in YYYY-MM-DD format using local time to avoid timezone issues
+     */
+    const parseDateString = (dateString: string): Date => {
+        const [year, month, day] = dateString.trim().split('-').map(Number);
+        return new Date(year, month - 1, day);
+    };
+
+    /**
      * Check if a leave falls within the selected month
      */
     const leaveInSelectedMonth = (leave: any): boolean => {
@@ -91,16 +99,21 @@ export const useHRData = () => {
         for (const dateEntry of leave.inclusive_dates) {
             if (!dateEntry) continue;
 
+            // Check if this is a date range (contains " - " with exactly 2 YYYY-MM-DD dates)
             if (dateEntry.includes(' - ')) {
-                const [startStr, endStr] = dateEntry.split(' - ');
-                const rangeStart = new Date(startStr.trim());
-                const rangeEnd = new Date(endStr.trim());
+                const parts = dateEntry.split(' - ');
+                if (parts.length === 2) {
+                    const startStr = parts[0].trim();
+                    const endStr = parts[1].trim();
+                    const rangeStart = parseDateString(startStr);
+                    const rangeEnd = parseDateString(endStr);
 
-                if (rangeStart <= monthEnd && rangeEnd >= monthStart) {
-                    return true;
+                    if (rangeStart <= monthEnd && rangeEnd >= monthStart) {
+                        return true;
+                    }
                 }
             } else {
-                const date = new Date(dateEntry.trim());
+                const date = parseDateString(dateEntry);
                 if (date.getMonth() === selectedHRMonth.value && date.getFullYear() === selectedHRYear.value) {
                     return true;
                 }
@@ -138,13 +151,14 @@ export const useHRData = () => {
         });
 
         travelOrders.value.forEach(to => {
-            if (to.from_date) {
-                const year = new Date(to.from_date).getFullYear();
-                yearsSet.add(year);
-            }
-            if (to.to_date) {
-                const year = new Date(to.to_date).getFullYear();
-                yearsSet.add(year);
+            if (to.inclusive_dates && Array.isArray(to.inclusive_dates)) {
+                to.inclusive_dates.forEach((dateEntry: string) => {
+                    if (dateEntry) {
+                        const dateStr = dateEntry.includes(' - ') ? dateEntry.split(' - ')[0] : dateEntry;
+                        const year = new Date(dateStr.trim()).getFullYear();
+                        yearsSet.add(year);
+                    }
+                });
             }
         });
 
@@ -216,14 +230,57 @@ export const useHRData = () => {
      * Check if a travel order falls within the selected month
      */
     const travelOrderInSelectedMonth = (to: any): boolean => {
-        if (!to.from_date || !to.to_date) return false;
-
-        const fromDate = new Date(to.from_date);
-        const toDate = new Date(to.to_date);
         const monthStart = new Date(selectedHRYear.value, selectedHRMonth.value, 1);
         const monthEnd = new Date(selectedHRYear.value, selectedHRMonth.value + 1, 0);
 
-        return fromDate <= monthEnd && toDate >= monthStart;
+        // If inclusive_dates exist and have data, use them
+        if (to.inclusive_dates && Array.isArray(to.inclusive_dates) && to.inclusive_dates.length > 0) {
+            for (const dateEntry of to.inclusive_dates) {
+                if (!dateEntry) continue;
+
+                // Check if this is a date range (contains " - " with exactly 2 YYYY-MM-DD dates)
+                if (dateEntry.includes(' - ')) {
+                    const parts = dateEntry.split(' - ');
+                    if (parts.length === 2) {
+                        const startStr = parts[0].trim();
+                        const endStr = parts[1].trim();
+                        
+                        // Verify both parts look like dates (contain dashes)
+                        if (startStr.match(/^\d{4}-\d{2}-\d{2}$/) && endStr.match(/^\d{4}-\d{2}-\d{2}$/)) {
+                            const rangeStart = parseDateString(startStr);
+                            const rangeEnd = parseDateString(endStr);
+
+                            if (rangeStart <= monthEnd && rangeEnd >= monthStart) {
+                                return true;
+                            }
+                        }
+                    }
+                } else if (dateEntry.match(/^\d{4}-\d{2}-\d{2}$/)) {
+                    // Single date
+                    const date = parseDateString(dateEntry);
+                    if (date.getMonth() === selectedHRMonth.value && date.getFullYear() === selectedHRYear.value) {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+
+        // Fallback to from_date and to_date for backwards compatibility (for old records)
+        if ((to.from_date && to.from_date.match(/^\d{4}-\d{2}-\d{2}/)) || (to.to_date && to.to_date.match(/^\d{4}-\d{2}-\d{2}/))) {
+            const fromDate = to.from_date && to.from_date.match(/^\d{4}-\d{2}-\d{2}/) ? parseDateString(to.from_date) : null;
+            const toDate = to.to_date && to.to_date.match(/^\d{4}-\d{2}-\d{2}/) ? parseDateString(to.to_date) : null;
+
+            if (fromDate && toDate) {
+                return fromDate <= monthEnd && toDate >= monthStart;
+            } else if (fromDate) {
+                return fromDate.getMonth() === selectedHRMonth.value && fromDate.getFullYear() === selectedHRYear.value;
+            } else if (toDate) {
+                return toDate.getMonth() === selectedHRMonth.value && toDate.getFullYear() === selectedHRYear.value;
+            }
+        }
+
+        return false;
     };
 
     /**
@@ -281,16 +338,21 @@ export const useHRData = () => {
             for (const dateEntry of ps.inclusive_dates) {
                 if (!dateEntry) continue;
                 
+                // Check if this is a date range (contains " - " with exactly 2 YYYY-MM-DD dates)
                 if (dateEntry.includes(' - ')) {
-                    const [startStr, endStr] = dateEntry.split(' - ');
-                    const rangeStart = new Date(startStr.trim());
-                    const rangeEnd = new Date(endStr.trim());
-                    
-                    if (rangeStart <= monthEnd && rangeEnd >= monthStart) {
-                        return true;
+                    const parts = dateEntry.split(' - ');
+                    if (parts.length === 2) {
+                        const startStr = parts[0].trim();
+                        const endStr = parts[1].trim();
+                        const rangeStart = parseDateString(startStr);
+                        const rangeEnd = parseDateString(endStr);
+                        
+                        if (rangeStart <= monthEnd && rangeEnd >= monthStart) {
+                            return true;
+                        }
                     }
                 } else {
-                    const date = new Date(dateEntry.trim());
+                    const date = parseDateString(dateEntry);
                     if (date.getMonth() === selectedHRMonth.value && date.getFullYear() === selectedHRYear.value) {
                         return true;
                     }
@@ -300,7 +362,7 @@ export const useHRData = () => {
         }
         
         // Fallback to date if inclusive_dates not available
-        const psDate = new Date(ps.date);
+        const psDate = parseDateString(ps.date);
         return psDate.getMonth() === selectedHRMonth.value && psDate.getFullYear() === selectedHRYear.value;
     };
 

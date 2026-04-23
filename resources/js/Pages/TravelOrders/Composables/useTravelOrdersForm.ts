@@ -6,14 +6,15 @@ export function useTravelOrdersForm(employees: any, travelOrders: any) {
         control_no: '',
         date: '',
         going_to: '',
-        from_date: '',
-        to_date: '',
+        inclusive_dates: [] as string[],
         purpose: [] as string[],
         vehicle: 'RP Vehicle' as 'PUJ' | 'RP Vehicle',
         plate_number: '',
         employee_ids: [] as number[],
         driver: '',
         newPurpose: '',
+        newInclusiveDate: '',
+        newInclusiveDateRange: '',
         supervisor_employee_id: null as number | null,
         approver_employee_id: null as number | null,
     });
@@ -135,18 +136,8 @@ export function useTravelOrdersForm(employees: any, travelOrders: any) {
             formErrors.value['going_to'] = 'Going to is required';
         }
 
-        if (!formData.value.from_date.trim()) {
-            formErrors.value['from_date'] = 'From date is required';
-        }
-
-        if (!formData.value.to_date.trim()) {
-            formErrors.value['to_date'] = 'To date is required';
-        }
-
-        if (formData.value.from_date && formData.value.to_date) {
-            if (formData.value.to_date < formData.value.from_date) {
-                formErrors.value['to_date'] = 'To date must be after from date';
-            }
+        if (formData.value.inclusive_dates.length === 0) {
+            formErrors.value['inclusive_dates'] = 'At least one inclusive date is required';
         }
 
         if (formData.value.purpose.length === 0) {
@@ -224,14 +215,15 @@ export function useTravelOrdersForm(employees: any, travelOrders: any) {
             control_no: generateControlNo(today),
             date: today,
             going_to: '',
-            from_date: today,
-            to_date: today,
+            inclusive_dates: [],
             purpose: [],
             vehicle: 'RP Vehicle',
             plate_number: '',
             employee_ids: [],
             driver: '',
             newPurpose: '',
+            newInclusiveDate: '',
+            newInclusiveDateRange: '',
             supervisor_employee_id: null,
             approver_employee_id: null,
         };
@@ -249,14 +241,15 @@ export function useTravelOrdersForm(employees: any, travelOrders: any) {
             control_no: order.control_no,
             date: formatDateForInput(order.date),
             going_to: order.going_to,
-            from_date: formatDateForInput(order.from_date),
-            to_date: formatDateForInput(order.to_date),
+            inclusive_dates: order.inclusive_dates ? [...order.inclusive_dates] : [],
             purpose: [...order.purpose],
             vehicle: order.vehicle as 'PUJ' | 'RP Vehicle',
             plate_number: order.plate_number || '',
             employee_ids: order.employees.map(emp => emp.id),
             driver: order.driver || '',
             newPurpose: '',
+            newInclusiveDate: '',
+            newInclusiveDateRange: '',
             supervisor_employee_id: order.supervisor_employee_id || null,
             approver_employee_id: order.approver_employee_id || null,
         };
@@ -314,6 +307,40 @@ export function useTravelOrdersForm(employees: any, travelOrders: any) {
     const cancelEditPurpose = () => {
         editingPurposeIndex.value = null;
         editingPurposeValue.value = '';
+    };
+
+    const addInclusiveDate = () => {
+        if (formData.value.newInclusiveDate.trim()) {
+            formData.value.inclusive_dates = [...formData.value.inclusive_dates, formData.value.newInclusiveDate.trim()];
+            formData.value.newInclusiveDate = '';
+        }
+    };
+
+    const addInclusiveDateRange = () => {
+        if (formData.value.newInclusiveDateRange.trim()) {
+            formData.value.inclusive_dates = [...formData.value.inclusive_dates, formData.value.newInclusiveDateRange.trim()];
+            formData.value.newInclusiveDateRange = '';
+        }
+    };
+
+    const removeInclusiveDate = (index: number) => {
+        formData.value.inclusive_dates = formData.value.inclusive_dates.filter((_, i) => i !== index);
+    };
+
+    const formatInclusiveDate = (dateEntry: string): string => {
+        if (!dateEntry) return '';
+        
+        if (dateEntry.includes(' - ')) {
+            const [startStr, endStr] = dateEntry.split(' - ');
+            const startDate = new Date(startStr.trim());
+            const endDate = new Date(endStr.trim());
+            const start = startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            const end = endDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            return `${start} - ${end}`;
+        } else {
+            const date = new Date(dateEntry.trim());
+            return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        }
     };
 
     const getSupervisor = (): Employee | null => {
@@ -411,6 +438,10 @@ export function useTravelOrdersForm(employees: any, travelOrders: any) {
         startEditPurpose,
         saveEditPurpose,
         cancelEditPurpose,
+        addInclusiveDate,
+        addInclusiveDateRange,
+        removeInclusiveDate,
+        formatInclusiveDate,
         getSupervisor,
         getApproverName,
         getApproverRole,

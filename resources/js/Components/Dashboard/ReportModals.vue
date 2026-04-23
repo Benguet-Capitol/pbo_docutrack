@@ -210,7 +210,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, watch, nextTick } from 'vue';
 
 const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
@@ -236,6 +236,76 @@ const emit = defineEmits([
     'generateReport',
     'generateSummaryReport'
 ]);
+
+// Auto-select first item in Report Generation Modal when it opens
+watch(() => props.showReportModal, async (newVal) => {
+    if (newVal) {
+        await nextTick();
+        
+        if (props.reportData && props.supervisorUsers && props.administratorUsers) {
+            const updates: any = {};
+            
+            // Auto-select first supervisor for "Reviewed By" - force select on every open
+            if (props.supervisorUsers.length > 0) {
+                updates.reviewedBy = (props.supervisorUsers[0] as any).id;
+            }
+            
+            // Auto-select first administrator for "Certified Correct" - force select on every open
+            if (props.administratorUsers.length > 0) {
+                updates.certifiedCorrect = (props.administratorUsers[0] as any).id;
+            }
+            
+            if (Object.keys(updates).length > 0) {
+                const updatedData = { ...props.reportData, ...updates };
+                emit('update:reportData', updatedData);
+            }
+        }
+    }
+});
+
+// Auto-select first item in Summary Report Modal when it opens
+watch(() => props.showSummaryModal, async (newVal) => {
+    if (newVal) {
+        await nextTick();
+        
+        if (props.summaryData) {
+            const updates: any = {};
+            
+            // Auto-select first employment type (permanent)
+            if (!props.summaryData.employmentType) {
+                updates.employmentType = 'permanent';
+            }
+            
+            // Auto-select first report period (1-15) if casual
+            if (props.summaryData.employmentType === 'casual' && !props.summaryData.casualPeriod) {
+                updates.casualPeriod = '1-15';
+            }
+            
+            // Auto-select first prepared by
+            if (props.administrativeStaffEmployees && props.administrativeStaffEmployees.length > 0 && !props.summaryData.preparedBy) {
+                updates.preparedBy = (props.administrativeStaffEmployees[0] as any).id;
+            }
+            
+            // Auto-select first certified correct
+            if (props.administratorUsers && props.administratorUsers.length > 0 && !props.summaryData.certifiedCorrect) {
+                updates.certifiedCorrect = (props.administratorUsers[0] as any).id;
+            }
+            
+            if (Object.keys(updates).length > 0) {
+                const updatedData = { ...props.summaryData, ...updates };
+                emit('update:summaryData', updatedData);
+            }
+        }
+    }
+});
+
+// Auto-select first report period when employment type changes to casual
+watch(() => props.summaryData?.employmentType, (newVal) => {
+    if (newVal === 'casual' && props.summaryData && !props.summaryData.casualPeriod) {
+        const updatedData = { ...props.summaryData, casualPeriod: '1-15' };
+        emit('update:summaryData', updatedData);
+    }
+});
 
 const showReportModalLocal = computed({
     get: () => props.showReportModal,
