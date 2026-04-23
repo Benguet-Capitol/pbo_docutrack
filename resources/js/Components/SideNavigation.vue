@@ -34,8 +34,8 @@ const usertype = computed(() => auth.value?.usertype || '');
 const canViewItem = (item: string): boolean => {
     const role = usertype.value;
     
-    // Only Developer, Administrator, and Administrative can view Leaves, Pass Slips, and Travel Orders
-    if (item === 'leaves' || item === 'pass-slips' || item === 'travel-orders' || item === 'tardiness') {
+    // Only Developer, Administrator, and Administrative can view Leaves, Pass Slips, Travel Orders, Tardiness, and Certificates
+    if (item === 'leaves' || item === 'pass-slips' || item === 'travel-orders' || item === 'tardiness' || item === 'certificates-of-appearance') {
         return ['Developer', 'Administrator', 'Administrative'].includes(role);
     }
     
@@ -218,6 +218,21 @@ const handleSidebarHover = (hovered: boolean) => {
             >
                 <i class="fas fa-clock text-xl flex-shrink-0 dark:text-gray-100" aria-hidden="true"></i>
                 <span class="text-sm font-medium whitespace-nowrap" v-show="isSidebarOpen || isSidebarHovered">Tardiness/Undertime</span>
+            </Link>
+
+            <!-- Certificates of Appearance Link -->
+            <Link
+                v-if="canViewItem('certificates-of-appearance')"
+                :href="route('certificates-of-appearance.index')"
+                :class="[
+                    route().current('certificates-of-appearance.*')
+                        ? 'text-white bg-gradient-to-r from-emerald-500 to-emerald-600 shadow-md hover:from-emerald-600 hover:to-emerald-700'
+                        : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 hover:shadow-sm',
+                    'flex-shrink-0 flex items-center gap-3 px-3 py-2.5 transition-all rounded-lg overflow-hidden',
+                ]"
+            >
+                <i class="fas fa-certificate text-xl flex-shrink-0 dark:text-gray-100" aria-hidden="true"></i>
+                <span class="text-sm font-medium whitespace-nowrap" v-show="isSidebarOpen || isSidebarHovered">Certificates of Appearance</span>
             </Link>
 
             <!-- Auxiliary Section Divider -->

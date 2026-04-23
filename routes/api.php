@@ -12,6 +12,7 @@ use App\Http\Controllers\Api\PassSlipController;
 use App\Http\Controllers\Api\TravelOrderController;
 use App\Http\Controllers\Api\LeaveController;
 use App\Http\Controllers\Api\TardinessController;
+use App\Http\Controllers\Api\CertificateOfAppearanceController;
 use App\Http\Controllers\Api\SyncController;
 use App\Http\Controllers\Api\ReportController;
 
@@ -79,6 +80,14 @@ Route::middleware(['web', 'auth'])->group(function () {
     Route::post('/pass-slips', [PassSlipController::class, 'store']);
     Route::put('/pass-slips/{passSlip}', [PassSlipController::class, 'update']);
     Route::delete('/pass-slips/{passSlip}', [PassSlipController::class, 'destroy']);
+});
+
+// Certificate of Appearance API
+Route::middleware(['web', 'auth'])->group(function () {
+    Route::get('/certificate-of-appearances', [CertificateOfAppearanceController::class, 'index']);
+    Route::post('/certificate-of-appearances', [CertificateOfAppearanceController::class, 'store']);
+    Route::put('/certificate-of-appearances/{certificateOfAppearance}', [CertificateOfAppearanceController::class, 'update']);
+    Route::delete('/certificate-of-appearances/{certificateOfAppearance}', [CertificateOfAppearanceController::class, 'destroy']);
 });
 
 // Travel Orders API

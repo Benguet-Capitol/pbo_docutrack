@@ -64,6 +64,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/tardiness', function () {
         return Inertia::render('Tardiness/Index');
     })->name('tardiness.index');
+
+    Route::get('/certificates-of-appearance', function () {
+        return Inertia::render('CertificateOfAppearance/Index');
+    })->name('certificates-of-appearance.index');
 });
 
 // API Routes - Stateless with Bearer token authentication (skip CSRF)
