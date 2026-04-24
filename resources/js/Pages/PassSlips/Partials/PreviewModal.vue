@@ -1,7 +1,7 @@
 <template>
     <Teleport to="body" v-if="show && formData">
         <div class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
-            <div class="relative w-full max-w-6xl bg-white rounded-lg shadow-2xl dark:bg-gray-800 max-h-[90vh] overflow-y-auto">
+            <div class="relative w-full max-w-7xl bg-white rounded-lg shadow-2xl dark:bg-gray-800 max-h-[90vh] overflow-y-auto">
                 <!-- Modal Header -->
                 <div class="sticky top-0 flex items-center justify-between px-6 py-4 border-b border-gray-200 rounded-t-lg bg-gradient-to-r from-emerald-50 to-emerald-100 dark:from-gray-700 dark:to-gray-600 dark:border-gray-600 z-10 print:hidden">
                     <h3 class="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
@@ -262,14 +262,22 @@
                         <i class="fas fa-print"></i>
                         Print
                     </button>
-                    <button @click="$emit('confirm')" class="inline-flex items-center gap-2 px-5 py-3 text-xs font-medium text-white bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-700 dark:hover:bg-emerald-800 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95">
-                        <i class="fas fa-check"></i>
-                        Confirm & Save
-                    </button>
-                    <button @click="$emit('close')" class="inline-flex items-center gap-2 px-5 py-3 text-xs font-medium text-gray-600 dark:text-gray-400 border border-gray-600 dark:border-gray-500 hover:text-white hover:bg-gray-600 dark:hover:bg-gray-600 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95">
-                        <i class="fas fa-arrow-left"></i>
-                        Back to Form
-                    </button>
+                    <template v-if="!isPreviewFromTable">
+                        <button @click="$emit('confirm')" class="inline-flex items-center gap-2 px-5 py-3 text-xs font-medium text-white bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-700 dark:hover:bg-emerald-800 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95">
+                            <i class="fas fa-check"></i>
+                            Confirm & Save
+                        </button>
+                        <button @click="$emit('close')" class="inline-flex items-center gap-2 px-5 py-3 text-xs font-medium text-gray-600 dark:text-gray-400 border border-gray-600 dark:border-gray-500 hover:text-white hover:bg-gray-600 dark:hover:bg-gray-600 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95">
+                            <i class="fas fa-arrow-left"></i>
+                            Back to Form
+                        </button>
+                    </template>
+                    <template v-else>
+                        <button @click="$emit('close')" class="inline-flex items-center gap-2 px-5 py-3 text-xs font-medium text-gray-600 dark:text-gray-400 border border-gray-600 dark:border-gray-500 hover:text-white hover:bg-gray-600 dark:hover:bg-gray-600 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95">
+                            <i class="fas fa-times"></i>
+                            Close
+                        </button>
+                    </template>
                 </div>
             </div>
         </div>
@@ -284,6 +292,7 @@ const props = defineProps<{
     formData: any;
     employees: Employee[];
     sortedEmployees: Employee[];
+    isPreviewFromTable?: boolean;
 }>();
 
 defineEmits<{

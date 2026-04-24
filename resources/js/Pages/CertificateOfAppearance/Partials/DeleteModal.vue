@@ -2,7 +2,7 @@
     <Teleport to="body" v-if="show && certificate">
         <Transition>
             <div class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4" @click.self="$emit('close')">
-                <div class="relative w-full max-w-md mx-4 bg-white rounded-lg shadow-lg dark:bg-gray-800">
+                <div class="relative w-full max-w-md mx-4 bg-white rounded-lg shadow-lg dark:bg-gray-800 animate-scaleInUp">
                     <!-- Modal Header -->
                     <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 rounded-t-lg bg-gradient-to-r from-red-50 to-red-100 dark:from-gray-700 dark:to-gray-600 dark:border-gray-600">
                         <h3 class="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
@@ -29,14 +29,14 @@
 
                     <!-- Modal Footer -->
                     <div class="flex items-center justify-end gap-3 p-6 border-t border-gray-200 rounded-b-lg dark:border-gray-600 bg-gray-50 dark:bg-gray-800">
-                        <button @click="$emit('close')" :disabled="loading" class="inline-flex items-center gap-2 px-5 py-3 text-xs font-medium text-gray-600 dark:text-gray-400 border border-gray-600 dark:border-gray-500 hover:text-white hover:bg-gray-600 dark:hover:bg-gray-600 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed">
-                            <i class="fas fa-times"></i>
-                            Cancel
-                        </button>
                         <button @click="$emit('confirm')" :disabled="loading" class="inline-flex items-center gap-2 px-5 py-3 text-xs font-medium text-white bg-red-600 hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-800 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed">
                             <i v-if="loading" class="fas fa-spinner fa-spin"></i>
                             <i v-else class="fas fa-trash"></i>
                             {{ loading ? 'Deleting...' : 'Delete' }}
+                        </button>
+                        <button @click="$emit('close')" :disabled="loading" class="inline-flex items-center gap-2 px-5 py-3 text-xs font-medium text-gray-600 dark:text-gray-400 border border-gray-600 dark:border-gray-500 hover:text-white hover:bg-gray-600 dark:hover:bg-gray-600 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed">
+                            <i class="fas fa-times"></i>
+                            Cancel
                         </button>
                     </div>
                 </div>

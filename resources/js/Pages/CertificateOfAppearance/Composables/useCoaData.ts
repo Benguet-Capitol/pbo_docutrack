@@ -33,7 +33,7 @@ export function useCoaData() {
     const formattedDate = (dateStr: string): string => {
         if (!dateStr) return '';
         const date = new Date(dateStr);
-        return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+        return date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
     };
 
     const filteredCertificates = computed(() => {

@@ -65,6 +65,13 @@
                     <td class="px-4 py-2 text-xs">
                         <div class="flex items-center justify-center gap-2">
                             <button
+                                @click.stop="$emit('preview', slip)"
+                                class="relative p-2 text-purple-600 dark:text-purple-400 bg-purple-100 dark:bg-purple-900/30 hover:text-purple-700 dark:hover:text-purple-300 hover:bg-purple-200 dark:hover:bg-purple-900/50 rounded-lg transition-all duration-200 group"
+                            >
+                                <i class="fas fa-eye"></i>
+                                <span class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-1 text-xs font-medium text-white bg-gray-900 dark:bg-gray-950 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-20">View</span>
+                            </button>
+                            <button
                                 @click.stop="$emit('edit', slip)"
                                 class="relative p-2 text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/30 hover:text-blue-700 dark:hover:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-900/50 rounded-lg transition-all duration-200 group"
                             >
@@ -96,6 +103,7 @@ defineProps<{
 defineEmits<{
     edit: [slip: PassSlip];
     delete: [slip: PassSlip];
+    preview: [slip: PassSlip];
 }>();
 
 const formatDate = (dateStr: string): string => {

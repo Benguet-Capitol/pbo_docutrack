@@ -6,17 +6,42 @@
                 <col class="w-32">
                 <col class="w-28">
                 <col class="w-40">
-                <col class="w-20">
                 <col class="w-32">
+                <col class="w-20">
             </colgroup>
             <!-- Table Header -->
             <thead class="bg-gray-100 dark:bg-gray-900 border-b-2 border-gray-300 dark:border-gray-700">
                 <tr>
-                    <th class="px-6 py-3 text-xs font-bold text-gray-700 dark:text-gray-200">Control No</th>
-                    <th class="px-6 py-3 text-xs font-bold text-gray-700 dark:text-gray-200">Name</th>
-                    <th class="px-6 py-3 text-xs font-bold text-gray-700 dark:text-gray-200">Office</th>
-                    <th class="px-6 py-3 text-xs font-bold text-gray-700 dark:text-gray-200">Purpose</th>
-                    <th class="px-6 py-3 text-xs font-bold text-gray-700 dark:text-gray-200">Date</th>
+                    <th class="px-6 py-3 text-xs font-bold text-gray-700 dark:text-gray-200">
+                        <button @click="$emit('sort', 'control_no')" class="flex items-center gap-2 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
+                            Control No
+                            <span v-if="sortBy === 'control_no'" class="text-xs">{{ sortOrder === 'asc' ? '▲' : '▼' }}</span>
+                        </button>
+                    </th>
+                    <th class="px-6 py-3 text-xs font-bold text-gray-700 dark:text-gray-200">
+                        <button @click="$emit('sort', 'name')" class="flex items-center gap-2 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
+                            Name
+                            <span v-if="sortBy === 'name'" class="text-xs">{{ sortOrder === 'asc' ? '▲' : '▼' }}</span>
+                        </button>
+                    </th>
+                    <th class="px-6 py-3 text-xs font-bold text-gray-700 dark:text-gray-200">
+                        <button @click="$emit('sort', 'office')" class="flex items-center gap-2 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
+                            Office
+                            <span v-if="sortBy === 'office'" class="text-xs">{{ sortOrder === 'asc' ? '▲' : '▼' }}</span>
+                        </button>
+                    </th>
+                    <th class="px-6 py-3 text-xs font-bold text-gray-700 dark:text-gray-200">
+                        <button @click="$emit('sort', 'purpose')" class="flex items-center gap-2 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
+                            Purpose
+                            <span v-if="sortBy === 'purpose'" class="text-xs">{{ sortOrder === 'asc' ? '▲' : '▼' }}</span>
+                        </button>
+                    </th>
+                    <th class="px-6 py-3 text-xs font-bold text-gray-700 dark:text-gray-200">
+                        <button @click="$emit('sort', 'date')" class="flex items-center gap-2 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
+                            Date
+                            <span v-if="sortBy === 'date'" class="text-xs">{{ sortOrder === 'asc' ? '▲' : '▼' }}</span>
+                        </button>
+                    </th>
                     <th class="px-6 py-3 text-xs font-bold text-gray-700 dark:text-gray-200">Actions</th>
                 </tr>
             </thead>
@@ -42,14 +67,14 @@
                         <div class="flex items-center justify-center gap-2">
                             <button
                                 @click.stop="$emit('preview', certificate)"
-                                class="relative p-2 text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/30 hover:text-blue-700 dark:hover:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-900/50 rounded-lg transition-all duration-200 group"
+                                class="relative p-2 text-purple-600 dark:text-purple-400 bg-purple-100 dark:bg-purple-900/30 hover:text-purple-700 dark:hover:text-purple-300 hover:bg-purple-200 dark:hover:bg-purple-900/50 rounded-lg transition-all duration-200 group"
                             >
                                 <i class="fas fa-eye"></i>
                                 <span class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-1 text-xs font-medium text-white bg-gray-900 dark:bg-gray-950 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-20">Preview</span>
                             </button>
                             <button
                                 @click.stop="$emit('edit', certificate)"
-                                class="relative p-2 text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-900/30 hover:text-green-700 dark:hover:text-green-300 hover:bg-green-200 dark:hover:bg-green-900/50 rounded-lg transition-all duration-200 group"
+                                class="relative p-2 text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/30 hover:text-blue-700 dark:hover:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-900/50 rounded-lg transition-all duration-200 group"
                             >
                                 <i class="fas fa-pencil-alt"></i>
                                 <span class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-1 text-xs font-medium text-white bg-gray-900 dark:bg-gray-950 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-20">Edit</span>
@@ -74,12 +99,15 @@ import type { CertificateOfAppearance } from '../Composables/useCoaData';
 
 defineProps<{
     certificates: CertificateOfAppearance[];
+    sortBy?: 'control_no' | 'name' | 'office' | 'purpose' | 'date';
+    sortOrder?: 'asc' | 'desc';
 }>();
 
 defineEmits<{
     edit: [certificate: CertificateOfAppearance];
     delete: [certificate: CertificateOfAppearance];
     preview: [certificate: CertificateOfAppearance];
+    sort: [field: 'control_no' | 'name' | 'office' | 'purpose' | 'date'];
 }>();
 
 const formattedDate = (dateStr: string): string => {

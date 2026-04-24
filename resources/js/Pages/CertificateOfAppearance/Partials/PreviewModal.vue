@@ -1,18 +1,35 @@
 <script setup lang="ts">
 import type { CertificateOfAppearance } from '../Composables/useCoaData';
 
+interface Employee {
+    id: number;
+    name: string;
+    employee_id: string;
+    designation?: string;
+}
+
 const props = defineProps<{
     show: boolean;
-    certificate: CertificateOfAppearance | null;
+    formData: any;
+    isPreviewFromTable?: boolean;
     formattedDate: (dateStr: string) => string;
+    sortedEmployees?: Employee[];
 }>();
 
 defineEmits<{
+    confirm: [];
     close: [];
 }>();
 
 const printPreview = () => {
     window.print();
+};
+
+const getProvincialBudgetOfficer = () => {
+    if (!props.sortedEmployees) return null;
+    return props.sortedEmployees.find((e: Employee) => 
+        e.designation?.toLowerCase().includes('provincial budget officer')
+    );
 };
 </script>
 
@@ -20,93 +37,106 @@ const printPreview = () => {
     <Teleport to="body" v-if="show">
         <Transition>
             <div class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4" @click.self="$emit('close')">
-                <div class="relative w-full max-w-2xl mx-4 bg-white rounded-lg shadow-lg dark:bg-gray-800 animate-scaleInUp">
+                <div class="relative w-full max-w-4xl mx-4 bg-white rounded-lg shadow-lg dark:bg-gray-800 animate-scaleInUp max-h-[90vh] overflow-y-auto">
                     <!-- Modal Header -->
                     <div class="sticky top-0 flex items-center justify-between px-6 py-4 border-b border-gray-200 rounded-t-lg bg-gradient-to-r from-emerald-50 to-emerald-100 dark:from-gray-700 dark:to-gray-600 dark:border-gray-600 z-10">
                         <h3 class="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-                            <i class="fas fa-certificate text-emerald-600 dark:text-emerald-400"></i>
-                            Certificate Preview
+                            <i class="fas fa-location-dot text-emerald-600 dark:text-emerald-400"></i>
+                            Certificate of Appearance Preview
                         </h3>
-                        <div class="flex gap-3 items-center">
-                            <button
-                                @click="printPreview"
-                                class="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 dark:bg-emerald-700 dark:hover:bg-emerald-800 font-medium text-sm transition-colors"
-                            >
-                                <i class="fas fa-print"></i>
-                                Print
-                            </button>
-                            <button
-                                @click="$emit('close')"
-                                class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
-                            >
-                                <i class="fas fa-times text-xl"></i>
-                            </button>
-                        </div>
+                        <button @click="$emit('close')" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
+                            <i class="fas fa-times text-xl"></i>
+                        </button>
                     </div>
 
                     <!-- Certificate Content -->
-                    <div class="px-8 py-8 bg-white dark:bg-gray-900 overflow-y-auto" style="max-height: calc(90vh - 140px);">
-                <div v-if="certificate" class="space-y-6">
-                    <!-- Title -->
-                    <div class="text-center border-b pb-6 dark:border-gray-700">
-                        <h2 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">CERTIFICATE OF APPEARANCE</h2>
-                    </div>
-
-                    <!-- Details -->
-                    <div class="space-y-4 text-sm">
-                        <!-- Control Number -->
-                        <div class="flex justify-between items-start">
-                            <span class="font-semibold text-gray-700 dark:text-gray-300">Control No:</span>
-                            <span class="text-gray-900 dark:text-white font-mono">{{ certificate.control_no }}</span>
-                        </div>
-
-                        <!-- Date -->
-                        <div class="flex justify-between items-start">
-                            <span class="font-semibold text-gray-700 dark:text-gray-300">Date:</span>
-                            <span class="text-gray-900 dark:text-white">{{ formattedDate(certificate.date) }}</span>
-                        </div>
-
-                        <!-- Name -->
-                        <div class="flex justify-between items-start">
-                            <span class="font-semibold text-gray-700 dark:text-gray-300">Name:</span>
-                            <span class="text-gray-900 dark:text-white">{{ certificate.name }}</span>
-                        </div>
-
-                        <!-- Office -->
-                        <div class="flex justify-between items-start">
-                            <span class="font-semibold text-gray-700 dark:text-gray-300">Office:</span>
-                            <span class="text-gray-900 dark:text-white">{{ certificate.office }}</span>
-                        </div>
-
-                        <!-- Purpose -->
-                        <div class="border-t dark:border-gray-700 pt-4">
-                            <span class="font-semibold text-gray-700 dark:text-gray-300">Purpose:</span>
-                            <p class="text-gray-900 dark:text-white mt-2 whitespace-pre-wrap">{{ certificate.purpose }}</p>
-                        </div>
-
-                        <!-- Remarks -->
-                        <div v-if="certificate.remarks" class="border-t dark:border-gray-700 pt-4">
-                            <span class="font-semibold text-gray-700 dark:text-gray-300">Remarks:</span>
-                            <p class="text-gray-900 dark:text-white mt-2 whitespace-pre-wrap">{{ certificate.remarks }}</p>
-                        </div>
-                    </div>
-
-                    <!-- Signature Section -->
-                    <div class="border-t dark:border-gray-700 pt-8 mt-8">
-                        <div class="flex justify-between">
-                            <div class="text-center">
-                                <div class="h-20 border-b-2 border-gray-400 dark:border-gray-600 mb-2"></div>
-                                <p class="text-xs text-gray-700 dark:text-gray-400 font-medium">Issued By</p>
+                    <div class="p-4 flex flex-col" style="background-color: white; min-height: 1000px;">
+                        <div v-if="formData" class="space-y-6">
+                            <!-- Header Section with Logos -->
+                            <div class="flex items-center justify-center gap-2 mb-6 pb-2" style="border-bottom: 4px double #050505;">
+                                <div style="width: 85px; flex-shrink: 0;">
+                                    <img src="/benguetlogo.png" alt="Benguet Logo" style="width: 100%; height: auto;">
+                                </div>
+                                <div class="text-center">
+                                    <p class="text-base font-semibold text-gray-700 mt-2">Republic of the Philippines</p>
+                                    <p class="text-base font-bold text-gray-900">PROVINCE OF BENGUET</p>
+                                    <p class="text-xl font-bold text-gray-900">PROVINCIAL BUDGET OFFICE</p>
+                                    <p class="text-base text-gray-700 mb-1">Poblacion, La Trinidad, Benguet 2601</p>
+                                </div>
+                                <div style="width: 85px; flex-shrink: 0;">
+                                    <img src="/bagongpilipinaslogo.png" alt="Bagong Pilipinas Logo" style="width: 100%; height: auto;">
+                                </div>
                             </div>
-                            <div class="text-center">
-                                <div class="h-20 border-b-2 border-gray-400 dark:border-gray-600 mb-2"></div>
-                                <p class="text-xs text-gray-700 dark:text-gray-400 font-medium">Signature</p>
+                            
+                            <div>
+                                <p class="font-bold text-3xl text-center text-gray-900 mb-10">CERTIFICATE OF APPEARANCE</p>
+                            </div>
+                            
+                            <!-- Date & Control Numbers -->
+                            <div class="mb-8 flex justify-start pr-8">
+                                <div class="text-center text-base">
+                                    <p><span class="w-26 inline-block text-right">Control No.: </span><span class="font-bold text-gray-900 w-48 border-b border-gray-900 inline-block text-center">{{ formData.control_no }}</span></p>
+                                    <p class="mt-1 mb-8"><span class="w-26 inline-block text-right">Date: </span><span class="font-bold text-gray-900 w-48 border-b border-gray-900 inline-block text-center">{{ formattedDate(formData.date) }}</span></p>
+                                </div>
+                            </div>
+
+                            <!-- Details Body -->
+                            <div class="space-y-4 text-lg mb-10">
+                                <p class="text-justify indent-8">This is to certify that <span class="font-semibold uppercase">{{ formData.name }}</span>, of <span class="font-semibold uppercase">{{ formData.office }}</span>, has appeared in this office on <span class="font-semibold">{{ formattedDate(formData.date) }}</span> for the purpose <span class="font-semibold">{{ formData.purpose }}</span>.</p>
+                                
+                                <!-- Closing Statement -->
+                                <p class="text-justify indent-8">This certification is issued upon the request of the above-named person for whatever legal purpose it may serve.</p>
+                                
+                                <!-- Issued Statement -->
+                                <p class="text-justify indent-8 mb-10">Issued this <span class="font-semibold">{{ formattedDate(formData.date) }}</span> at <span class="font-semibold">La Trinidad, Benguet</span>.</p>
+                            </div>
+
+                            <!-- Signature Section -->
+                            <div class="mt-12 mb-10">
+                                <div class="mt-8 flex justify-end pr-8">
+                                    <div class="w-72 text-center">
+                                        <p class="text-lg text-gray-700 mt-12"></p>
+                                        <p class="text-lg text-center text-gray-900 border-b border-gray-900 pb-1 font-bold uppercase">{{ getProvincialBudgetOfficer()?.name || 'PROVINCIAL BUDGET OFFICER' }}</p>
+                                        <p class="text-lg text-center text-gray-700">{{ getProvincialBudgetOfficer()?.designation || 'Provincial Budget Officer' }}</p>
+                                    </div>
+                                </div>
                             </div>
                         </div>
+
+                        <!-- Footer Section -->
+                        <div class="mb-6 mt-auto" style="border-top: 4px double #050505;">
+                            <div class="flex justify-between items-center mt-2" style="line-height: 1;">
+                                <p><span class="font-semibold text-sm">PBO Telephone No.:</span> <span class="text-sm text-gray-900">(074) 422-1378, Local: 134</span></p>
+                                <p><span class="font-semibold text-sm">Website:</span> <span class="text-sm font-semibold text-blue-800 underline">www.benguet.gov.ph</span></p>
+                            </div>
+                            <p><span class="font-semibold text-sm">Email Address:</span> <span class="text-sm font-semibold text-blue-800 underline">benguetpbo@benguet.gov.ph</span></p>
+                        </div>
+                    </div>
+
+                    <!-- Modal Footer -->
+                    <div class="flex items-center justify-center gap-3 p-6 border-t-2 border-gray-200 rounded-b-lg dark:border-gray-600 bg-gray-50 dark:bg-gray-800 sticky bottom-0 print:hidden">
+                        <button @click="printPreview" class="inline-flex items-center gap-2 px-5 py-3 text-xs font-medium text-gray-600 dark:text-gray-400 border border-gray-600 dark:border-gray-500 hover:text-white hover:bg-gray-600 dark:hover:bg-gray-600 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95">
+                            <i class="fas fa-print"></i>
+                            Print
+                        </button>
+                        <template v-if="!isPreviewFromTable">
+                            <button @click="$emit('confirm')" class="inline-flex items-center gap-2 px-5 py-3 text-xs font-medium text-white bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-700 dark:hover:bg-emerald-800 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95">
+                                <i class="fas fa-check"></i>
+                                Confirm & Save
+                            </button>
+                            <button @click="$emit('close')" class="inline-flex items-center gap-2 px-5 py-3 text-xs font-medium text-gray-600 dark:text-gray-400 border border-gray-600 dark:border-gray-500 hover:text-white hover:bg-gray-600 dark:hover:bg-gray-600 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95">
+                                <i class="fas fa-arrow-left"></i>
+                                Back to Form
+                            </button>
+                        </template>
+                        <template v-else>
+                            <button @click="$emit('close')" class="inline-flex items-center gap-2 px-5 py-3 text-xs font-medium text-gray-600 dark:text-gray-400 border border-gray-600 dark:border-gray-500 hover:text-white hover:bg-gray-600 dark:hover:bg-gray-600 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95">
+                                <i class="fas fa-times"></i>
+                                Close
+                            </button>
+                        </template>
                     </div>
                 </div>
-            </div>
-            </div>
             </div>
         </Transition>
     </Teleport>
@@ -129,19 +159,44 @@ const printPreview = () => {
 }
 
 @media print {
-    body {
-        background: white;
+    .sticky {
+        position: static !important;
     }
-    .fixed,
-    .sticky,
-    button {
+    
+    .sticky.top-0 {
         display: none !important;
     }
-    .bg-black {
-        background: none !important;
+    
+    .sticky.bottom-0 {
+        display: none !important;
     }
-    .rounded-lg {
-        border-radius: 0;
+    
+    .overflow-y-auto {
+        overflow: visible !important;
+    }
+    
+    .max-h-\[90vh\] {
+        max-height: none !important;
+    }
+    
+    body, html {
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+    
+    .fixed.inset-0.flex.items-center.justify-center {
+        align-items: flex-start !important;
+        padding-top: 0 !important;
+    }
+
+    /* Remove shadows from printed form */
+    .shadow-2xl {
+        box-shadow: none !important;
+    }
+    
+    [class*="shadow"] {
+        box-shadow: none !important;
     }
 }
+
 </style>

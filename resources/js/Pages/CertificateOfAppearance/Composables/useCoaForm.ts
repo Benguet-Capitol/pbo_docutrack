@@ -16,6 +16,7 @@ export function useCoaForm(certificates: any) {
     const showEditModal = ref(false);
     const showDeleteModal = ref(false);
     const showPreviewModal = ref(false);
+    const isPreviewFromTable = ref(false);
 
     const creating = ref(false);
     const updating = ref(false);
@@ -44,7 +45,7 @@ export function useCoaForm(certificates: any) {
         const dateToUse = dateString ? new Date(dateString) : new Date();
         const year = dateToUse.getFullYear();
         const month = String(dateToUse.getMonth() + 1).padStart(2, '0');
-        const prefix = 'COA';
+        const prefix = 'CA';
 
         // Find the maximum series number from all records in the same year
         let maxSeries = 0;
@@ -131,6 +132,7 @@ export function useCoaForm(certificates: any) {
 
     const closePreviewModal = () => {
         showPreviewModal.value = false;
+        isPreviewFromTable.value = false;
     };
 
     return {
@@ -140,6 +142,7 @@ export function useCoaForm(certificates: any) {
         showEditModal,
         showDeleteModal,
         showPreviewModal,
+        isPreviewFromTable,
         creating,
         updating,
         deleting,

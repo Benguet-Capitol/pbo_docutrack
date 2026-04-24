@@ -208,15 +208,23 @@
                         <i class="fas fa-print"></i>
                         Print
                     </button>
-                    <button @click="$emit('confirm')" :disabled="saving" class="inline-flex items-center gap-2 px-5 py-3 text-xs font-medium text-white bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-700 dark:hover:bg-emerald-800 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed">
-                        <i v-if="saving" class="fas fa-spinner fa-spin"></i>
-                        <i v-else class="fas fa-check"></i>
-                        {{ saving ? 'Saving...' : 'Confirm & Save' }}
-                    </button>
-                    <button @click="$emit('close')" :disabled="saving" class="inline-flex items-center gap-2 px-5 py-3 text-xs font-medium text-gray-600 dark:text-gray-400 border border-gray-600 dark:border-gray-500 hover:text-white hover:bg-gray-600 dark:hover:bg-gray-600 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed">
-                        <i class="fas fa-arrow-left"></i>
-                        Back to Form
-                    </button>
+                    <template v-if="!isPreviewFromTable">
+                        <button @click="$emit('confirm')" :disabled="saving" class="inline-flex items-center gap-2 px-5 py-3 text-xs font-medium text-white bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-700 dark:hover:bg-emerald-800 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed">
+                            <i v-if="saving" class="fas fa-spinner fa-spin"></i>
+                            <i v-else class="fas fa-check"></i>
+                            {{ saving ? 'Saving...' : 'Confirm & Save' }}
+                        </button>
+                        <button @click="$emit('close')" :disabled="saving" class="inline-flex items-center gap-2 px-5 py-3 text-xs font-medium text-gray-600 dark:text-gray-400 border border-gray-600 dark:border-gray-500 hover:text-white hover:bg-gray-600 dark:hover:bg-gray-600 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed">
+                            <i class="fas fa-arrow-left"></i>
+                            Back to Form
+                        </button>
+                    </template>
+                    <template v-else>
+                        <button @click="$emit('close')" :disabled="saving" class="inline-flex items-center gap-2 px-5 py-3 text-xs font-medium text-gray-600 dark:text-gray-400 border border-gray-600 dark:border-gray-500 hover:text-white hover:bg-gray-600 dark:hover:bg-gray-600 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed">
+                            <i class="fas fa-times"></i>
+                            Close
+                        </button>
+                    </template>
                 </div>
             </div>
         </div>
@@ -243,6 +251,7 @@ const props = defineProps<{
     provincialBudgetOfficer: Employee | null;
     provincialGovernor: Employee | null;
     saving: boolean;
+    isPreviewFromTable?: boolean;
 }>();
 
 defineEmits<{

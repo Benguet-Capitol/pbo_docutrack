@@ -60,6 +60,13 @@
                     </td>
                     <td class="px-4 py-2 text-xs text-center">
                         <div class="flex items-center justify-center gap-2">
+                            <button
+                                @click.stop="$emit('preview', record)"
+                                class="relative p-2 text-purple-600 dark:text-purple-400 bg-purple-100 dark:bg-purple-900/30 hover:text-purple-700 dark:hover:text-purple-300 hover:bg-purple-200 dark:hover:bg-purple-900/50 rounded-lg transition-all duration-200 group"
+                            >
+                                <i class="fas fa-eye"></i>
+                                <span class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-1 text-xs font-medium text-white bg-gray-900 dark:bg-gray-950 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-20">View</span>
+                            </button>
                             <button 
                                 v-if="hasPermission('tardiness.edit')" 
                                 @click.stop="$emit('edit', record)" 
@@ -94,6 +101,7 @@ defineProps<{
 defineEmits<{
     edit: [record: TardinessRecord];
     delete: [record: TardinessRecord];
+    preview: [record: TardinessRecord];
 }>();
 
 const hasPermission = (permission: string): boolean => {

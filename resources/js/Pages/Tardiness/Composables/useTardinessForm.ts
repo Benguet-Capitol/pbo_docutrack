@@ -20,6 +20,7 @@ export function useTardinessForm(employees: any, tardiness: any) {
     const showEditModal = ref(false);
     const showDeleteModal = ref(false);
     const showPreviewModal = ref(false);
+    const isPreviewFromTable = ref(false);
 
     const creating = ref(false);
     const updating = ref(false);
@@ -223,11 +224,22 @@ export function useTardinessForm(employees: any, tardiness: any) {
 
     const formatTimeDisplay = (timeStr: string): string => {
         if (!timeStr) return '';
-        const [hours, minutes] = timeStr.split(':');
-        const hour = parseInt(hours);
-        const ampm = hour >= 12 ? 'PM' : 'AM';
-        const displayHour = hour % 12 || 12;
-        return `${displayHour}:${minutes} ${ampm}`;
+        
+        // If it doesn't contain a colon, it's likely a special value
+        if (!timeStr.includes(':')) {
+            return timeStr;
+        }
+        
+        try {
+            const [hours, minutes] = timeStr.split(':');
+            const hour = parseInt(hours);
+            if (isNaN(hour) || minutes === undefined) return timeStr;
+            const ampm = hour >= 12 ? 'PM' : 'AM';
+            const displayHour = hour % 12 || 12;
+            return `${displayHour}:${minutes} ${ampm}`;
+        } catch (e) {
+            return timeStr;
+        }
     };
 
     const validateForm = (): boolean => {
@@ -320,6 +332,7 @@ export function useTardinessForm(employees: any, tardiness: any) {
 
     const closePreviewModal = () => {
         showPreviewModal.value = false;
+        isPreviewFromTable.value = false;
     };
 
     return {
@@ -329,6 +342,7 @@ export function useTardinessForm(employees: any, tardiness: any) {
         showEditModal,
         showDeleteModal,
         showPreviewModal,
+        isPreviewFromTable,
         creating,
         updating,
         deleting,

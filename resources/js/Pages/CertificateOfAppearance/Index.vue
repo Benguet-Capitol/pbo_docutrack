@@ -34,6 +34,7 @@ const {
     paginationRange,
     formattedDate,
     fetchAllData,
+    sortedEmployees,
 } = useCoaData();
 
 const {
@@ -59,6 +60,7 @@ const {
     closeDeleteModal,
     openPreviewModal,
     closePreviewModal,
+    isPreviewFromTable,
 } = useCoaForm(certificates);
 
 const showPagination = computed(() => totalPages.value > 1);
@@ -83,12 +85,33 @@ const handlePageChange = (page: number) => {
     currentPage.value = page;
 };
 
+const handleSort = (field: 'control_no' | 'name' | 'office' | 'purpose' | 'date') => {
+    if (sortBy.value === field) {
+        // Toggle sort order if same field clicked
+        sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc';
+    } else {
+        // Set new field and default to descending
+        sortBy.value = field;
+        sortOrder.value = 'desc';
+    }
+    currentPage.value = 1;
+};
+
 const handleUpdateFormData = (data: any) => {
     formData.value = data;
 };
 
 const handlePreview = (certificate: CertificateOfAppearance) => {
     certificateToEdit.value = certificate;
+    isPreviewFromTable.value = true;
+    formData.value = {
+        control_no: certificate.control_no,
+        name: certificate.name,
+        office: certificate.office,
+        purpose: certificate.purpose,
+        date: certificate.date,
+        remarks: certificate.remarks || '',
+    };
     openPreviewModal();
 };
 
@@ -110,6 +133,40 @@ const submitCreateForm = async () => {
         return;
     }
 
+    // Open preview instead of directly submitting
+    openPreviewModal();
+};
+
+// Handle edit submit
+const submitEditForm = async () => {
+    if (!certificateToEdit.value) return;
+
+    if (!formData.value.name || !formData.value.office || !formData.value.purpose || !formData.value.date) {
+        formErrors.value = {
+            ...(!formData.value.name && { name: 'Name is required' }),
+            ...(!formData.value.office && { office: 'Office is required' }),
+            ...(!formData.value.purpose && { purpose: 'Purpose is required' }),
+            ...(!formData.value.date && { date: 'Date is required' }),
+        };
+        return;
+    }
+
+    // Open preview instead of directly submitting
+    openPreviewModal();
+};
+
+// Handle confirm from preview modal
+const handleConfirmPreviewAndSubmit = async () => {
+    if (certificateToEdit.value) {
+        // Editing
+        await submitConfirmEdit();
+    } else {
+        // Creating
+        await submitConfirmCreate();
+    }
+};
+
+const submitConfirmCreate = async () => {
     creating.value = true;
     formErrors.value = {};
 
@@ -146,6 +203,7 @@ const submitCreateForm = async () => {
 
         const newCertificate = await response.json();
         certificates.value.unshift(newCertificate.data);
+        closePreviewModal();
         closeCreateModal();
 
         toastRef.value?.add(
@@ -161,19 +219,8 @@ const submitCreateForm = async () => {
     }
 };
 
-// Handle edit submit
-const submitEditForm = async () => {
+const submitConfirmEdit = async () => {
     if (!certificateToEdit.value) return;
-
-    if (!formData.value.name || !formData.value.office || !formData.value.purpose || !formData.value.date) {
-        formErrors.value = {
-            ...(!formData.value.name && { name: 'Name is required' }),
-            ...(!formData.value.office && { office: 'Office is required' }),
-            ...(!formData.value.purpose && { purpose: 'Purpose is required' }),
-            ...(!formData.value.date && { date: 'Date is required' }),
-        };
-        return;
-    }
 
     updating.value = true;
     formErrors.value = {};
@@ -214,6 +261,7 @@ const submitEditForm = async () => {
         if (index !== -1) {
             certificates.value[index] = updatedCertificate.data;
         }
+        closePreviewModal();
         closeEditModal();
 
         toastRef.value?.add(
@@ -313,9 +361,12 @@ const confirmDelete = async () => {
                 <Table 
                     v-else
                     :certificates="paginatedCertificates"
+                    :sort-by="sortBy"
+                    :sort-order="sortOrder"
                     @edit="openEditModal"
                     @delete="openDeleteModal"
                     @preview="handlePreview"
+                    @sort="handleSort"
                 />
 
                 <!-- Pagination Controls -->
@@ -365,9 +416,12 @@ const confirmDelete = async () => {
 
         <PreviewModal
             :show="showPreviewModal"
-            :certificate="certificateToEdit"
+            :form-data="formData"
             :formatted-date="formattedDate"
+            :is-preview-from-table="isPreviewFromTable"
+            :sorted-employees="sortedEmployees"
             @close="closePreviewModal"
+            @confirm="handleConfirmPreviewAndSubmit"
         />
     </AuthenticatedLayout>
 </template>

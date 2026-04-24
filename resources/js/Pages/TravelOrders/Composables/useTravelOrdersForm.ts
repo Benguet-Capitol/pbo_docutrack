@@ -25,6 +25,7 @@ export function useTravelOrdersForm(employees: any, travelOrders: any) {
     const showEditModal = ref(false);
     const showDeleteModal = ref(false);
     const showPreviewModal = ref(false);
+    const isPreviewFromTable = ref(false);
 
     const creating = ref(false);
     const updating = ref(false);
@@ -273,11 +274,31 @@ export function useTravelOrdersForm(employees: any, travelOrders: any) {
     };
 
     const openPreviewModal = () => {
+        if (travelOrderToEdit.value) {
+            const order = travelOrderToEdit.value;
+            formData.value = {
+                control_no: order.control_no,
+                date: formatDateForInput(order.date),
+                going_to: order.going_to,
+                inclusive_dates: order.inclusive_dates ? [...order.inclusive_dates] : [],
+                purpose: [...order.purpose],
+                vehicle: order.vehicle as 'PUJ' | 'RP Vehicle',
+                plate_number: order.plate_number || '',
+                employee_ids: order.employees.map(emp => emp.id),
+                driver: order.driver || '',
+                newPurpose: '',
+                newInclusiveDate: '',
+                newInclusiveDateRange: '',
+                supervisor_employee_id: order.supervisor_employee_id || null,
+                approver_employee_id: order.approver_employee_id || null,
+            };
+        }
         showPreviewModal.value = true;
     };
 
     const closePreviewModal = () => {
         showPreviewModal.value = false;
+        isPreviewFromTable.value = false;
     };
 
     const addPurpose = () => {
@@ -403,6 +424,7 @@ export function useTravelOrdersForm(employees: any, travelOrders: any) {
         showEditModal,
         showDeleteModal,
         showPreviewModal,
+        isPreviewFromTable,
         creating,
         updating,
         deleting,

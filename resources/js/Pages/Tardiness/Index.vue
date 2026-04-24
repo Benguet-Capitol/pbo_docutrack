@@ -45,6 +45,7 @@
                     :records="paginatedTardiness"
                     @edit="handleEditClick"
                     @delete="handleDeleteClick"
+                    @preview="handlePreviewClick"
                 />
 
                 <!-- Pagination Controls -->
@@ -101,6 +102,7 @@
             :provincial-budget-officer="formComposable.getProvincialBudgetOfficer()"
             :provincial-governor="formComposable.getProvincialGovernor()"
             :saving="creating || updating"
+            :is-preview-from-table="formComposable.isPreviewFromTable.value"
             @close="formComposable.closePreviewModal()"
             @confirm="handleConfirmPreviewAndSubmit"
         />
@@ -188,6 +190,22 @@ const handleDeleteClick = (record: TardinessRecord) => {
     formComposable.openDeleteModal(record);
 };
 
+const handlePreviewClick = (record: TardinessRecord) => {
+    formComposable.recordToEdit.value = record;
+    formComposable.formData.value = {
+        control_no: record.control_no,
+        date_filed: formComposable.formatDateForInput(record.date_filed),
+        requested_date: formComposable.formatDateForInput(record.requested_date),
+        requested_time: formComposable.formatTimeForInput(record.requested_time),
+        return_time: record.return_time ? formComposable.formatTimeForInput(record.return_time) : '',
+        reason: record.reason || '',
+        type: record.type || 'Tardiness',
+        employee_id: record.employee_id || null,
+    };
+    formComposable.isPreviewFromTable.value = true;
+    formComposable.showPreviewModal.value = true;
+};
+
 const handleUpdateFormData = (data: any) => {
     formComposable.formData.value = data;
 };
@@ -195,12 +213,14 @@ const handleUpdateFormData = (data: any) => {
 const handleSubmitCreateForm = async () => {
     if (!formComposable.validateForm()) return;
     // Open preview modal instead of directly submitting
+    formComposable.isPreviewFromTable.value = false;
     formComposable.showPreviewModal.value = true;
 };
 
 const handleSubmitEditForm = async () => {
     if (!formComposable.validateForm() || !formComposable.recordToEdit.value) return;
     // Open preview modal instead of directly submitting
+    formComposable.isPreviewFromTable.value = false;
     formComposable.showPreviewModal.value = true;
 };
 

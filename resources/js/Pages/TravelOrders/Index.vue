@@ -47,6 +47,7 @@
                     :sort-order="sortOrder"
                     @edit="handleEditClick"
                     @delete="handleDeleteClick"
+                    @preview="handlePreviewClick"
                     @sort="handleSort"
                 />
 
@@ -103,6 +104,7 @@
             :form-data="formData"
             :employees="employees"
             :sorted-employees="sortedEmployees"
+            :is-preview-from-table="formComposable.isPreviewFromTable.value"
             @close="formComposable.closePreviewModal()"
             @confirm="handleConfirmPreviewAndSubmit"
         />
@@ -189,6 +191,12 @@ const handleEditClick = (record: any) => {
 
 const handleDeleteClick = (record: any) => {
     formComposable.openDeleteModal(record);
+};
+
+const handlePreviewClick = (record: any) => {
+    formComposable.travelOrderToEdit.value = record;
+    formComposable.isPreviewFromTable.value = true;
+    formComposable.openPreviewModal();
 };
 
 const showToast = (type: 'success' | 'error' | 'info', title: string, message: string) => {

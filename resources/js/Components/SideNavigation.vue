@@ -231,7 +231,7 @@ const handleSidebarHover = (hovered: boolean) => {
                     'flex-shrink-0 flex items-center gap-3 px-3 py-2.5 transition-all rounded-lg overflow-hidden',
                 ]"
             >
-                <i class="fas fa-certificate text-xl flex-shrink-0 dark:text-gray-100" aria-hidden="true"></i>
+                <i class="fas fa-location-dot text-xl flex-shrink-0 dark:text-gray-100" aria-hidden="true"></i>
                 <span class="text-sm font-medium whitespace-nowrap" v-show="isSidebarOpen || isSidebarHovered">Certificates of Appearance</span>
             </Link>
 
