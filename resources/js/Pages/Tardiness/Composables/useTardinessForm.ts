@@ -28,6 +28,7 @@ export function useTardinessForm(employees: any, tardiness: any) {
 
     const recordToEdit = ref<TardinessRecord | null>(null);
     const recordToDelete = ref<TardinessRecord | null>(null);
+    const isRegeneratingControlNo = ref(false);
 
     const todayDate = computed(() => {
         const today = new Date();
@@ -44,11 +45,11 @@ export function useTardinessForm(employees: any, tardiness: any) {
         }
     );
 
-    // Watch for date_filed changes to regenerate control number based on its month
+    // Watch for date_filed changes to regenerate control number based on its month (only for new records)
     watch(
         () => formData.value.date_filed,
         (newDate) => {
-            if (newDate) {
+            if (newDate && isRegeneratingControlNo.value) {
                 formData.value.control_no = generateControlNo(newDate);
             }
         }
@@ -273,6 +274,7 @@ export function useTardinessForm(employees: any, tardiness: any) {
     };
 
     const openCreateModal = () => {
+        isRegeneratingControlNo.value = true;
         const today = new Date().toISOString().split('T')[0];
         formData.value = {
             control_no: '',
@@ -297,6 +299,7 @@ export function useTardinessForm(employees: any, tardiness: any) {
     };
 
     const openEditModal = (record: TardinessRecord) => {
+        isRegeneratingControlNo.value = false;
         recordToEdit.value = record;
 
         formData.value = {
@@ -328,6 +331,26 @@ export function useTardinessForm(employees: any, tardiness: any) {
     const closeDeleteModal = () => {
         showDeleteModal.value = false;
         recordToDelete.value = null;
+    };
+
+    const openPreviewModal = (record?: TardinessRecord) => {
+        isRegeneratingControlNo.value = false;
+        if (record) {
+            formData.value = {
+                control_no: record.control_no,
+                date_filed: formatDateForInput(record.date_filed),
+                type: record.type,
+                requested_date: formatDateForInput(record.requested_date),
+                employee_id: record.employee_id,
+                requested_time: formatTimeForInput(record.requested_time),
+                reason: record.reason,
+                return_time: record.return_time || '',
+                returnType: (record.return_time === 'NWD' || record.return_time === '17:00:00') ? 'nwd' : 'time',
+                supervisor_employee_id: record.supervisor_employee_id || null,
+            };
+            recordToEdit.value = record;
+        }
+        showPreviewModal.value = true;
     };
 
     const closePreviewModal = () => {
@@ -369,6 +392,7 @@ export function useTardinessForm(employees: any, tardiness: any) {
         closeEditModal,
         openDeleteModal,
         closeDeleteModal,
+        openPreviewModal,
         closePreviewModal,
     };
 }

@@ -191,40 +191,8 @@ const handleDeleteClick = (record: PassSlip) => {
     formComposable.openDeleteModal(record);
 };
 const handlePreviewClick = (slip: any) => {
-    // Determine returnType based on expected_return_time value
-    let returnType = 'time';
-    if (slip.expected_return_time === 'ASAP') {
-        returnType = 'asap';
-    } else if (slip.expected_return_time === 'NWD') {
-        returnType = 'nwd';
-    } else if (slip.expected_return_time === 'Time Slip') {
-        returnType = 'time_slip';
-    } else if (slip.expected_return_time === 'NOM') {
-        returnType = 'nom';
-    } else if (slip.expected_return_time === 'Memo') {
-        returnType = 'memo';
-    }
-    
-    // Set the form data from the slip
-    formComposable.passSlipToEdit.value = slip;
-    formComposable.formData.value = {
-        control_no: slip.control_no,
-        date: formComposable.formatDateForInput(slip.date),
-        inclusive_dates: slip.inclusive_dates ? [...slip.inclusive_dates] : [],
-        newInclusiveDate: '',
-        newInclusiveDateRange: '',
-        requested_time: formComposable.formatTimeForAPI(slip.requested_time),
-        purpose: slip.purpose,
-        location: slip.location,
-        expected_return_time: slip.expected_return_time || '',
-        remarks: slip.remarks || '',
-        employee_ids: slip.employees.map((emp: any) => emp.id),
-        returnType: returnType,
-        recommending_approval_employee_id: slip.recommending_approval_employee_id || null,
-        vehicle: slip.vehicle || 'RP Vehicle',
-    };
     formComposable.isPreviewFromTable.value = true;
-    formComposable.showPreviewModal.value = true;
+    formComposable.openPreviewModal(slip);
 };
 const handleUpdateFormData = (data: any) => {
     formComposable.formData.value = data;

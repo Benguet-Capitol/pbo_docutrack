@@ -32,6 +32,7 @@ export function usePassSlipsForm(employees: any, passSlips: any) {
 
     const passSlipToEdit = ref<PassSlip | null>(null);
     const passSlipToDelete = ref<PassSlip | null>(null);
+    const isRegeneratingControlNo = ref(false);
 
     const todayDate = computed(() => {
         const today = new Date();
@@ -64,11 +65,11 @@ export function usePassSlipsForm(employees: any, passSlips: any) {
         }
     );
 
-    // Watch for date changes to regenerate control number
+    // Watch for date changes to regenerate control number (only for new records)
     watch(
         () => formData.value.date,
         (newDate) => {
-            if (newDate) {
+            if (newDate && isRegeneratingControlNo.value) {
                 formData.value.control_no = generateControlNo(newDate);
             }
         }
@@ -265,6 +266,7 @@ export function usePassSlipsForm(employees: any, passSlips: any) {
     };
 
     const openCreateModal = () => {
+        isRegeneratingControlNo.value = true;
         const today = new Date().toISOString().split('T')[0];
         formData.value = {
             control_no: generateControlNo(today),
@@ -291,6 +293,7 @@ export function usePassSlipsForm(employees: any, passSlips: any) {
     };
 
     const openEditModal = (slip: PassSlip) => {
+        isRegeneratingControlNo.value = false;
         passSlipToEdit.value = slip;
 
         let returnType: 'time' | 'asap' | 'nwd' | 'time_slip' | 'nom' | 'memo' = 'time';
@@ -333,6 +336,37 @@ export function usePassSlipsForm(employees: any, passSlips: any) {
     const closeDeleteModal = () => {
         showDeleteModal.value = false;
         passSlipToDelete.value = null;
+    };
+
+    const openPreviewModal = (slip?: PassSlip) => {
+        isRegeneratingControlNo.value = false;
+        if (slip) {
+            let returnType: 'time' | 'asap' | 'nwd' | 'time_slip' | 'nom' | 'memo' = 'time';
+            if (slip.expected_return_time === 'ASAP') returnType = 'asap';
+            else if (slip.expected_return_time === 'NWD') returnType = 'nwd';
+            else if (slip.expected_return_time === 'Time Slip') returnType = 'time_slip';
+            else if (slip.expected_return_time === 'NOM') returnType = 'nom';
+            else if (slip.expected_return_time === 'Memo') returnType = 'memo';
+
+            formData.value = {
+                control_no: slip.control_no,
+                date: formatDateForInput(slip.date),
+                inclusive_dates: slip.inclusive_dates ? [...slip.inclusive_dates] : [],
+                newInclusiveDate: '',
+                newInclusiveDateRange: '',
+                requested_time: formatTimeForAPI(slip.requested_time),
+                purpose: slip.purpose,
+                location: slip.location,
+                expected_return_time: returnType === 'time' ? formatTimeForAPI(slip.expected_return_time) : slip.expected_return_time || '',
+                remarks: slip.remarks || '',
+                employee_ids: slip.employees.map(emp => emp.id),
+                returnType: returnType,
+                recommending_approval_employee_id: slip.recommending_approval_employee_id || null,
+                vehicle: (slip.vehicle || 'RP Vehicle') as 'RP Vehicle' | 'PUJ',
+            };
+            passSlipToEdit.value = slip;
+        }
+        showPreviewModal.value = true;
     };
 
     const closePreviewModal = () => {
@@ -457,6 +491,7 @@ export function usePassSlipsForm(employees: any, passSlips: any) {
         closeEditModal,
         openDeleteModal,
         closeDeleteModal,
+        openPreviewModal,
         closePreviewModal,
         resetForm,
         submitCreatePassSlip,

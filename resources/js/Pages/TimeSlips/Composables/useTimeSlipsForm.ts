@@ -27,6 +27,7 @@ export function useTimeSlipsForm(employees: any, timeSlips: any) {
 
     const timeSlipToEdit = ref<TimeSlip | null>(null);
     const timeSlipToDelete = ref<TimeSlip | null>(null);
+    const isRegeneratingControlNo = ref(false);
 
     const todayDate = computed(() => {
         const today = new Date();
@@ -41,11 +42,11 @@ export function useTimeSlipsForm(employees: any, timeSlips: any) {
         });
     });
 
-    // Watch for date changes to regenerate control number
+    // Watch for date changes to regenerate control number (only for new records)
     watch(
         () => formData.value.date,
         (newDate) => {
-            if (newDate) {
+            if (newDate && isRegeneratingControlNo.value) {
                 formData.value.control_no = generateControlNo(newDate);
             }
         }
@@ -99,6 +100,7 @@ export function useTimeSlipsForm(employees: any, timeSlips: any) {
     };
 
     const openCreateModal = () => {
+        isRegeneratingControlNo.value = true;
         const today = new Date().toISOString().split('T')[0];
         formData.value = {
             control_no: generateControlNo(today),
@@ -121,6 +123,7 @@ export function useTimeSlipsForm(employees: any, timeSlips: any) {
     };
 
     const openEditModal = (timeSlip: TimeSlip) => {
+        isRegeneratingControlNo.value = false;
         timeSlipToEdit.value = timeSlip;
         formData.value = {
             control_no: timeSlip.control_no,
@@ -154,6 +157,7 @@ export function useTimeSlipsForm(employees: any, timeSlips: any) {
     };
 
     const openPreviewModal = (timeSlip?: TimeSlip) => {
+        isRegeneratingControlNo.value = false;
         if (timeSlip) {
             formData.value = {
                 control_no: timeSlip.control_no,

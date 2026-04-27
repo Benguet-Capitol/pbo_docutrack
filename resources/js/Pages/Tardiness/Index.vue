@@ -196,19 +196,8 @@ const handleDeleteClick = (record: TardinessRecord) => {
 };
 
 const handlePreviewClick = (record: TardinessRecord) => {
-    formComposable.recordToEdit.value = record;
-    formComposable.formData.value = {
-        control_no: record.control_no,
-        date_filed: formComposable.formatDateForInput(record.date_filed),
-        requested_date: formComposable.formatDateForInput(record.requested_date),
-        requested_time: formComposable.formatTimeForInput(record.requested_time),
-        return_time: record.return_time ? formComposable.formatTimeForInput(record.return_time) : '',
-        reason: record.reason || '',
-        type: record.type || 'Tardiness',
-        employee_id: record.employee_id || null,
-    };
     formComposable.isPreviewFromTable.value = true;
-    formComposable.showPreviewModal.value = true;
+    formComposable.openPreviewModal(record);
 };
 
 const handleUpdateFormData = (data: any) => {
