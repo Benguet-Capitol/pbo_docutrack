@@ -96,7 +96,7 @@
                             <div v-if="getCertifiedBySignatory() && formData.certified_by_employee_id">
                                 <p class="text-sm text-gray-900 mb-8">CERTIFIED BY:</p>
                                 <div class="w-72 text-center">
-                                    <p class="font-bold text-sm text-center text-gray-900 w-72 uppercase border-b border-gray-900 pb-1">{{ getCertifiedBySignatory()?.name }}</p>
+                                    <p class="font-bold text-base text-center text-gray-900 w-72 uppercase border-b border-gray-900 pb-1">{{ getCertifiedBySignatory()?.name }}</p>
                                     <p class="text-sm text-center text-gray-700 w-72">{{ getCertifiedBySignatory()?.designation }}</p>
                                 </div>
                             </div>
@@ -106,7 +106,7 @@
                                 <p class="text-sm text-gray-900 mb-8">APPROVED BY:</p>
                                 <div class="w-72 text-center">
                                     <p class="text-sm text-center text-gray-700"></p>
-                                    <p class="text-sm text-center text-gray-900 border-b border-gray-900 pb-1 font-bold uppercase">{{ getApprovedBySignatory()?.name }}</p>
+                                    <p class="font-bold text-base text-center text-gray-900 w-72 uppercase border-b border-gray-900 pb-1">{{ getApprovedBySignatory()?.name }}</p>
                                     <p class="text-sm text-center text-gray-700">{{ getApprovedBySignatory()?.designation }}</p>
                                 </div>
                             </div>
@@ -195,7 +195,7 @@
                             <div v-if="getCertifiedBySignatory() && formData.certified_by_employee_id">
                                 <p class="text-sm text-gray-900 mb-8">CERTIFIED BY:</p>
                                 <div class="w-72 text-center">
-                                    <p class="font-bold text-sm text-center text-gray-900 w-72 uppercase border-b border-gray-900 pb-1">{{ getCertifiedBySignatory()?.name }}</p>
+                                    <p class="font-bold text-base text-center text-gray-900 w-72 uppercase border-b border-gray-900 pb-1">{{ getCertifiedBySignatory()?.name }}</p>
                                     <p class="text-sm text-center text-gray-700 w-72">{{ getCertifiedBySignatory()?.designation }}</p>
                                 </div>
                             </div>
@@ -205,8 +205,8 @@
                                 <p class="text-sm text-gray-900 mb-8">APPROVED BY:</p>
                                 <div class="w-72 text-center">
                                     <p class="text-sm text-center text-gray-700"></p>
-                                    <p class="text-sm text-center text-gray-900 border-b border-gray-900 pb-1 font-bold uppercase">{{ getApprovedBySignatory()?.name }}</p>
-                                    <p class="text-sm text-center text-gray-700">{{ getApprovedBySignatory()?.designation }}</p>
+                                    <p class="font-bold text-base text-center text-gray-900 w-72 uppercase border-b border-gray-900 pb-1">{{ getApprovedBySignatory()?.name }}</p>
+                                    <p class="text-sm text-center text-gray-700 w-72">{{ getApprovedBySignatory()?.designation }}</p>
                                 </div>
                             </div>
                         </div>
