@@ -54,16 +54,16 @@ const getProvincialBudgetOfficer = () => {
                         <div v-if="formData" class="space-y-6">
                             <!-- Header Section with Logos -->
                             <div class="flex items-center justify-center gap-2 mb-6 pb-2" style="border-bottom: 4px double #050505;">
-                                <div style="width: 85px; flex-shrink: 0;">
+                                <div style="width: 100px; flex-shrink: 0;">
                                     <img src="/benguetlogo.png" alt="Benguet Logo" style="width: 100%; height: auto;">
                                 </div>
                                 <div class="text-center">
-                                    <p class="text-base font-semibold text-gray-700 mt-2">Republic of the Philippines</p>
-                                    <p class="text-base font-bold text-gray-900">PROVINCE OF BENGUET</p>
-                                    <p class="text-xl font-bold text-gray-900">PROVINCIAL BUDGET OFFICE</p>
-                                    <p class="text-base text-gray-700 mb-1">Poblacion, La Trinidad, Benguet 2601</p>
+                                    <p class="text-lg font-semibold text-gray-900 mt-2">Republic of the Philippines</p>
+                                    <p class="text-lg font-bold text-gray-900">PROVINCE OF BENGUET</p>
+                                    <p class="text-2xl font-bold text-gray-900">PROVINCIAL BUDGET OFFICE</p>
+                                    <p class="text-lg text-gray-900 mb-1">Poblacion, La Trinidad, Benguet 2601</p>
                                 </div>
-                                <div style="width: 85px; flex-shrink: 0;">
+                                <div style="width: 100px; flex-shrink: 0;">
                                     <img src="/bagongpilipinaslogo.png" alt="Bagong Pilipinas Logo" style="width: 100%; height: auto;">
                                 </div>
                             </div>
@@ -82,7 +82,7 @@ const getProvincialBudgetOfficer = () => {
 
                             <!-- Details Body -->
                             <div class="space-y-4 text-lg mb-10">
-                                <p class="text-justify indent-8">This is to certify that <span class="font-semibold uppercase">{{ formData.name }}</span>, of <span class="font-semibold uppercase">{{ formData.office }}</span>, has appeared in this office on <span class="font-semibold">{{ formattedDate(formData.date) }}</span> for the purpose <span class="font-semibold">{{ formData.purpose }}</span>.</p>
+                                <p class="text-justify indent-8">This is to certify that <span class="font-semibold uppercase">{{ formData.name }}</span>, of <span class="font-semibold uppercase">{{ formData.office }}</span>, has appeared in this office on <span class="font-semibold">{{ formattedDate(formData.date) }}</span> on Official Business for the purpose of <span class="font-semibold">{{ formData.purpose }}</span>.</p>
                                 
                                 <!-- Closing Statement -->
                                 <p class="text-justify indent-8">This certification is issued upon the request of the above-named person for whatever legal purpose it may serve.</p>
@@ -97,7 +97,7 @@ const getProvincialBudgetOfficer = () => {
                                     <div class="w-72 text-center">
                                         <p class="text-lg text-gray-700 mt-12"></p>
                                         <p class="text-lg text-center text-gray-900 border-b border-gray-900 pb-1 font-bold uppercase">{{ getProvincialBudgetOfficer()?.name || 'PROVINCIAL BUDGET OFFICER' }}</p>
-                                        <p class="text-lg text-center text-gray-700">{{ getProvincialBudgetOfficer()?.designation || 'Provincial Budget Officer' }}</p>
+                                        <p class="text-lg text-center text-gray-900 ">{{ getProvincialBudgetOfficer()?.designation || 'Provincial Budget Officer' }}</p>
                                     </div>
                                 </div>
                             </div>

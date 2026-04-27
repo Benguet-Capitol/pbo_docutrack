@@ -1,3 +1,113 @@
+<template>
+    <Toast ref="toastRef" />
+    <PageHead />
+    <AuthenticatedLayout>
+        <template #header>
+            <h2 class="text-xl font-semibold leading-tight text-gray-800 dark:text-gray-200">
+                Certificates of Appearance
+            </h2>
+        </template>
+
+        <div class="py-6 px-4 sm:px-6 lg:px-8">
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow">
+                <!-- Header Section -->
+                <Header 
+                    :search-query="searchQuery"
+                    :items-per-page="itemsPerPage"
+                    @create="openCreateModal"
+                    @update:search-query="handleSearchQuery"
+                    @update:items-per-page="handleItemsPerPage"
+                />
+
+                <!-- Loading State -->
+                <LoadingState v-if="loading" />
+
+                <!-- Error State -->
+                <ErrorState v-else-if="error" :error="error" />
+
+                <!-- Empty State -->
+                <EmptyState 
+                    v-else-if="certificates.length === 0"
+                    title="No records found"
+                    message="Get started by creating a new certificate of appearance"
+                />
+
+                <!-- No Records for Search -->
+                <EmptyState 
+                    v-else-if="filteredCertificates.length === 0"
+                    title="No Certificates found"
+                    message="Try adjusting your search or create a new certificate"
+                />
+
+                <!-- Data Table -->
+                <Table 
+                    v-else
+                    :certificates="paginatedCertificates"
+                    :sort-by="sortBy"
+                    :sort-order="sortOrder"
+                    @edit="openEditModal"
+                    @delete="openDeleteModal"
+                    @preview="handlePreview"
+                    @sort="handleSort"
+                />
+
+                <!-- Pagination Controls -->
+                <Pagination 
+                    v-if="!loading && certificates.length > 0"
+                    :current-page="currentPage"
+                    :total-pages="totalPages"
+                    :items-per-page="itemsPerPage"
+                    :total-records="filteredCertificates.length"
+                    :pagination-range="paginationRange"
+                    @page-change="handlePageChange"
+                />
+            </div>
+        </div>
+
+        <!-- Modals -->
+        <CreateModal
+            :show="showCreateModal"
+            :form-data="formData"
+            :form-errors="formErrors"
+            :loading="creating"
+            :today-date="todayDate"
+            @update:formData="handleUpdateFormData"
+            @close="closeCreateModal"
+            @submit="submitCreateForm"
+            @generate-control-no="handleGenerateControlNo"
+        />
+
+        <EditModal
+            :show="showEditModal"
+            :form-data="formData"
+            :form-errors="formErrors"
+            :loading="updating"
+            :today-date="todayDate"
+            @update:formData="handleUpdateFormData"
+            @close="closeEditModal"
+            @submit="submitEditForm"
+        />
+
+        <DeleteModal
+            :show="showDeleteModal"
+            :certificate="certificateToDelete"
+            :loading="deleting"
+            @close="closeDeleteModal"
+            @confirm="confirmDelete"
+        />
+
+        <PreviewModal
+            :show="showPreviewModal"
+            :form-data="formData"
+            :formatted-date="formattedDate"
+            :is-preview-from-table="isPreviewFromTable"
+            :sorted-employees="sortedEmployees"
+            @close="closePreviewModal"
+            @confirm="handleConfirmPreviewAndSubmit"
+        />
+    </AuthenticatedLayout>
+</template>
+
 <script setup lang="ts">
 import { onMounted, computed, ref } from 'vue';
 import Toast from '@/Components/Toast.vue';
@@ -315,113 +425,3 @@ const confirmDelete = async () => {
     }
 };
 </script>
-
-<template>
-    <Toast ref="toastRef" />
-    <PageHead />
-    <AuthenticatedLayout>
-        <template #header>
-            <h2 class="text-xl font-semibold leading-tight text-gray-800 dark:text-gray-200">
-                Certificates of Appearance
-            </h2>
-        </template>
-
-        <div class="py-6 px-4 sm:px-6 lg:px-8">
-            <div class="bg-white dark:bg-gray-800 rounded-lg shadow">
-                <!-- Header Section -->
-                <Header 
-                    :search-query="searchQuery"
-                    :items-per-page="itemsPerPage"
-                    @create="openCreateModal"
-                    @update:search-query="handleSearchQuery"
-                    @update:items-per-page="handleItemsPerPage"
-                />
-
-                <!-- Loading State -->
-                <LoadingState v-if="loading" />
-
-                <!-- Error State -->
-                <ErrorState v-else-if="error" :error="error" />
-
-                <!-- Empty State -->
-                <EmptyState 
-                    v-else-if="certificates.length === 0"
-                    title="No records found"
-                    message="Get started by creating a new certificate of appearance"
-                />
-
-                <!-- No Records for Search -->
-                <EmptyState 
-                    v-else-if="filteredCertificates.length === 0"
-                    title="No Certificates found"
-                    message="Try adjusting your search or create a new certificate"
-                />
-
-                <!-- Data Table -->
-                <Table 
-                    v-else
-                    :certificates="paginatedCertificates"
-                    :sort-by="sortBy"
-                    :sort-order="sortOrder"
-                    @edit="openEditModal"
-                    @delete="openDeleteModal"
-                    @preview="handlePreview"
-                    @sort="handleSort"
-                />
-
-                <!-- Pagination Controls -->
-                <Pagination 
-                    v-if="!loading && certificates.length > 0"
-                    :current-page="currentPage"
-                    :total-pages="totalPages"
-                    :items-per-page="itemsPerPage"
-                    :total-records="filteredCertificates.length"
-                    :pagination-range="paginationRange"
-                    @page-change="handlePageChange"
-                />
-            </div>
-        </div>
-
-        <!-- Modals -->
-        <CreateModal
-            :show="showCreateModal"
-            :form-data="formData"
-            :form-errors="formErrors"
-            :loading="creating"
-            :today-date="todayDate"
-            @update:formData="handleUpdateFormData"
-            @close="closeCreateModal"
-            @submit="submitCreateForm"
-            @generate-control-no="handleGenerateControlNo"
-        />
-
-        <EditModal
-            :show="showEditModal"
-            :form-data="formData"
-            :form-errors="formErrors"
-            :loading="updating"
-            :today-date="todayDate"
-            @update:formData="handleUpdateFormData"
-            @close="closeEditModal"
-            @submit="submitEditForm"
-        />
-
-        <DeleteModal
-            :show="showDeleteModal"
-            :certificate="certificateToDelete"
-            :loading="deleting"
-            @close="closeDeleteModal"
-            @confirm="confirmDelete"
-        />
-
-        <PreviewModal
-            :show="showPreviewModal"
-            :form-data="formData"
-            :formatted-date="formattedDate"
-            :is-preview-from-table="isPreviewFromTable"
-            :sorted-employees="sortedEmployees"
-            @close="closePreviewModal"
-            @confirm="handleConfirmPreviewAndSubmit"
-        />
-    </AuthenticatedLayout>
-</template>
