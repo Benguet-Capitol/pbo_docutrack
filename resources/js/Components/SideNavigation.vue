@@ -34,9 +34,14 @@ const usertype = computed(() => auth.value?.usertype || '');
 const canViewItem = (item: string): boolean => {
     const role = usertype.value;
     
-    // Only Developer, Administrator, and Administrative can view Leaves, Pass Slips, Travel Orders, Tardiness, and Certificates
-    if (item === 'leaves' || item === 'pass-slips' || item === 'travel-orders' || item === 'tardiness' || item === 'certificates-of-appearance') {
+    // Developer, Administrator, and Administrative can view Leaves, Pass Slips, Travel Orders, Tardiness
+    if (item === 'leaves' || item === 'pass-slips' || item === 'travel-orders' || item === 'tardiness') {
         return ['Developer', 'Administrator', 'Administrative'].includes(role);
+    }
+    
+    // Only Developer, Administrator, Administrative, and Receiving can view Certificates
+    if (item === 'certificates-of-appearance') {
+        return ['Developer', 'Administrator', 'Administrative', 'Receiving'].includes(role);
     }
     
     // Everyone can view Documents and Records
@@ -222,6 +227,7 @@ const handleSidebarHover = (hovered: boolean) => {
 
             <!-- Certificates of Appearance Link -->
             <Link
+                v-if="canViewItem('certificates-of-appearance')"
                 :href="route('certificates-of-appearance.index')"
                 :class="[
                     route().current('certificates-of-appearance.*')
