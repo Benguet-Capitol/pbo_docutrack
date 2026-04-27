@@ -35,6 +35,8 @@ export function useTardinessData() {
     const searchQuery = ref('');
     const currentPage = ref(1);
     const itemsPerPage = ref(10);
+    const sortBy = ref<'id' | 'control_no' | 'requested_date' | 'type' | 'reason'>('id');
+    const sortOrder = ref<'asc' | 'desc'>('desc');
     const loading = ref(false);
     const error = ref<string | null>(null);
 
@@ -67,8 +69,35 @@ export function useTardinessData() {
             );
         }
 
-        // Sort by ID in descending order (newest first)
-        return filtered.sort((a, b) => b.id - a.id);
+        // Sort by specified field and order
+        filtered.sort((a, b) => {
+            let aVal: any;
+            let bVal: any;
+
+            if (sortBy.value === 'id') {
+                aVal = a.id;
+                bVal = b.id;
+            } else if (sortBy.value === 'control_no') {
+                aVal = a.control_no || '';
+                bVal = b.control_no || '';
+            } else if (sortBy.value === 'requested_date') {
+                aVal = a.requested_date || '';
+                bVal = b.requested_date || '';
+            } else if (sortBy.value === 'type') {
+                aVal = (a.type || '').toLowerCase();
+                bVal = (b.type || '').toLowerCase();
+            } else if (sortBy.value === 'reason') {
+                aVal = (a.reason || '').toLowerCase();
+                bVal = (b.reason || '').toLowerCase();
+            }
+
+            let comparison = 0;
+            if (aVal < bVal) comparison = -1;
+            if (aVal > bVal) comparison = 1;
+            return sortOrder.value === 'asc' ? comparison : -comparison;
+        });
+
+        return filtered;
     });
 
     const sortedEmployees = computed(() => {
@@ -162,12 +191,24 @@ export function useTardinessData() {
         return employees.value.find(emp => emp.id === id) || null;
     };
 
+    const toggleSort = (field: string) => {
+        if (sortBy.value === field) {
+            sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc';
+        } else {
+            sortBy.value = field as any;
+            sortOrder.value = 'asc';
+        }
+        currentPage.value = 1;
+    };
+
     return {
         tardiness,
         employees,
         searchQuery,
         currentPage,
         itemsPerPage,
+        sortBy,
+        sortOrder,
         loading,
         error,
         filteredTardiness,
@@ -177,6 +218,7 @@ export function useTardinessData() {
         paginationRange,
         fetchTardiness,
         fetchEmployees,
+        toggleSort,
         getProvincialBudgetOfficer,
         getProvincialGovernor,
         getEmployeeById,

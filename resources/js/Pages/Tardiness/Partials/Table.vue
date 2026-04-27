@@ -14,14 +14,34 @@
             </colgroup>
             <thead class="bg-gray-100 dark:bg-gray-900 border-b-2 border-gray-300 dark:border-gray-700">
                 <tr>
-                    <th class="px-6 py-3 text-xs font-bold text-gray-700 dark:text-gray-200">Control No</th>
+                    <th class="px-6 py-3 text-xs font-bold text-gray-700 dark:text-gray-200">
+                        <button @click="$emit('sort', 'control_no')" class="flex items-center gap-2 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
+                            Control No
+                            <span v-if="sortBy === 'control_no'" class="text-xs">{{ sortOrder === 'asc' ? '▲' : '▼' }}</span>
+                        </button>
+                    </th>
                     <th class="px-6 py-3 text-xs font-bold text-gray-700 dark:text-gray-200">Date Filed</th>
-                    <th class="px-6 py-3 text-xs font-bold text-gray-700 dark:text-gray-200">Type</th>
+                    <th class="px-6 py-3 text-xs font-bold text-gray-700 dark:text-gray-200">
+                        <button @click="$emit('sort', 'type')" class="flex items-center gap-2 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
+                            Type
+                            <span v-if="sortBy === 'type'" class="text-xs">{{ sortOrder === 'asc' ? '▲' : '▼' }}</span>
+                        </button>
+                    </th>
                     <th class="px-6 py-3 text-xs font-bold text-gray-700 dark:text-gray-200">Employee</th>
-                    <th class="px-6 py-3 text-xs font-bold text-gray-700 dark:text-gray-200">Requested Date</th>
+                    <th class="px-6 py-3 text-xs font-bold text-gray-700 dark:text-gray-200">
+                        <button @click="$emit('sort', 'requested_date')" class="flex items-center gap-2 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
+                            Requested Date
+                            <span v-if="sortBy === 'requested_date'" class="text-xs">{{ sortOrder === 'asc' ? '▲' : '▼' }}</span>
+                        </button>
+                    </th>
                     <th class="px-6 py-3 text-xs font-bold text-gray-700 dark:text-gray-200">Requested Time</th>
                     <th class="px-6 py-3 text-xs font-bold text-gray-700 dark:text-gray-200">Return Time</th>
-                    <th class="px-6 py-3 text-xs font-bold text-gray-700 dark:text-gray-200">Reason</th>
+                    <th class="px-6 py-3 text-xs font-bold text-gray-700 dark:text-gray-200">
+                        <button @click="$emit('sort', 'reason')" class="flex items-center gap-2 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
+                            Reason
+                            <span v-if="sortBy === 'reason'" class="text-xs">{{ sortOrder === 'asc' ? '▲' : '▼' }}</span>
+                        </button>
+                    </th>
                     <th class="px-6 py-3 text-xs font-bold text-gray-700 dark:text-gray-200 text-center">Actions</th>
                 </tr>
             </thead>
@@ -96,12 +116,15 @@ import type { TardinessRecord } from '../Composables/useTardinessData';
 
 defineProps<{
     records: TardinessRecord[];
+    sortBy: string;
+    sortOrder: 'asc' | 'desc';
 }>();
 
 defineEmits<{
     edit: [record: TardinessRecord];
     delete: [record: TardinessRecord];
     preview: [record: TardinessRecord];
+    sort: [field: string];
 }>();
 
 const hasPermission = (permission: string): boolean => {

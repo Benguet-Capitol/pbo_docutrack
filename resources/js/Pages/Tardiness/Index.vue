@@ -43,9 +43,12 @@
                 <Table 
                     v-else
                     :records="paginatedTardiness"
+                    :sort-by="sortBy"
+                    :sort-order="sortOrder"
                     @edit="handleEditClick"
                     @delete="handleDeleteClick"
                     @preview="handlePreviewClick"
+                    @sort="dataComposable.toggleSort"
                 />
 
                 <!-- Pagination Controls -->
@@ -141,6 +144,8 @@ const employees = dataComposable.employees;
 const searchQuery = dataComposable.searchQuery;
 const currentPage = dataComposable.currentPage;
 const itemsPerPage = dataComposable.itemsPerPage;
+const sortBy = dataComposable.sortBy;
+const sortOrder = dataComposable.sortOrder;
 const loading = dataComposable.loading;
 const error = dataComposable.error;
 const filteredTardiness = dataComposable.filteredTardiness;

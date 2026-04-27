@@ -191,6 +191,16 @@ export function usePassSlipsData() {
         return employees.value.find(emp => emp.id === id) || null;
     };
 
+    const toggleSort = (field: string) => {
+        if (sortBy.value === field) {
+            sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc';
+        } else {
+            sortBy.value = field as any;
+            sortOrder.value = 'asc';
+        }
+        currentPage.value = 1;
+    };
+
     return {
         passSlips,
         employees,
@@ -208,6 +218,7 @@ export function usePassSlipsData() {
         paginationRange,
         fetchPassSlips,
         fetchEmployees,
+        toggleSort,
         getProvincialBudgetOfficer,
         getProvincialGovernor,
         getEmployeeById,

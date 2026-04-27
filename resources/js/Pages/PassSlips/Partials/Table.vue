@@ -15,12 +15,37 @@
             <!-- Table Header -->
             <thead class="bg-gray-100 dark:bg-gray-900 border-b-2 border-gray-300 dark:border-gray-700">
                 <tr>
-                    <th class="px-6 py-3 text-xs font-bold text-gray-700 dark:text-gray-200">Control No</th>
-                    <th class="px-6 py-3 text-xs font-bold text-gray-700 dark:text-gray-200">Date</th>
+                    <th class="px-6 py-3 text-xs font-bold text-gray-700 dark:text-gray-200">
+                        <button @click="$emit('sort', 'control_no')" class="flex items-center gap-2 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
+                            Control No
+                            <span v-if="sortBy === 'control_no'" class="text-xs">{{ sortOrder === 'asc' ? '▲' : '▼' }}</span>
+                        </button>
+                    </th>
+                    <th class="px-6 py-3 text-xs font-bold text-gray-700 dark:text-gray-200">
+                        <button @click="$emit('sort', 'date')" class="flex items-center gap-2 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
+                            Date
+                            <span v-if="sortBy === 'date'" class="text-xs">{{ sortOrder === 'asc' ? '▲' : '▼' }}</span>
+                        </button>
+                    </th>
                     <th class="px-6 py-3 text-xs font-bold text-gray-700 dark:text-gray-200">Inclusive Dates</th>
-                    <th class="px-6 py-3 text-xs font-bold text-gray-700 dark:text-gray-200">Leave Time</th>
-                    <th class="px-6 py-3 text-xs font-bold text-gray-700 dark:text-gray-200">Purpose</th>
-                    <th class="px-6 py-3 text-xs font-bold text-gray-700 dark:text-gray-200">Location</th>
+                    <th class="px-6 py-3 text-xs font-bold text-gray-700 dark:text-gray-200">
+                        <button @click="$emit('sort', 'requested_time')" class="flex items-center gap-2 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
+                            Leave Time
+                            <span v-if="sortBy === 'requested_time'" class="text-xs">{{ sortOrder === 'asc' ? '▲' : '▼' }}</span>
+                        </button>
+                    </th>
+                    <th class="px-6 py-3 text-xs font-bold text-gray-700 dark:text-gray-200">
+                        <button @click="$emit('sort', 'purpose')" class="flex items-center gap-2 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
+                            Purpose
+                            <span v-if="sortBy === 'purpose'" class="text-xs">{{ sortOrder === 'asc' ? '▲' : '▼' }}</span>
+                        </button>
+                    </th>
+                    <th class="px-6 py-3 text-xs font-bold text-gray-700 dark:text-gray-200">
+                        <button @click="$emit('sort', 'location')" class="flex items-center gap-2 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
+                            Location
+                            <span v-if="sortBy === 'location'" class="text-xs">{{ sortOrder === 'asc' ? '▲' : '▼' }}</span>
+                        </button>
+                    </th>
                     <th class="px-6 py-3 text-xs font-bold text-gray-700 dark:text-gray-200">Return Time</th>
                     <th class="px-6 py-3 text-xs font-bold text-gray-700 dark:text-gray-200">Employees</th>
                     <th class="px-6 py-3 text-xs font-bold text-gray-700 dark:text-gray-200">Actions</th>
@@ -98,12 +123,15 @@ import type { PassSlip } from '../Composables/usePassSlipsData';
 
 defineProps<{
     records: PassSlip[];
+    sortBy: string;
+    sortOrder: 'asc' | 'desc';
 }>();
 
 defineEmits<{
     edit: [slip: PassSlip];
     delete: [slip: PassSlip];
     preview: [slip: PassSlip];
+    sort: [field: string];
 }>();
 
 const formatDate = (dateStr: string): string => {

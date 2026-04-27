@@ -15,7 +15,7 @@
                     </div>
 
                     <!-- Modal Body - Document Preview -->
-                    <div class="p-4 flex flex-col" style="background-color: white; min-height: 1200px;">
+                    <div class="p-4 flex flex-col" style="background-color: white; min-height: 1100px;">
                         <!-- Header Section with Logos -->
                         <div class="flex items-center justify-center gap-2 mb-6 pb-2" style="border-bottom: 3px double #050505;">
                             <div style="width: 85px; flex-shrink: 0;">
@@ -153,8 +153,8 @@
                             <p class="text-sm text-gray-900 mb-8">RECOMMENDING APPROVAL:</p>
                             <div class="space-y-8">
                                 <div class="w-72">
-                                    <p class="font-bold text-sm text-center text-gray-900 w-72 uppercase" :class="{ 'border-b border-gray-900 pb-1': isApproverProvincialGovernor() }">{{ getRecommendingApprovalSignatory()?.name }}</p>
-                                    <p v-if="!isApproverProvincialGovernor()" class="text-sm text-center text-gray-700 border-b border-gray-900 w-72">{{ getRecommendingApprovalSignatory()?.designation }}</p>
+                                    <p class="font-bold text-base text-center text-gray-900 w-72 uppercase" :class="{ 'border-b border-gray-900 pb-1': isApproverProvincialGovernor() }">{{ getRecommendingApprovalSignatory()?.name }}</p>
+                                    <p v-if="!isApproverProvincialGovernor()" class="text-base text-center text-gray-700 border-b border-gray-900 w-72">{{ getRecommendingApprovalSignatory()?.designation }}</p>
                                     <p class="text-sm text-center text-gray-700 w-72">{{ getRecommendingApprovalDesignation() }}</p>
                                 </div>
                             </div>
@@ -165,7 +165,7 @@
                             <div class="w-72 text-center">
                                 <p class="text-sm text-left text-gray-900 mb-8">APPROVED:</p>
                                 <p class="text-sm text-center text-gray-700"></p>
-                                <p class="text-sm text-center text-gray-900 border-b border-gray-900 pb-1 font-bold uppercase">{{ getApproverName() }}</p>
+                                <p class="text-base text-center text-gray-900 border-b border-gray-900 pb-1 font-bold uppercase">{{ getApproverName() }}</p>
                                 <p class="text-sm text-center text-gray-700">{{ getApproverRole() }}</p>
                             </div>
                         </div>

@@ -16,14 +16,29 @@
             <!-- Table Header -->
             <thead class="bg-gray-100 dark:bg-gray-900 border-b-2 border-gray-300 dark:border-gray-700">
                 <tr>
-                    <th class="px-6 py-3 text-xs font-bold text-gray-700 dark:text-gray-200">Control No</th>
+                    <th class="px-6 py-3 text-xs font-bold text-gray-700 dark:text-gray-200">
+                        <button @click="$emit('sort', 'control_no')" class="flex items-center gap-2 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
+                            Control No
+                            <span v-if="sortBy === 'control_no'" class="text-xs">{{ sortOrder === 'asc' ? '▲' : '▼' }}</span>
+                        </button>
+                    </th>
                     <th class="px-6 py-3 text-xs font-bold text-gray-700 dark:text-gray-200">Employee</th>
-                    <th class="px-6 py-3 text-xs font-bold text-gray-700 dark:text-gray-200">Date</th>
+                    <th class="px-6 py-3 text-xs font-bold text-gray-700 dark:text-gray-200">
+                        <button @click="$emit('sort', 'date')" class="flex items-center gap-2 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
+                            Date
+                            <span v-if="sortBy === 'date'" class="text-xs">{{ sortOrder === 'asc' ? '▲' : '▼' }}</span>
+                        </button>
+                    </th>
                     <th class="px-6 py-3 text-xs font-bold text-gray-700 dark:text-gray-200">In AM</th>
                     <th class="px-6 py-3 text-xs font-bold text-gray-700 dark:text-gray-200">Out AM</th>
                     <th class="px-6 py-3 text-xs font-bold text-gray-700 dark:text-gray-200">In PM</th>
                     <th class="px-6 py-3 text-xs font-bold text-gray-700 dark:text-gray-200">Out PM</th>
-                    <th class="px-6 py-3 text-xs font-bold text-gray-700 dark:text-gray-200">Reason</th>
+                    <th class="px-6 py-3 text-xs font-bold text-gray-700 dark:text-gray-200">
+                        <button @click="$emit('sort', 'reason')" class="flex items-center gap-2 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
+                            Reason
+                            <span v-if="sortBy === 'reason'" class="text-xs">{{ sortOrder === 'asc' ? '▲' : '▼' }}</span>
+                        </button>
+                    </th>
                     <th class="px-6 py-3 text-xs font-bold text-gray-700 dark:text-gray-200">Certified By</th>
                     <th class="px-6 py-3 text-xs font-bold text-gray-700 dark:text-gray-200">Actions</th>
                 </tr>
@@ -98,12 +113,15 @@ import type { TimeSlip } from '../Composables/useTimeSlipsData';
 
 defineProps<{
     records: TimeSlip[];
+    sortBy: string;
+    sortOrder: 'asc' | 'desc';
 }>();
 
 defineEmits<{
     edit: [slip: TimeSlip];
     delete: [slip: TimeSlip];
     preview: [slip: TimeSlip];
+    sort: [field: string];
 }>();
 
 const formatDate = (dateStr: string): string => {

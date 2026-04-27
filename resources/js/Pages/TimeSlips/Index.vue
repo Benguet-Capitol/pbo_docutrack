@@ -43,9 +43,12 @@
                 <Table 
                     v-else
                     :records="paginatedTimeSlips"
+                    :sort-by="sortBy"
+                    :sort-order="sortOrder"
                     @edit="handleEditClick"
                     @delete="handleDeleteClick"
                     @preview="handlePreviewClick"
+                    @sort="toggleSort"
                 />
 
                 <!-- Pagination Controls -->
@@ -160,30 +163,58 @@ const toastRef = ref();
 const searchQuery = ref('');
 const itemsPerPage = ref(10);
 const currentPage = ref(1);
+const sortBy = ref<'control_no' | 'date' | 'reason'>('control_no');
+const sortOrder = ref<'asc' | 'desc'>('desc');
 
 const creating_local = ref(false);
 const updating_local = ref(false);
 const deleting_local = ref(false);
 
 const filteredTimeSlips = computed(() => {
-    if (!searchQuery.value) return timeSlips.value;
+    let filtered = timeSlips.value;
 
-    const query = searchQuery.value.toLowerCase();
-    return timeSlips.value.filter((slip) => {
-        const controlNo = slip.control_no?.toLowerCase() || '';
-        const employeeName = slip.requesting_employee?.name?.toLowerCase() || '';
-        const certifiedBy = slip.certified_by_employee?.name?.toLowerCase() || '';
-        const reason = slip.reason?.toLowerCase() || '';
-        const date = slip.date?.toLowerCase() || '';
+    if (searchQuery.value) {
+        const query = searchQuery.value.toLowerCase();
+        filtered = filtered.filter((slip) => {
+            const controlNo = slip.control_no?.toLowerCase() || '';
+            const employeeName = slip.requesting_employee?.name?.toLowerCase() || '';
+            const certifiedBy = slip.certified_by_employee?.name?.toLowerCase() || '';
+            const reason = slip.reason?.toLowerCase() || '';
+            const date = slip.date?.toLowerCase() || '';
 
-        return (
-            controlNo.includes(query) ||
-            employeeName.includes(query) ||
-            certifiedBy.includes(query) ||
-            reason.includes(query) ||
-            date.includes(query)
-        );
+            return (
+                controlNo.includes(query) ||
+                employeeName.includes(query) ||
+                certifiedBy.includes(query) ||
+                reason.includes(query) ||
+                date.includes(query)
+            );
+        });
+    }
+
+    // Sort by specified field and order
+    filtered.sort((a, b) => {
+        let aVal: any;
+        let bVal: any;
+
+        if (sortBy.value === 'control_no') {
+            aVal = a.control_no || '';
+            bVal = b.control_no || '';
+        } else if (sortBy.value === 'date') {
+            aVal = a.date || '';
+            bVal = b.date || '';
+        } else if (sortBy.value === 'reason') {
+            aVal = (a.reason || '').toLowerCase();
+            bVal = (b.reason || '').toLowerCase();
+        }
+
+        let comparison = 0;
+        if (aVal < bVal) comparison = -1;
+        if (aVal > bVal) comparison = 1;
+        return sortOrder.value === 'asc' ? comparison : -comparison;
     });
+
+    return filtered;
 });
 
 const totalPages = computed(() => Math.ceil(filteredTimeSlips.value.length / itemsPerPage.value));
@@ -223,6 +254,16 @@ const paginationRange = computed(() => {
 
 const recordToEdit = computed(() => timeSlipToEdit.value);
 const recordToDelete = computed(() => timeSlipToDelete.value);
+
+const toggleSort = (field: string) => {
+    if (sortBy.value === field) {
+        sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc';
+    } else {
+        sortBy.value = field as any;
+        sortOrder.value = 'asc';
+    }
+    currentPage.value = 1;
+};
 
 const handleCreateClick = () => {
     formComposable.openCreateModal();
