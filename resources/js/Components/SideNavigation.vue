@@ -222,7 +222,6 @@ const handleSidebarHover = (hovered: boolean) => {
 
             <!-- Certificates of Appearance Link -->
             <Link
-                v-if="canViewItem('certificates-of-appearance')"
                 :href="route('certificates-of-appearance.index')"
                 :class="[
                     route().current('certificates-of-appearance.*')
