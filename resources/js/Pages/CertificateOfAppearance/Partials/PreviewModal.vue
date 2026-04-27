@@ -88,7 +88,7 @@ const getProvincialBudgetOfficer = () => {
                                 <p class="text-justify indent-8">This certification is issued upon the request of the above-named person for whatever legal purpose it may serve.</p>
                                 
                                 <!-- Issued Statement -->
-                                <p class="text-justify indent-8 mb-10">Issued this <span class="font-semibold">{{ formattedDate(formData.date) }}</span> at <span class="font-semibold">La Trinidad, Benguet</span>.</p>
+                                <p class="text-justify indent-8 mb-10">Issued this <span class="font-semibold">{{ formattedDate(formData.date) }}</span> at <span class="font-semibold">La Trinidad, Benguet, Philippines</span>.</p>
                             </div>
 
                             <!-- Signature Section -->
