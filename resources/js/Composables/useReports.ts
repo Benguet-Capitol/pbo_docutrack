@@ -348,7 +348,9 @@ export const useReports = (
 
             // Helper function to parse date string to Date object (handling timezone correctly)
             const parseDateString = (dateString: string): Date => {
-                const [year, month, day] = dateString.trim().split('-').map(Number);
+                // Handle ISO datetime format (2026-04-14T16:00:00.000000Z) by extracting just the date part
+                const dateOnly = dateString.includes('T') ? dateString.split('T')[0] : dateString;
+                const [year, month, day] = dateOnly.trim().split('-').map(Number);
                 return new Date(year, month - 1, day);
             };
 
@@ -727,18 +729,48 @@ export const useReports = (
             });
 
             // Process tardiness/undertime
+            console.log('=== TARDINESS PROCESSING DEBUG ===');
+            console.log('Total tardiness records received:', tardinessData.length);
+            console.log('Selected month:', summaryData.value.month, 'Year:', currentYear);
+            console.log('Employment type:', summaryData.value.employmentType);
+            console.log('Casual period:', summaryData.value.casualPeriod);
+            
+            let dateFilterPass = 0, employmentFilterPass = 0, employeeNotFound = 0, addedToReport = 0;
+            
             tardinessData.forEach((tu: any) => {
-                if (!isInMonth(tu.date_filed)) return;
+                console.log('Processing tardiness record:', tu);
                 
-                if (summaryData.value.employmentType === 'casual' && tu.requested_date && !isDateInCasualPeriod(tu.requested_date)) return;
+                if (!isInMonth(tu.requested_date)) {
+                    console.log('  ❌ Date filter failed. requested_date:', tu.requested_date);
+                    return;
+                }
+                dateFilterPass++;
+                
+                if (summaryData.value.employmentType === 'casual' && tu.requested_date && !isDateInCasualPeriod(tu.requested_date)) {
+                    console.log('  ❌ Casual period filter failed');
+                    return;
+                }
                 
                 const empId = tu.employee_id;
                 let employee = tu.employee;
                 if (!employee && empId) {
+                    console.log('  - Employee not in record, looking up by ID:', empId);
                     employee = employees.value.find(e => e.id === empId);
                 }
-                if (!employee) return;
-                if (getEmploymentType(employee) !== summaryData.value.employmentType) return;
+                if (!employee) {
+                    console.log('  ❌ Employee not found. ID:', empId);
+                    employeeNotFound++;
+                    return;
+                }
+                
+                const empType = getEmploymentType(employee);
+                console.log('  - Employee:', employee.name, 'Type:', empType, 'Selected Type:', summaryData.value.employmentType);
+                
+                if (empType !== summaryData.value.employmentType) {
+                    console.log('  ❌ Employment type mismatch');
+                    return;
+                }
+                employmentFilterPass++;
 
                 if (!employeeData.has(empId)) {
                     employeeData.set(empId, {
@@ -753,7 +785,16 @@ export const useReports = (
                     });
                 }
                 employeeData.get(empId)!.tardiness.push(tu);
+                addedToReport++;
+                console.log('  ✅ Added to report');
             });
+            
+            console.log('=== TARDINESS FILTER SUMMARY ===');
+            console.log('Date filter passed:', dateFilterPass);
+            console.log('Employment filter passed:', employmentFilterPass);
+            console.log('Employee not found:', employeeNotFound);
+            console.log('Added to report:', addedToReport);
+            console.log('=== END DEBUG ===');
 
             // Get signatory names
             const preparedByData = administrativeStaffEmployees?.value?.find(e => e.id === summaryData.value.preparedBy);
