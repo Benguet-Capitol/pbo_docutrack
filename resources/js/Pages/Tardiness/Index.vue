@@ -28,7 +28,7 @@
                 <!-- Empty State -->
                 <EmptyState 
                     v-else-if="tardiness.length === 0"
-                    title="No records found"
+                    title="No Tardiness/Undertime found"
                     message="Get started by creating a new tardiness/undertime record"
                 />
 

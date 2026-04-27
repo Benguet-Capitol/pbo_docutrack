@@ -30,6 +30,10 @@ class RoleService
             'pass_slips.create',
             'pass_slips.edit',
             'pass_slips.delete',
+            'time_slips.view',
+            'time_slips.create',
+            'time_slips.edit',
+            'time_slips.delete',
             'certificate_of_appearances.view',
             'certificate_of_appearances.create',
             'certificate_of_appearances.edit',
@@ -68,6 +72,10 @@ class RoleService
             'pass_slips.create',
             'pass_slips.edit',
             'pass_slips.delete',
+            'time_slips.view',
+            'time_slips.create',
+            'time_slips.edit',
+            'time_slips.delete',
             'certificate_of_appearances.view',
             'certificate_of_appearances.create',
             'certificate_of_appearances.edit',
@@ -154,6 +162,10 @@ class RoleService
             'pass_slips.create',
             'pass_slips.edit',
             'pass_slips.delete',
+            'time_slips.view',
+            'time_slips.create',
+            'time_slips.edit',
+            'time_slips.delete',
             'certificate_of_appearances.view',
             'certificate_of_appearances.create',
             'certificate_of_appearances.edit',
@@ -336,6 +348,38 @@ class RoleService
     public static function canDeletePassSlip(User $user): bool
     {
         return self::hasPermission($user, 'pass_slips.delete');
+    }
+
+    /**
+     * Check if user can view time slips
+     */
+    public static function canViewTimeSlips(User $user): bool
+    {
+        return self::hasPermission($user, 'time_slips.view');
+    }
+
+    /**
+     * Check if user can create time slips
+     */
+    public static function canCreateTimeSlip(User $user): bool
+    {
+        return self::hasPermission($user, 'time_slips.create');
+    }
+
+    /**
+     * Check if user can edit time slips
+     */
+    public static function canEditTimeSlip(User $user): bool
+    {
+        return self::hasPermission($user, 'time_slips.edit');
+    }
+
+    /**
+     * Check if user can delete time slips
+     */
+    public static function canDeleteTimeSlip(User $user): bool
+    {
+        return self::hasPermission($user, 'time_slips.delete');
     }
 
     /**

@@ -28,7 +28,7 @@
                 <!-- Empty State -->
                 <EmptyState 
                     v-else-if="certificates.length === 0"
-                    title="No records found"
+                    title="No Certificates found"
                     message="Get started by creating a new certificate of appearance"
                 />
 

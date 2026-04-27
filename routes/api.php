@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\MunicipalityController;
 use App\Http\Controllers\Api\DocumentController;
 use App\Http\Controllers\Api\RecordController;
 use App\Http\Controllers\Api\PassSlipController;
+use App\Http\Controllers\Api\TimeSlipController;
 use App\Http\Controllers\Api\TravelOrderController;
 use App\Http\Controllers\Api\LeaveController;
 use App\Http\Controllers\Api\TardinessController;
@@ -80,6 +81,14 @@ Route::middleware(['web', 'auth'])->group(function () {
     Route::post('/pass-slips', [PassSlipController::class, 'store']);
     Route::put('/pass-slips/{passSlip}', [PassSlipController::class, 'update']);
     Route::delete('/pass-slips/{passSlip}', [PassSlipController::class, 'destroy']);
+});
+
+// Time Slips API
+Route::middleware(['web', 'auth'])->group(function () {
+    Route::get('/time-slips', [TimeSlipController::class, 'index']);
+    Route::post('/time-slips', [TimeSlipController::class, 'store']);
+    Route::put('/time-slips/{timeSlip}', [TimeSlipController::class, 'update']);
+    Route::delete('/time-slips/{timeSlip}', [TimeSlipController::class, 'destroy']);
 });
 
 // Certificate of Appearance API

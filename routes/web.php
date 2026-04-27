@@ -53,6 +53,10 @@ Route::middleware('auth')->group(function () {
         return Inertia::render('PassSlips/Index');
     })->name('pass-slips.index');
 
+    Route::get('/time-slips', function () {
+        return Inertia::render('TimeSlips/Index');
+    })->name('time-slips.index');
+
     Route::get('/travel-orders', function () {
         return Inertia::render('TravelOrders/Index');
     })->name('travel-orders.index');
