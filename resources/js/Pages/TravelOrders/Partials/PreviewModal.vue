@@ -15,7 +15,7 @@
                     </div>
 
                     <!-- Modal Body - Document Preview -->
-                    <div class="p-4 flex flex-col" style="background-color: white; min-height: 1100px;">
+                    <div class="p-4 flex flex-col" style="background-color: white; min-height: 1050px;">
                         <!-- Header Section with Logos -->
                         <div class="flex items-center justify-center gap-2 mb-6 pb-2" style="border-bottom: 3px double #050505;">
                             <div style="width: 85px; flex-shrink: 0;">
@@ -100,7 +100,7 @@
                         <div class="space-y-2 text-sm mb-6">
                             <p class="space-y-2">
                                 <span class="inline-block indent-8">You are hereby authorized to go to </span> 
-                                <span class="border-b border-gray-900 w-[540px] inline-block text-center font-semibold pr-8">{{ formData.going_to }}</span> 
+                                <span class="border-b border-gray-900 w-[500px] inline-block text-center font-semibold pr-8">{{ formData.going_to }}</span> 
                                 on
                                 <!-- If inclusive_dates exist, show them; otherwise show from_date and to_date -->
                                 <template v-if="formData.inclusive_dates && formData.inclusive_dates.length > 0">
