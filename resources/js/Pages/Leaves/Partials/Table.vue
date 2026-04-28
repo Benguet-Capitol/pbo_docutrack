@@ -7,7 +7,7 @@
                 <col class="w-32">
                 <col class="w-32">
                 <col class="w-20">
-                <col class="w-48">
+                <col class="w-20">
                 <col class="w-20">
             </colgroup>
             <!-- Table Header -->
@@ -47,9 +47,13 @@
                 <tr v-for="leave in records" :key="leave.id" class="bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                     <td class="px-4 py-2 text-xs font-medium text-gray-900 dark:text-gray-100">{{ leave.control_no }}</td>
                     <td class="px-4 py-2 text-xs text-gray-600 dark:text-gray-400">{{ formatDateForDisplay(leave.date_of_filing) }}</td>
-                    <td class="px-4 py-2 text-xs text-gray-700 dark:text-gray-300">{{ leave.employee.name }}</td>
+                    <td class="px-4 py-2 text-xs text-gray-700 dark:text-gray-300">
+                        <span class="inline-block px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 rounded-full text-xs font-semibold">
+                            {{ leave.employee.name }}
+                        </span>
+                    </td>
                     <td class="px-4 py-2 text-xs">
-                        <span class="inline-block px-2 py-1 bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 rounded text-xs">
+                        <span class="inline-block px-2 py-1 bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 rounded text-xs font-semibold">
                             {{ leave.type_of_leave }}
                         </span>
                     </td>
@@ -62,8 +66,8 @@
                         </div>
                     </td>
                     <td class="px-4 py-2 text-xs">
-                        <div class="flex flex-col gap-1">
-                            <span v-for="(date, idx) in leave.inclusive_dates" :key="idx" class="text-gray-600 dark:text-gray-400">
+                        <div v-if="leave.inclusive_dates && leave.inclusive_dates.length > 0" class="flex flex-wrap gap-1">
+                            <span v-for="(date, idx) in leave.inclusive_dates" :key="idx" class="inline-block px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded text-xs font-semibold">
                                 {{ formatInclusiveDate(date) }}
                             </span>
                         </div>
@@ -117,11 +121,18 @@ const formatDateForDisplay = (dateStr: string): string => {
 
 const formatInclusiveDate = (entry: string): string => {
     if (!entry) return '';
+    
+    const formatDateWithoutYear = (dateStr: string): string => {
+        if (!dateStr) return '';
+        const date = new Date(dateStr);
+        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    };
+    
     if (entry.includes(' - ')) {
         const [startDate, endDate] = entry.split(' - ');
-        return `${formatDateForDisplay(startDate.trim())} - ${formatDateForDisplay(endDate.trim())}`;
+        return `${formatDateWithoutYear(startDate.trim())} - ${formatDateWithoutYear(endDate.trim())}`;
     } else {
-        return formatDateForDisplay(entry);
+        return formatDateWithoutYear(entry);
     }
 };
 </script>

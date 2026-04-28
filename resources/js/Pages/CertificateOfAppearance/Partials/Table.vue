@@ -3,10 +3,10 @@
         <table class="w-full text-left table-fixed">
             <colgroup>
                 <col class="w-24">
-                <col class="w-32">
+                <col class="w-24">
+                <col class="w-28">
                 <col class="w-28">
                 <col class="w-40">
-                <col class="w-32">
                 <col class="w-20">
             </colgroup>
             <!-- Table Header -->
@@ -16,6 +16,12 @@
                         <button @click="$emit('sort', 'control_no')" class="flex items-center gap-2 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
                             Control No
                             <span v-if="sortBy === 'control_no'" class="text-xs">{{ sortOrder === 'asc' ? '▲' : '▼' }}</span>
+                        </button>
+                    </th>
+                    <th class="px-6 py-3 text-xs font-bold text-gray-700 dark:text-gray-200">
+                        <button @click="$emit('sort', 'date')" class="flex items-center gap-2 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
+                            Date
+                            <span v-if="sortBy === 'date'" class="text-xs">{{ sortOrder === 'asc' ? '▲' : '▼' }}</span>
                         </button>
                     </th>
                     <th class="px-6 py-3 text-xs font-bold text-gray-700 dark:text-gray-200">
@@ -36,12 +42,6 @@
                             <span v-if="sortBy === 'purpose'" class="text-xs">{{ sortOrder === 'asc' ? '▲' : '▼' }}</span>
                         </button>
                     </th>
-                    <th class="px-6 py-3 text-xs font-bold text-gray-700 dark:text-gray-200">
-                        <button @click="$emit('sort', 'date')" class="flex items-center gap-2 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
-                            Date
-                            <span v-if="sortBy === 'date'" class="text-xs">{{ sortOrder === 'asc' ? '▲' : '▼' }}</span>
-                        </button>
-                    </th>
                     <th class="px-6 py-3 text-xs font-bold text-gray-700 dark:text-gray-200">Actions</th>
                 </tr>
             </thead>
@@ -52,16 +52,18 @@
                         {{ certificate.control_no }}
                     </td>
                     <td class="px-4 py-2 text-xs text-gray-600 dark:text-gray-400">
-                        {{ certificate.name }}
+                        {{ formattedDate(certificate.date) }}
+                    </td>
+                    <td class="px-4 py-2 text-xs text-gray-600 dark:text-gray-400">
+                        <span class="inline-block px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 rounded-full text-xs font-semibold">
+                            {{ certificate.name }}
+                        </span>
                     </td>
                     <td class="px-4 py-2 text-xs text-gray-600 dark:text-gray-400">
                         {{ certificate.office }}
                     </td>
                     <td class="px-4 py-2 text-xs text-gray-600 dark:text-gray-400">
                         {{ certificate.purpose }}
-                    </td>
-                    <td class="px-4 py-2 text-xs text-gray-600 dark:text-gray-400">
-                        {{ formattedDate(certificate.date) }}
                     </td>
                     <td class="px-4 py-2 text-xs">
                         <div class="flex items-center justify-center gap-2">

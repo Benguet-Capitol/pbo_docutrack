@@ -49,13 +49,12 @@
                         </div>
 
                         <!-- Requesting Employee -->
-                        <div class="space-y-2 text-sm mb-4">
+                        <div class="space-y-2 text-base mb-4">
                             <div class="space-y-1">
                                 <div class="flex gap-2 items-start">
-                                    <p class="w-7">TO:</p>
                                     <div class="text-center">
                                         <span class="w-56 text-center font-semibold uppercase block">{{ getEmployeeNameById(formData.requesting_employee_id) }}</span>
-                                        <span class="text-xs text-gray-700">{{ getEmployeeDesignation(formData.requesting_employee_id) }}</span>
+                                        <span class="text-xs text-gray-700">Requesting Employee</span>
                                     </div>
                                 </div>
                             </div>
@@ -148,13 +147,12 @@
                         </div>
 
                         <!-- Requesting Employee - Copy 2 -->
-                        <div class="space-y-2 text-sm mb-4">
+                        <div class="space-y-2 text-base mb-4">
                             <div class="space-y-1">
                                 <div class="flex gap-2 items-start">
-                                    <p class="w-7">TO:</p>
                                     <div class="text-center">
                                         <span class="w-56 text-center font-semibold uppercase block">{{ getEmployeeNameById(formData.requesting_employee_id) }}</span>
-                                        <span class="text-xs text-gray-700">{{ getEmployeeDesignation(formData.requesting_employee_id) }}</span>
+                                        <span class="text-xs text-gray-700">Requesting Employee</span>
                                     </div>
                                 </div>
                             </div>

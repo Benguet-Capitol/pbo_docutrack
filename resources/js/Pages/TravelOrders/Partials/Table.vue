@@ -2,14 +2,14 @@
     <div class="overflow-x-auto">
         <table class="w-full text-left table-fixed">
             <colgroup>
-                <col class="w-24">
-                <col class="w-20">
+                <col class="w-14">
+                <col class="w-12">
                 <col class="w-28">
                 <col class="w-28">
-                <col class="w-32">
                 <col class="w-28">
-                <col class="w-20">
-                <col class="w-20">
+                <col class="w-40">
+                <col class="w-12">
+                <col class="w-16">
             </colgroup>
             <!-- Table Header -->
             <thead class="bg-gray-100 dark:bg-gray-900 border-b-2 border-gray-300 dark:border-gray-700">
@@ -51,7 +51,7 @@
                     <td class="px-4 py-2 text-xs text-gray-600 dark:text-gray-400">{{ formatDateForDisplay(order.date) }}</td>
                     <td class="px-4 py-2 text-xs">
                         <div class="flex flex-wrap gap-1">
-                            <span v-for="emp in order.employees" :key="emp.id" class="inline-block px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded text-xs">
+                            <span v-for="emp in order.employees" :key="emp.id" class="inline-block px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded text-xs font-semibold">
                                 {{ emp.name }}
                             </span>
                         </div>
@@ -59,7 +59,7 @@
                     <td class="px-4 py-2 text-xs text-gray-700 dark:text-gray-300">{{ order.going_to }}</td>
                     <td class="px-4 py-2 text-xs">
                         <div v-if="order.inclusive_dates && order.inclusive_dates.length > 0" class="flex flex-wrap gap-1">
-                            <span v-for="(date, idx) in order.inclusive_dates" :key="idx" class="inline-block px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded text-xs">
+                            <span v-for="(date, idx) in order.inclusive_dates" :key="idx" class="inline-block px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded text-xs font-semibold">
                                 {{ formatInclusiveDateForTable(date) }}
                             </span>
                         </div>

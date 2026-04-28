@@ -3,14 +3,13 @@
         <table class="w-full text-left table-fixed">
             <colgroup>
                 <col class="w-20">
+                <col class="w-20">
                 <col class="w-24">
                 <col class="w-20">
                 <col class="w-20">
                 <col class="w-20">
                 <col class="w-20">
-                <col class="w-20">
                 <col class="w-40">
-                <col class="w-32">
                 <col class="w-20">
             </colgroup>
             <!-- Table Header -->
@@ -22,13 +21,13 @@
                             <span v-if="sortBy === 'control_no'" class="text-xs">{{ sortOrder === 'asc' ? '▲' : '▼' }}</span>
                         </button>
                     </th>
-                    <th class="px-6 py-3 text-xs font-bold text-gray-700 dark:text-gray-200">Employee</th>
                     <th class="px-6 py-3 text-xs font-bold text-gray-700 dark:text-gray-200">
                         <button @click="$emit('sort', 'date')" class="flex items-center gap-2 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
                             Date
                             <span v-if="sortBy === 'date'" class="text-xs">{{ sortOrder === 'asc' ? '▲' : '▼' }}</span>
                         </button>
                     </th>
+                    <th class="px-6 py-3 text-xs font-bold text-gray-700 dark:text-gray-200">Employee</th>
                     <th class="px-6 py-3 text-xs font-bold text-gray-700 dark:text-gray-200">In AM</th>
                     <th class="px-6 py-3 text-xs font-bold text-gray-700 dark:text-gray-200">Out AM</th>
                     <th class="px-6 py-3 text-xs font-bold text-gray-700 dark:text-gray-200">In PM</th>
@@ -39,7 +38,6 @@
                             <span v-if="sortBy === 'reason'" class="text-xs">{{ sortOrder === 'asc' ? '▲' : '▼' }}</span>
                         </button>
                     </th>
-                    <th class="px-6 py-3 text-xs font-bold text-gray-700 dark:text-gray-200">Certified By</th>
                     <th class="px-6 py-3 text-xs font-bold text-gray-700 dark:text-gray-200">Actions</th>
                 </tr>
             </thead>
@@ -49,33 +47,40 @@
                     <td class="px-4 py-2 text-xs text-gray-900 dark:text-gray-100 font-semibold">
                         {{ slip.control_no }}
                     </td>
+                    <td class="px-4 py-2 text-xs text-gray-600 dark:text-gray-400">
+                        {{ formatDate(slip.date) }}
+                    </td>
                     <td class="px-4 py-2 text-xs text-gray-900 dark:text-gray-100">
                         <span class="inline-block px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 rounded-full text-xs font-semibold">
                             {{ slip.requesting_employee?.name || 'N/A' }}
                         </span>
                     </td>
                     <td class="px-4 py-2 text-xs text-gray-600 dark:text-gray-400">
-                        {{ formatDate(slip.date) }}
-                    </td>
-                    <td class="px-4 py-2 text-xs text-gray-600 dark:text-gray-400">
-                        {{ slip.time_in_am ? formatTime(slip.time_in_am) : '—' }}
-                    </td>
-                    <td class="px-4 py-2 text-xs text-gray-600 dark:text-gray-400">
-                        {{ slip.time_out_am ? formatTime(slip.time_out_am) : '—' }}
-                    </td>
-                    <td class="px-4 py-2 text-xs text-gray-600 dark:text-gray-400">
-                        {{ slip.time_in_pm ? formatTime(slip.time_in_pm) : '—' }}
-                    </td>
-                    <td class="px-4 py-2 text-xs text-gray-600 dark:text-gray-400">
-                        {{ slip.time_out_pm ? formatTime(slip.time_out_pm) : '—' }}
-                    </td>
-                    <td class="px-4 py-2 text-xs text-gray-600 dark:text-gray-400">
-                        <span class="truncate block">{{ slip.reason }}</span>
-                    </td>
-                    <td class="px-4 py-2 text-xs text-gray-600 dark:text-gray-400">
-                        <span class="inline-block px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 rounded-full text-xs font-medium">
-                            {{ slip.certified_by_employee?.name || '—' }}
+                        <span v-if="slip.time_in_am" class="inline-block px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 rounded-full text-xs font-medium">
+                            {{ formatTime(slip.time_in_am) }}
                         </span>
+                        <span v-else>—</span>
+                    </td>
+                    <td class="px-4 py-2 text-xs text-gray-600 dark:text-gray-400">
+                        <span v-if="slip.time_out_am" class="inline-block px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 rounded-full text-xs font-medium">
+                            {{ formatTime(slip.time_out_am) }}
+                        </span>
+                        <span v-else>—</span>
+                    </td>
+                    <td class="px-4 py-2 text-xs text-gray-600 dark:text-gray-400">
+                        <span v-if="slip.time_in_pm" class="inline-block px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 rounded-full text-xs font-medium">
+                            {{ formatTime(slip.time_in_pm) }}
+                        </span>
+                        <span v-else>—</span>
+                    </td>
+                    <td class="px-4 py-2 text-xs text-gray-600 dark:text-gray-400">
+                        <span v-if="slip.time_out_pm" class="inline-block px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 rounded-full text-xs font-medium">
+                            {{ formatTime(slip.time_out_pm) }}
+                        </span>
+                        <span v-else>—</span>
+                    </td>
+                    <td class="px-4 py-2 text-xs text-gray-600 dark:text-gray-400">
+                        <span class="block">{{ slip.reason }}</span>
                     </td>
                     <td class="px-4 py-2 text-xs">
                         <div class="flex items-center justify-center gap-2">

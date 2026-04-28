@@ -19,38 +19,38 @@
                         <div class="grid gap-4">
                 <!-- Control No Field -->
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">
                         Control No
                     </label>
                     <input
                         :value="formData.control_no"
                         type="text"
                         disabled
-                        class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 text-sm dark:bg-gray-700 dark:text-white bg-gray-100 dark:bg-gray-600 cursor-not-allowed opacity-75 focus:outline-none"
+                        class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 text-xs dark:bg-gray-700 dark:text-white bg-gray-100 dark:bg-gray-600 cursor-not-allowed opacity-75 focus:outline-none"
                     />
                 </div>
 
                 <!-- Date -->
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">
                         Date <span class="text-red-500">*</span>
                     </label>
                     <input
                         v-model="formData.date"
                         type="date"
-                        class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 text-sm dark:bg-gray-700 dark:text-white focus:outline-none focus:border-emerald-500"
+                        class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 text-xs dark:bg-gray-700 dark:text-white focus:outline-none focus:border-emerald-500"
                     />
                     <span v-if="formErrors.date" class="text-xs text-red-500">{{ formErrors.date }}</span>
                 </div>
 
                 <!-- Requesting Employee -->
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">
                         Requesting Employee <span class="text-red-500">*</span>
                     </label>
                     <select
                         v-model.number="formData.requesting_employee_id"
-                        class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 text-sm dark:bg-gray-700 dark:text-white focus:outline-none focus:border-emerald-500"
+                        class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 text-xs dark:bg-gray-700 dark:text-white focus:outline-none focus:border-emerald-500"
                     >
                         <option value="">Select employee</option>
                         <option v-for="emp in sortedEmployees" :key="emp.id" :value="emp.id">
@@ -63,35 +63,35 @@
                 <!-- Time Fields Grid -->
                 <div class="grid grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">In AM</label>
+                        <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">In AM</label>
                         <input
                             v-model="formData.time_in_am"
                             type="time"
-                            class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 text-sm dark:bg-gray-700 dark:text-white focus:outline-none focus:border-emerald-500"
+                            class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 text-xs dark:bg-gray-700 dark:text-white focus:outline-none focus:border-emerald-500"
                         />
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Out AM</label>
+                        <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">Out AM</label>
                         <input
                             v-model="formData.time_out_am"
                             type="time"
-                            class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 text-sm dark:bg-gray-700 dark:text-white focus:outline-none focus:border-emerald-500"
+                            class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 text-xs dark:bg-gray-700 dark:text-white focus:outline-none focus:border-emerald-500"
                         />
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">In PM</label>
+                        <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">In PM</label>
                         <input
                             v-model="formData.time_in_pm"
                             type="time"
-                            class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 text-sm dark:bg-gray-700 dark:text-white focus:outline-none focus:border-emerald-500"
+                            class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 text-xs dark:bg-gray-700 dark:text-white focus:outline-none focus:border-emerald-500"
                         />
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Out PM</label>
+                        <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">Out PM</label>
                         <input
                             v-model="formData.time_out_pm"
                             type="time"
-                            class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 text-sm dark:bg-gray-700 dark:text-white focus:outline-none focus:border-emerald-500"
+                            class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 text-xs dark:bg-gray-700 dark:text-white focus:outline-none focus:border-emerald-500"
                         />
                     </div>
                 </div>
@@ -99,13 +99,13 @@
 
                 <!-- Reason -->
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">
                         Reason <span class="text-red-500">*</span>
                     </label>
                     <textarea
                         v-model="formData.reason"
                         rows="4"
-                        class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 text-sm dark:bg-gray-700 dark:text-white focus:outline-none focus:border-emerald-500"
+                        class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 text-xs dark:bg-gray-700 dark:text-white focus:outline-none focus:border-emerald-500"
                         placeholder="Enter the reason for the time slip..."
                     ></textarea>
                     <span v-if="formErrors.reason" class="text-xs text-red-500">{{ formErrors.reason }}</span>
@@ -113,12 +113,12 @@
 
                 <!-- Certified By -->
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">
                         Certified By
                     </label>
                     <select
                         v-model.number="formData.certified_by_employee_id"
-                        class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 text-sm dark:bg-gray-700 dark:text-white focus:outline-none focus:border-emerald-500"
+                        class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 text-xs dark:bg-gray-700 dark:text-white focus:outline-none focus:border-emerald-500"
                     >
                         <option value="">Select Certified By</option>
                         <option v-for="emp in sortedEmployees" :key="emp.id" :value="emp.id">

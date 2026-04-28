@@ -6,10 +6,10 @@
                 <col class="w-16">
                 <col class="w-28">
                 <col class="w-24">
-                <col class="w-40">
-                <col class="w-20">
                 <col class="w-20">
                 <col class="w-40">
+                <col class="w-40">
+                <col class="w-20">
                 <col class="w-20">
             </colgroup>
             <!-- Table Header -->
@@ -27,6 +27,7 @@
                             <span v-if="sortBy === 'date'" class="text-xs">{{ sortOrder === 'asc' ? '▲' : '▼' }}</span>
                         </button>
                     </th>
+                    <th class="px-6 py-3 text-xs font-bold text-gray-700 dark:text-gray-200">Employees</th>
                     <th class="px-6 py-3 text-xs font-bold text-gray-700 dark:text-gray-200">Inclusive Dates</th>
                     <th class="px-6 py-3 text-xs font-bold text-gray-700 dark:text-gray-200">
                         <button @click="$emit('sort', 'requested_time')" class="flex items-center gap-2 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
@@ -47,7 +48,6 @@
                         </button>
                     </th>
                     <th class="px-6 py-3 text-xs font-bold text-gray-700 dark:text-gray-200">Return Time</th>
-                    <th class="px-6 py-3 text-xs font-bold text-gray-700 dark:text-gray-200">Employees</th>
                     <th class="px-6 py-3 text-xs font-bold text-gray-700 dark:text-gray-200">Actions</th>
                 </tr>
             </thead>
@@ -60,13 +60,19 @@
                     <td class="px-4 py-2 text-xs text-gray-600 dark:text-gray-400">
                         {{ formatDate(slip.date) }}
                     </td>
-                    <td class="px-4 py-2 text-xs text-gray-600 dark:text-gray-400">
-                        <div v-if="slip.inclusive_dates && slip.inclusive_dates.length > 0" class="flex flex-col gap-1">
-                            <span v-for="(entry, idx) in slip.inclusive_dates" :key="idx" class="text-xs">
-                                {{ formatInclusiveDate(entry) }}
+                    <td class="px-4 py-2 text-xs">
+                        <div class="flex gap-1 flex-wrap">
+                            <span v-for="emp in slip.employees" :key="emp.id" class="inline-block px-2 py-1 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-300 rounded-full text-xs font-semibold">
+                                {{ emp.name }}
                             </span>
                         </div>
-                        <span v-else class="text-gray-400 italic">—</span>
+                    </td>
+                    <td class="px-4 py-2 text-xs">
+                        <div v-if="slip.inclusive_dates && slip.inclusive_dates.length > 0" class="flex flex-wrap gap-1">
+                            <span v-for="(date, idx) in slip.inclusive_dates" :key="idx" class="inline-block px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded text-xs font-semibold">
+                                {{ formatInclusiveDate(date) }}
+                            </span>
+                        </div>
                     </td>
                     <td class="px-4 py-2 text-xs text-gray-600 dark:text-gray-400">
                         {{ formatTime(slip.requested_time) }}
@@ -79,13 +85,6 @@
                     </td>
                     <td class="px-4 py-2 text-xs text-gray-600 dark:text-gray-400">
                         {{ formatTime(slip.expected_return_time) }}
-                    </td>
-                    <td class="px-4 py-2 text-xs">
-                        <div class="flex gap-1 flex-wrap">
-                            <span v-for="emp in slip.employees" :key="emp.id" class="inline-block px-2 py-1 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-300 rounded-full text-xs font-medium">
-                                {{ emp.name }}
-                            </span>
-                        </div>
                     </td>
                     <td class="px-4 py-2 text-xs">
                         <div class="flex items-center justify-center gap-2">

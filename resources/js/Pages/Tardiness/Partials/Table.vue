@@ -2,14 +2,14 @@
     <div class="overflow-x-auto">
         <table class="w-full text-left table-fixed">
             <colgroup>
-                <col class="w-24">
                 <col class="w-20">
                 <col class="w-20">
                 <col class="w-24">
+                <col class="w-20">
+                <col class="w-20">
+                <col class="w-20">
+                <col class="w-20">
                 <col class="w-24">
-                <col class="w-20">
-                <col class="w-20">
-                <col class="w-20">
                 <col class="w-20">
             </colgroup>
             <thead class="bg-gray-100 dark:bg-gray-900 border-b-2 border-gray-300 dark:border-gray-700">
@@ -21,13 +21,13 @@
                         </button>
                     </th>
                     <th class="px-6 py-3 text-xs font-bold text-gray-700 dark:text-gray-200">Date Filed</th>
+                    <th class="px-6 py-3 text-xs font-bold text-gray-700 dark:text-gray-200">Employee</th>
                     <th class="px-6 py-3 text-xs font-bold text-gray-700 dark:text-gray-200">
                         <button @click="$emit('sort', 'type')" class="flex items-center gap-2 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
                             Type
                             <span v-if="sortBy === 'type'" class="text-xs">{{ sortOrder === 'asc' ? '▲' : '▼' }}</span>
                         </button>
                     </th>
-                    <th class="px-6 py-3 text-xs font-bold text-gray-700 dark:text-gray-200">Employee</th>
                     <th class="px-6 py-3 text-xs font-bold text-gray-700 dark:text-gray-200">
                         <button @click="$emit('sort', 'requested_date')" class="flex items-center gap-2 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
                             Requested Date
@@ -53,6 +53,11 @@
                     <td class="px-4 py-2 text-xs text-gray-600 dark:text-gray-400">
                         {{ formatDate(record.date_filed) }}
                     </td>
+                    <td class="px-4 py-2 text-xs text-gray-600 dark:text-gray-400">
+                        <span class="inline-block px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 rounded-full text-xs font-semibold">
+                            {{ record.employee?.name || 'N/A' }}
+                        </span>
+                    </td>
                     <td class="px-4 py-2 text-xs">
                         <span :class="[
                             'px-2 py-1 rounded-full text-xs font-medium',
@@ -62,9 +67,6 @@
                         ]">
                             {{ record.type }}
                         </span>
-                    </td>
-                    <td class="px-4 py-2 text-xs text-gray-600 dark:text-gray-400">
-                        {{ record.employee?.name || 'N/A' }}
                     </td>
                     <td class="px-4 py-2 text-xs text-gray-600 dark:text-gray-400">
                         {{ formatDate(record.requested_date) }}
