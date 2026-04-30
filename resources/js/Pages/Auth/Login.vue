@@ -93,11 +93,11 @@ const submit = () => {
 
                             <!-- Form Header -->
                             <div class="mb-8 animate-fade-in-up">
-                                <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-                                    Welcome Back
+                                <h1 class="text-4xl font-bold text-gray-900 dark:text-white mb-2">
+                                    Sign In
                                 </h1>
                                 <p class="text-gray-600 dark:text-gray-400 text-sm">
-                                    Please sign in to your account
+                                    Enter your credentials to continue
                                 </p>
                             </div>
 
@@ -118,7 +118,7 @@ const submit = () => {
                                                 v-model="form.username"
                                                 autofocus
                                                 autocomplete="username"
-                                                placeholder="Username"
+                                                placeholder="Enter your username"
                                             />
                                         </div>
 
@@ -139,7 +139,7 @@ const submit = () => {
                                                 class="login-input pl-10 pr-10 block w-full transition duration-300 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 dark:focus:ring-emerald-600"
                                                 v-model="form.password"
                                                 autocomplete="current-password"
-                                                placeholder="Password"
+                                                placeholder="Enter your password"
                                             />
                                             <button
                                                 type="button"
@@ -163,13 +163,13 @@ const submit = () => {
                                             :disabled="form.processing"
                                         >
                                             <i class="fas fa-sign-in-alt"></i>
-                                            <span>{{ form.processing ? 'Logging in...' : 'Log in' }}</span>
+                                            <span>{{ form.processing ? 'Signing in...' : 'Sign In' }}</span>
                                         </PrimaryButton>
                                     </div>
 
                                     <!-- Register Info -->
                                     <p class="text-sm text-gray-600 dark:text-gray-400 text-center animate-fade-in-up" style="animation-delay: 0.6s;">
-                                        Don't have an account?<br>
+                                        For your account assistance,<br>
                                         <span class="text-gray-800 dark:text-gray-200 font-medium">
                                             Contact your administrator
                                         </span>

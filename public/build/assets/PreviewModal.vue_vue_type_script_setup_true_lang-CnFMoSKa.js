@@ -1,0 +1,1 @@
+import{d as o,i as t,j as s,o as n}from"./app-wYtvFQ8x.js";const a={key:0},_=o({__name:"PreviewModal",props:{show:{type:Boolean}},emits:["close"],setup(e){return(r,c)=>e.show?(n(),t("div",a)):s("",!0)}});export{_};
