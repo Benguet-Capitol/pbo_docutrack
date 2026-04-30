@@ -131,10 +131,6 @@
                                                 <input type="radio" :checked="formData.returnType === 'nwd'" @change="$emit('update:formData', { ...formData, returnType: 'nwd' })" class="accent-emerald-600" />
                                                 <span class="text-xs text-gray-700 dark:text-gray-300">NWD</span>
                                             </label>
-                                            <label class="flex items-center gap-2 cursor-pointer mb-2">
-                                                <input type="radio" :checked="formData.returnType === 'time_slip'" @change="$emit('update:formData', { ...formData, returnType: 'time_slip' })" class="accent-emerald-600" />
-                                                <span class="text-xs text-gray-700 dark:text-gray-300">Time Slip</span>
-                                            </label>
                                         </div>
                                         <div class="flex-1">
                                             <label class="flex items-center gap-2 cursor-pointer mb-2">

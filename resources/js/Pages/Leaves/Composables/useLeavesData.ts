@@ -66,16 +66,70 @@ export function useLeavesData() {
         }
     };
 
+    const formatDateForDisplay = (dateStr: string): string => {
+        if (!dateStr) return '';
+        const date = new Date(dateStr);
+        return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+    };
+
+    const formatInclusiveDateForSearch = (dateEntry: string): string => {
+        if (!dateEntry) return '';
+        
+        if (dateEntry.includes(' - ')) {
+            const [startStr, endStr] = dateEntry.split(' - ');
+            const startDate = new Date(startStr.trim());
+            const endDate = new Date(endStr.trim());
+            const start = startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            const end = endDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            return `${start} - ${end}`;
+        } else {
+            const date = new Date(dateEntry.trim());
+            return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        }
+    };
+
     const filteredLeaves = computed(() => {
         let filtered = leaves.value;
 
         if (searchQuery.value) {
             const query = searchQuery.value.toLowerCase();
-            filtered = filtered.filter(leave =>
-                leave.control_no.toLowerCase().includes(query) ||
-                leave.employee.name.toLowerCase().includes(query) ||
-                leave.type_of_leave.toLowerCase().includes(query)
-            );
+            filtered = filtered.filter(leave => {
+                // Search in control_no
+                if (leave.control_no.toLowerCase().includes(query)) return true;
+                
+                // Search in employee name
+                if (leave.employee.name.toLowerCase().includes(query)) return true;
+                
+                // Search in type_of_leave
+                if (leave.type_of_leave.toLowerCase().includes(query)) return true;
+                
+                // Search in date_of_filing (both raw and formatted)
+                if (leave.date_of_filing.toLowerCase().includes(query)) return true;
+                if (formatDateForDisplay(leave.date_of_filing).toLowerCase().includes(query)) return true;
+                
+                // Search in number_of_working_days_applied_for
+                if (leave.number_of_working_days_applied_for.toString().includes(query)) return true;
+                
+                // Search in half_day_period
+                if (leave.half_day_period && leave.half_day_period.toLowerCase().includes(query)) return true;
+                
+                // Search in inclusive_dates (both raw and formatted)
+                if (leave.inclusive_dates && leave.inclusive_dates.length > 0) {
+                    if (leave.inclusive_dates.some(date => date.toLowerCase().includes(query))) return true;
+                    if (leave.inclusive_dates.some(date => formatInclusiveDateForSearch(date).toLowerCase().includes(query))) return true;
+                }
+                
+                // Search in purpose
+                if (leave.purpose && leave.purpose.toLowerCase().includes(query)) return true;
+                
+                // Search in illness
+                if (leave.illness && leave.illness.toLowerCase().includes(query)) return true;
+                
+                // Search in other_type
+                if (leave.other_type && leave.other_type.toLowerCase().includes(query)) return true;
+                
+                return false;
+            });
         }
 
         // Apply sorting

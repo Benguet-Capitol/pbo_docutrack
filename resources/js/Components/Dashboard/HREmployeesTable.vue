@@ -49,8 +49,8 @@
 
 <script setup lang="ts">
 defineProps({
-    employeeLeavesSummary: Array,
-    uniqueLeaveTypes: Array,
+    employeeLeavesSummary: Array<any>,
+    uniqueLeaveTypes: Array<any>,
     selectedHRYear: Number,
     getOtherLeaveTypes: Function,
     getOtherLeaveTypesMap: Function,

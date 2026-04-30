@@ -35,7 +35,7 @@
                                 <select 
                                     :value="formData.record_type"
                                     @change="(e) => {
-                                        $emit('update:form-data', { ...formData, record_type: e.target.value });
+                                        $emit('update:form-data', { ...formData, record_type: (e.target as HTMLSelectElement).value });
                                     }"
                                     id="create_record_type" 
                                     class="block w-full pl-10 pr-4 py-2 text-xs border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:outline-none transition-colors appearance-none"
@@ -56,7 +56,7 @@
                                 <select 
                                     :value="formData.record_subtype"
                                     @change="(e) => {
-                                        $emit('update:form-data', { ...formData, record_subtype: e.target.value });
+                                        $emit('update:form-data', { ...formData, record_subtype: (e.target as HTMLSelectElement).value });
                                     }"
                                     id="create_record_subtype" 
                                     class="block w-full pl-10 pr-4 py-2 text-xs border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:outline-none focus:border-emerald-500 transition-colors appearance-none"
@@ -111,7 +111,7 @@
                             <label for="create_file" class="block text-xs font-medium text-gray-700 dark:text-gray-300">Scanned Image / File <span class="text-red-600">*</span></label>
                             <div 
                                 :class="['border-2 border-dashed rounded-lg p-4 text-center cursor-pointer transition-colors', formErrors.file ? 'border-red-500 dark:border-red-600 hover:border-red-600 dark:hover:border-red-500' : 'border-gray-300 dark:border-gray-600 hover:border-emerald-500 dark:hover:border-emerald-400']" 
-                                @click="$refs.fileInputCreate?.click()"
+                                @click="($refs.fileInputCreate as HTMLInputElement)?.click()"
                             >
                                 <input 
                                     ref="fileInputCreate"

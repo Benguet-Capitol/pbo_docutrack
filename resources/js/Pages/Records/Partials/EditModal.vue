@@ -41,8 +41,8 @@
                                 <i class="fas fa-tags absolute left-3 text-gray-400 text-sm pointer-events-none"></i>
                                 <select 
                                     :value="formData.record_type"
-                                    @change="(e) => $emit('update:form-data', { ...formData, record_type: e.target.value })"
-                                    id="edit_record_type" 
+                                    @change="(e) => $emit('update:form-data', { ...formData, record_type: (e.target as HTMLSelectElement).value })"
+                                    id="edit_record_type"
                                     class="block w-full pl-10 pr-4 py-2 text-xs border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:outline-none transition-colors appearance-none"
                                     :class="[formErrors.record_type ? 'border-red-500 focus:border-red-500' : 'border-gray-300 focus:border-blue-500']"
                                 >
@@ -60,8 +60,8 @@
                                 <i class="fas fa-layer-group absolute left-3 text-gray-400 text-sm pointer-events-none"></i>
                                 <select 
                                     :value="formData.record_subtype"
-                                    @change="(e) => $emit('update:form-data', { ...formData, record_subtype: e.target.value })"
-                                    id="edit_record_subtype" 
+                                    @change="(e) => $emit('update:form-data', { ...formData, record_subtype: (e.target as HTMLSelectElement).value })"
+                                    id="edit_record_subtype"
                                     class="block w-full pl-10 pr-4 py-2 text-xs border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:outline-none focus:border-blue-500 transition-colors appearance-none"
                                 >
                                     <option value="" disabled>Select a subtype</option>
@@ -121,7 +121,7 @@
                             </div>
                             <div 
                                 class="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-4 text-center cursor-pointer hover:border-blue-500 dark:hover:border-blue-400 transition-colors" 
-                                @click="$refs.fileInputEdit?.click()"
+                                @click="($refs.fileInputEdit as HTMLInputElement)?.click()"
                             >
                                 <input 
                                     ref="fileInputEdit"
@@ -164,11 +164,11 @@
 
 <script setup lang="ts">
 import type { FormData } from '../Composables/useRecordsForm';
-import type { Record } from '../Composables/useRecordsData';
+import type { Record as RecordModel } from '../Composables/useRecordsData';
 
 defineProps<{
     show: boolean;
-    recordToEdit: Record | null;
+    recordToEdit: RecordModel | null;
     formData: FormData;
     formErrors: Record<string, string>;
     updating: boolean;

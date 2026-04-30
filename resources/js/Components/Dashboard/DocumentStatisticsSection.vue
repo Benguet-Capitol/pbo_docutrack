@@ -122,9 +122,9 @@
 import { computed } from 'vue';
 
 const props = defineProps({
-    documentProcessingStatistics: Array,
+    documentProcessingStatistics: Array<any>,
     expandedDocumentType: String,
-    filteredDocuments: Array,
+    filteredDocuments: Array<any>,
     formatHours: Function,
     calculateProcessingTime: Function,
     getTimeLeftText: Function,

@@ -8,6 +8,7 @@ export const useHRData = () => {
     const travelOrders = ref<any[]>([]);
     const passSlips = ref<any[]>([]);
     const tardiness = ref<any[]>([]);
+    const timeSlips = ref<any[]>([]);
     const hrLoading = ref(true);
 
     const selectedHRMonth = ref<number>(new Date().getMonth());
@@ -74,6 +75,22 @@ export const useHRData = () => {
             }
         } catch (e) {
             console.error('Error fetching tardiness:', e);
+        } finally {
+            hrLoading.value = false;
+        }
+    };
+
+    /**
+     * Fetch time slips from API
+     */
+    const fetchTimeSlips = async () => {
+        try {
+            const response = await fetch('/api/time-slips');
+            if (response.ok) {
+                timeSlips.value = await response.json();
+            }
+        } catch (e) {
+            console.error('Error fetching time slips:', e);
         } finally {
             hrLoading.value = false;
         }
@@ -573,7 +590,8 @@ export const useHRData = () => {
                 fetchLeaves(),
                 fetchTravelOrders(),
                 fetchPassSlips(),
-                fetchTardiness()
+                fetchTardiness(),
+                fetchTimeSlips()
             ]);
         } finally {
             hrLoading.value = false;
@@ -586,6 +604,7 @@ export const useHRData = () => {
         travelOrders,
         passSlips,
         tardiness,
+        timeSlips,
         hrLoading,
         selectedHRMonth,
         selectedHRYear,
@@ -596,6 +615,7 @@ export const useHRData = () => {
         fetchTravelOrders,
         fetchPassSlips,
         fetchTardiness,
+        fetchTimeSlips,
         fetchAllHRData,
 
         // Computed properties

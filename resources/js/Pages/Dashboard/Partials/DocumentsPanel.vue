@@ -109,6 +109,8 @@
             :get-time-left-styles="getTimeLeftStyles"
             :get-custodian-name="getCustodianName"
             :toggle-expanded="toggleExpanded"
+            :format-duration="formatDuration"
+            :get-action-type="getActionType"
             @update:sort-by="sortBy = $event"
             @update:sort-order="sortOrder = $event"
         />
@@ -226,6 +228,8 @@ const props = defineProps<{
     getTimeLeftStyles: (doc: Document) => object;
     getCustodianName: (doc: Document) => string;
     toggleExpanded: (id: number) => void;
+    formatDuration: (hours: number) => string;
+    getActionType: (action: string) => string;
 }>();
 
 const emit = defineEmits<{

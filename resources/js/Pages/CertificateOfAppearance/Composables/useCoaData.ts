@@ -25,7 +25,7 @@ export function useCoaData() {
     const searchQuery = ref('');
     const currentPage = ref(1);
     const itemsPerPage = ref(10);
-    const sortBy = ref<'id' | 'control_no' | 'date' | 'purpose' | 'name'>('control_no');
+    const sortBy = ref<'control_no' | 'name' | 'office' | 'purpose' | 'date'>('control_no');
     const sortOrder = ref<'asc' | 'desc'>('desc');
     const loading = ref(false);
     const error = ref<string | null>(null);
@@ -56,15 +56,10 @@ export function useCoaData() {
             let aVal: any;
             let bVal: any;
 
-            if (sortBy.value === 'id') {
-                aVal = a.id;
-                bVal = b.id;
-            } else {
-                aVal = a[sortBy.value as keyof CertificateOfAppearance];
-                bVal = b[sortBy.value as keyof CertificateOfAppearance];
-                aVal = aVal?.toString().toLowerCase() || '';
-                bVal = bVal?.toString().toLowerCase() || '';
-            }
+            aVal = a[sortBy.value as keyof CertificateOfAppearance];
+            bVal = b[sortBy.value as keyof CertificateOfAppearance];
+            aVal = aVal?.toString().toLowerCase() || '';
+            bVal = bVal?.toString().toLowerCase() || '';
 
             let comparison = 0;
             if (aVal < bVal) comparison = -1;

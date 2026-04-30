@@ -185,7 +185,7 @@ export function useRecordsData() {
         }
     };
 
-    const toggleSort = (field: 'record_no' | 'record_type' | 'title' | 'created_at' | 'record_subtype' | 'remarks' | 'file_extension') => {
+    const toggleSort = (field: 'id' | 'record_no' | 'title' | 'created_at' | 'record_subtype' | 'remarks' | 'file_extension') => {
         if (sortBy.value === field) {
             sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc';
         } else {

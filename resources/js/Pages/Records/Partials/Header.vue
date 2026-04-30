@@ -15,14 +15,14 @@
                 <i class="fas fa-search text-gray-400"></i>
                 <input
                     :value="searchQuery"
-                    @input="$emit('update:search-query', $event.target.value)"
+                    @input="$emit('update:search-query', ($event.target as HTMLInputElement).value)"
                     type="text"
                     placeholder="Search records..."
                     class="border border-gray-300 rounded-lg px-4 py-2 text-xs flex-1 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white w-80"
                 />
                 <select
                     :value="itemsPerPage"
-                    @change="$emit('update:items-per-page', Number($event.target.value))"
+                    @change="$emit('update:items-per-page', Number(($event.target as HTMLSelectElement).value))"
                     class="border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 rounded-lg px-3 py-2 text-xs text-gray-900 dark:text-white focus:outline-none focus:border-emerald-500 dark:focus:border-emerald-500 transition-colors cursor-pointer"
                 >
                     <option value="10">10</option>

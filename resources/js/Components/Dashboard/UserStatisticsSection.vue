@@ -122,9 +122,9 @@
 import { computed } from 'vue';
 
 const props = defineProps({
-    filteredUserStatistics: Array,
+    filteredUserStatistics: Array<any>,
     expandedUserId: Number,
-    selectedUserDetails: Array,
+    selectedUserDetails: Array<any>,
     formatHours: Function,
 });
 

@@ -1489,6 +1489,7 @@ interface Document {
     document_type: string;
     particulars: string | null;
     source: string | null;
+    sb_no?: string | null;
     status: string;
     remarks: string | null;
     user_id: number;
@@ -1500,7 +1501,7 @@ interface Document {
 const currentTime = ref(new Date());
 
 /** Stores the interval ID for cleanup on component unmount */
-let timeUpdateInterval: NodeJS.Timeout | null = null;
+let timeUpdateInterval: ReturnType<typeof setInterval> | null = null;
 const toastRef = ref<InstanceType<typeof Toast> | null>(null);
 
 // ============== Helper Functions ==============
@@ -1598,7 +1599,7 @@ const finalizeModalRemarks = ref('');
 const offices = ref<Array<{id: number; office_name: string}>>([]);
 
 /** Stores the list of municipalities for external source */
-const municipalities = ref<Array<{id: number; name: string}>>([]);
+const municipalities = ref<Array<{id: number; name: string; city_class?: string}>>([]);
 
 /** Stores the list of users for document forwarding */
 const users = ref<Array<{id: number; name: string}>>([]);

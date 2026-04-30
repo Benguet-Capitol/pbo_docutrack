@@ -2,7 +2,7 @@
     <div class="border-t border-gray-200 dark:border-gray-700 p-6">
         <h4 class="font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
             <i class="fas fa-users text-blue-600"></i>
-            Employee Leaves Summary for {{ selectedHRYear }}
+            Employee Leaves Summary for {{ selectedHrYear }}
         </h4>
         <div class="overflow-x-auto">
             <table class="w-full text-sm">
@@ -50,7 +50,7 @@
 defineProps<{
     employeeLeavesSummary: any[];
     uniqueLeaveTypes: string[];
-    selectedHRYear: number;
+    selectedHrYear: number;
     getOtherLeaveTypes: (emp: any) => string[];
     getOtherLeaveTypesMap: (emp: any) => Record<string, number>;
 }>();

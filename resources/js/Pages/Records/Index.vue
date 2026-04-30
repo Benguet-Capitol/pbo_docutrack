@@ -85,7 +85,7 @@
                             <div class="relative">
                                 <select 
                                     :value="activeSubtype || ''"
-                                    @change="(e) => handleSubtypeChange(e.target.value || null)"
+                                    @change="(e) => handleSubtypeChange((e.target as HTMLSelectElement).value || null)"
                                     class="appearance-none px-3 py-1 text-xs font-medium rounded-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 cursor-pointer focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all width-auto pr-6"
                                 >
                                     <option value="">Select a subtype...</option>
@@ -218,7 +218,7 @@ const toastRef = ref<InstanceType<typeof Toast> | null>(null);
 
 // ============== Composables ==============
 const dataComposable = useRecordsData();
-const formComposable = useRecordsForm(dataComposable);
+const formComposable = useRecordsForm(dataComposable as any);
 
 // ============== Expose State from Composables ==============
 // Data Management

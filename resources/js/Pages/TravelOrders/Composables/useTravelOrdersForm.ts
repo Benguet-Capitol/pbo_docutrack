@@ -170,15 +170,7 @@ export function useTravelOrdersForm(employees: any, travelOrders: any) {
         }
     );
 
-    // Watch for changes to from_date and automatically sync to_date
-    watch(
-        () => formData.value.from_date,
-        (newFromDate) => {
-            if (newFromDate && !travelOrderToEdit.value) {
-                formData.value.to_date = newFromDate;
-            }
-        }
-    );
+
 
     // Watch for approver changes - if Provincial Governor is selected, auto-set supervisor to PBO
     watch(
@@ -274,7 +266,8 @@ export function useTravelOrdersForm(employees: any, travelOrders: any) {
     };
 
     const openPreviewModal = () => {
-        if (travelOrderToEdit.value) {
+        // If coming from table, populate formData from the selected travel order
+        if (isPreviewFromTable.value && travelOrderToEdit.value) {
             const order = travelOrderToEdit.value;
             formData.value = {
                 control_no: order.control_no,
@@ -293,6 +286,7 @@ export function useTravelOrdersForm(employees: any, travelOrders: any) {
                 approver_employee_id: order.approver_employee_id || null,
             };
         }
+        // Otherwise formData should already be populated from the edit/create modal
         showPreviewModal.value = true;
     };
 

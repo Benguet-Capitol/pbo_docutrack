@@ -144,24 +144,24 @@
         <!-- Expanded Details Section (moved to HRDetailsPanel) -->
         <HRDetailsPanel 
             v-if="expandedHRTypeLocal"
-            :expandedType="expandedHRTypeLocal"
-            :currentMonthLeavesByTypeWithEmployees="currentMonthLeavesByTypeWithEmployees"
-            :currentMonthTravelOrdersByEmp="currentMonthTravelOrdersByEmp"
-            :currentMonthPassSlipsByEmp="currentMonthPassSlipsByEmp"
-            :currentMonthTardinesssByEmp="currentMonthTardinesssByEmp"
-            :formatDateRange="formatDateRange"
-            :formatTime="formatTime"
-            :formatInclusiveDates="formatInclusiveDates"
+            :expanded-type="expandedHRTypeLocal"
+            :current-month-leaves-by-type-with-employees="currentMonthLeavesByTypeWithEmployees"
+            :current-month-travel-orders-by-emp="currentMonthTravelOrdersByEmp"
+            :current-month-pass-slips-by-emp="currentMonthPassSlipsByEmp"
+            :current-month-tardiness-by-emp="currentMonthTardinesssByEmp"
+            :format-date-range="formatDateRange"
+            :format-time="formatTime"
+            :format-inclusive-dates="formatInclusiveDates"
         />
 
         <!-- Employee Leaves by Type Summary (Yearly) (moved to HREmployeesTable) -->
         <HREmployeesTable 
             v-if="employeeLeavesSummary.length > 0"
-            :employeeLeavesSummary="employeeLeavesSummary"
-            :uniqueLeaveTypes="uniqueLeaveTypes"
-            :selectedHRYear="selectedHRYearLocal"
-            :getOtherLeaveTypes="getOtherLeaveTypes"
-            :getOtherLeaveTypesMap="getOtherLeaveTypesMap"
+            :employee-leaves-summary="employeeLeavesSummary"
+            :unique-leave-types="uniqueLeaveTypes"
+            :selected-hr-year="selectedHRYear"
+            :get-other-leave-types="getOtherLeaveTypes"
+            :get-other-leave-types-map="getOtherLeaveTypesMap"
         />
     </div>
 </template>
@@ -176,21 +176,21 @@ const props = defineProps({
     hrLoading: Boolean,
     selectedHRYear: Number,
     selectedHRMonth: Number,
-    availableHRYears: Array,
-    currentMonthLeaves: Array,
+    availableHRYears: Array<number>,
+    currentMonthLeaves: Array<any>,
     currentMonthLeavesByType: Object,
     currentMonthLeavesByTypeWithEmployees: Object,
-    currentMonthTravelOrders: Array,
+    currentMonthTravelOrders: Array<any>,
     uniqueEmployeesTravelOrders: Object,
     currentMonthTravelOrdersByEmp: Object,
-    currentMonthPassSlips: Array,
+    currentMonthPassSlips: Array<any>,
     uniqueEmployeesPassSlips: Object,
     currentMonthPassSlipsByEmp: Object,
-    currentMonthTardiness: Array,
+    currentMonthTardiness: Array<any>,
     uniqueEmployeesTardiness: Object,
     currentMonthTardinesssByEmp: Object,
-    employeeLeavesSummary: Array,
-    uniqueLeaveTypes: Array,
+    employeeLeavesSummary: Array<any>,
+    uniqueLeaveTypes: Array<any>,
     formatDateRange: Function,
     formatTime: Function,
     formatInclusiveDates: Function,

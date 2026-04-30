@@ -139,6 +139,7 @@ defineProps<{
     currentMonthTardinesssByEmp: Record<string, any[]>;
     formatDateRange: (from: any, to: any) => string;
     formatTime: (time: string) => string;
+    formatInclusiveDates: (dates: any) => string;
 }>();
 
 const formatInclusiveDatesForDisplay = (inclusiveDates: string[] | undefined): string => {

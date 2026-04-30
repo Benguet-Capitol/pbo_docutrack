@@ -74,6 +74,22 @@ export function useTravelOrdersData() {
         return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
     };
 
+    const formatInclusiveDateForSearch = (dateEntry: string): string => {
+        if (!dateEntry) return '';
+        
+        if (dateEntry.includes(' - ')) {
+            const [startStr, endStr] = dateEntry.split(' - ');
+            const startDate = new Date(startStr.trim());
+            const endDate = new Date(endStr.trim());
+            const start = startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            const end = endDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            return `${start} - ${end}`;
+        } else {
+            const date = new Date(dateEntry.trim());
+            return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        }
+    };
+
     const filteredTravelOrders = computed(() => {
         let filtered = travelOrders.value;
 
@@ -93,11 +109,17 @@ export function useTravelOrdersData() {
                 // Search in employee names
                 if (order.employees.some(emp => emp.name.toLowerCase().includes(query))) return true;
                 
-                // Search in from_date and to_date (both raw and formatted)
-                if (order.from_date.toLowerCase().includes(query)) return true;
-                if (formatDateForDisplay(order.from_date).toLowerCase().includes(query)) return true;
-                if (order.to_date.toLowerCase().includes(query)) return true;
-                if (formatDateForDisplay(order.to_date).toLowerCase().includes(query)) return true;
+                // Search in inclusive_dates array (both raw and formatted)
+                if (order.inclusive_dates && order.inclusive_dates.length > 0) {
+                    if (order.inclusive_dates.some(date => date.toLowerCase().includes(query))) return true;
+                    if (order.inclusive_dates.some(date => formatInclusiveDateForSearch(date).toLowerCase().includes(query))) return true;
+                }
+                
+                // Search in from_date and to_date (both raw and formatted) - fallback for when inclusive_dates not available
+                if (order.from_date && order.from_date.toLowerCase().includes(query)) return true;
+                if (order.from_date && formatDateForDisplay(order.from_date).toLowerCase().includes(query)) return true;
+                if (order.to_date && order.to_date.toLowerCase().includes(query)) return true;
+                if (order.to_date && formatDateForDisplay(order.to_date).toLowerCase().includes(query)) return true;
                 
                 // Search in purpose array
                 if (order.purpose.some(p => p.toLowerCase().includes(query))) return true;

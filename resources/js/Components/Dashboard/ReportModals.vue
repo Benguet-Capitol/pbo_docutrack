@@ -221,9 +221,9 @@ const props = defineProps({
     showSummaryModal: Boolean,
     summaryData: Object,
     summaryErrors: Object,
-    supervisorUsers: Array,
-    administratorUsers: Array,
-    administrativeStaffEmployees: Array,
+    supervisorUsers: Array<any>,
+    administratorUsers: Array<any>,
+    administrativeStaffEmployees: Array<any>,
 });
 
 const emit = defineEmits([

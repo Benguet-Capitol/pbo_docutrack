@@ -11,7 +11,8 @@ export const useReports = (
     travelOrders?: Ref<any[]>,
     passSlips?: Ref<any[]>,
     tardiness?: Ref<any[]>,
-    administrativeStaffEmployees?: Ref<any[]>
+    administrativeStaffEmployees?: Ref<any[]>,
+    timeSlips?: Ref<any[]>
 ) => {
     const showReportModal = ref(false);
     const reportData = ref({
@@ -675,6 +676,54 @@ export const useReports = (
                 });
             });
 
+            // Process time slips
+            const timeSlipsData = timeSlips?.value || [];
+            
+            timeSlipsData.forEach((ts: any) => {
+                if (!isInMonth(ts.date)) {
+                    return;
+                }
+                
+                if (summaryData.value.employmentType === 'casual' && !isDateInCasualPeriod(ts.date)) {
+                    return;
+                }
+                
+                const empId = ts.requesting_employee_id;
+                let employee = ts.requesting_employee;
+                if (!employee && empId) {
+                    employee = employees.value.find(e => e.id === empId);
+                }
+                if (!employee) {
+                    return;
+                }
+                
+                const empType = getEmploymentType(employee);
+                
+                if (empType !== summaryData.value.employmentType) {
+                    return;
+                }
+                
+                if (!employeeData.has(empId)) {
+                    employeeData.set(empId, {
+                        employee_id: employee?.employee_id || '',
+                        id: empId,
+                        name: employee?.name || 'N/A',
+                        designation: employee?.designation || '',
+                        leaves: [],
+                        passSlips: [],
+                        travelOrders: [],
+                        tardiness: []
+                    });
+                }
+                
+                // Add time slip to passSlips array for combined display
+                employeeData.get(empId)!.passSlips.push({
+                    ...ts,
+                    isTimeSlip: true,
+                    date: ts.date  // Use date field for time slips
+                });
+            });
+
             // Process travel orders
             travelOrdersData.forEach((to: any) => {
                 if (!travelOrderInMonth(to)) return;
@@ -1001,15 +1050,38 @@ export const useReports = (
                             }
                         }
                         html += '<td style="text-align: center; padding: 4px 3px; width: 6%; font-size: 11px;">' + psDate + '</td>';
-                        html += '<td style="text-align: center; padding: 4px 3px; width: 6%; font-size: 11px;">' + (ps ? formatTime(ps.requested_time || '') : '') + '</td>';
+                        
+                        // Time of Departure - show all available times for time slips (comma-separated), or requested_time for pass slips
+                        let departureTime = '';
+                        if (ps) {
+                            if (ps.isTimeSlip) {
+                                // For time slips, collect all available times and join with commas
+                                const times = [];
+                                if (ps.time_in_am) times.push(formatTime(ps.time_in_am));
+                                if (ps.time_out_am) times.push(formatTime(ps.time_out_am));
+                                if (ps.time_in_pm) times.push(formatTime(ps.time_in_pm));
+                                if (ps.time_out_pm) times.push(formatTime(ps.time_out_pm));
+                                departureTime = times.join(', ');
+                            } else {
+                                // For pass slips, use requested_time
+                                departureTime = formatTime(ps.requested_time || '');
+                            }
+                        }
+                        html += '<td style="text-align: center; padding: 4px 3px; width: 6%; font-size: 11px;">' + departureTime + '</td>';
                         
                         let returnTimeDisplay = '';
                         if (ps) {
-                            let returnTypeLabel = ps.expected_return_time || '';
-                            if (ps.remarks) {
-                                returnTimeDisplay = returnTypeLabel + ' (' + ps.remarks + ')';
+                            if (ps.isTimeSlip) {
+                                // For time slips, display "Time Slip"
+                                returnTimeDisplay = 'Time Slip';
                             } else {
-                                returnTimeDisplay = returnTypeLabel;
+                                // For pass slips, use expected_return_time with remarks
+                                let returnTypeLabel = ps.expected_return_time || '';
+                                if (ps.remarks) {
+                                    returnTimeDisplay = returnTypeLabel + ' (' + ps.remarks + ')';
+                                } else {
+                                    returnTimeDisplay = returnTypeLabel;
+                                }
                             }
                         }
                         html += '<td style="text-align: center; padding: 4px 3px; width: 6%; font-size: 11px;">' + returnTimeDisplay + '</td>';

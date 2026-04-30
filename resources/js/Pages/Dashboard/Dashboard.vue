@@ -1203,7 +1203,7 @@ const selectedUser = ref<number | null>(null);
 const currentTime = ref(new Date());
 
 /** Stores the interval ID for cleanup on component unmount */
-let timeUpdateInterval: NodeJS.Timeout | null = null;
+let timeUpdateInterval: ReturnType<typeof setInterval> | null = null;
 
 // ============== Report Generation ==============
 const showReportModal = ref(false);
@@ -3703,6 +3703,7 @@ const generateSummaryReport = async () => {
         summaryData.value = {
             month: null,
             employmentType: '',
+            casualPeriod: '',
             preparedBy: null,
             certifiedCorrect: null,
             remarks: '',

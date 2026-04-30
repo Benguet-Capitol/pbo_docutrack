@@ -45,29 +45,29 @@
             <!-- Documents Section Component -->
             <DocumentsSection
                 :documents="documents"
-                :searchQuery="searchQuery"
-                :sortBy="sortBy"
-                :sortOrder="sortOrder"
-                :itemsPerPage="itemsPerPage"
-                :currentPage="currentPage"
-                :expandedDocumentId="expandedDocumentId"
-                :selectedYear="selectedYear"
-                :selectedSemester="selectedSemester"
-                :selectedUser="selectedUser"
-                :filteredDocuments="filteredDocuments"
-                :paginatedDocuments="paginatedDocuments"
-                :totalPages="totalPages"
-                :availableYears="availableYears"
-                :availableUsers="availableUsers"
+                :search-query="searchQuery"
+                :sort-by="sortBy"
+                :sort-order="sortOrder"
+                :items-per-page="itemsPerPage"
+                :current-page="currentPage"
+                :expanded-document-id="expandedDocumentId"
+                :selected-year="selectedYear"
+                :selected-semester="selectedSemester"
+                :selected-user="selectedUser"
+                :filtered-documents="filteredDocuments"
+                :paginated-documents="paginatedDocuments"
+                :total-pages="totalPages"
+                :available-years="availableYears"
+                :available-users="availableUsers"
                 :loading="loading"
                 :error="error"
-                :calculateProcessingTime="calculateProcessingTime"
-                :getTimeLeftText="getTimeLeftText"
-                :getTimeLeftStyles="getTimeLeftStyles"
-                :getCustodianName="getCustodianName"
-                :formatDuration="formatDuration"
-                :getActionType="getActionType"
-                :matchesYearAndSemester="matchesYearAndSemester"
+                :calculate-processing-time="calculateProcessingTime"
+                :get-time-left-text="getTimeLeftText"
+                :get-time-left-styles="getTimeLeftStyles"
+                :get-custodian-name="getCustodianName"
+                :format-duration="formatDuration"
+                :get-action-type="getActionType"
+                :match-year-and-semester="matchesYearAndSemester"
                 @update:searchQuery="handleUpdateSearchQuery"
                 @update:itemsPerPage="handleUpdateItemsPerPage"
                 @update:currentPage="handleUpdateCurrentPage"
@@ -186,7 +186,8 @@ const reportsComposable = useReports(
     hrComposable.travelOrders,
     hrComposable.passSlips,
     hrComposable.tardiness,
-    administrativeStaffEmployees as any
+    administrativeStaffEmployees as any,
+    hrComposable.timeSlips
 );
 
 // ============== Extract States from Composables ==============

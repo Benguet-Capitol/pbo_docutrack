@@ -43,8 +43,8 @@
                 <Table 
                     v-else
                     :records="paginatedPassSlips"
-                    :sort-by="sortBy.value"
-                    :sort-order="sortOrder.value"
+                    :sort-by="sortBy"
+                    :sort-order="sortOrder"
                     @edit="handleEditClick"
                     @delete="handleDeleteClick"
                     @preview="handlePreviewClick"

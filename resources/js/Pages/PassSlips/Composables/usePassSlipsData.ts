@@ -60,20 +60,66 @@ export function usePassSlipsData() {
         return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
     };
 
+    const formatInclusiveDateForSearch = (dateEntry: string): string => {
+        if (!dateEntry) return '';
+        
+        if (dateEntry.includes(' - ')) {
+            const [startStr, endStr] = dateEntry.split(' - ');
+            const startDate = new Date(startStr.trim());
+            const endDate = new Date(endStr.trim());
+            const start = startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            const end = endDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            return `${start} - ${end}`;
+        } else {
+            const date = new Date(dateEntry.trim());
+            return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        }
+    };
+
     const filteredPassSlips = computed(() => {
         let filtered = passSlips.value;
 
         if (searchQuery.value) {
             const query = searchQuery.value.toLowerCase();
-            filtered = filtered.filter(slip =>
-                slip.control_no.toLowerCase().includes(query) ||
-                formattedDate(slip.date).toLowerCase().includes(query) ||
-                formatTimeForSearch(slip.requested_time).toLowerCase().includes(query) ||
-                slip.purpose.toLowerCase().includes(query) ||
-                slip.location.toLowerCase().includes(query) ||
-                formatTimeForSearch(slip.expected_return_time).toLowerCase().includes(query) ||
-                slip.employees.some(emp => emp.name.toLowerCase().includes(query))
-            );
+            filtered = filtered.filter(slip => {
+                // Search in control_no
+                if (slip.control_no.toLowerCase().includes(query)) return true;
+                
+                // Search in date (both raw and formatted)
+                if (slip.date.toLowerCase().includes(query)) return true;
+                if (formattedDate(slip.date).toLowerCase().includes(query)) return true;
+                
+                // Search in inclusive_dates (both raw and formatted)
+                if (slip.inclusive_dates && slip.inclusive_dates.length > 0) {
+                    if (slip.inclusive_dates.some(date => date.toLowerCase().includes(query))) return true;
+                    if (slip.inclusive_dates.some(date => formatInclusiveDateForSearch(date).toLowerCase().includes(query))) return true;
+                }
+                
+                // Search in requested_time (both raw and formatted)
+                if (slip.requested_time.toLowerCase().includes(query)) return true;
+                if (formatTimeForSearch(slip.requested_time).toLowerCase().includes(query)) return true;
+                
+                // Search in purpose
+                if (slip.purpose.toLowerCase().includes(query)) return true;
+                
+                // Search in location
+                if (slip.location.toLowerCase().includes(query)) return true;
+                
+                // Search in expected_return_time (both raw and formatted)
+                if (slip.expected_return_time.toLowerCase().includes(query)) return true;
+                if (formatTimeForSearch(slip.expected_return_time).toLowerCase().includes(query)) return true;
+                
+                // Search in remarks
+                if (slip.remarks && slip.remarks.toLowerCase().includes(query)) return true;
+                
+                // Search in vehicle
+                if (slip.vehicle && slip.vehicle.toLowerCase().includes(query)) return true;
+                
+                // Search in employee names
+                if (slip.employees.some(emp => emp.name.toLowerCase().includes(query))) return true;
+                
+                return false;
+            });
         }
 
         // Sort by field and order

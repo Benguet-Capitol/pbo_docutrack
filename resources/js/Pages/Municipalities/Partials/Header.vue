@@ -18,7 +18,7 @@
                     <i class="fas fa-search text-gray-400 absolute left-3"></i>
                     <input
                         :value="searchQuery"
-                        @input="$emit('update:searchQuery', $event.target.value)"
+                        @input="$emit('update:searchQuery', ($event.target as HTMLInputElement).value)"
                         type="text"
                         placeholder="Search municipalities..."
                         class="border border-gray-300 rounded-lg pl-10 pr-4 py-2 text-xs dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white w-80 focus:outline-none focus:border-emerald-500 dark:focus:border-emerald-500"
@@ -28,7 +28,7 @@
                 <!-- Items Per Page Selector: Controls number of items displayed per page -->
                 <select
                     :value="itemsPerPage"
-                    @change="$emit('update:itemsPerPage', $event.target.value)"
+                    @change="$emit('update:itemsPerPage', ($event.target as HTMLSelectElement).value)"
                     class="border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 rounded-lg px-3 py-2 text-xs text-gray-900 dark:text-white focus:outline-none focus:border-emerald-500 dark:focus:border-emerald-500 transition-colors cursor-pointer"
                 >
                     <option value="10">10</option>

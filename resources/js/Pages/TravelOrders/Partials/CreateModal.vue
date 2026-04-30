@@ -81,10 +81,10 @@
                                         </button>
                                     </div>
                                     <div class="flex flex-wrap gap-2">
-                                        <span v-for="(entry, idx) in formData.inclusive_dates" :key="idx" @click="editInclusiveDate(idx)" class="inline-flex items-center gap-2 px-3 py-1.5 bg-emerald-100 dark:bg-emerald-900 text-emerald-800 dark:text-emerald-200 rounded text-xs cursor-pointer hover:bg-emerald-200 dark:hover:bg-emerald-800 transition-colors">
+                                        <span v-for="(entry, idx) in formData.inclusive_dates" :key="idx" @click="editInclusiveDate(idx as number)" class="inline-flex items-center gap-2 px-3 py-1.5 bg-emerald-100 dark:bg-emerald-900 text-emerald-800 dark:text-emerald-200 rounded text-xs cursor-pointer hover:bg-emerald-200 dark:hover:bg-emerald-800 transition-colors">
                                             <i class="fas fa-edit text-emerald-600 dark:text-emerald-400"></i>
                                             {{ formatInclusiveDate(entry) }}
-                                            <button @click.stop="removeInclusiveDate(idx)" class="text-emerald-600 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-200 font-bold">×</button>
+                                            <button @click.stop="removeInclusiveDate(idx as number)" class="text-emerald-600 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-200 font-bold">×</button>
                                         </span>
                                     </div>
                                 </div>
@@ -103,15 +103,15 @@
                                 <div v-if="formData.purpose.length > 0" class="flex flex-wrap gap-2">
                                     <div v-for="(p, index) in formData.purpose" :key="index" class="inline-flex items-center gap-2 px-3 py-1 bg-emerald-100 dark:bg-emerald-900 text-emerald-800 dark:text-emerald-200 rounded-full text-xs">
                                         <span v-if="editingPurposeIndex !== index">{{ p }}</span>
-                                        <textarea v-else v-model="editingPurposeValue" class="bg-emerald-200 dark:bg-emerald-800 border-0 px-2 py-1 rounded text-emerald-900 dark:text-emerald-100 text-xs focus:outline-none resize-none" rows="4" @keyup.enter="saveEditPurpose(index)" @keyup.escape="cancelEditPurpose"></textarea>
+                                        <textarea v-else v-model="editingPurposeValue" class="bg-emerald-200 dark:bg-emerald-800 border-0 px-2 py-1 rounded text-emerald-900 dark:text-emerald-100 text-xs focus:outline-none resize-none" rows="4" @keyup.enter="saveEditPurpose(index as number)" @keyup.escape="cancelEditPurpose"></textarea>
                                         <div class="flex gap-1">
-                                            <button v-if="editingPurposeIndex !== index" @click="startEditPurpose(index)" type="button" class="hover:text-emerald-600 dark:hover:text-emerald-300 transition-colors">
+                                            <button v-if="editingPurposeIndex !== index" @click="startEditPurpose(index as number)" type="button" class="hover:text-emerald-600 dark:hover:text-emerald-300 transition-colors">
                                                 <i class="fas fa-edit text-xs"></i>
                                             </button>
-                                            <button v-else @click="saveEditPurpose(index)" type="button" class="hover:text-emerald-600 dark:hover:text-emerald-300 transition-colors">
+                                            <button v-else @click="saveEditPurpose(index as number)" type="button" class="hover:text-emerald-600 dark:hover:text-emerald-300 transition-colors">
                                                 <i class="fas fa-check text-xs"></i>
                                             </button>
-                                            <button v-if="editingPurposeIndex !== index" @click="removePurpose(index)" type="button" class="hover:text-emerald-600 dark:hover:text-emerald-300 transition-colors">
+                                            <button v-if="editingPurposeIndex !== index" @click="removePurpose(index as number)" type="button" class="hover:text-emerald-600 dark:hover:text-emerald-300 transition-colors">
                                                 <i class="fas fa-times"></i>
                                             </button>
                                             <button v-else @click="cancelEditPurpose" type="button" class="hover:text-emerald-600 dark:hover:text-emerald-300 transition-colors">

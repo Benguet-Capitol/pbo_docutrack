@@ -1,5 +1,5 @@
 import { ref, computed } from 'vue';
-import type { Record } from './useRecordsData';
+import type { Record as RecordModel } from './useRecordsData';
 
 export interface FormData {
     record_no: string;
@@ -17,7 +17,7 @@ const recordTypeAbbreviations = {
     'Issuances / Circulars / Other References and Documents': 'ISO',
 };
 
-export function useRecordsForm(records: { value: Record[] }) {
+export function useRecordsForm(records: { value: RecordModel[] }) {
     const showCreateModal = ref(false);
     const showEditModal = ref(false);
     const showDeleteModal = ref(false);
@@ -27,8 +27,8 @@ export function useRecordsForm(records: { value: Record[] }) {
     const updating = ref(false);
     const deleting = ref(false);
 
-    const recordToEdit = ref<Record | null>(null);
-    const recordToDelete = ref<Record | null>(null);
+    const recordToEdit = ref<RecordModel | null>(null);
+    const recordToDelete = ref<RecordModel | null>(null);
 
     const formData = ref<FormData>({
         record_no: '',
@@ -181,7 +181,7 @@ export function useRecordsForm(records: { value: Record[] }) {
         }
     };
 
-    const handleEditRecord = (record: Record) => {
+    const handleEditRecord = (record: RecordModel) => {
         recordToEdit.value = record;
         formData.value = { 
             record_no: record.record_no,
@@ -253,7 +253,7 @@ export function useRecordsForm(records: { value: Record[] }) {
         }
     };
 
-    const openDeleteModal = (record: Record) => {
+    const openDeleteModal = (record: RecordModel) => {
         recordToDelete.value = record;
         showDeleteModal.value = true;
     };
@@ -313,13 +313,13 @@ export function useRecordsForm(records: { value: Record[] }) {
         }
     };
 
-    const viewFile = (record: Record) => {
+    const viewFile = (record: RecordModel) => {
         if (record.image_path) {
             window.open(`/api/records/${record.id}/view`, '_blank');
         }
     };
 
-    const downloadFile = (record: Record) => {
+    const downloadFile = (record: RecordModel) => {
         if (record.image_path) {
             const link = document.createElement('a');
             link.href = `/api/records/${record.id}/download`;

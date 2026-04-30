@@ -118,17 +118,7 @@
         <!-- Expanded Details Section -->
         <HRDetailsPanel
             v-if="expandedHRType"
-            :expanded-type="expandedHRType"
-            :current-month-leaves="currentMonthLeaves"
-            :current-month-leaves-by-type-with-employees="currentMonthLeavesByTypeWithEmployees"
-            :current-month-travel-orders="currentMonthTravelOrders"
-            :current-month-travel-orders-by-emp="currentMonthTravelOrdersByEmp"
-            :current-month-pass-slips="currentMonthPassSlips"
-            :current-month-pass-slips-by-emp="currentMonthPassSlipsByEmp"
-            :current-month-tardiness="currentMonthTardiness"
-            :current-month-tardiness-by-emp="currentMonthTardinesssByEmp"
-            :format-date-range="formatDateRange"
-            :format-time="formatTime"
+            v-bind="hrDetailsPanelProps"
         />
 
         <!-- Employee Leaves Summary Table -->
@@ -136,7 +126,7 @@
             v-if="employeeLeavesSummary.length > 0"
             :employee-leaves-summary="employeeLeavesSummary"
             :unique-leave-types="uniqueLeaveTypes"
-            :selected-hr-year="selectedYear"
+            :selected-hr-year="selectedHRYear"
             :get-other-leave-types="getOtherLeaveTypes"
             :get-other-leave-types-map="getOtherLeaveTypesMap"
         />
@@ -160,6 +150,7 @@ const props = defineProps<{
     uniqueLeaveTypes: string[];
     formatDateRange: (from: any, to: any) => string;
     formatTime: (time: string) => string;
+    formatInclusiveDates: (dates: any) => string;
     getOtherLeaveTypes: (emp: any) => string[];
     getOtherLeaveTypesMap: (emp: any) => Record<string, number>;
 }>();
@@ -246,6 +237,28 @@ const currentMonthLeavesByTypeWithEmployees = computed(() => {
     });
     return grouped;
 });
+
+// Alias for HRDetailsPanel component (expected prop name)
+const currentMonthLeavesTypeWithEmployees = computed(() => currentMonthLeavesByTypeWithEmployees.value);
+
+// Alias for HREmployeesSummaryTable component (expected prop name - selectedHRYear not selectedYear)
+const selectedHRYear = computed(() => selectedYear.value);
+
+// Create readonly props object for HRDetailsPanel component
+const hrDetailsPanelProps = computed(() => ({
+    expandedType: props.expandedHRType,
+    currentMonthLeaves: currentMonthLeaves.value,
+    currentMonthLeavesTypeWithEmployees: currentMonthLeavesTypeWithEmployees.value,
+    currentMonthTravelOrders: currentMonthTravelOrders.value,
+    currentMonthTravelOrdersByEmp: currentMonthTravelOrdersByEmp.value,
+    currentMonthPassSlips: currentMonthPassSlips.value,
+    currentMonthPassSlipsByEmp: currentMonthPassSlipsByEmp.value,
+    currentMonthTardiness: currentMonthTardiness.value,
+    currentMonthTardinesssByEmp: currentMonthTardinesssByEmp.value,
+    formatDateRange: props.formatDateRange,
+    formatTime: props.formatTime,
+    formatInclusiveDates: props.formatInclusiveDates,
+} as const));
 
 const travelOrderInSelectedMonth = (to: any): boolean => {
     if (!to.from_date || !to.to_date) return false;

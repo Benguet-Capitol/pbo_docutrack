@@ -54,19 +54,51 @@ export function useTardinessData() {
         }
     };
 
+    const formatDateForDisplay = (dateStr: string): string => {
+        if (!dateStr) return '';
+        const date = new Date(dateStr);
+        return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+    };
+
     const filteredTardiness = computed(() => {
         let filtered = tardiness.value;
 
         if (searchQuery.value) {
             const query = searchQuery.value.toLowerCase();
-            filtered = filtered.filter(record =>
-                record.control_no.toLowerCase().includes(query) ||
-                record.employee?.name.toLowerCase().includes(query) ||
-                record.reason.toLowerCase().includes(query) ||
-                record.type.toLowerCase().includes(query) ||
-                formatTimeForSearch(record.requested_time).toLowerCase().includes(query) ||
-                formatTimeForSearch(record.return_time).toLowerCase().includes(query)
-            );
+            filtered = filtered.filter(record => {
+                // Search in control_no
+                if (record.control_no.toLowerCase().includes(query)) return true;
+                
+                // Search in employee name
+                if (record.employee?.name.toLowerCase().includes(query)) return true;
+                
+                // Search in reason
+                if (record.reason.toLowerCase().includes(query)) return true;
+                
+                // Search in type
+                if (record.type.toLowerCase().includes(query)) return true;
+                
+                // Search in requested_time (both raw and formatted)
+                if (record.requested_time.toLowerCase().includes(query)) return true;
+                if (formatTimeForSearch(record.requested_time).toLowerCase().includes(query)) return true;
+                
+                // Search in return_time (both raw and formatted)
+                if (record.return_time && record.return_time.toLowerCase().includes(query)) return true;
+                if (record.return_time && formatTimeForSearch(record.return_time).toLowerCase().includes(query)) return true;
+                
+                // Search in requested_date (both raw and formatted)
+                if (record.requested_date.toLowerCase().includes(query)) return true;
+                if (formatDateForDisplay(record.requested_date).toLowerCase().includes(query)) return true;
+                
+                // Search in date_filed (both raw and formatted)
+                if (record.date_filed.toLowerCase().includes(query)) return true;
+                if (formatDateForDisplay(record.date_filed).toLowerCase().includes(query)) return true;
+                
+                // Search in supervisor name
+                if (record.supervisor?.name.toLowerCase().includes(query)) return true;
+                
+                return false;
+            });
         }
 
         // Sort by specified field and order

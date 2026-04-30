@@ -20,7 +20,7 @@
                     <!-- Items Per Page Selector: Controls number of items displayed per page -->
                     <select
                         :value="itemsPerPageLocal"
-                        @change="(e) => emit('update:itemsPerPage', Number(e.target.value))"
+                        @change="(e) => emit('update:itemsPerPage', Number((e.target as HTMLSelectElement).value))"
                         class="border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 rounded-lg px-3 py-2 text-xs text-gray-900 dark:text-white focus:outline-none focus:border-emerald-500 dark:focus:border-emerald-500 transition-colors cursor-pointer"
                     >
                         <option :value="10">10</option>
@@ -41,7 +41,7 @@
                         <label class="text-xs font-semibold text-gray-700 dark:text-gray-300">Year</label>
                         <select
                             :value="String(selectedYearLocal === null ? '' : selectedYearLocal)"
-                            @change="(e) => { const val = e.target.value === '' ? null : Number(e.target.value); emit('update:selectedYear', val); }"
+                            @change="(e) => { const val = (e.target as HTMLSelectElement).value === '' ? null : Number((e.target as HTMLSelectElement).value); emit('update:selectedYear', val); }"
                             class="border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 rounded-lg px-3 py-2 text-xs text-gray-900 dark:text-white focus:outline-none focus:border-emerald-500 dark:focus:border-emerald-500 transition-colors cursor-pointer"
                         >
                             <option value="">All Years</option>
@@ -56,7 +56,7 @@
                         <label class="text-xs font-semibold text-gray-700 dark:text-gray-300">Semester</label>
                         <select
                             :value="String(selectedSemesterLocal === null ? '' : selectedSemesterLocal)"
-                            @change="(e) => { const val = e.target.value === '' ? null : Number(e.target.value); emit('update:selectedSemester', val); }"
+                            @change="(e) => { const val = (e.target as HTMLSelectElement).value === '' ? null : Number((e.target as HTMLSelectElement).value); emit('update:selectedSemester', val); }"
                             class="border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 rounded-lg px-3 py-2 text-xs text-gray-900 dark:text-white focus:outline-none focus:border-emerald-500 dark:focus:border-emerald-500 transition-colors cursor-pointer"
                         >
                             <option value="">All Semesters</option>
@@ -70,7 +70,7 @@
                         <label class="text-xs font-semibold text-gray-700 dark:text-gray-300">User</label>
                         <select
                             :value="selectedUserLocal === null ? '' : selectedUserLocal"
-                            @change="(e) => { const val = e.target.value === '' ? null : Number(e.target.value); emit('update:selectedUser', val); }"
+                            @change="(e) => { const val = (e.target as HTMLSelectElement).value === '' ? null : Number((e.target as HTMLSelectElement).value); emit('update:selectedUser', val); }"
                             class="border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 rounded-lg px-3 py-2 text-xs text-gray-900 dark:text-white focus:outline-none focus:border-emerald-500 dark:focus:border-emerald-500 transition-colors cursor-pointer"
                         >
                             <option value="">All Users</option>
@@ -420,7 +420,7 @@ const props = defineProps({
     paginatedDocuments: Array<Document>,
     totalPages: Number,
     availableYears: Array<number>,
-    availableUsers: Array,
+    availableUsers: Array<{id: number; name: string}>,
     loading: Boolean,
     error: String,
     // Methods
