@@ -55,7 +55,6 @@
                         >
                             <option :value="null">All Semesters</option>
                             <option :value="1">1st Semester (Jan - Jun)</option>
-                            <option :value="2">2nd Semester (Jul - Dec)</option>
                         </select>
                     </div>
 
@@ -86,11 +85,11 @@
                 <!-- Right side: Report Buttons -->
                 <div class="flex gap-2 flex-col sm:flex-row">
                     <button
-                        @click="emit('show-report-modal')"
+                        @click="$emit('show-report-modal')"
                         class="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors text-xs font-medium"
                     >
                         <i class="fas fa-file-pdf"></i>
-                        Budget Proposal Report
+                        Documents Summary Report
                     </button>
                 </div>
             </div>

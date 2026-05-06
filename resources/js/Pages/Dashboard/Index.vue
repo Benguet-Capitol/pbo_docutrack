@@ -109,22 +109,38 @@
             <!-- Report Modals Component -->
             <ReportModals
                 :showReportModal="showReportModal"
-                :reportData="reportData"
-                :reportErrors="reportErrors"
-                :showSummaryModal="showSummaryModal"
-                :summaryData="summaryData"
-                :summaryErrors="summaryErrors"
+                :reportAsOfDateValue="reportData.asOfDate"
+                :reportDocumentTypeValue="reportData.documentType"
+                :reportReviewedByValue="reportData.reviewedBy"
+                :reportCertifiedCorrectValue="reportData.certifiedCorrect"
+                :availableDocumentTypes="availableDocumentTypes"
                 :supervisorUsers="supervisorUsers"
                 :administratorUsers="administratorUsers"
+                :reportError="reportErrors.submit || reportErrors.general || ''"
+                :showSummaryModal="showSummaryModal"
+                :summaryMonthValue="summaryData.month"
+                :summaryEmploymentTypeValue="summaryData.employmentType"
+                :summaryCasualPeriodValue="summaryData.casualPeriod"
+                :summaryPreparedByValue="summaryData.preparedBy"
+                :summaryCertifiedCorrectValue="summaryData.certifiedCorrect"
+                :summaryRemarksValue="summaryData.remarks"
                 :administrativeStaffEmployees="administrativeStaffEmployees"
-                @update:showReportModal="handleUpdateReportModal"
-                @update:reportData="handleUpdateReportData"
-                @update:reportErrors="handleUpdateReportErrors"
-                @update:showSummaryModal="handleUpdateSummaryModal"
-                @update:summaryData="handleUpdateSummaryData"
-                @update:summaryErrors="handleUpdateSummaryErrors"
-                @generateReport="generateReport"
-                @generateSummaryReport="handleGenerateSummaryReport"
+                :summaryError="summaryErrors.submit || summaryErrors.general || ''"
+                :lastDayOfMonth="lastDayOfSelectedMonth"
+                @update:report-as-of-date="(val) => reportData.asOfDate = val"
+                @update:report-document-type="(val) => reportData.documentType = val"
+                @update:report-reviewed-by="(val) => reportData.reviewedBy = val"
+                @update:report-certified-correct="(val) => reportData.certifiedCorrect = val"
+                @update:summary-month="(val) => summaryData.month = val"
+                @update:summary-employment-type="(val) => summaryData.employmentType = val"
+                @update:summary-casual-period="(val) => summaryData.casualPeriod = val"
+                @update:summary-prepared-by="(val) => summaryData.preparedBy = val"
+                @update:summary-certified-correct="(val) => summaryData.certifiedCorrect = val"
+                @update:summary-remarks="(val) => summaryData.remarks = val"
+                @close-report-modal="showReportModal = false"
+                @close-summary-modal="showSummaryModal = false"
+                @generate-report="generateReport"
+                @generate-summary-report="generateSummaryReport"
             />
         </div>
 
@@ -175,6 +191,17 @@ const administrativeStaffEmployees = computed(() => {
         const emp = documentsComposable.employees.value.find(e => e.name === user.name);
         return emp || { id: user.id, name: user.name, designation: '' };
     });
+});
+
+// Get available document types from all documents
+const availableDocumentTypes = computed(() => {
+    const types = new Set<string>();
+    documents.value.forEach(doc => {
+        if (doc.document_type) {
+            types.add(doc.document_type);
+        }
+    });
+    return Array.from(types).sort();
 });
 
 // Now initialize reportsComposable with administrativeStaffEmployees

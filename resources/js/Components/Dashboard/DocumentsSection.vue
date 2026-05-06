@@ -97,7 +97,7 @@
                         class="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors text-xs font-medium"
                     >
                         <i class="fas fa-file-pdf"></i>
-                        Budget Proposal Report
+                        Documents Summary Report
                     </button>
                 </div>
             </div>

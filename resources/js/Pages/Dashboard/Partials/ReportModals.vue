@@ -25,6 +25,20 @@
                     </div>
 
                     <div class="space-y-2">
+                        <label for="report_document_type" class="block text-xs font-medium text-gray-700 dark:text-gray-300">Document Type</label>
+                        <select
+                            v-model="reportDocumentType"
+                            id="report_document_type"
+                            class="w-full px-4 py-2 text-xs border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:outline-none focus:border-blue-500"
+                        >
+                            <option value="">All Document Types</option>
+                            <option v-for="docType in availableDocumentTypes" :key="docType" :value="docType">
+                                {{ docType }}
+                            </option>
+                        </select>
+                    </div>
+
+                    <div class="space-y-2">
                         <label for="report_reviewed_by" class="block text-xs font-medium text-gray-700 dark:text-gray-300">Reviewed By</label>
                         <select
                             v-model.number="reportReviewedBy"
@@ -201,10 +215,12 @@ const props = defineProps<{
     showReportModal: boolean;
     showSummaryModal: boolean;
     reportAsOfDateValue: string;
+    reportDocumentTypeValue: string;
     reportReviewedByValue: number | null;
     reportCertifiedCorrectValue: number | null;
     supervisorUsers: any[];
     administratorUsers: any[];
+    availableDocumentTypes: string[];
     summaryMonthValue: number | null;
     summaryEmploymentTypeValue: string;
     summaryCasualPeriodValue: string;
@@ -223,6 +239,7 @@ const emit = defineEmits<{
     'generate-report': [];
     'generate-summary-report': [];
     'update:report-as-of-date': [value: string];
+    'update:report-document-type': [value: string];
     'update:report-reviewed-by': [value: number | null];
     'update:report-certified-correct': [value: number | null];
     'update:summary-month': [value: number | null];
@@ -238,6 +255,11 @@ const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 
 const reportAsOfDate = computed({
     get: () => props.reportAsOfDateValue,
     set: (val) => emit('update:report-as-of-date', val)
+});
+
+const reportDocumentType = computed({
+    get: () => props.reportDocumentTypeValue,
+    set: (val) => emit('update:report-document-type', val)
 });
 
 const reportReviewedBy = computed({

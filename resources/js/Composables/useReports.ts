@@ -17,6 +17,7 @@ export const useReports = (
     const showReportModal = ref(false);
     const reportData = ref({
         asOfDate: new Date().toISOString().split('T')[0],
+        documentType: '' as string,
         reviewedBy: null as number | null,
         certifiedCorrect: null as number | null,
     });
@@ -75,11 +76,19 @@ export const useReports = (
         reportErrors.value = {};
 
         try {
+            // Validate document type is selected
+            if (!reportData.value.documentType) {
+                reportErrors.value.submit = 'Document Type is required';
+                return;
+            }
+
             const asOfDate = new Date(reportData.value.asOfDate);
             const selectedYear = asOfDate.getFullYear();
 
+            // Filter documents by document type and year
             const budgetProposals = documents.value.filter(doc => {
-                if (!doc.document_type.toLowerCase().includes('proposal')) return false;
+                // Filter by exact document type match (required field)
+                if (doc.document_type !== reportData.value.documentType) return false;
                 const docDate = new Date(doc.date);
                 return docDate.getFullYear() === selectedYear;
             });
@@ -144,7 +153,7 @@ export const useReports = (
         </div>
     </div>
 
-    <p style="text-align: center; font-size: 14px; margin-bottom: 0; margin-top: 10px; font-weight: bold;">BUDGET PROPOSALS</p>
+    <p style="text-align: center; font-size: 14px; margin-bottom: 0; margin-top: 10px; font-weight: bold;">${reportData.value.documentType.toUpperCase()}</p>
     <p style="text-align: center; margin-top:0; margin-bottom: 20px;">As of ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
 
     <table>
