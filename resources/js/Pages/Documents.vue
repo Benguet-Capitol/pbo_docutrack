@@ -2078,15 +2078,15 @@ const generateTrackingNo = async (): Promise<string> => {
         return data.tracking_no;
     } catch (error) {
         console.error('Error generating tracking number:', error);
-        // Fallback: Generate locally if API fails, using max number logic
+        // Fallback: Generate locally if API fails, using yearly reset logic
         const now = new Date();
         const year = now.getFullYear();
         const month = String(now.getMonth() + 1).padStart(2, '0');
         const yearMonth = `${year}-${month}`;
         
-        // Extract numeric parts from matching tracking numbers and find the max
+        // Extract numeric parts from ALL documents in current year (not just current month)
         const matchingNumbers = documents.value
-            .filter(d => d.tracking_no.startsWith(yearMonth))
+            .filter(d => d.tracking_no.startsWith(`${year}-`))
             .map(d => {
                 const parts = d.tracking_no.split('-');
                 return parseInt(parts[parts.length - 1], 10);

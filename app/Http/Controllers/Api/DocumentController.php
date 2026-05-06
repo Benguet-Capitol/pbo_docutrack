@@ -37,9 +37,10 @@ class DocumentController extends Controller
     }
 
     /**
-     * Generate the next tracking number based on current month and highest existing number.
-     * Format: YYYY-MM-NNNN (e.g., 2026-03-0001)
-     * Finds the highest existing sequence number and increments it (handles deleted records)
+     * Generate the next tracking number based on current year and highest existing number.
+     * Format: YYYY-MM-NNNN (e.g., 2026-03-0004)
+     * Series number resets yearly, not monthly. Sequence continues regardless of month changes.
+     * Finds the highest existing sequence number for the year and increments it (handles deleted records)
      */
     public function generateTrackingNo(): JsonResponse
     {
@@ -49,8 +50,9 @@ class DocumentController extends Controller
             $month = $now->format('m');
             $yearMonth = "{$year}-{$month}";
 
-            // Get all tracking numbers with same year-month prefix
-            $existingNumbers = Document::where('tracking_no', 'like', "{$yearMonth}-%")
+            // Get all tracking numbers with same year prefix (ignores month)
+            // This allows sequence to continue across months within the same year
+            $existingNumbers = Document::where('tracking_no', 'like', "{$year}-%")
                 ->pluck('tracking_no')
                 ->map(function($trackingNo) {
                     // Extract the numeric part after the last dash

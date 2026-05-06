@@ -131,7 +131,7 @@ class SupplementalBudgetChecklistSeeder extends Seeder
             [
                 'item_name' => 'Supplemental Annual Investment Program (AIP), if applicable, approved by the Sanggunian',
                 'signatories' => 'Local PDC, Local Budget Officer, Local Chief Executive',
-                'remarks' => json_encode(['Date Attested' => '']),
+                'remarks' => json_encode(['Details' => '']),
                 'order' => 8,
                 'group_letter' => 'g',
                 'is_subitem' => false,
@@ -139,7 +139,7 @@ class SupplementalBudgetChecklistSeeder extends Seeder
             [
                 'item_name' => 'Resolution approving the Supplemental AIP',
                 'signatories' => 'Secretary to the Sanggunian, Local Budget Officer, Local Chief Executive',
-                'remarks' => json_encode(['Date Approved' => '']),
+                'remarks' => json_encode(['Details' => '']),
                 'order' => 8.1,
                 'group_letter' => 'g',
                 'is_subitem' => true,
@@ -163,7 +163,7 @@ class SupplementalBudgetChecklistSeeder extends Seeder
             [
                 'item_name' => 'MDC Resolution',
                 'signatories' => 'Local Chief Executive',
-                'remarks' => json_encode(['Date Approved' => '']),
+                'remarks' => json_encode(['Details' => '']),
                 'order' => 11,
                 'group_letter' => 'j',
                 'is_subitem' => true,
