@@ -133,7 +133,7 @@ const handleSidebarHover = (hovered: boolean) => {
                 v-show="isSidebarOpen || isSidebarHovered"
                 class="text-xs font-bold uppercase tracking-widest text-emerald-600 dark:text-emerald-400 px-3 pt-4 pb-2 mt-2 border-b-2 border-emerald-200 dark:border-emerald-900 transition-opacity"
             >
-                Main
+                DocuTrack
             </div>
 
             <!-- Documents Link -->
@@ -164,6 +164,14 @@ const handleSidebarHover = (hovered: boolean) => {
                 <i class="fas fa-archive text-xl flex-shrink-0 dark:text-gray-100" aria-hidden="true"></i>
                 <span class="text-sm font-medium whitespace-nowrap" v-show="isSidebarOpen || isSidebarHovered">Records</span>
             </Link>
+
+            <!-- Section Divider -->
+            <div
+                v-show="isSidebarOpen || isSidebarHovered"
+                class="text-xs font-bold uppercase tracking-widest text-emerald-600 dark:text-emerald-400 px-3 pt-4 pb-2 mt-2 border-b-2 border-emerald-200 dark:border-emerald-900 transition-opacity"
+            >
+                Admin
+            </div>
 
             <!-- Leaves Link -->
             <Link

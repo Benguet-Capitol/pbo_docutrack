@@ -112,7 +112,7 @@
                         </div>
 
                         <!-- Divider Border -->
-                        <div class="mt-16" style="border-top: 3px dotted #050505;"></div>
+                        <div class="mt-4" style="border-top: 3px dotted #050505;"></div>
 
                         <!-- Second Copy - Header Section with Logos -->
                         <div class="flex items-center justify-center gap-2 pb-2" style="border-bottom: 3px double #050505;">
