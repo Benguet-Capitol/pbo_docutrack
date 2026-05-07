@@ -70,7 +70,7 @@ export const useReports = (
     };
 
     /**
-     * Generate Budget Proposals Report
+     * Generate Document Summary Report
      */
     const generateReport = async () => {
         reportErrors.value = {};
@@ -83,14 +83,15 @@ export const useReports = (
             }
 
             const asOfDate = new Date(reportData.value.asOfDate);
-            const selectedYear = asOfDate.getFullYear();
+            // Set to end of day to include documents created on this date
+            asOfDate.setHours(23, 59, 59, 999);
 
-            // Filter documents by document type and year
+            // Filter documents by document type and as of date
             const budgetProposals = documents.value.filter(doc => {
                 // Filter by exact document type match (required field)
                 if (doc.document_type !== reportData.value.documentType) return false;
                 const docDate = new Date(doc.date);
-                return docDate.getFullYear() === selectedYear;
+                return docDate <= asOfDate;
             });
 
             const reportData_items: Array<{
@@ -121,7 +122,7 @@ export const useReports = (
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Budget Proposals</title>
+    <title>Document Summary Report</title>
     <style>
         body { font-family: Arial, sans-serif; margin: 10px; line-height: 1.5; font-size: 11px; }
         .header { text-align: center; margin-bottom: 15px; font-size: 12px; border-bottom: 3px double black; }
@@ -154,7 +155,7 @@ export const useReports = (
     </div>
 
     <p style="text-align: center; font-size: 14px; margin-bottom: 0; margin-top: 10px; font-weight: bold;">${reportData.value.documentType.toUpperCase()}</p>
-    <p style="text-align: center; margin-top:0; margin-bottom: 20px;">As of ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+    <p style="text-align: center; margin-top:0; margin-bottom: 20px;">As of ${new Date(reportData.value.asOfDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
 
     <table>
         <thead>
