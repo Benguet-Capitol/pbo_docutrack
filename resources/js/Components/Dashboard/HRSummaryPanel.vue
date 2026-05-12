@@ -148,7 +148,7 @@
             :current-month-leaves-by-type-with-employees="currentMonthLeavesByTypeWithEmployees"
             :current-month-travel-orders-by-emp="currentMonthTravelOrdersByEmp"
             :current-month-pass-slips-by-emp="currentMonthPassSlipsByEmp"
-            :current-month-tardiness-by-emp="currentMonthTardinesssByEmp"
+            :current-month-tardiness-by-emp="currentMonthTardinessByEmp"
             :format-date-range="formatDateRange"
             :format-time="formatTime"
             :format-inclusive-dates="formatInclusiveDates"
@@ -188,7 +188,7 @@ const props = defineProps({
     currentMonthPassSlipsByEmp: Object,
     currentMonthTardiness: Array<any>,
     uniqueEmployeesTardiness: Object,
-    currentMonthTardinesssByEmp: Object,
+    currentMonthTardinessByEmp: Object,
     employeeLeavesSummary: Array<any>,
     uniqueLeaveTypes: Array<any>,
     formatDateRange: Function,

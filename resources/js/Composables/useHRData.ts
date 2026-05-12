@@ -195,8 +195,8 @@ export const useHRData = () => {
         });
 
         tardiness.value.forEach(tu => {
-            if (tu.date_filed) {
-                const year = new Date(tu.date_filed).getFullYear();
+            if (tu.requested_date) {
+                const year = new Date(tu.requested_date).getFullYear();
                 yearsSet.add(year);
             }
         });
@@ -430,9 +430,9 @@ export const useHRData = () => {
      * Check if a tardiness record falls within the selected month
      */
     const tardinessInSelectedMonth = (tu: any): boolean => {
-        if (!tu.date_filed) return false;
+        if (!tu.requested_date) return false;
 
-        const tuDate = new Date(tu.date_filed);
+        const tuDate = new Date(tu.requested_date);
         return tuDate.getMonth() === selectedHRMonth.value && tuDate.getFullYear() === selectedHRYear.value;
     };
 
@@ -462,7 +462,7 @@ export const useHRData = () => {
     /**
      * Get tardiness grouped by employee
      */
-    const currentMonthTardinesssByEmp = computed(() => {
+    const currentMonthTardinessByEmp = computed(() => {
         const grouped: Record<string, any[]> = {};
         currentMonthTardiness.value.forEach(tu => {
             const empName = tu.employee?.name || 'Unknown Employee';
@@ -631,7 +631,7 @@ export const useHRData = () => {
         currentMonthPassSlipsByEmp,
         currentMonthTardiness,
         uniqueEmployeesTardiness,
-        currentMonthTardinesssByEmp,
+        currentMonthTardinessByEmp,
         uniqueLeaveTypes,
         employeeLeavesSummary,
 

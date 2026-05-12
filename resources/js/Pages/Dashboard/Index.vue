@@ -29,7 +29,7 @@
                 :currentMonthPassSlipsByEmp="currentMonthPassSlipsByEmp"
                 :currentMonthTardiness="currentMonthTardiness"
                 :uniqueEmployeesTardiness="uniqueEmployeesTardiness"
-                :currentMonthTardinesssByEmp="currentMonthTardinesssByEmp"
+                :currentMonthTardinessByEmp="currentMonthTardinessByEmp"
                 :employeeLeavesSummary="employeeLeavesSummary"
                 :uniqueLeaveTypes="uniqueLeaveTypes"
                 :formatDateRange="formatDateRange"
@@ -274,7 +274,7 @@ const {
     currentMonthPassSlipsByEmp,
     currentMonthTardiness,
     uniqueEmployeesTardiness,
-    currentMonthTardinesssByEmp,
+    currentMonthTardinessByEmp,
     uniqueLeaveTypes,
     employeeLeavesSummary,
     toggleHRExpanded

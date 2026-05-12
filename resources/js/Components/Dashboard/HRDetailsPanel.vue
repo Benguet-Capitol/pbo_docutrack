@@ -7,7 +7,13 @@
                 <i class="fas fa-calendar-alt text-blue-600"></i>
                 Leaves by Type
             </h4>
-            <div class="space-y-4 max-h-96 overflow-y-auto">
+            <div v-if="!currentMonthLeavesByTypeWithEmployees || Object.keys(currentMonthLeavesByTypeWithEmployees).length === 0" class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg border border-gray-200 dark:border-gray-600 text-center">
+                <p class="text-gray-600 dark:text-gray-400 text-sm">
+                    <i class="fas fa-inbox text-gray-400 mr-2"></i>
+                    No leave records found for this period.
+                </p>
+            </div>
+            <div v-else class="space-y-4 max-h-96 overflow-y-auto">
                 <div v-for="(data, type) in currentMonthLeavesByTypeWithEmployees" :key="type" class="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-200 dark:border-blue-800">
                     <div class="flex items-center justify-between mb-3">
                         <p class="font-semibold text-gray-900 dark:text-white">{{ type }}</p>
@@ -37,7 +43,13 @@
                 <i class="fas fa-map-marked-alt text-orange-600"></i>
                 Travel Orders by Employee
             </h4>
-            <div class="space-y-3 max-h-96 overflow-y-auto">
+            <div v-if="!currentMonthTravelOrdersByEmp || Object.keys(currentMonthTravelOrdersByEmp).length === 0" class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg border border-gray-200 dark:border-gray-600 text-center">
+                <p class="text-gray-600 dark:text-gray-400 text-sm">
+                    <i class="fas fa-inbox text-gray-400 mr-2"></i>
+                    No travel order records found for this period.
+                </p>
+            </div>
+            <div v-else class="space-y-3 max-h-96 overflow-y-auto">
                 <div v-for="(orders, empName) in currentMonthTravelOrdersByEmp" :key="empName" class="bg-orange-50 dark:bg-orange-900/20 p-3 rounded-lg border border-orange-200 dark:border-orange-800">
                     <p class="font-medium text-gray-900 dark:text-white mb-2">{{ empName }}</p>
                     <div class="space-y-2">
@@ -63,7 +75,13 @@
                 <i class="fas fa-clipboard-list text-emerald-600"></i>
                 Pass Slips by Employee
             </h4>
-            <div class="space-y-3 max-h-96 overflow-y-auto">
+            <div v-if="!currentMonthPassSlipsByEmp || Object.keys(currentMonthPassSlipsByEmp).length === 0" class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg border border-gray-200 dark:border-gray-600 text-center">
+                <p class="text-gray-600 dark:text-gray-400 text-sm">
+                    <i class="fas fa-inbox text-gray-400 mr-2"></i>
+                    No pass slip records found for this period.
+                </p>
+            </div>
+            <div v-else class="space-y-3 max-h-96 overflow-y-auto">
                 <div v-for="(slips, empName) in currentMonthPassSlipsByEmp" :key="empName" class="bg-emerald-50 dark:bg-emerald-900/20 p-3 rounded-lg border border-emerald-200 dark:border-emerald-800">
                     <p class="font-medium text-gray-900 dark:text-white mb-2">{{ empName }}</p>
                     <div class="space-y-2">
@@ -97,8 +115,14 @@
                 <i class="fas fa-hourglass-end text-red-600"></i>
                 Tardiness/Undertime by Employee
             </h4>
-            <div class="space-y-3 max-h-96 overflow-y-auto">
-                <div v-for="(records, empName) in currentMonthTardinesssByEmp" :key="empName" class="bg-red-50 dark:bg-red-900/20 p-3 rounded-lg border border-red-200 dark:border-red-800">
+            <div v-if="!currentMonthTardinessByEmp || Object.keys(currentMonthTardinessByEmp).length === 0" class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg border border-gray-200 dark:border-gray-600 text-center">
+                <p class="text-gray-600 dark:text-gray-400 text-sm">
+                    <i class="fas fa-inbox text-gray-400 mr-2"></i>
+                    No tardiness/undertime records found for this period.
+                </p>
+            </div>
+            <div v-else class="space-y-3 max-h-96 overflow-y-auto">
+                <div v-for="(records, empName) in currentMonthTardinessByEmp" :key="empName" class="bg-red-50 dark:bg-red-900/20 p-3 rounded-lg border border-red-200 dark:border-red-800">
                     <p class="font-medium text-gray-900 dark:text-white mb-2">{{ empName }}</p>
                     <div class="space-y-2">
                         <div v-for="(record, idx) in records" :key="idx" class="bg-white dark:bg-gray-700 p-2 rounded border border-gray-200 dark:border-gray-600 text-xs">
@@ -133,7 +157,7 @@ defineProps({
     currentMonthLeavesByTypeWithEmployees: Object,
     currentMonthTravelOrdersByEmp: Object,
     currentMonthPassSlipsByEmp: Object,
-    currentMonthTardinesssByEmp: Object,
+    currentMonthTardinessByEmp: Object,
     formatDateRange: Function,
     formatTime: Function,
     formatInclusiveDates: Function,
