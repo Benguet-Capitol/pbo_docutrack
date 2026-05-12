@@ -139,9 +139,9 @@
                                 <i class="fas fa-clock text-red-500 mr-1"></i>
                                 Time: {{ formatTime(record.requested_time) }}
                             </p>
-                            <p class="text-gray-600 dark:text-gray-400 mt-1">
-                                <i class="fas fa-note-sticky text-gray-400 mr-1"></i>
-                                {{ record.reason }}
+                            <p class="text-gray-600 dark:text-gray-400">
+                                <i class="fas fa-note-sticky text-red-500 mr-1"></i>
+                                Reason: {{ record.reason }}
                             </p>
                         </div>
                     </div>
