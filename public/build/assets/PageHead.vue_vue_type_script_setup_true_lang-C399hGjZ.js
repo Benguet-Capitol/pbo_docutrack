@@ -1,0 +1,1 @@
+import{d as a,c as o,w as n,e as t,b as r,h as s,o as l}from"./app-DuFujchk.js";const _=a({__name:"PageHead",setup(c){return(i,e)=>(l(),o(r(s),null,{default:n(()=>[...e[0]||(e[0]=[t("link",{rel:"icon",type:"image/x-icon",href:"/benguetlogo.ico"},null,-1)])]),_:1}))}});export{_};

@@ -2116,7 +2116,15 @@ const filteredDocuments = computed(() => {
         if (permissions.value.includes('documents.view.all')) {
             // Can view all documents
             return true;
-        } else if (permissions.value.includes('documents.view.pending')) {
+        }
+        
+        // Receiving, Administrator, and Developer roles can view all documents
+        const userRole = currentUser.value?.usertype || '';
+        if (['Receiving', 'Administrator', 'Developer'].includes(userRole)) {
+            return true;
+        }
+        
+        if (permissions.value.includes('documents.view.pending')) {
             // Can view all pending documents
             if (document.status === 'pending') {
                 return true;
