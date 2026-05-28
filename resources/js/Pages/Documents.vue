@@ -4174,8 +4174,9 @@ const printChecklist = async () => {
  * validateChecklistRequirements: Validates that required items are checked
  * For Annual Budget: letters a, b, c must have document AND signatories checked
  * For Supplemental Budget:
- *   - Letters a, b, g must have document AND signatories checked
+ *   - Letters a, b must have document AND signatories checked
  *   - Letter c: only parent document must be checked
+ *   - Letter g: optional (not required)
  */
 const validateChecklistRequirements = (): { valid: boolean; message: string } => {
     const docType = formData.value.document_type;
@@ -4202,12 +4203,12 @@ const validateChecklistRequirements = (): { valid: boolean; message: string } =>
             }
         });
     } else if (docType === 'Supplemental Budget') {
-        // Supplemental Budget: a, b, g require document AND signatories
-        const abgItems = checklistData.value.filter((item: any) => 
-            ['a', 'b', 'g'].includes(item.group_letter)
+        // Supplemental Budget: a, b require document AND signatories (g is optional)
+        const abItems = checklistData.value.filter((item: any) => 
+            ['a', 'b'].includes(item.group_letter)
         );
         
-        abgItems.forEach((item: any) => {
+        abItems.forEach((item: any) => {
             // Check document
             if (!item.is_checked) {
                 missingItems.push(`${item.group_letter.toUpperCase()}. ${item.item_name} - Document`);
