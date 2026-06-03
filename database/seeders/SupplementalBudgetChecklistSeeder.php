@@ -138,7 +138,7 @@ class SupplementalBudgetChecklistSeeder extends Seeder
             ],
             [
                 'item_name' => 'Resolution approving the Supplemental AIP',
-                'signatories' => 'Secretary to the Sanggunian, Local Budget Officer, Local Chief Executive',
+                'signatories' => 'Secretary to the Sanggunian, Presiding Officer, Local Chief Executive',
                 'remarks' => json_encode(['Details' => '']),
                 'order' => 8.1,
                 'group_letter' => 'g',

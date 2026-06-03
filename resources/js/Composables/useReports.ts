@@ -934,16 +934,25 @@ export const useReports = (
         <tbody>
             ${(() => {
                 const sortedEntries = Array.from(employeeData.entries()).sort((a, b) => {
-                    const aIsProvincialBudgetOfficer = a[1].designation?.toLowerCase().includes('provincial budget officer') || false;
-                    const bIsProvincialBudgetOfficer = b[1].designation?.toLowerCase().includes('provincial budget officer') || false;
-                    
-                    if (aIsProvincialBudgetOfficer && !bIsProvincialBudgetOfficer) return -1;
-                    if (!aIsProvincialBudgetOfficer && bIsProvincialBudgetOfficer) return 1;
-                    
-                    const aName = a[1].name.split(' ').pop() || '';
-                    const bName = b[1].name.split(' ').pop() || '';
-                    return aName.localeCompare(bName);
-                });
+                const aIsProvincialBudgetOfficer = a[1].designation?.toLowerCase().includes('provincial budget officer') || false;
+                const bIsProvincialBudgetOfficer = b[1].designation?.toLowerCase().includes('provincial budget officer') || false;
+
+                if (aIsProvincialBudgetOfficer && !bIsProvincialBudgetOfficer) return -1;
+                if (!aIsProvincialBudgetOfficer && bIsProvincialBudgetOfficer) return 1;
+
+                const getLastName = (fullName: string): string => {
+                    // Strip known name suffixes (case-insensitive) before finding the last name
+                    const suffixes = /\b(jr\.?|sr\.?|ii|iii|iv|v|esq\.?)$/i;
+                    const stripped = fullName.trim().replace(suffixes, '').trim();
+                    // Last name is now reliably the last token
+                    const parts = stripped.split(/\s+/);
+                    return parts[parts.length - 1] || '';
+                };
+
+                const aLastName = getLastName(a[1].name);
+                const bLastName = getLastName(b[1].name);
+                return aLastName.localeCompare(bLastName);
+            });
                 
                 return sortedEntries.map(([empId, emp]) => {
                     const tardinessRecords = emp.tardiness.filter((r: any) => r.type === 'Tardiness');
