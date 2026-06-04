@@ -279,7 +279,7 @@
                                                     </p>
 
                                                     <!-- Remarks -->
-                                                    <p v-if="transaction.remarks" class="text-xs text-gray-600 dark:text-gray-400 italic border-t border-gray-200 dark:border-gray-600 pt-2 mt-2">
+                                                    <p v-if="transaction.remarks" class="text-xs text-gray-600 dark:text-gray-400 italic border-t border-gray-200 dark:border-gray-600 pt-2 mt-2" style="white-space: pre-wrap; word-break: break-word;">
                                                         {{ transaction.remarks }}
                                                     </p>
                                                 </div>

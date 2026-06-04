@@ -194,7 +194,7 @@
                                 </td>
                                 <!-- Remarks Column: Truncate if too long -->
                                 <td class="px-4 py-2 text-xs text-gray-600 dark:text-gray-400">
-                                    <span v-if="document.remarks" :title="document.remarks">{{ document.remarks }}</span>
+                                    <span v-if="document.remarks" :title="document.remarks" style="white-space: pre-wrap; word-break: break-word;">{{ document.remarks }}</span>
                                     <span v-else class="text-gray-400 dark:text-gray-600 italic">-</span>
                                 </td>
                                 <!-- Custodian Column: Shows office/municipality if forwarded, otherwise current user -->
@@ -512,6 +512,7 @@
                                         id="remarks"
                                         placeholder="Additional remarks..."
                                         rows="3"
+                                        style="white-space: pre-wrap; word-break: break-word;"
                                         class="block w-full pl-10 pr-4 py-2 text-xs border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:outline-none focus:border-emerald-500 resize-none"
                                     ></textarea>
                                 </div>
@@ -715,6 +716,7 @@
                                         id="edit_remarks"
                                         placeholder="Additional remarks..."
                                         rows="3"
+                                        style="white-space: pre-wrap; word-break: break-word;"
                                         class="block w-full pl-10 pr-4 py-2 text-xs border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:outline-none focus:border-blue-500 resize-none"
                                     ></textarea>
                                 </div>
@@ -930,6 +932,7 @@
                                     id="forward_remarks"
                                     placeholder="Add remarks for forwarding..."
                                     rows="3"
+                                    style="white-space: pre-wrap; word-break: break-word;"
                                     class="block w-full pl-10 pr-4 py-2 text-xs border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:outline-none focus:border-blue-500 resize-none"
                                 ></textarea>
                             </div>
@@ -1002,6 +1005,7 @@
                                     id="finalize_remarks"
                                     placeholder="Add any remarks or notes about ending transaction for this document..."
                                     rows="3"
+                                    style="white-space: pre-wrap; word-break: break-word;"
                                     class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-blue-500 dark:focus:border-blue-500 transition-colors text-xs resize-none"
                                 ></textarea>
                             </div>
@@ -1070,6 +1074,7 @@
                                     id="receive_remarks"
                                     placeholder="Add any remarks or notes about receiving this document..."
                                     rows="3"
+                                    style="white-space: pre-wrap; word-break: break-word;"
                                     class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-blue-500 dark:focus:border-blue-500 transition-colors text-xs resize-none"
                                 ></textarea>
                             </div>
@@ -1185,7 +1190,7 @@
                                             </div>
 
                                             <!-- Remarks -->
-                                            <p v-if="transaction.remarks" class="text-xs text-gray-700 dark:text-gray-300 mt-2 italic">
+                                            <p v-if="transaction.remarks" class="text-xs text-gray-700 dark:text-gray-300 mt-2 italic" style="white-space: pre-wrap; word-break: break-word;">
                                                 "{{ transaction.remarks }}"
                                             </p>
                                         </div>
@@ -1367,6 +1372,7 @@
                                                                 @input="(e: Event) => item.remarks[label as string] = (e.target as HTMLTextAreaElement).value"
                                                                 placeholder="Enter details..."
                                                                 rows="3"
+                                                                style="white-space: pre-wrap; word-break: break-word;"
                                                                 :disabled="!getDocumentItemForSignatories(item).is_checked"
                                                                 class="px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:border-blue-500 resize-none disabled:opacity-50 disabled:cursor-not-allowed"
                                                             />
@@ -1394,6 +1400,7 @@
                                                                     item.remarks['Details'] = (e.target as HTMLTextAreaElement).value;
                                                                 }"
                                                                 placeholder="Enter details..."
+                                                                style="white-space: pre-wrap; word-break: break-word;"
                                                                 rows="4"
                                                                 :disabled="!getDocumentItemForSignatories(item).is_checked"
                                                                 class="px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:border-blue-500 resize-none disabled:opacity-50 disabled:cursor-not-allowed"
@@ -3977,7 +3984,7 @@ const printChecklist = async () => {
                 Object.entries(item?.remarks || {}).forEach(([key, value]: [string, any]) => {
                     if (value) {
                         const formattedValue = formatRemarksValue(value, key);
-                        remarksHTML += `${key}: <span style="border-bottom: 1px solid #000;">${formattedValue}</span><br/>`;
+                        remarksHTML += `${key}: <span style="border-bottom: 1px solid #000; white-space: pre-wrap; word-break: break-word;">${formattedValue}</span><br/>`;
                     }
                 });
                 
@@ -4139,7 +4146,7 @@ const printChecklist = async () => {
                             <td>${dateTimeStr}</td>
                             <td>${durationStr}</td>
                             <td>${transaction.action}</td>
-                            <td>${remarksStr}</td>
+                            <td style="white-space: pre-wrap; word-break: break-word;">${remarksStr}</td>
                         </tr>
                     `;
                 });
