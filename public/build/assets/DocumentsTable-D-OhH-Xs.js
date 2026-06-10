@@ -1,0 +1,1 @@
+import{_ as o}from"./DocumentsTable.vue_vue_type_script_setup_true_lang-DFFVxyBm.js";import"./app-CIL7AQfd.js";import"./TransactionHistory.vue_vue_type_script_setup_true_lang-g0Fhm03U.js";export{o as default};
