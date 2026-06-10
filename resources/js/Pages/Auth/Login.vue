@@ -76,7 +76,7 @@ const submit = () => {
             </button>
         </div>
 
-        <div class="flex items-center justify-center min-h-screen px-4 bg-gradient-to-br from-emerald-50 via-white to-emerald-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+        <div class="flex items-center justify-center h-full px-4 bg-gradient-to-br from-emerald-50 via-white to-emerald-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
             <div class="w-full max-w-md">
 
                 <!-- Header Section -->
