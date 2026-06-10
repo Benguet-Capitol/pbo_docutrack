@@ -100,5 +100,19 @@ class EmployeeController extends Controller
             return response()->json(['error' => $e->getMessage()], 500);
         }
     }
+
+    public function checkUnique(Request $request): JsonResponse
+    {
+        $query = Employee::where('employee_id', $request->employee_id);
+
+        // When editing, exclude the current record from the check
+        if ($request->filled('exclude_id')) {
+            $query->where('id', '!=', $request->exclude_id);
+        }
+
+        return response()->json([
+            'is_unique' => !$query->exists(),
+        ]);
+    }
 }
 

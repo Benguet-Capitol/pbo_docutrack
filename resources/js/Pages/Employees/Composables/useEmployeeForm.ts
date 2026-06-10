@@ -84,7 +84,6 @@ export function useEmployeeForm() {
 
     /**
      * closeCreateModal: Closes the Create Employee modal
-     * Sets showCreateModal to false
      */
     const closeCreateModal = () => {
         showCreateModal.value = false;
@@ -93,13 +92,10 @@ export function useEmployeeForm() {
     /**
      * openEditModal: Opens the Edit Employee modal with the selected employee data
      * @param {Employee} employee - The employee object to edit
-     * Populates formData with the current employee values
-     * Sets editingEmployee to the employee being edited
-     * Opens the edit modal
      */
     const openEditModal = (employee: Employee) => {
         editingEmployee.value = employee;
-        
+
         // Extract office ID, handling both object and number formats
         let officeId: number | '' = '';
         if (employee.office) {
@@ -109,7 +105,7 @@ export function useEmployeeForm() {
                 officeId = employee.office.id;
             }
         }
-        
+
         formData.value = {
             employee_id: employee.employee_id,
             name: employee.name,
@@ -122,7 +118,6 @@ export function useEmployeeForm() {
 
     /**
      * closeEditModal: Closes the Edit Employee modal
-     * Clears the editingEmployee reference
      */
     const closeEditModal = () => {
         showEditModal.value = false;
@@ -132,8 +127,6 @@ export function useEmployeeForm() {
     /**
      * openDeleteModal: Opens the Delete Employee confirmation modal
      * @param {Employee} employee - The employee object to delete
-     * Sets employeeToDelete to the employee being confirmed for deletion
-     * Opens the delete confirmation modal
      */
     const openDeleteModal = (employee: Employee) => {
         employeeToDelete.value = employee;
@@ -142,7 +135,6 @@ export function useEmployeeForm() {
 
     /**
      * closeDeleteModal: Closes the Delete Employee modal
-     * Clears the employeeToDelete reference
      */
     const closeDeleteModal = () => {
         showDeleteModal.value = false;
@@ -151,25 +143,25 @@ export function useEmployeeForm() {
 
     /**
      * validateForm: Validates the form data for creating/updating an employee
-     * Required fields: employee_id, name, designation
+     * - employee_id must be set (meaning an employee was selected from the dropdown)
+     * - name and designation must be non-empty (auto-filled on selection)
      * Returns true if all validations pass, false otherwise
-     * Sets formErrors with specific error messages for invalid fields
      */
     const validateForm = (): boolean => {
         formErrors.value = {};
-        
+
         if (!formData.value.employee_id.trim()) {
-            formErrors.value['employee_id'] = 'Employee ID is required';
+            formErrors.value['employee_id'] = 'Please select a valid Employee ID from the search results.';
         }
-        
+
         if (!formData.value.name.trim()) {
-            formErrors.value['name'] = 'Name is required';
+            formErrors.value['name'] = 'Name is required.';
         }
-        
+
         if (!formData.value.designation.trim()) {
-            formErrors.value['designation'] = 'Designation is required';
+            formErrors.value['designation'] = 'Designation is required.';
         }
-        
+
         return Object.keys(formErrors.value).length === 0;
     };
 
@@ -178,29 +170,40 @@ export function useEmployeeForm() {
     /**
      * createEmployee: Submits the form to create a new employee
      * - Validates form data first
-     * - Makes POST request to /api/employees with form data and Bearer token
-     * - Returns the newly created employee or null on error
-     * - Sets formErrors['submit'] with error message if request fails
+     * - Makes POST request to /api/employees with form data and CSRF token
+     * - Returns the newly created employee or null on validation failure
+     * - Throws on server errors so the caller can handle them
      */
     const createEmployee = async (): Promise<Employee | null> => {
         if (!validateForm()) return null;
-        
+
         try {
+            const csrfToken = (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content ?? '';
+
             const response = await fetch('/api/employees', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'Accept': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    'X-CSRF-TOKEN': csrfToken,
                 },
                 body: JSON.stringify(formData.value)
             });
-            
+
             if (!response.ok) {
                 const errorData = await response.json().catch(() => ({}));
+
+                // Handle Laravel validation errors (422)
+                if (response.status === 422 && errorData.errors) {
+                    Object.entries(errorData.errors).forEach(([field, messages]) => {
+                        formErrors.value[field] = Array.isArray(messages) ? messages[0] as string : messages as string;
+                    });
+                    return null;
+                }
+
                 throw new Error(errorData.message || errorData.error || 'Failed to create employee');
             }
-            
+
             return await response.json();
         } catch (e) {
             const errorMsg = e instanceof Error ? e.message : 'An error occurred';
@@ -212,29 +215,39 @@ export function useEmployeeForm() {
     /**
      * updateEmployee: Submits the form to update an existing employee
      * - Validates form data first
-     * - Makes PUT request to /api/employees/{id} with updated data and Bearer token
-     * - Returns the updated employee or null on error
-     * - Sets formErrors['submit'] with error message if request fails
+     * - Makes PUT request to /api/employees/{id} with updated data and CSRF token
+     * - Returns the updated employee or null on validation failure
      */
     const updateEmployee = async (id: number): Promise<Employee | null> => {
         if (!validateForm()) return null;
-        
+
         try {
+            const csrfToken = (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content ?? '';
+
             const response = await fetch(`/api/employees/${id}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
                     'Accept': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    'X-CSRF-TOKEN': csrfToken,
                 },
                 body: JSON.stringify(formData.value)
             });
-            
+
             if (!response.ok) {
                 const errorData = await response.json().catch(() => ({}));
+
+                // Handle Laravel validation errors (422)
+                if (response.status === 422 && errorData.errors) {
+                    Object.entries(errorData.errors).forEach(([field, messages]) => {
+                        formErrors.value[field] = Array.isArray(messages) ? messages[0] as string : messages as string;
+                    });
+                    return null;
+                }
+
                 throw new Error(errorData.message || errorData.error || 'Failed to update employee');
             }
-            
+
             return await response.json();
         } catch (e) {
             const errorMsg = e instanceof Error ? e.message : 'An error occurred';
@@ -245,24 +258,26 @@ export function useEmployeeForm() {
 
     /**
      * deleteEmployee: Submits the form to delete an employee
-     * - Makes DELETE request to /api/employees/{id} with Bearer token
-     * - Returns true on success, false on error
+     * - Makes DELETE request to /api/employees/{id}
+     * - Returns true on success
      */
     const deleteEmployee = async (id: number): Promise<boolean> => {
         try {
+            const csrfToken = (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content ?? '';
+
             const response = await fetch(`/api/employees/${id}`, {
                 method: 'DELETE',
                 headers: {
                     'Accept': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    'X-CSRF-TOKEN': csrfToken,
                 }
             });
-            
+
             if (!response.ok) {
                 const errorData = await response.json().catch(() => ({}));
                 throw new Error(errorData.message || errorData.error || 'Failed to delete employee');
             }
-            
+
             return true;
         } catch (e) {
             throw e;

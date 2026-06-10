@@ -1,4 +1,5 @@
 import { computed, ref, Ref } from 'vue';
+import { useProcessingTime } from './useProcessingTime';
 
 interface Document {
     id: number;
@@ -23,8 +24,34 @@ export const useStatistics = (
     selectedSemester: Ref<number | null>,
     selectedUser: Ref<number | null>,
     expandedUserId: Ref<number | null>,
-    expandedDocumentType: Ref<string | null>
+    expandedDocumentType: Ref<string | null>,
+    offices: Ref<any[]>,
+    municipalities: Ref<any[]>,
+    users: Ref<any[]>
 ) => {
+    const currentTime = ref(new Date());
+
+    const formatHours = (hours: number): string => {
+        if (hours < 0) return '—';
+        const totalMinutes = Math.round(hours * 60);
+        const days    = Math.floor(totalMinutes / (60 * 24));
+        const hrs     = Math.floor((totalMinutes % (60 * 24)) / 60);
+        const minutes = totalMinutes % 60;
+        const parts: string[] = [];
+        if (days    > 0) parts.push(`${days}d`);
+        if (hrs     > 0) parts.push(`${hrs}h`);
+        if (minutes > 0 || parts.length === 0) parts.push(`${minutes}m`);
+        return parts.join(' ');
+    };
+
+    const { calculateElapsedTimeExcluding } = useProcessingTime(
+        currentTime,
+        offices,
+        municipalities,
+        formatHours,
+        users
+    );
+
     const expandedDocumentTypeLocal = ref<string | null>(null);
 
     /**
@@ -108,8 +135,7 @@ export const useStatistics = (
                         averageHours: 0
                     };
 
-                    // In production, would use calculateElapsedTimeExcluding
-                    const pendingHours = (transactionTime.getTime() - currentOwner.startTime.getTime()) / (1000 * 60 * 60);
+                    const pendingHours = calculateElapsedTimeExcluding(document, currentOwner.startTime, transactionTime);
 
                     existing.totalHours += pendingHours;
                     existing.count += 1;
@@ -140,7 +166,7 @@ export const useStatistics = (
                         averageHours: 0
                     };
 
-                    const pendingHours = (transactionTime.getTime() - currentOwner.startTime.getTime()) / (1000 * 60 * 60);
+                    const pendingHours = calculateElapsedTimeExcluding(document, currentOwner.startTime, transactionTime);
 
                     existing.totalHours += pendingHours;
                     existing.count += 1;
@@ -170,7 +196,8 @@ export const useStatistics = (
     });
 
     /**
-     * Document processing statistics
+     * Document processing statistics — correctly uses calculateElapsedTimeExcluding
+     * so averages reflect real business processing time, not raw wall-clock duration.
      */
     const documentProcessingStatistics = computed(() => {
         const stats = new Map<string, { documentType: string; totalHours: number; count: number; averageHours: number }>();
@@ -181,14 +208,18 @@ export const useStatistics = (
             if (!document.transactions || document.transactions.length === 0) return;
 
             const docType = document.document_type || 'Other';
+
+            // transactions are stored newest-first; oldest (creation) is at the end
             const creationTransaction = document.transactions[document.transactions.length - 1];
             const createdAt = new Date(creationTransaction.created_at);
-            const endTime = (document.status !== 'finalized' && document.status !== 'ended')
-                ? new Date()
-                : new Date(document.transactions[0].created_at);
 
-            // In production, would use calculateElapsedTimeExcluding
-            const processingHours = (endTime.getTime() - createdAt.getTime()) / (1000 * 60 * 60);
+            const isFinished = document.status === 'finalized' || document.status === 'ended';
+            const endTime = isFinished
+                ? new Date(document.transactions[0].created_at)
+                : new Date();
+
+            // Use the proper business-hours calculator that excludes office/municipality periods
+            const processingHours = calculateElapsedTimeExcluding(document, createdAt, endTime);
 
             const existing = stats.get(docType) || {
                 documentType: docType,
@@ -242,7 +273,7 @@ export const useStatistics = (
                         startTime: transactionTime
                     };
                 } else if (action === 'forwarded' && currentOwner && currentOwner.userId === currentSelectedUserStat.userId) {
-                    const pendingHours = (transactionTime.getTime() - currentOwner.startTime.getTime()) / (1000 * 60 * 60);
+                    const pendingHours = calculateElapsedTimeExcluding(document, currentOwner.startTime, transactionTime);
 
                     details.push({
                         documentId: document.id,
@@ -250,18 +281,12 @@ export const useStatistics = (
                         particulars: document.particulars || '-',
                         pendingHours,
                         startDate: new Date(currentOwner.startTime).toLocaleString('en-US', {
-                            month: 'short',
-                            day: 'numeric',
-                            hour: '2-digit',
-                            minute: '2-digit',
-                            hour12: true
+                            month: 'short', day: 'numeric',
+                            hour: '2-digit', minute: '2-digit', hour12: true
                         }),
                         endDate: new Date(transactionTime).toLocaleString('en-US', {
-                            month: 'short',
-                            day: 'numeric',
-                            hour: '2-digit',
-                            minute: '2-digit',
-                            hour12: true
+                            month: 'short', day: 'numeric',
+                            hour: '2-digit', minute: '2-digit', hour12: true
                         })
                     });
 
@@ -279,7 +304,7 @@ export const useStatistics = (
                         startTime: transactionTime
                     };
                 } else if (action === 'finalized' && currentOwner && currentOwner.userId === currentSelectedUserStat.userId) {
-                    const pendingHours = (transactionTime.getTime() - currentOwner.startTime.getTime()) / (1000 * 60 * 60);
+                    const pendingHours = calculateElapsedTimeExcluding(document, currentOwner.startTime, transactionTime);
 
                     details.push({
                         documentId: document.id,
@@ -287,18 +312,12 @@ export const useStatistics = (
                         particulars: document.particulars || '-',
                         pendingHours,
                         startDate: new Date(currentOwner.startTime).toLocaleString('en-US', {
-                            month: 'short',
-                            day: 'numeric',
-                            hour: '2-digit',
-                            minute: '2-digit',
-                            hour12: true
+                            month: 'short', day: 'numeric',
+                            hour: '2-digit', minute: '2-digit', hour12: true
                         }),
                         endDate: new Date(transactionTime).toLocaleString('en-US', {
-                            month: 'short',
-                            day: 'numeric',
-                            hour: '2-digit',
-                            minute: '2-digit',
-                            hour12: true
+                            month: 'short', day: 'numeric',
+                            hour: '2-digit', minute: '2-digit', hour12: true
                         })
                     });
 
