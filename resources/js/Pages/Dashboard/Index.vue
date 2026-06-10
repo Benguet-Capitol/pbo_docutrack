@@ -333,7 +333,10 @@ const statisticsComposable = useStatistics(
     selectedSemester,
     selectedUser,
     expandedUserId,
-    expandedDocumentType
+    expandedDocumentType,
+    offices,
+    municipalities,
+    users
 );
 
 const {
