@@ -113,7 +113,7 @@ const handleSidebarHover = (hovered: boolean) => {
         </div>
 
         <!-- Navigation Content -->
-        <nav class="flex flex-col flex-1 gap-2 px-2 overflow-y-auto">
+        <nav class="flex flex-col flex-1 gap-0.5 px-2 overflow-y-auto">
             <!-- Dashboard Link -->
             <Link
                 :href="route('dashboard')"
@@ -121,7 +121,7 @@ const handleSidebarHover = (hovered: boolean) => {
                     route().current('dashboard')
                         ? 'text-white bg-gradient-to-r from-emerald-500 to-emerald-600 shadow-md hover:from-emerald-600 hover:to-emerald-700'
                         : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 hover:shadow-sm',
-                    'flex-shrink-0 flex items-center gap-3 px-3 py-2.5 transition-all rounded-lg overflow-hidden',
+                    'flex-shrink-0 flex items-center gap-3 px-3 py-1.5 transition-all rounded-lg overflow-hidden',
                 ]"
             >
                 <i class="fas fa-tachometer-alt text-xl flex-shrink-0 dark:text-gray-100" aria-hidden="true"></i>
@@ -143,7 +143,7 @@ const handleSidebarHover = (hovered: boolean) => {
                     route().current('documents.*')
                         ? 'text-white bg-gradient-to-r from-emerald-500 to-emerald-600 shadow-md hover:from-emerald-600 hover:to-emerald-700'
                         : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 hover:shadow-sm',
-                    'flex-shrink-0 flex items-center gap-3 px-3 py-2.5 transition-all rounded-lg overflow-hidden',
+                    'flex-shrink-0 flex items-center gap-3 px-3 py-1.5 transition-all rounded-lg overflow-hidden',
                 ]"
             >
                 <i class="fas fa-file-alt text-xl flex-shrink-0 dark:text-gray-100" aria-hidden="true"></i>
@@ -158,7 +158,7 @@ const handleSidebarHover = (hovered: boolean) => {
                     route().current('records.*')
                         ? 'text-white bg-gradient-to-r from-emerald-500 to-emerald-600 shadow-md hover:from-emerald-600 hover:to-emerald-700'
                         : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 hover:shadow-sm',
-                    'flex-shrink-0 flex items-center gap-3 px-3 py-2.5 transition-all rounded-lg overflow-hidden',
+                    'flex-shrink-0 flex items-center gap-3 px-3 py-1.5 transition-all rounded-lg overflow-hidden',
                 ]"
             >
                 <i class="fas fa-archive text-xl flex-shrink-0 dark:text-gray-100" aria-hidden="true"></i>
@@ -181,7 +181,7 @@ const handleSidebarHover = (hovered: boolean) => {
                     route().current('leaves.*')
                         ? 'text-white bg-gradient-to-r from-emerald-500 to-emerald-600 shadow-md hover:from-emerald-600 hover:to-emerald-700'
                         : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 hover:shadow-sm',
-                    'flex-shrink-0 flex items-center gap-3 px-3 py-2.5 transition-all rounded-lg overflow-hidden',
+                    'flex-shrink-0 flex items-center gap-3 px-3 py-1.5 transition-all rounded-lg overflow-hidden',
                 ]"
             >
                 <i class="fas fa-calendar-alt text-xl flex-shrink-0 dark:text-gray-100" aria-hidden="true"></i>
@@ -196,7 +196,7 @@ const handleSidebarHover = (hovered: boolean) => {
                     route().current('travel-orders.*')
                         ? 'text-white bg-gradient-to-r from-emerald-500 to-emerald-600 shadow-md hover:from-emerald-600 hover:to-emerald-700'
                         : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 hover:shadow-sm',
-                    'flex-shrink-0 flex items-center gap-3 px-3 py-2.5 transition-all rounded-lg overflow-hidden',
+                    'flex-shrink-0 flex items-center gap-3 px-3 py-1.5 transition-all rounded-lg overflow-hidden',
                 ]"
             >
                 <i class="fas fa-bus text-xl flex-shrink-0 dark:text-gray-100" aria-hidden="true"></i>
@@ -211,7 +211,7 @@ const handleSidebarHover = (hovered: boolean) => {
                     route().current('pass-slips.*')
                         ? 'text-white bg-gradient-to-r from-emerald-500 to-emerald-600 shadow-md hover:from-emerald-600 hover:to-emerald-700'
                         : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 hover:shadow-sm',
-                    'flex-shrink-0 flex items-center gap-3 px-3 py-2.5 transition-all rounded-lg overflow-hidden',
+                    'flex-shrink-0 flex items-center gap-3 px-3 py-1.5 transition-all rounded-lg overflow-hidden',
                 ]"
             >
                 <i class="fas fa-file-contract text-xl flex-shrink-0 dark:text-gray-100" aria-hidden="true"></i>
@@ -226,7 +226,7 @@ const handleSidebarHover = (hovered: boolean) => {
                     route().current('time-slips.*')
                         ? 'text-white bg-gradient-to-r from-emerald-500 to-emerald-600 shadow-md hover:from-emerald-600 hover:to-emerald-700'
                         : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 hover:shadow-sm',
-                    'flex-shrink-0 flex items-center gap-3 px-3 py-2.5 transition-all rounded-lg overflow-hidden',
+                    'flex-shrink-0 flex items-center gap-3 px-3 py-1.5 transition-all rounded-lg overflow-hidden',
                 ]"
             >
                 <i class="fas fa-hourglass-half text-xl flex-shrink-0 dark:text-gray-100" aria-hidden="true"></i>
@@ -241,7 +241,7 @@ const handleSidebarHover = (hovered: boolean) => {
                     route().current('tardiness.*')
                         ? 'text-white bg-gradient-to-r from-emerald-500 to-emerald-600 shadow-md hover:from-emerald-600 hover:to-emerald-700'
                         : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 hover:shadow-sm',
-                    'flex-shrink-0 flex items-center gap-3 px-3 py-2.5 transition-all rounded-lg overflow-hidden',
+                    'flex-shrink-0 flex items-center gap-3 px-3 py-1.5 transition-all rounded-lg overflow-hidden',
                 ]"
             >
                 <i class="fas fa-clock text-xl flex-shrink-0 dark:text-gray-100" aria-hidden="true"></i>
@@ -256,7 +256,7 @@ const handleSidebarHover = (hovered: boolean) => {
                     route().current('certificates-of-appearance.*')
                         ? 'text-white bg-gradient-to-r from-emerald-500 to-emerald-600 shadow-md hover:from-emerald-600 hover:to-emerald-700'
                         : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 hover:shadow-sm',
-                    'flex-shrink-0 flex items-center gap-3 px-3 py-2.5 transition-all rounded-lg overflow-hidden',
+                    'flex-shrink-0 flex items-center gap-3 px-3 py-1.5 transition-all rounded-lg overflow-hidden',
                 ]"
             >
                 <i class="fas fa-location-dot text-xl flex-shrink-0 dark:text-gray-100" aria-hidden="true"></i>
@@ -279,7 +279,7 @@ const handleSidebarHover = (hovered: boolean) => {
                     route().current('users.*')
                         ? 'text-white bg-gradient-to-r from-emerald-500 to-emerald-600 shadow-md hover:from-emerald-600 hover:to-emerald-700'
                         : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 hover:shadow-sm',
-                    'flex-shrink-0 flex items-center gap-3 px-3 py-2.5 transition-all rounded-lg overflow-hidden',
+                    'flex-shrink-0 flex items-center gap-3 px-3 py-1.5 transition-all rounded-lg overflow-hidden',
                 ]"
             >
                 <i class="fas fa-users text-xl flex-shrink-0 dark:text-gray-100" aria-hidden="true"></i>
@@ -294,7 +294,7 @@ const handleSidebarHover = (hovered: boolean) => {
                     route().current('employees.*')
                         ? 'text-white bg-gradient-to-r from-emerald-500 to-emerald-600 shadow-md hover:from-emerald-600 hover:to-emerald-700'
                         : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 hover:shadow-sm',
-                    'flex-shrink-0 flex items-center gap-3 px-3 py-2.5 transition-all rounded-lg overflow-hidden',
+                    'flex-shrink-0 flex items-center gap-3 px-3 py-1.5 transition-all rounded-lg overflow-hidden',
                 ]"
             >
                 <i class="fas fa-briefcase text-xl flex-shrink-0 dark:text-gray-100" aria-hidden="true"></i>
@@ -309,7 +309,7 @@ const handleSidebarHover = (hovered: boolean) => {
                     route().current('offices.*')
                         ? 'text-white bg-gradient-to-r from-emerald-500 to-emerald-600 shadow-md hover:from-emerald-600 hover:to-emerald-700'
                         : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 hover:shadow-sm',
-                    'flex-shrink-0 flex items-center gap-3 px-3 py-2.5 transition-all rounded-lg overflow-hidden',
+                    'flex-shrink-0 flex items-center gap-3 px-3 py-1.5 transition-all rounded-lg overflow-hidden',
                 ]"
             >
                 <i class="fas fa-building text-xl flex-shrink-0 dark:text-gray-100" aria-hidden="true"></i>
@@ -324,7 +324,7 @@ const handleSidebarHover = (hovered: boolean) => {
                     route().current('municipalities.*')
                         ? 'text-white bg-gradient-to-r from-emerald-500 to-emerald-600 shadow-md hover:from-emerald-600 hover:to-emerald-700'
                         : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 hover:shadow-sm',
-                    'flex-shrink-0 flex items-center gap-3 px-3 py-2.5 transition-all rounded-lg overflow-hidden',
+                    'flex-shrink-0 flex items-center gap-3 px-3 py-1.5 transition-all rounded-lg overflow-hidden',
                 ]"
             >
                 <i class="fas fa-city text-xl flex-shrink-0 dark:text-gray-100" aria-hidden="true"></i>
