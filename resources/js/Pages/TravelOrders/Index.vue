@@ -263,6 +263,9 @@ const handleConfirmPreviewAndSubmit = async () => {
             driver: formData.value.driver,
             supervisor_employee_id: formData.value.supervisor_employee_id,
             approver_employee_id: formData.value.approver_employee_id,
+            is_acting_approver: formData.value.is_acting_approver,
+            acting_approver_name: formData.value.is_acting_approver ? formData.value.acting_approver_name : null,
+            acting_approver_designation: formData.value.is_acting_approver ? formData.value.acting_approver_designation : null,
         };
 
         const url = isUpdate ? `/api/travel-orders/${travelOrderToEdit.value!.id}` : '/api/travel-orders';

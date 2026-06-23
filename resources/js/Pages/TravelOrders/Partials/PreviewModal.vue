@@ -227,16 +227,25 @@ defineEmits<{
 }>();
 
 const isApproverProvincialGovernor = () => {
+    if (props.formData.is_acting_approver && props.formData.acting_approver_designation?.trim()) {
+        return props.formData.acting_approver_designation.toLowerCase().includes('governor');
+    }
     const approver = props.sortedEmployees.find((e: Employee) => e.id === props.formData.approver_employee_id);
     return approver?.designation?.toLowerCase().includes('provincial governor');
 };
 
 const getApproverName = () => {
+    if (props.formData.is_acting_approver && props.formData.acting_approver_name?.trim()) {
+        return props.formData.acting_approver_name.trim();
+    }
     const approver = props.sortedEmployees.find((e: Employee) => e.id === props.formData.approver_employee_id);
     return approver?.name || '';
 };
 
 const getApproverRole = () => {
+    if (props.formData.is_acting_approver && props.formData.acting_approver_designation?.trim()) {
+        return props.formData.acting_approver_designation.trim();
+    }
     const approver = props.sortedEmployees.find((e: Employee) => e.id === props.formData.approver_employee_id);
     return approver?.designation || '';
 };

@@ -142,7 +142,7 @@
 
                             <!-- Approver Field -->
                             <div class="space-y-2">
-                                <label for="edit_approver" class="block text-xs font-medium text-gray-700 dark:text-gray-300">Approved By <span class="text-red-600">*</span></label>
+                                <label for="edit_approver" class="block text-xs font-medium text-gray-700 dark:text-gray-300">Approved By <span v-if="!formData.is_acting_approver" class="text-red-600">*</span></label>
                                 <div class="relative flex items-center">
                                     <i class="fas fa-file-signature absolute left-3 text-gray-400 text-sm pointer-events-none"></i>
                                     <select
@@ -158,6 +158,45 @@
                                     </select>
                                 </div>
                                 <span v-if="formErrors.approver_employee_id" class="text-red-500 text-xs">{{ formErrors.approver_employee_id }}</span>
+
+                                <label class="flex items-center gap-2 mt-2 cursor-pointer">
+                                    <input
+                                        type="checkbox"
+                                        :checked="formData.is_acting_approver"
+                                        @change="$emit('update:form-data', { ...formData, is_acting_approver: ($event.target as HTMLInputElement).checked, acting_approver_name: ($event.target as HTMLInputElement).checked ? formData.acting_approver_name : '', acting_approver_designation: ($event.target as HTMLInputElement).checked ? formData.acting_approver_designation : '' })"
+                                        class="rounded border-gray-300 dark:border-gray-600 accent-blue-600"
+                                    />
+                                    <span class="text-xs text-gray-700 dark:text-gray-300">Acting Personnel (enter name and designation of acting signatory)</span>
+                                </label>
+
+                                <div v-if="formData.is_acting_approver" class="grid gap-3 mt-2 pl-1">
+                                    <div class="space-y-2">
+                                        <label for="edit_acting_approver_name" class="block text-xs font-medium text-gray-700 dark:text-gray-300">Acting Name <span class="text-red-600">*</span></label>
+                                        <input
+                                            :value="formData.acting_approver_name"
+                                            @input="$emit('update:form-data', { ...formData, acting_approver_name: ($event.target as HTMLInputElement).value })"
+                                            id="edit_acting_approver_name"
+                                            type="text"
+                                            placeholder="e.g. Juan B. Dela Cruz"
+                                            class="block w-full px-4 py-2 text-xs border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:outline-none transition-colors"
+                                            :class="[formErrors.acting_approver_name ? 'border-red-500 focus:border-red-500' : 'border-gray-300 focus:border-blue-500']"
+                                        />
+                                        <span v-if="formErrors.acting_approver_name" class="text-red-500 text-xs">{{ formErrors.acting_approver_name }}</span>
+                                    </div>
+                                    <div class="space-y-2">
+                                        <label for="edit_acting_approver_designation" class="block text-xs font-medium text-gray-700 dark:text-gray-300">Acting Designation <span class="text-red-600">*</span></label>
+                                        <input
+                                            :value="formData.acting_approver_designation"
+                                            @input="$emit('update:form-data', { ...formData, acting_approver_designation: ($event.target as HTMLInputElement).value })"
+                                            id="edit_acting_approver_designation"
+                                            type="text"
+                                            placeholder="e.g. Acting Provincial Governor"
+                                            class="block w-full px-4 py-2 text-xs border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:outline-none transition-colors"
+                                            :class="[formErrors.acting_approver_designation ? 'border-red-500 focus:border-red-500' : 'border-gray-300 focus:border-blue-500']"
+                                        />
+                                        <span v-if="formErrors.acting_approver_designation" class="text-red-500 text-xs">{{ formErrors.acting_approver_designation }}</span>
+                                    </div>
+                                </div>
                             </div>
 
                             <!-- Driver Field -->

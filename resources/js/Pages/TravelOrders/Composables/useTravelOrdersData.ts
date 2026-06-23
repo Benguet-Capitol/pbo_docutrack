@@ -28,6 +28,9 @@ export interface TravelOrder {
     supervisor_employee_id: number | null;
     supervisor?: Employee;
     approver_employee_id: number | null;
+    is_acting_approver?: boolean;
+    acting_approver_name?: string | null;
+    acting_approver_designation?: string | null;
     created_at: string;
     updated_at: string;
 }

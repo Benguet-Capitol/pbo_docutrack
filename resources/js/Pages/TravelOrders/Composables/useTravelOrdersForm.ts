@@ -17,6 +17,9 @@ export function useTravelOrdersForm(employees: any, travelOrders: any) {
         newInclusiveDateRange: '',
         supervisor_employee_id: null as number | null,
         approver_employee_id: null as number | null,
+        is_acting_approver: false,
+        acting_approver_name: '',
+        acting_approver_designation: '',
     });
 
     const formErrors = ref<Record<string, string>>({});
@@ -153,8 +156,17 @@ export function useTravelOrdersForm(employees: any, travelOrders: any) {
             formErrors.value['employee_ids'] = 'At least one employee is required';
         }
 
-        if (!formData.value.approver_employee_id) {
+        if (!formData.value.is_acting_approver && !formData.value.approver_employee_id) {
             formErrors.value['approver_employee_id'] = 'Approver is required';
+        }
+
+        if (formData.value.is_acting_approver) {
+            if (!formData.value.acting_approver_name?.trim()) {
+                formErrors.value['acting_approver_name'] = 'Acting approver name is required';
+            }
+            if (!formData.value.acting_approver_designation?.trim()) {
+                formErrors.value['acting_approver_designation'] = 'Acting approver designation is required';
+            }
         }
 
         return Object.keys(formErrors.value).length === 0;
@@ -219,6 +231,9 @@ export function useTravelOrdersForm(employees: any, travelOrders: any) {
             newInclusiveDateRange: '',
             supervisor_employee_id: null,
             approver_employee_id: null,
+            is_acting_approver: false,
+            acting_approver_name: '',
+            acting_approver_designation: '',
         };
         formErrors.value = {};
         showCreateModal.value = true;
@@ -245,6 +260,9 @@ export function useTravelOrdersForm(employees: any, travelOrders: any) {
             newInclusiveDateRange: '',
             supervisor_employee_id: order.supervisor_employee_id || null,
             approver_employee_id: order.approver_employee_id || null,
+            is_acting_approver: order.is_acting_approver ?? false,
+            acting_approver_name: order.acting_approver_name || '',
+            acting_approver_designation: order.acting_approver_designation || '',
         };
         formErrors.value = {};
         showEditModal.value = true;
@@ -284,6 +302,9 @@ export function useTravelOrdersForm(employees: any, travelOrders: any) {
                 newInclusiveDateRange: '',
                 supervisor_employee_id: order.supervisor_employee_id || null,
                 approver_employee_id: order.approver_employee_id || null,
+                is_acting_approver: order.is_acting_approver ?? false,
+                acting_approver_name: order.acting_approver_name || '',
+                acting_approver_designation: order.acting_approver_designation || '',
             };
         }
         // Otherwise formData should already be populated from the edit/create modal
@@ -366,18 +387,27 @@ export function useTravelOrdersForm(employees: any, travelOrders: any) {
     };
 
     const getApproverName = (): string => {
+        if (formData.value.is_acting_approver && formData.value.acting_approver_name?.trim()) {
+            return formData.value.acting_approver_name.trim();
+        }
         if (!formData.value.approver_employee_id) return '';
         const approver = employees.value.find((emp: Employee) => emp.id === formData.value.approver_employee_id);
         return approver?.name || '';
     };
 
     const getApproverRole = (): string => {
+        if (formData.value.is_acting_approver && formData.value.acting_approver_designation?.trim()) {
+            return formData.value.acting_approver_designation.trim();
+        }
         if (!formData.value.approver_employee_id) return '';
         const approver = employees.value.find((emp: Employee) => emp.id === formData.value.approver_employee_id);
         return approver?.designation || '';
     };
 
     const isApproverProvincialGovernor = (): boolean => {
+        if (formData.value.is_acting_approver && formData.value.acting_approver_designation?.trim()) {
+            return formData.value.acting_approver_designation.toLowerCase().includes('governor');
+        }
         if (!formData.value.approver_employee_id) return false;
         const approver = employees.value.find((emp: Employee) => emp.id === formData.value.approver_employee_id);
         return approver?.designation?.toLowerCase().includes('governor') || false;
