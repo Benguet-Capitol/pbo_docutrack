@@ -46,7 +46,10 @@ class TravelOrderController extends Controller
                 'employee_ids' => 'required|array|min:1',
                 'employee_ids.*' => 'integer|exists:employees,id',
                 'supervisor_employee_id' => 'nullable|integer|exists:employees,id',
-                'approver_employee_id' => 'nullable|integer|exists:employees,id',
+                'approver_employee_id' => 'nullable|integer|exists:employees,id|required_unless:is_acting_approver,true',
+                'is_acting_approver' => 'nullable|boolean',
+                'acting_approver_name' => 'nullable|string|max:255|required_if:is_acting_approver,true',
+                'acting_approver_designation' => 'nullable|string|max:255|required_if:is_acting_approver,true',
             ]);
 
             // Create travel order
@@ -61,6 +64,9 @@ class TravelOrderController extends Controller
                 'driver' => $validated['driver'] ?? null,
                 'supervisor_employee_id' => $validated['supervisor_employee_id'] ?? null,
                 'approver_employee_id' => $validated['approver_employee_id'] ?? null,
+                'is_acting_approver' => $validated['is_acting_approver'] ?? false,
+                'acting_approver_name' => $validated['is_acting_approver'] ? $validated['acting_approver_name'] : null,
+                'acting_approver_designation' => $validated['is_acting_approver'] ? $validated['acting_approver_designation'] : null,
             ]);
 
             // Attach employees
@@ -101,7 +107,10 @@ class TravelOrderController extends Controller
                 'employee_ids' => 'required|array|min:1',
                 'employee_ids.*' => 'integer|exists:employees,id',
                 'supervisor_employee_id' => 'nullable|integer|exists:employees,id',
-                'approver_employee_id' => 'nullable|integer|exists:employees,id',
+                'approver_employee_id' => 'nullable|integer|exists:employees,id|required_unless:is_acting_approver,true',
+                'is_acting_approver' => 'nullable|boolean',
+                'acting_approver_name' => 'nullable|string|max:255|required_if:is_acting_approver,true',
+                'acting_approver_designation' => 'nullable|string|max:255|required_if:is_acting_approver,true',
             ]);
 
             // Update travel order
@@ -116,6 +125,9 @@ class TravelOrderController extends Controller
                 'driver' => $validated['driver'] ?? null,
                 'supervisor_employee_id' => $validated['supervisor_employee_id'] ?? null,
                 'approver_employee_id' => $validated['approver_employee_id'] ?? null,
+                'is_acting_approver' => $validated['is_acting_approver'] ?? false,
+                'acting_approver_name' => $validated['is_acting_approver'] ? $validated['acting_approver_name'] : null,
+                'acting_approver_designation' => $validated['is_acting_approver'] ? $validated['acting_approver_designation'] : null,
             ]);
 
             // Sync employees (update the relationship)

@@ -26,6 +26,9 @@ class TravelOrder extends Model
         'driver',
         'supervisor_employee_id',
         'approver_employee_id',
+        'is_acting_approver',
+        'acting_approver_name',
+        'acting_approver_designation',
     ];
 
     protected $casts = [
@@ -34,6 +37,7 @@ class TravelOrder extends Model
         'to_date' => 'datetime:Y-m-d',
         'inclusive_dates' => 'array',
         'purpose' => 'array',
+        'is_acting_approver' => 'boolean',
     ];
 
     protected $dateFormat = 'Y-m-d';

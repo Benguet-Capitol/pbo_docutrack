@@ -24,8 +24,7 @@
 
                 <!-- Error State -->
                 <ErrorState v-else-if="error" :error="error" />
-
-                <!-- Empty State -->
+          <!-- Empty State -->
                 <EmptyState 
                     v-else-if="travelOrders.length === 0"
                     title="No records found"
