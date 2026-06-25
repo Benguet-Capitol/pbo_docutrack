@@ -162,6 +162,7 @@ interface ApiEmployee {
     fname: string;
     mname?: string;
     lname: string;
+    suffix?: string;
     position_title?: string;
     office_desc?: string;
     type?: string;
@@ -294,13 +295,15 @@ function formatDesignation(emp: ApiEmployee): string {
     return isCasual && title ? `${title} (Casual)` : title;
 }
 
-// ============== Format name: Juan B. Dela Cruz ==============
+// ============== Format name: Juan B. Dela Cruz Jr. ==============
 function formatName(emp: ApiEmployee): string {
     const fname = (emp.fname ?? '').trim();
     const mname = (emp.mname ?? '').trim();
     const lname = (emp.lname ?? '').trim();
-    const middleInitial = mname ? mname.charAt(0).toUpperCase() + '.' : '';
-    return [fname, middleInitial, lname].filter(Boolean).join(' ');
+    const suffix = (emp.suffix ?? '').trim();
+    const isValidMiddle = mname && mname.toLowerCase() !== 'n/a';
+    const middleInitial = isValidMiddle ? mname.charAt(0).toUpperCase() + '.' : '';
+    return [fname, middleInitial, lname, suffix].filter(Boolean).join(' ');
 }
 
 // ============== Match office_desc to offices list ==============
