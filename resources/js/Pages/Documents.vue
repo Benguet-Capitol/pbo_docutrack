@@ -4318,7 +4318,7 @@ const validateChecklistRequirements = (): { valid: boolean; message: string } =>
             const item = checklistData.value.find((item: any) => item.item_name === requiredItemName);
             if (!item || !item.is_checked) {
                 const displayName = requiredItemName === 'LBP Form 2 (Program Appropriation & Obligation by Object of Expenditure)' 
-                    ? 'LBP Form 2 (Program Appropriation)' 
+                    ? 'LBP Form 2 (Program Appropriation & Obligation by Object of Expenditure)' 
                     : requiredItemName;
                 missingItems.push(displayName);
             }
