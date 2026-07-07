@@ -153,8 +153,8 @@
                             <p class="text-sm text-gray-900 mb-8">RECOMMENDING APPROVAL:</p>
                             <div class="space-y-8">
                                 <div class="w-72">
-                                    <p class="font-bold text-base text-center text-gray-900 w-72 uppercase" :class="{ 'border-b border-gray-900 pb-1': isApproverProvincialGovernor() }">{{ getRecommendingApprovalSignatory()?.name }}</p>
-                                    <p v-if="!isApproverProvincialGovernor()" class="text-base text-center text-gray-700 border-b border-gray-900 w-72">{{ getRecommendingApprovalSignatory()?.designation }}</p>
+                                    <p class="font-bold text-sm text-center text-gray-900 w-72 uppercase" :class="{ 'border-b border-gray-900 pb-1': isApproverProvincialGovernor() }">{{ getRecommendingApprovalSignatory()?.name }}</p>
+                                    <p v-if="!isApproverProvincialGovernor()" class="text-sm text-center text-gray-700 border-b border-gray-900 w-72">{{ getRecommendingApprovalSignatory()?.designation }}</p>
                                     <p class="text-sm text-center text-gray-700 w-72">{{ getRecommendingApprovalDesignation() }}</p>
                                 </div>
                             </div>

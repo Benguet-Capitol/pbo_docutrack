@@ -115,6 +115,7 @@ class DocumentController extends Controller
                 'remarks' => $validated['remarks'] ?? null,
             ]);
             
+            
             return response()->json($document->load('user'), 201);
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], 500);
@@ -139,6 +140,9 @@ class DocumentController extends Controller
 
             $document = Document::findOrFail($id);
             
+            // Store old values before update
+            $oldValues = $document->toArray();
+            
             $validated = $request->validate([
                 'tracking_no' => 'sometimes|string|unique:documents,tracking_no,' . $id,
                 'date' => 'sometimes|date',
@@ -152,6 +156,8 @@ class DocumentController extends Controller
             ]);
 
             $document->update($validated);
+            
+            
             return response()->json($document->load('user'));
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], 500);
@@ -165,7 +171,12 @@ class DocumentController extends Controller
     {
         try {
             $document = Document::findOrFail($id);
+            
+            // Capture document data before deletion
+            $documentData = $document->toArray();
+            
             $document->delete();
+            
             return response()->json(['message' => 'Document deleted successfully']);
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], 500);
@@ -243,6 +254,7 @@ class DocumentController extends Controller
             
             // Log the forward transaction
             DocumentTransaction::create($transactionData);
+
             
             return response()->json($document->load('user'));
         } catch (\Exception $e) {
@@ -379,7 +391,7 @@ class DocumentController extends Controller
                 'remarks' => $request->input('remarks'),
                 'duration_hours' => $durationHours,
             ]);
-            
+
             return response()->json($document->load('user'));
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], 500);
