@@ -2148,6 +2148,11 @@ const formErrors = ref<Record<string, string>>({});
  */
 const filteredDocuments = computed(() => {
     let filtered = documents.value.filter(document => {
+        // Ended (finalized) documents are visible to all roles regardless of permissions
+        if (document.status === 'finalized') {
+            return true;
+        }
+        
         // Check if user can view this document
         if (permissions.value.includes('documents.view.all')) {
             // Can view all documents
