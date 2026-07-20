@@ -71,6 +71,10 @@
                                         <i class="fas fa-hourglass-end"></i>
                                         Undertime
                                     </span>
+                                    <span v-else-if="employee.status === 'Off Day'" class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300">
+                                        <i class="fas fa-bed"></i>
+                                        Off Day
+                                    </span>
                                 </td>
                                 <td class="px-6 py-3 text-gray-700 dark:text-gray-300">
                                     <span v-if="employee.remarks" class="inline-flex items-center px-3 py-1 rounded-full text-xs  font-medium" :class="remarksBadgeClass(employee.status)">
@@ -147,6 +151,14 @@ const currentDateDisplay = computed(() => {
         month: 'long',
         day: 'numeric'
     });
+});
+
+/**
+ * Check if the selected date is a Saturday or Sunday.
+ */
+const isSelectedDateWeekend = computed(() => {
+    const day = selectedDate.value.getDay();
+    return day === 0 || day === 6;
 });
 
 /**
@@ -229,6 +241,14 @@ const getLastName = (fullName: string): string => {
  * Get employee status and remarks for the selected date
  */
 const getEmployeeStatusAndRemarks = (employee: any): { status: string; remarks: string } => {
+    // Weekends override everything else — nobody's "Present" or "On Leave"
+    // on a non-working day, the day itself is the reason.
+    if (isSelectedDateWeekend.value) {
+        return {
+            status: 'Off Day',
+            remarks: ''
+        };
+    }
     const employeeId = employee.id;
 
     const formatTime = (timeStr: string): string => {
@@ -311,6 +331,8 @@ const remarksBadgeClass = (status: string): string => {
             return 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300';
         case 'Undertime':
             return 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300';
+        case 'Off Day':
+            return 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300';
         case 'Present':
         default:
             return 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300';
