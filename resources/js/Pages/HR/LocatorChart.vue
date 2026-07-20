@@ -202,6 +202,30 @@ const isSelectedDateInInclusiveDates = (inclusiveDates: string[] | undefined): b
 };
 
 /**
+ * Common name suffixes to exclude when identifying the last name.
+ */
+const NAME_SUFFIXES = new Set(['jr', 'jr.', 'sr', 'sr.', 'ii', 'iii', 'iv', 'v']);
+
+/**
+ * Extract the last name from a "Firstname M. LastName [Suffix]" formatted
+ * name, ignoring generational suffixes so "Avelino B. Cayat Jr." sorts by
+ * "Cayat", not "Jr."
+ */
+const getLastName = (fullName: string): string => {
+    const parts = fullName.trim().split(/\s+/);
+    if (parts.length === 0) return fullName;
+
+    let lastIndex = parts.length - 1;
+    const lastToken = parts[lastIndex].toLowerCase().replace(/\.$/, '');
+
+    if (NAME_SUFFIXES.has(lastToken) && parts.length > 1) {
+        lastIndex -= 1;
+    }
+
+    return parts[lastIndex] || fullName;
+};
+
+/**
  * Get employee status and remarks for the selected date
  */
 const getEmployeeStatusAndRemarks = (employee: any): { status: string; remarks: string } => {
@@ -337,7 +361,11 @@ const employeesWithStatus = computed(() => {
                 remarks
             };
         })
-        .sort((a, b) => a.name.localeCompare(b.name));
+        .sort((a, b) => {
+            const lastNameCompare = getLastName(a.name).localeCompare(getLastName(b.name));
+            if (lastNameCompare !== 0) return lastNameCompare;
+            return a.name.localeCompare(b.name); // tiebreaker on full name
+        });
 });
 
 // ============== Fetch Data ==============
