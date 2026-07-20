@@ -237,7 +237,7 @@
                                     <div class="flex items-center justify-center gap-2">
                                         <!-- Forward Button: Visible if created or pending and user has permission -->
                                         <button 
-                                            v-if="(document.status === 'created' || document.status === 'pending') && hasPermission('documents.forward')"
+                                            v-if="(document.status === 'created' || document.status === 'pending') && document.user_id === currentUser?.id && hasPermission('documents.forward')"
                                             @click.stop="handleForwardDocument(document)" 
                                             class="relative p-2 text-cyan-600 dark:text-cyan-400 bg-cyan-100 dark:bg-cyan-900/30 hover:text-cyan-700 dark:hover:text-cyan-300 hover:bg-cyan-200 dark:hover:bg-cyan-900/50 rounded-lg transition-all duration-200 group"
                                         >
@@ -2147,59 +2147,8 @@ const formErrors = ref<Record<string, string>>({});
  * Returns the filtered and sorted array of documents
  */
 const filteredDocuments = computed(() => {
-    let filtered = documents.value.filter(document => {
-        // Ended (finalized) documents are visible to all roles regardless of permissions
-        if (document.status === 'finalized') {
-            return true;
-        }
-        
-        // Check if user can view this document
-        if (permissions.value.includes('documents.view.all')) {
-            // Can view all documents
-            return true;
-        }
-        
-        // Receiving, Administrator, and Developer roles can view all documents
-        const userRole = currentUser.value?.usertype || '';
-        if (['Receiving', 'Administrator', 'Developer'].includes(userRole)) {
-            return true;
-        }
-        
-        if (permissions.value.includes('documents.view.pending')) {
-            // Can view all pending documents
-            if (document.status === 'pending') {
-                return true;
-            }
-        }
-        
-        if (permissions.value.includes('documents.view.assigned')) {
-            // Can view documents assigned to them (user_id matches)
-            if (document.user_id === currentUser.value?.id) {
-                return true;
-            }
-            
-            // Can view documents forwarded to them as a user
-            const latestTransaction = document.transactions && document.transactions.length > 0 
-                ? document.transactions[0] 
-                : null;
-            if (latestTransaction && latestTransaction.forwarded_to_user_id === currentUser.value?.id) {
-                return true;
-            }
-            
-            // Administrator, Developer, Receiving roles can view documents forwarded to offices or municipalities
-            // Also, the user who forwarded it can view it
-            if (latestTransaction && (latestTransaction.forwarded_to_office_id || latestTransaction.forwarded_to_municipality_id)) {
-                const isAllowedRole = ['Receiving', 'Administrator', 'Developer'].includes(currentUser.value?.usertype || '');
-                const isForwarder = latestTransaction.user_id === currentUser.value?.id;
-                if (isAllowedRole || isForwarder) {
-                    return true;
-                }
-            }
-            
-            return false;
-        }
-        return false;
-    });
+    // All roles can view all document records — no per-role visibility gating.
+    let filtered = [...documents.value];
 
     // Apply document type filter if selected
     if (documentTypeFilter.value) {
@@ -2221,17 +2170,14 @@ const filteredDocuments = computed(() => {
         let bVal: any;
         
         if (sortBy.value === 'user_id') {
-            // Sort by user_id (numeric)
             aVal = a.user_id || 0;
             bVal = b.user_id || 0;
             aVal = Number(aVal);
             bVal = Number(bVal);
         } else if (sortBy.value === 'id') {
-            // Handle numeric sorting for id
             aVal = Number(a[sortBy.value]) || 0;
             bVal = Number(b[sortBy.value]) || 0;
         } else {
-            // Handle string sorting
             aVal = a[sortBy.value] || '';
             bVal = b[sortBy.value] || '';
             aVal = aVal.toString();
@@ -2690,36 +2636,25 @@ const getForwardedByUserId = (document: Document): number | null => {
  * Mirrors the backend canReceiveSpecificDocument logic exactly
  */
 const canReceiveDocument = (document: Document): boolean => {
-    // Must be forwarded status
-    if (document.status !== 'forwarded') {
-        return false;
+    if (document.status !== 'forwarded') return false;
+    if (!hasPermission('documents.receive')) return false;
+    if (!document.transactions || document.transactions.length === 0) return false;
+
+    const latestTransaction = document.transactions[0];
+
+    // Forwarded directly to this user
+    if (latestTransaction.forwarded_to_user_id === currentUser.value?.id) {
+        return true;
     }
-    
-    // Must have receive permission
-    if (!hasPermission('documents.receive')) {
-        return false;
-    }
-    
-    // Get forwarder ID and current user ID (ensure both are numbers)
-    const forwarderId = getForwardedByUserId(document);
-    const currentUserId = currentUser.value?.id ? Number(currentUser.value.id) : null;
-    
-    if (!forwarderId || !currentUserId) {
-        return false;
-    }
-    
-    // If forwarded to office or municipality
-    if (isForwardedToOfficeOrMunicipality(document)) {
-        // Only Admin, Developer, Receiving roles can receive as base rule
-        const userRole = currentUser.value?.usertype || '';
-        const isAllowedRole = ['Administrator', 'Developer', 'Receiving'].includes(userRole);
-        // OR the user who forwarded it can receive (regardless of role)
-        const isForwarder = forwarderId === currentUserId;
+
+    // Forwarded to office/municipality — allowed roles or original forwarder can still receive
+    if (latestTransaction.forwarded_to_office_id || latestTransaction.forwarded_to_municipality_id) {
+        const isAllowedRole = ['Receiving', 'Administrator', 'Developer', 'Supervisor', 'Reviewer'].includes(currentUser.value?.usertype || '');
+        const isForwarder = latestTransaction.user_id === currentUser.value?.id;
         return isAllowedRole || isForwarder;
     }
-    
-    // Otherwise (forwarded to a user): can receive if they didn't forward it
-    return forwarderId !== currentUserId;
+
+    return false;
 };
 
 const getCustodianDisplay = (document: Document): string => {
