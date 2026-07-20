@@ -72,6 +72,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/certificates-of-appearance', function () {
         return Inertia::render('CertificateOfAppearance/Index');
     })->name('certificates-of-appearance.index');
+
+    Route::get('/locator-chart', function () {
+        return Inertia::render('HR/LocatorChart');
+    })->name('locator-chart.index');
 });
 
 // API Routes - Stateless with Bearer token authentication (skip CSRF)

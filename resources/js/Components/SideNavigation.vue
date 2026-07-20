@@ -40,8 +40,8 @@ const canViewItem = (item: string): boolean => {
     }
     
     // Only Developer, Administrator, Administrative, and Receiving can view Certificates
-    if (item === 'certificates-of-appearance') {
-        return ['Developer', 'Administrator', 'Administrative', 'Receiving'].includes(role);
+    if (item === 'certificates-of-appearance' || item === 'locator-chart') {
+        return ['Developer', 'Administrator', 'Administrative', 'Receiving', 'Reviewer', 'Supervisor'].includes(role);
     }
     
     // Everyone can view Documents and Records
@@ -172,6 +172,21 @@ const handleSidebarHover = (hovered: boolean) => {
             >
                 Admin
             </div>
+
+            <!-- Locator Chart Link -->
+            <Link
+                v-if="canViewItem('locator-chart')"
+                :href="route('locator-chart.index')"
+                :class="[
+                    route().current('locator-chart.*')
+                        ? 'text-white bg-gradient-to-r from-emerald-500 to-emerald-600 shadow-md hover:from-emerald-600 hover:to-emerald-700'
+                        : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 hover:shadow-sm',
+                    'flex-shrink-0 flex items-center gap-3 px-3 py-1.5 transition-all rounded-lg overflow-hidden',
+                ]"
+            >
+                <i class="fas fa-map-location-dot text-xl flex-shrink-0 dark:text-gray-100" aria-hidden="true"></i>
+                <span class="text-sm font-medium whitespace-nowrap" v-show="isSidebarOpen || isSidebarHovered">Locator Chart</span>
+            </Link>
 
             <!-- Leaves Link -->
             <Link
