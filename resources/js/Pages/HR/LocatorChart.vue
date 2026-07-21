@@ -12,9 +12,9 @@
             <div class="w-full bg-white dark:bg-gray-800 rounded-lg shadow">
                 <!-- Header Section -->
                 <div class="px-6 py-5 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex items-center justify-between flex-wrap gap-4">
-                    <h3 class="text-2xl font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                    <h3 class="text-xl font-semibold text-gray-900 dark:text-white flex items-center gap-2">
                         <i class="fas fa-map-location-dot text-blue-600 dark:text-blue-400"></i>
-                        Date: {{ currentDateDisplay }}
+                        {{ currentDateDisplay }}
                     </h3>
                     <div class="flex items-center gap-3 flex-wrap print:hidden">
                         <!-- View toggle: grid (compact, no-scroll) vs list (original table) -->
@@ -303,7 +303,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import PageHead from '@/Components/PageHead.vue';
 
@@ -324,6 +324,11 @@ const gridColumns = ref<number>(4);
 // The date the Locator Chart is being viewed for — defaults to today,
 // but the user can pick a different date to see historical/future records.
 const selectedDate = ref<Date>(new Date());
+
+// True once the user has picked a specific date themselves — while false,
+// selectedDate is kept in sync with the real "today" (see the date-rollover
+// check below), so leaving the chart open overnight rolls it to the new day.
+const isDateManuallySet = ref<boolean>(false);
 
 // ============== Auto-refresh ==============
 const autoRefreshEnabled = ref<boolean>(true);
@@ -359,6 +364,29 @@ const lastUpdatedDisplay = computed(() => {
     return lastUpdatedAt.value.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
 });
 
+// ============== Date rollover ==============
+
+// Checks whether the real-world date has moved past selectedDate and,
+// if the user hasn't manually chosen a date, advances selectedDate to
+// match — so leaving the chart open across midnight shows the new day
+// without needing a manual refresh or navigation.
+let dateRolloverTimer: ReturnType<typeof setInterval> | null = null;
+const DATE_ROLLOVER_CHECK_MS = 30 * 1000; // 30 seconds
+
+const checkForDateRollover = () => {
+    if (isDateManuallySet.value) return;
+
+    const now = new Date();
+    const hasDayChanged =
+        now.getDate() !== selectedDate.value.getDate() ||
+        now.getMonth() !== selectedDate.value.getMonth() ||
+        now.getFullYear() !== selectedDate.value.getFullYear();
+
+    if (hasDayChanged) {
+        selectedDate.value = now;
+    }
+};
+
 // Bridges the <input type="date"> (which needs "YYYY-MM-DD" strings)
 // to/from the selectedDate Date object.
 const selectedDateInput = computed({
@@ -372,6 +400,7 @@ const selectedDateInput = computed({
         if (!value) return;
         const [y, m, d] = value.split('-').map(Number);
         selectedDate.value = new Date(y, m - 1, d);
+        isDateManuallySet.value = true;
     }
 });
 
@@ -384,6 +413,7 @@ const isSelectedDateToday = computed(() => {
 
 const resetToToday = () => {
     selectedDate.value = new Date();
+    isDateManuallySet.value = false;
 };
 
 // ============== Computed Properties ==============
@@ -865,7 +895,8 @@ const fetchTardiness = async () => {
 
 /**
  * Fetch all data sources and stamp the last-updated time. Used for the
- * initial load, the manual refresh button, and the auto-refresh timer.
+ * initial load, the manual refresh button, the auto-refresh timer, and
+ * whenever the selected date changes.
  */
 const refreshAll = async () => {
     await Promise.all([
@@ -878,6 +909,15 @@ const refreshAll = async () => {
     lastUpdatedAt.value = new Date();
 };
 
+// Re-fetch everything whenever the viewed date changes — whether the user
+// picked a different date or the automatic rollover check above advanced
+// it to a new day — so the chart reflects the latest records for that
+// date without needing a page reload. Skipped on the very first run since
+// onMounted already does the initial fetch.
+watch(selectedDate, () => {
+    refreshAll();
+});
+
 /**
  * Initialize: Fetch all data on mount, then start auto-refresh if enabled.
  */
@@ -886,14 +926,26 @@ onMounted(async () => {
     if (autoRefreshEnabled.value) {
         startAutoRefresh();
     }
+    dateRolloverTimer = setInterval(checkForDateRollover, DATE_ROLLOVER_CHECK_MS);
 });
 
 onUnmounted(() => {
     stopAutoRefresh();
+    if (dateRolloverTimer) {
+        clearInterval(dateRolloverTimer);
+        dateRolloverTimer = null;
+    }
 });
 </script>
 
 <style>
+/* Printing must show ONLY the government-form sheet above — nothing else
+   on the page, including the app's TopNavigation/Header/Footer that live
+   outside this component in AuthenticatedLayout. This must be a global
+   (non-scoped) style, since scoped styles can't reach ancestors like
+   <body> or sibling layout markup outside this component. Hide everything
+   on the page by default and re-reveal just the print sheet and its
+   descendants; this works no matter what markup wraps it. */
 @media print {
     body * {
         visibility: hidden;
