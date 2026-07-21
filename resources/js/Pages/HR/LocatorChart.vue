@@ -12,9 +12,9 @@
             <div class="w-full bg-white dark:bg-gray-800 rounded-lg shadow">
                 <!-- Header Section -->
                 <div class="px-6 py-5 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex items-center justify-between flex-wrap gap-4">
-                    <h3 class="text-xl font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                    <h3 class="text-2xl font-semibold text-gray-900 dark:text-white flex items-center gap-2">
                         <i class="fas fa-map-location-dot text-blue-600 dark:text-blue-400"></i>
-                        {{ currentDateDisplay }}
+                        Current Date: {{ currentDateDisplay }}
                     </h3>
                     <div class="flex items-center gap-3 flex-wrap print:hidden">
                         <!-- View toggle: grid (compact, no-scroll) vs list (original table) -->
