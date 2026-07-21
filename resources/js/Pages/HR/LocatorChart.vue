@@ -1,9 +1,9 @@
 <template>
-    <PageHead title="Locator Chart" />
+    <PageHead />
     <AuthenticatedLayout>
         <template #header>
             <h2 class="text-xl font-semibold leading-tight text-gray-800 dark:text-gray-200">
-                Locator Chart
+                Locator Chart | <span class="text-blue-700 dark:text-blue-300">Provincial Budget Office</span>
             </h2>
         </template>
 
@@ -16,7 +16,36 @@
                         <i class="fas fa-map-location-dot text-blue-600 dark:text-blue-400"></i>
                         {{ currentDateDisplay }}
                     </h3>
-                    <div class="flex items-center gap-2">
+                    <div class="flex items-center gap-3 flex-wrap">
+                        <!-- View toggle: grid (compact, no-scroll) vs list (original table) -->
+                        <div class="flex items-center rounded-lg border border-gray-300 dark:border-gray-600 overflow-hidden text-xs font-medium">
+                            <button
+                                @click="viewMode = 'grid'"
+                                :class="[
+                                    'px-3 py-2 flex items-center gap-1.5 transition-colors',
+                                    viewMode === 'grid'
+                                        ? 'bg-blue-600 text-white'
+                                        : 'bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600'
+                                ]"
+                                title="Compact grid view — fits more employees on screen"
+                            >
+                                <i class="fas fa-table-cells"></i>
+                                Grid
+                            </button>
+                            <button
+                                @click="viewMode = 'list'"
+                                :class="[
+                                    'px-3 py-2 flex items-center gap-1.5 transition-colors border-l border-gray-300 dark:border-gray-600',
+                                    viewMode === 'list'
+                                        ? 'bg-blue-600 text-white'
+                                        : 'bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600'
+                                ]"
+                                title="Traditional table view"
+                            >
+                                <i class="fas fa-list"></i>
+                                List
+                            </button>
+                        </div>
                         <label for="locatorDate" class="text-sm font-medium text-gray-700 dark:text-gray-300">Date:</label>
                         <input
                             type="date"
@@ -34,8 +63,58 @@
                     </div>
                 </div>
 
-                <!-- Table Section -->
-                <div class="overflow-x-auto">
+                <!-- Summary strip: quick counts so the user can see totals at a glance -->
+                <div v-if="employeesWithStatus.length > 0" class="px-6 py-3 border-b border-gray-200 dark:border-gray-700 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs bg-gray-50/60 dark:bg-gray-800/60">
+                    <span class="font-semibold text-gray-600 dark:text-gray-300">{{ employeesWithStatus.length }} total</span>
+                    <span v-for="s in statusSummary" :key="s.status" class="inline-flex items-center gap-1.5 text-gray-600 dark:text-gray-300">
+                        <span class="w-2 h-2 rounded-full" :class="dotClass(s.status)"></span>
+                        {{ s.status }}: <strong>{{ s.count }}</strong>
+                    </span>
+                </div>
+
+                <!-- ============== GRID VIEW (compact, multi-column, minimal scrolling) ============== -->
+                <div v-if="viewMode === 'grid'" class="p-4">
+                    <div
+                        v-if="employeesWithStatus.length > 0"
+                        class="grid gap-3"
+                        style="grid-template-columns: repeat(4, minmax(0, 1fr));"
+                    >
+                        <div
+                            v-for="employee in employeesWithStatus"
+                            :key="employee.id"
+                            class="border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-3 hover:shadow-md transition-shadow flex flex-col gap-2 min-w-0"
+                            :class="recordBgClass(employee.status)"
+                        >
+                            <div class="flex items-center justify-between gap-2 min-w-0">
+                                <span class="font-semibold text-gray-900 dark:text-white text-base truncate" :title="employee.name">
+                                    {{ employee.name }}
+                                </span>
+                                <span
+                                    class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-sm font-bold whitespace-nowrap"
+                                    :class="statusBadgeClass(employee.status)"
+                                >
+                                    <i :class="statusIconClass(employee.status)"></i>
+                                    {{ statusShortLabel(employee.status) }}
+                                </span>
+                            </div>
+                            <div>
+                                <span v-if="employee.remarks" class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium break-words" :class="remarksBadgeClass(employee.status)">
+                                    {{ employee.remarks }}
+                                </span>
+                                <span v-else class="text-sm text-gray-400 dark:text-gray-500">-</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- No Data State -->
+                    <div v-else class="text-center py-12 bg-gray-50 dark:bg-gray-700 rounded-md">
+                        <i class="fas fa-inbox text-gray-400 dark:text-gray-600 text-4xl mb-3 block"></i>
+                        <p class="text-gray-600 dark:text-gray-400">No employees found</p>
+                    </div>
+                </div>
+
+                <!-- ============== LIST VIEW (original single-column table) ============== -->
+                <div v-else class="overflow-x-auto">
                     <table class="w-full text-sm table-fixed">
                         <colgroup>
                             <col class="w-1/4">
@@ -50,7 +129,7 @@
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
-                            <tr v-for="employee in employeesWithStatus" :key="employee.id" class="bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                            <tr v-for="employee in employeesWithStatus" :key="employee.id" class="transition-colors hover:brightness-95 dark:hover:brightness-110" :class="recordBgClass(employee.status)">
                                 <td class="px-6 py-3 font-medium text-gray-900 dark:text-white">
                                     {{ employee.name }}
                                 </td>
@@ -108,6 +187,10 @@ const leaves = ref<any[]>([]);
 const travelOrders = ref<any[]>([]);
 const passSlips = ref<any[]>([]);
 const tardiness = ref<any[]>([]);
+
+// Grid = compact multi-column cards (default, minimizes scrolling for large rosters).
+// List = original single-column table.
+const viewMode = ref<'grid' | 'list'>('grid');
 
 // The date the Locator Chart is being viewed for — defaults to today,
 // but the user can pick a different date to see historical/future records.
@@ -212,6 +295,15 @@ const isSelectedDateInInclusiveDates = (inclusiveDates: string[] | undefined): b
     }
     return false;
 };
+
+/**
+ * Designations that should always be pinned to the top of the roster,
+ * ahead of the alphabetical-by-last-name ordering applied to everyone else.
+ */
+const PRIORITY_DESIGNATIONS = new Set([
+    'Provincial Budget Officer',
+    'Provincial Government Department Head (Provincial Budget Officer)'
+]);
 
 /**
  * Common name suffixes to exclude when identifying the last name.
@@ -340,6 +432,92 @@ const remarksBadgeClass = (status: string): string => {
 };
 
 /**
+ * Compact badge classes for the grid view cards (same color language as
+ * the list view, just reused under a different name for clarity).
+ */
+const statusBadgeClass = (status: string): string => {
+    switch (status) {
+        case 'On Leave':
+            return 'bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-300';
+        case 'On Official Business':
+            return 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300';
+        case 'Undertime':
+            return 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300';
+        case 'Off Day':
+            return 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300';
+        case 'Present':
+        default:
+            return 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300';
+    }
+};
+
+const statusIconClass = (status: string): string => {
+    switch (status) {
+        case 'On Leave':
+            return 'fas fa-calendar-check';
+        case 'On Official Business':
+            return 'fas fa-briefcase';
+        case 'Undertime':
+            return 'fas fa-hourglass-end';
+        case 'Off Day':
+            return 'fas fa-bed';
+        case 'Present':
+        default:
+            return 'fas fa-check-circle';
+    }
+};
+
+/**
+ * Shorter labels for the compact grid card badges, so the badge doesn't
+ * dominate a narrow card. "On Official Business" -> "On Official Business".
+ */
+const statusShortLabel = (status: string): string => {
+    switch (status) {
+        case 'On Official Business':
+            return 'On Official Business';
+        default:
+            return status;
+    }
+};
+
+/**
+ * Subtle status-tinted background for a whole record (grid card or table
+ * row) — light enough to still read as "white-ish" so it blends with the
+ * existing card/table styling rather than competing with the status badge.
+ */
+const recordBgClass = (status: string): string => {
+    switch (status) {
+        case 'On Leave':
+            return 'bg-orange-50/60 dark:bg-orange-900/10';
+        case 'On Official Business':
+            return 'bg-blue-50/60 dark:bg-blue-900/10';
+        case 'Undertime':
+            return 'bg-red-50/60 dark:bg-red-900/10';
+        case 'Off Day':
+            return 'bg-gray-50/80 dark:bg-gray-700/30';
+        case 'Present':
+        default:
+            return 'bg-green-50/40 dark:bg-green-900/10';
+    }
+};
+
+const dotClass = (status: string): string => {
+    switch (status) {
+        case 'On Leave':
+            return 'bg-orange-500';
+        case 'On Official Business':
+            return 'bg-blue-500';
+        case 'Undertime':
+            return 'bg-red-500';
+        case 'Off Day':
+            return 'bg-gray-500';
+        case 'Present':
+        default:
+            return 'bg-green-500';
+    }
+};
+
+/**
  * Set of employee IDs that have an active leave, pass slip, travel order,
  * or tardiness record today — used to filter the full employee roster
  * down to only those who should appear in the Locator Chart.
@@ -371,6 +549,8 @@ const employeeIdsWithAnyRecord = computed(() => {
 /**
  * Get all employees with their status and remarks for today —
  * filtered to only those with an active record in one of the four sources.
+ * The Provincial Budget Officer (or department head holding that role)
+ * is always pinned first; everyone else follows alphabetically by last name.
  */
 const employeesWithStatus = computed(() => {
     return employees.value
@@ -384,10 +564,27 @@ const employeesWithStatus = computed(() => {
             };
         })
         .sort((a, b) => {
+            const aIsPriority = PRIORITY_DESIGNATIONS.has(a.designation);
+            const bIsPriority = PRIORITY_DESIGNATIONS.has(b.designation);
+
+            if (aIsPriority && !bIsPriority) return -1;
+            if (!aIsPriority && bIsPriority) return 1;
+
             const lastNameCompare = getLastName(a.name).localeCompare(getLastName(b.name));
             if (lastNameCompare !== 0) return lastNameCompare;
             return a.name.localeCompare(b.name); // tiebreaker on full name
         });
+});
+
+/**
+ * Counts per status, used by the summary strip above the chart.
+ */
+const statusSummary = computed(() => {
+    const counts = new Map<string, number>();
+    employeesWithStatus.value.forEach(e => {
+        counts.set(e.status, (counts.get(e.status) || 0) + 1);
+    });
+    return Array.from(counts.entries()).map(([status, count]) => ({ status, count }));
 });
 
 // ============== Fetch Data ==============
