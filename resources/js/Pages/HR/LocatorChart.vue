@@ -16,7 +16,7 @@
                         <i class="fas fa-map-location-dot text-blue-600 dark:text-blue-400"></i>
                         {{ currentDateDisplay }}
                     </h3>
-                    <div class="flex items-center gap-3 flex-wrap">
+                    <div class="flex items-center gap-3 flex-wrap print:hidden">
                         <!-- View toggle: grid (compact, no-scroll) vs list (original table) -->
                         <div class="flex items-center rounded-lg border border-gray-300 dark:border-gray-600 overflow-hidden text-xs font-medium">
                             <button
@@ -46,6 +46,28 @@
                                 List
                             </button>
                         </div>
+
+                        <!-- Column count control (grid view only) -->
+                        <div v-if="viewMode === 'grid'" class="flex items-center gap-2">
+                            <label class="text-xs font-medium text-gray-600 dark:text-gray-300">Columns:</label>
+                            <div class="flex items-center rounded-lg border border-gray-300 dark:border-gray-600 overflow-hidden text-xs font-medium">
+                                <button
+                                    v-for="(col, colIndex) in [2, 3, 4, 6]"
+                                    :key="col"
+                                    @click="gridColumns = col"
+                                    :class="[
+                                        'px-2.5 py-2 transition-colors',
+                                        gridColumns === col
+                                            ? 'bg-blue-600 text-white'
+                                            : 'bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600',
+                                        colIndex !== 0 ? 'border-l border-gray-300 dark:border-gray-600' : ''
+                                    ]"
+                                >
+                                    {{ col }}
+                                </button>
+                            </div>
+                        </div>
+
                         <label for="locatorDate" class="text-sm font-medium text-gray-700 dark:text-gray-300">Date:</label>
                         <input
                             type="date"
@@ -60,11 +82,40 @@
                         >
                             Reset to Today
                         </button>
+
+                        <!-- Auto-refresh controls -->
+                        <div class="flex items-center gap-2 pl-3 border-l border-gray-200 dark:border-gray-700">
+                            <button
+                                @click="toggleAutoRefresh"
+                                :title="autoRefreshEnabled ? 'Auto-refresh is on — click to pause' : 'Auto-refresh is paused — click to resume'"
+                                class="text-lg leading-none"
+                            >
+                                <i :class="autoRefreshEnabled ? 'fas fa-toggle-on text-blue-600' : 'fas fa-toggle-off text-gray-400'"></i>
+                            </button>
+                            <span class="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">
+                                <span v-if="autoRefreshEnabled" class="inline-block w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse mr-1"></span>
+                                Updated {{ lastUpdatedDisplay }}
+                            </span>
+                            <button @click="refreshAll" title="Refresh now" class="text-xs text-blue-600 dark:text-blue-400 hover:underline">
+                                <i class="fas fa-rotate"></i>
+                            </button>
+                        </div>
+
+                        <!-- Print -->
+                        <div class="flex items-center gap-2 pl-3 border-l border-gray-200 dark:border-gray-700">
+                            <button
+                                @click="printChart"
+                                class="text-xs px-2.5 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-1.5"
+                            >
+                                <i class="fas fa-print"></i>
+                                Print
+                            </button>
+                        </div>
                     </div>
                 </div>
 
                 <!-- Summary strip: quick counts so the user can see totals at a glance -->
-                <div v-if="employeesWithStatus.length > 0" class="px-6 py-3 border-b border-gray-200 dark:border-gray-700 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs bg-gray-50/60 dark:bg-gray-800/60">
+                <div v-if="employeesWithStatus.length > 0" class="px-6 py-3 border-b border-gray-200 dark:border-gray-700 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs bg-gray-50/60 dark:bg-gray-800/60 print:hidden">
                     <span class="font-semibold text-gray-600 dark:text-gray-300">{{ employeesWithStatus.length }} total</span>
                     <span v-for="s in statusSummary" :key="s.status" class="inline-flex items-center gap-1.5 text-gray-600 dark:text-gray-300">
                         <span class="w-2 h-2 rounded-full" :class="dotClass(s.status)"></span>
@@ -72,49 +123,74 @@
                     </span>
                 </div>
 
+                <!-- Weekend banner: friendlier messaging than a silently all-"Off Day" list -->
+                <div
+                    v-if="isSelectedDateWeekend"
+                    class="mx-6 mt-4 px-4 py-3 rounded-lg bg-gray-50 dark:bg-gray-700/40 border border-gray-200 dark:border-gray-600 text-sm text-gray-600 dark:text-gray-300 flex items-center gap-2 print:hidden"
+                >
+                    <i class="fas fa-mug-hot text-gray-400"></i>
+                    It's the weekend — listed staff are marked Off Day.
+                </div>
+
                 <!-- ============== GRID VIEW (compact, multi-column, minimal scrolling) ============== -->
-                <div v-if="viewMode === 'grid'" class="p-4">
-                    <div
-                        v-if="employeesWithStatus.length > 0"
-                        class="grid gap-3"
-                        style="grid-template-columns: repeat(4, minmax(0, 1fr));"
-                    >
-                        <div
-                            v-for="employee in employeesWithStatus"
-                            :key="employee.id"
-                            class="border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-3 hover:shadow-md transition-shadow flex flex-col gap-2 min-w-0"
-                            :class="recordBgClass(employee.status)"
-                        >
-                            <div class="flex items-center justify-between gap-2 min-w-0">
-                                <span class="font-semibold text-gray-900 dark:text-white text-base truncate" :title="employee.name">
-                                    {{ employee.name }}
-                                </span>
-                                <span
-                                    class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-sm font-bold whitespace-nowrap"
-                                    :class="statusBadgeClass(employee.status)"
-                                >
-                                    <i :class="statusIconClass(employee.status)"></i>
-                                    {{ statusShortLabel(employee.status) }}
-                                </span>
+                <div v-if="viewMode === 'grid'" class="p-4 print:hidden">
+                    <div v-if="employeesWithStatus.length > 0" class="flex flex-col gap-6">
+                        <div v-for="group in groupedEmployees" :key="group.status">
+                            <div class="flex items-center gap-2 mb-2">
+                                <span class="w-2.5 h-2.5 rounded-full" :class="dotClass(group.status)"></span>
+                                <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-200 uppercase tracking-wide">{{ group.status }}</h4>
+                                <span class="text-xs text-gray-400 dark:text-gray-500">({{ group.employees.length }})</span>
                             </div>
-                            <div>
-                                <span v-if="employee.remarks" class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium break-words" :class="remarksBadgeClass(employee.status)">
-                                    {{ employee.remarks }}
-                                </span>
-                                <span v-else class="text-sm text-gray-400 dark:text-gray-500">-</span>
+                            <div
+                                class="grid gap-3 locator-grid"
+                                :style="{ gridTemplateColumns: `repeat(${gridColumns}, minmax(0, 1fr))` }"
+                            >
+                                <div
+                                    v-for="employee in group.employees"
+                                    :key="employee.id"
+                                    class="border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-3 hover:shadow-md transition-shadow flex flex-col gap-2 min-w-0"
+                                    :class="recordBgClass(employee.status)"
+                                >
+                                    <div class="flex items-center gap-2 min-w-0">
+                                        <span
+                                            class="w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
+                                            :class="statusBadgeClass(employee.status)"
+                                        >
+                                            {{ getInitials(employee.name) }}
+                                        </span>
+                                        <div class="flex-1 flex items-center justify-between gap-2 min-w-0">
+                                            <span class="font-semibold text-gray-900 dark:text-white text-base truncate" :title="employee.name">
+                                                {{ employee.name }}
+                                            </span>
+                                            <span
+                                                class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-sm font-bold whitespace-nowrap"
+                                                :class="statusBadgeClass(employee.status)"
+                                            >
+                                                <i :class="statusIconClass(employee.status)"></i>
+                                                {{ statusShortLabel(employee.status) }}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <span v-if="employee.remarks" class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium break-words" :class="remarksBadgeClass(employee.status)">
+                                            {{ employee.remarks }}
+                                        </span>
+                                        <span v-else class="text-sm text-gray-400 dark:text-gray-500">-</span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
 
                     <!-- No Data State -->
-                    <div v-else class="text-center py-12 bg-gray-50 dark:bg-gray-700 rounded-md">
+                    <div v-else-if="!isSelectedDateWeekend" class="text-center py-12 bg-gray-50 dark:bg-gray-700 rounded-md">
                         <i class="fas fa-inbox text-gray-400 dark:text-gray-600 text-4xl mb-3 block"></i>
                         <p class="text-gray-600 dark:text-gray-400">No employees found</p>
                     </div>
                 </div>
 
                 <!-- ============== LIST VIEW (original single-column table) ============== -->
-                <div v-else class="overflow-x-auto">
+                <div v-else class="overflow-x-auto print:hidden">
                     <table class="w-full text-sm table-fixed">
                         <colgroup>
                             <col class="w-1/4">
@@ -129,9 +205,22 @@
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
-                            <tr v-for="employee in employeesWithStatus" :key="employee.id" class="transition-colors hover:brightness-95 dark:hover:brightness-110" :class="recordBgClass(employee.status)">
+                            <tr
+                                v-for="employee in employeesWithStatus"
+                                :key="employee.id"
+                                class="transition-colors hover:brightness-95 dark:hover:brightness-110"
+                                :class="recordBgClass(employee.status)"
+                            >
                                 <td class="px-6 py-3 font-medium text-gray-900 dark:text-white">
-                                    {{ employee.name }}
+                                    <span class="inline-flex items-center gap-2">
+                                        <span
+                                            class="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold flex-shrink-0"
+                                            :class="statusBadgeClass(employee.status)"
+                                        >
+                                            {{ getInitials(employee.name) }}
+                                        </span>
+                                        {{ employee.name }}
+                                    </span>
                                 </td>
                                 <td class="px-6 py-3 text-gray-700 dark:text-gray-300 text-center">
                                     <span v-if="employee.status === 'Present'" class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300">
@@ -166,10 +255,47 @@
                     </table>
 
                     <!-- No Data State -->
-                    <div v-if="employeesWithStatus.length === 0" class="text-center py-12 bg-gray-50 dark:bg-gray-700">
+                    <div v-if="employeesWithStatus.length === 0 && !isSelectedDateWeekend" class="text-center py-12 bg-gray-50 dark:bg-gray-700">
                         <i class="fas fa-inbox text-gray-400 dark:text-gray-600 text-4xl mb-3 block"></i>
                         <p class="text-gray-600 dark:text-gray-400">No employees found</p>
                     </div>
+                </div>
+
+                <!-- ============== PRINT-ONLY VIEW (formal government form layout) ============== -->
+                <div class="hidden print:block locator-print-area px-8 py-6 text-black">
+                    <div class="text-center mb-5 leading-snug">
+                        <p class="text-sm">Republic of the Philippines</p>
+                        <p class="text-sm">Province of Benguet</p>
+                        <p class="text-base font-bold uppercase tracking-wide">Provincial Budget Office</p>
+                        <p class="text-lg font-bold uppercase tracking-wide mt-2">Daily Locator Chart</p>
+                        <p class="text-sm mt-1">{{ currentDateDisplay }}</p>
+                    </div>
+
+                    <table class="w-full text-sm border-collapse">
+                        <thead>
+                            <tr>
+                                <th class="border border-black px-2 py-1.5 text-left w-12">No.</th>
+                                <th class="border border-black px-2 py-1.5 text-left">Employee Name</th>
+                                <th class="border border-black px-2 py-1.5 text-left w-40">Status</th>
+                                <th class="border border-black px-2 py-1.5 text-left">Remarks</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="(employee, idx) in employeesWithStatus" :key="`print-${employee.id}`">
+                                <td class="border border-black px-2 py-1 align-top">{{ idx + 1 }}</td>
+                                <td class="border border-black px-2 py-1 align-top">{{ employee.name }}</td>
+                                <td class="border border-black px-2 py-1 align-top">{{ employee.status }}</td>
+                                <td class="border border-black px-2 py-1 align-top">{{ employee.remarks || '-' }}</td>
+                            </tr>
+                            <tr v-if="employeesWithStatus.length === 0">
+                                <td colspan="4" class="border border-black px-2 py-3 text-center">No employees found</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <p class="text-xs mt-2">
+                        Total: {{ employeesWithStatus.length }}<span v-for="s in statusSummary" :key="`printsum-${s.status}`"> &nbsp;|&nbsp; {{ s.status }}: {{ s.count }}</span>
+                    </p>
                 </div>
             </div>
         </div>
@@ -177,7 +303,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import PageHead from '@/Components/PageHead.vue';
 
@@ -192,9 +318,46 @@ const tardiness = ref<any[]>([]);
 // List = original single-column table.
 const viewMode = ref<'grid' | 'list'>('grid');
 
+// Number of columns in the Grid view — user-adjustable.
+const gridColumns = ref<number>(4);
+
 // The date the Locator Chart is being viewed for — defaults to today,
 // but the user can pick a different date to see historical/future records.
 const selectedDate = ref<Date>(new Date());
+
+// ============== Auto-refresh ==============
+const autoRefreshEnabled = ref<boolean>(true);
+const lastUpdatedAt = ref<Date | null>(null);
+const REFRESH_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
+let refreshTimer: ReturnType<typeof setInterval> | null = null;
+
+const startAutoRefresh = () => {
+    stopAutoRefresh();
+    refreshTimer = setInterval(() => {
+        refreshAll();
+    }, REFRESH_INTERVAL_MS);
+};
+
+const stopAutoRefresh = () => {
+    if (refreshTimer) {
+        clearInterval(refreshTimer);
+        refreshTimer = null;
+    }
+};
+
+const toggleAutoRefresh = () => {
+    autoRefreshEnabled.value = !autoRefreshEnabled.value;
+    if (autoRefreshEnabled.value) {
+        startAutoRefresh();
+    } else {
+        stopAutoRefresh();
+    }
+};
+
+const lastUpdatedDisplay = computed(() => {
+    if (!lastUpdatedAt.value) return '—';
+    return lastUpdatedAt.value.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+});
 
 // Bridges the <input type="date"> (which needs "YYYY-MM-DD" strings)
 // to/from the selectedDate Date object.
@@ -330,6 +493,20 @@ const getLastName = (fullName: string): string => {
 };
 
 /**
+ * Initials for the avatar circle, e.g. "Avelino D. Cayat Jr." -> "AC",
+ * skipping generational suffixes so they don't get used as the last initial.
+ */
+const getInitials = (fullName: string): string => {
+    const parts = fullName.trim().split(/\s+/).filter(
+        p => !NAME_SUFFIXES.has(p.toLowerCase().replace(/\.$/, ''))
+    );
+    if (parts.length === 0) return '?';
+    const first = parts[0]?.[0] || '';
+    const last = parts[parts.length - 1]?.[0] || first;
+    return (first + last).toUpperCase();
+};
+
+/**
  * Get employee status and remarks for the selected date
  */
 const getEmployeeStatusAndRemarks = (employee: any): { status: string; remarks: string } => {
@@ -433,7 +610,8 @@ const remarksBadgeClass = (status: string): string => {
 
 /**
  * Compact badge classes for the grid view cards (same color language as
- * the list view, just reused under a different name for clarity).
+ * the list view, just reused under a different name for clarity). Also
+ * reused for the avatar initials circle.
  */
 const statusBadgeClass = (status: string): string => {
     switch (status) {
@@ -480,6 +658,22 @@ const statusShortLabel = (status: string): string => {
     }
 };
 
+const dotClass = (status: string): string => {
+    switch (status) {
+        case 'On Leave':
+            return 'bg-orange-500';
+        case 'On Official Business':
+            return 'bg-blue-500';
+        case 'Undertime':
+            return 'bg-red-500';
+        case 'Off Day':
+            return 'bg-gray-500';
+        case 'Present':
+        default:
+            return 'bg-green-500';
+    }
+};
+
 /**
  * Subtle status-tinted background for a whole record (grid card or table
  * row) — light enough to still read as "white-ish" so it blends with the
@@ -501,21 +695,10 @@ const recordBgClass = (status: string): string => {
     }
 };
 
-const dotClass = (status: string): string => {
-    switch (status) {
-        case 'On Leave':
-            return 'bg-orange-500';
-        case 'On Official Business':
-            return 'bg-blue-500';
-        case 'Undertime':
-            return 'bg-red-500';
-        case 'Off Day':
-            return 'bg-gray-500';
-        case 'Present':
-        default:
-            return 'bg-green-500';
-    }
-};
+/**
+ * Fixed display order for status groups in the Grid view.
+ */
+const STATUS_ORDER = ['Present', 'On Official Business', 'On Leave', 'Undertime', 'Off Day'];
 
 /**
  * Set of employee IDs that have an active leave, pass slip, travel order,
@@ -586,6 +769,26 @@ const statusSummary = computed(() => {
     });
     return Array.from(counts.entries()).map(([status, count]) => ({ status, count }));
 });
+
+/**
+ * Employees grouped by status, in a fixed display order, for the Grid
+ * view's sectioned headers. Relative order within each group is preserved
+ * from employeesWithStatus (priority designation first, then last name).
+ */
+const groupedEmployees = computed(() => {
+    return STATUS_ORDER
+        .map(status => ({
+            status,
+            employees: employeesWithStatus.value.filter(e => e.status === status)
+        }))
+        .filter(group => group.employees.length > 0);
+});
+
+// ============== Print ==============
+
+const printChart = () => {
+    window.print();
+};
 
 // ============== Fetch Data ==============
 
@@ -661,9 +864,10 @@ const fetchTardiness = async () => {
 };
 
 /**
- * Initialize: Fetch all data on mount
+ * Fetch all data sources and stamp the last-updated time. Used for the
+ * initial load, the manual refresh button, and the auto-refresh timer.
  */
-onMounted(async () => {
+const refreshAll = async () => {
     await Promise.all([
         fetchEmployees(),
         fetchLeaves(),
@@ -671,5 +875,44 @@ onMounted(async () => {
         fetchPassSlips(),
         fetchTardiness()
     ]);
+    lastUpdatedAt.value = new Date();
+};
+
+/**
+ * Initialize: Fetch all data on mount, then start auto-refresh if enabled.
+ */
+onMounted(async () => {
+    await refreshAll();
+    if (autoRefreshEnabled.value) {
+        startAutoRefresh();
+    }
+});
+
+onUnmounted(() => {
+    stopAutoRefresh();
 });
 </script>
+
+<style>
+@media print {
+    body * {
+        visibility: hidden;
+    }
+    .locator-print-area,
+    .locator-print-area * {
+        visibility: visible;
+    }
+    .locator-print-area {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+    }
+    @page {
+        margin: 1.5cm;
+    }
+    table tr {
+        break-inside: avoid;
+    }
+}
+</style>
