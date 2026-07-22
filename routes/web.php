@@ -74,7 +74,7 @@ Route::middleware('auth')->group(function () {
     })->name('certificates-of-appearance.index');
 
     Route::get('/locator-chart', function () {
-        return Inertia::render('HR/LocatorChart');
+        return Inertia::render('LocatorChart/Index');
     })->name('locator-chart.index');
 });
 
