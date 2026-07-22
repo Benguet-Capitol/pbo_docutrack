@@ -1,4 +1,5 @@
 import { ref, watch, computed } from 'vue';
+import { usePage } from '@inertiajs/vue3';
 import type { PassSlip, Employee } from './usePassSlipsData';
 
 export function usePassSlipsForm(employees: any, passSlips: any) {
@@ -265,6 +266,35 @@ export function usePassSlipsForm(employees: any, passSlips: any) {
         return Object.keys(formErrors.value).length === 0;
     };
 
+     // ============== User Permissions ==============
+
+    const page = usePage();
+    const usertype = computed(() => page.props.auth.user?.usertype || '');
+
+    /**
+     * Check if current user can create pass slips
+     * Only Developer and Administrator can create pass slips
+     */
+    const canCreatePassSlips = computed(() => {
+        return ['Developer', 'Administrator'].includes(usertype.value);
+    });
+
+    /**
+     * Check if current user can edit pass slips
+     * All authenticated users can edit pass slips (they all have pass_slips.edit permission)
+     */
+    const canEditPassSlips = computed(() => {
+        return true;
+    });
+
+    /**
+     * Check if current user can delete pass slips
+     * Only Developer and Administrator can delete pass slips
+     */
+    const canDeletePassSlips = computed(() => {
+        return ['Developer', 'Administrator'].includes(usertype.value);
+    });
+
     const openCreateModal = () => {
         isRegeneratingControlNo.value = true;
         const today = new Date().toISOString().split('T')[0];
@@ -470,6 +500,11 @@ export function usePassSlipsForm(employees: any, passSlips: any) {
         passSlipToDelete,
         todayDate,
         sortedEmployees,
+        // Permissions
+        canCreatePassSlips,
+        canEditPassSlips,
+        canDeletePassSlips,
+        // Methods
         generateControlNo,
         formatTimeForAPI,
         formatTimeDisplay,

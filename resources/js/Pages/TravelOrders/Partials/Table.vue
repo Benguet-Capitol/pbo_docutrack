@@ -95,6 +95,7 @@
                             </button>
                             <!-- Edit Button -->
                             <button
+                                v-if="canEditTravelOrders"
                                 @click.stop="$emit('edit', order)"
                                 class="relative p-2 text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/30 hover:text-blue-700 dark:hover:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-900/50 rounded-lg transition-all duration-200 group"
                             >
@@ -103,6 +104,7 @@
                             </button>
                             <!-- Delete Button -->
                             <button
+                                v-if="canDeleteTravelOrders"
                                 @click.stop="$emit('delete', order)"
                                 class="relative p-2 text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-900/30 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-200 dark:hover:bg-red-900/50 rounded-lg transition-all duration-200 group"
                             >
@@ -124,6 +126,14 @@ defineProps<{
     records: TravelOrder[];
     sortBy: string;
     sortOrder: 'asc' | 'desc';
+    canEditTravelOrders: {
+        type: Boolean,
+        required: true,
+    },
+    canDeleteTravelOrders: {
+        type: Boolean,
+        required: true,
+    },
 }>();
 
 defineEmits<{

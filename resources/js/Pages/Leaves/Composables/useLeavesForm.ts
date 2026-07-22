@@ -1,4 +1,5 @@
-import { ref, watch } from 'vue';
+import { ref, watch, computed } from 'vue';
+import { usePage } from '@inertiajs/vue3';
 import type { Leave } from './useLeavesData';
 
 export interface LeaveFormData {
@@ -126,6 +127,35 @@ export function useLeavesForm(
             return formatDateForDisplay(entry);
         }
     };
+
+    // ============== User Permissions ==============
+    
+    const page = usePage();
+    const usertype = computed(() => page.props.auth.user?.usertype || '');
+
+    /**
+     * Check if current user can create offices
+     * Only Developer and Administrator can create offices
+     */
+    const canCreateLeaves = computed(() => {
+        return ['Developer', 'Administrator', 'Administrative'].includes(usertype.value);
+    });
+
+    /**
+     * Check if current user can edit offices
+     * All authenticated users can edit offices (they all have offices.edit permission)
+     */
+    const canEditLeaves = computed(() => {
+        return ['Developer', 'Administrator', 'Administrative'].includes(usertype.value);
+    });
+
+    /**
+     * Check if current user can delete offices
+     * Only Developer and Administrator can delete offices
+     */
+    const canDeleteLeaves = computed(() => {
+        return ['Developer', 'Administrator', 'Administrative'].includes(usertype.value);
+    });
 
     const openCreateModal = () => {
         const today = new Date().toISOString().split('T')[0];
@@ -410,6 +440,11 @@ export function useLeavesForm(
         formData,
         formErrors,
         leaveTypes,
+
+        // Permissions
+        canCreateLeaves,
+        canEditLeaves,
+        canDeleteLeaves,
 
         // Methods
         generateControlNo,

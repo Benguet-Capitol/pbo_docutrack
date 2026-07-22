@@ -2,7 +2,10 @@
     <div class="px-6 py-5 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <!-- Create Leave Button -->
-            <button @click="$emit('create-click')" class="inline-flex items-center gap-2 px-5 py-2.5 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-700 dark:hover:bg-emerald-800 rounded-lg transition-colors duration-200">
+            <button 
+                v-if="canCreateLeaves"
+                @click="$emit('create-click')" 
+                class="inline-flex items-center gap-2 px-5 py-2.5 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-700 dark:hover:bg-emerald-800 rounded-lg transition-colors duration-200">
                 <i class="fas fa-plus"></i>
                 Create Leave
             </button>
@@ -35,6 +38,10 @@
 defineProps<{
     searchQuery: string;
     itemsPerPage: number;
+    canCreateLeaves: {
+        type: Boolean,
+        required: true,
+    },
 }>();
 
 defineEmits<{

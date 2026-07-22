@@ -1,4 +1,5 @@
 import { ref, watch, computed } from 'vue';
+import { usePage } from '@inertiajs/vue3';
 import type { TimeSlip, Employee } from './useTimeSlipsData';
 
 export function useTimeSlipsForm(employees: any, timeSlips: any) {
@@ -98,6 +99,35 @@ export function useTimeSlipsForm(employees: any, timeSlips: any) {
         };
         formErrors.value = {};
     };
+
+    // ============== User Permissions ==============
+
+    const page = usePage();
+    const usertype = computed(() => page.props.auth.user?.usertype || '');
+
+    /**
+     * Check if current user can create time slips
+     * Only Developer and Administrator can create time slips
+     */
+    const canCreateTimeSlips = computed(() => {
+        return ['Developer', 'Administrator'].includes(usertype.value);
+    });
+
+    /**
+     * Check if current user can edit time slips
+     * All authenticated users can edit time slips (they all have time_slips.edit permission)
+     */
+    const canEditTimeSlips = computed(() => {
+        return true;
+    });
+
+    /**
+     * Check if current user can delete time slips
+     * Only Developer and Administrator can delete time slips
+     */
+    const canDeleteTimeSlips = computed(() => {
+        return ['Developer', 'Administrator'].includes(usertype.value);
+    });
 
     const openCreateModal = () => {
         isRegeneratingControlNo.value = true;
@@ -241,6 +271,10 @@ export function useTimeSlipsForm(employees: any, timeSlips: any) {
         timeSlipToDelete,
         todayDate,
         sortedEmployees,
+        // Permissions
+        canCreateTimeSlips,
+        canEditTimeSlips,
+        canDeleteTimeSlips,
         resetForm,
         openCreateModal,
         closeCreateModal,

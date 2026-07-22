@@ -3,6 +3,7 @@
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <!-- Create Time Slip Button -->
             <button
+                v-if="canCreateTimeSlips"
                 @click="$emit('create-click')"
                 class="inline-flex items-center gap-2 px-5 py-2.5 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-700 dark:hover:bg-emerald-800 rounded-lg transition-colors duration-200"
             >
@@ -10,7 +11,7 @@
                 Create Time Slip
             </button>
 
-            <div class="flex items-center gap-3">
+            <div :class="['flex items-center gap-3', !canCreateTimeSlips && 'sm:ml-auto']">
                 <i class="fas fa-search text-gray-400"></i>
                 <input
                     :value="searchQuery"
@@ -39,6 +40,7 @@
 defineProps<{
     searchQuery: string;
     itemsPerPage: number;
+    canCreateTimeSlips: boolean;
 }>();
 
 defineEmits<{

@@ -1,4 +1,5 @@
 import { ref, watch, computed } from 'vue';
+import { usePage } from '@inertiajs/vue3';
 import type { TravelOrder, Employee } from './useTravelOrdersData';
 
 export function useTravelOrdersForm(employees: any, travelOrders: any) {
@@ -213,6 +214,35 @@ export function useTravelOrdersForm(employees: any, travelOrders: any) {
             }
         }
     );
+
+    // ============== User Permissions ==============
+
+    const page = usePage();
+    const usertype = computed(() => page.props.auth.user?.usertype || '');
+
+    /**
+     * Check if current user can create travel orders
+     * Only Developer and Administrator can create travel orders
+     */
+    const canCreateTravelOrders = computed(() => {
+        return ['Developer', 'Administrator'].includes(usertype.value);
+    });
+
+    /**
+     * Check if current user can edit travel orders
+     * All authenticated users can edit travel orders (they all have travel_orders.edit permission)
+     */
+    const canEditTravelOrders = computed(() => {
+        return true;
+    });
+
+    /**
+     * Check if current user can delete travel orders
+     * Only Developer and Administrator can delete travel orders
+     */
+    const canDeleteTravelOrders = computed(() => {
+        return ['Developer', 'Administrator'].includes(usertype.value);
+    });
 
     const openCreateModal = () => {
         const today = todayDate.value;
@@ -464,6 +494,11 @@ export function useTravelOrdersForm(employees: any, travelOrders: any) {
         supervisorOptions,
         approverOptions,
         driverOptions,
+
+        // Permissions
+        canCreateTravelOrders,
+        canEditTravelOrders,
+        canDeleteTravelOrders,
 
         // Methods
         generateControlNo,

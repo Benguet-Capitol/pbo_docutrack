@@ -1,4 +1,5 @@
 import { ref, watch, computed } from 'vue';
+import { usePage } from '@inertiajs/vue3';
 import type { TardinessRecord, Employee } from './useTardinessData';
 
 export function useTardinessForm(employees: any, tardiness: any) {
@@ -273,6 +274,35 @@ export function useTardinessForm(employees: any, tardiness: any) {
         return Object.keys(formErrors.value).length === 0;
     };
 
+    // ============== User Permissions ==============
+    
+        const page = usePage();
+        const usertype = computed(() => page.props.auth.user?.usertype || '');
+    
+        /**
+         * Check if current user can create tardiness
+         * Only Developer and Administrator can create tardiness
+         */
+        const canCreateTardiness = computed(() => {
+            return ['Developer', 'Administrator'].includes(usertype.value);
+        });
+    
+        /**
+         * Check if current user can edit tardiness
+         * All authenticated users can edit tardiness (they all have tardiness.edit permission)
+         */
+        const canEditTardiness = computed(() => {
+            return true;
+        });
+    
+        /**
+         * Check if current user can delete tardiness
+         * Only Developer and Administrator can delete tardiness
+         */
+        const canDeleteTardiness = computed(() => {
+            return ['Developer', 'Administrator'].includes(usertype.value);
+        });
+
     const openCreateModal = () => {
         isRegeneratingControlNo.value = true;
         const today = new Date().toISOString().split('T')[0];
@@ -372,6 +402,11 @@ export function useTardinessForm(employees: any, tardiness: any) {
         recordToEdit,
         recordToDelete,
         todayDate,
+        // Permissions
+        canCreateTardiness,
+        canEditTardiness,
+        canDeleteTardiness,
+        // Methods
         generateControlNo,
         computeUndertime,
         getRequestingEmployee,
