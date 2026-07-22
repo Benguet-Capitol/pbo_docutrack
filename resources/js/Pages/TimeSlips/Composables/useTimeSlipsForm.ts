@@ -110,7 +110,7 @@ export function useTimeSlipsForm(employees: any, timeSlips: any) {
      * Only Developer and Administrator can create time slips
      */
     const canCreateTimeSlips = computed(() => {
-        return ['Developer', 'Administrator'].includes(usertype.value);
+        return ['Developer', 'Administrator', 'Administrative'].includes(usertype.value);
     });
 
     /**
@@ -118,7 +118,7 @@ export function useTimeSlipsForm(employees: any, timeSlips: any) {
      * All authenticated users can edit time slips (they all have time_slips.edit permission)
      */
     const canEditTimeSlips = computed(() => {
-        return true;
+        return ['Developer', 'Administrator', 'Administrative'].includes(usertype.value);
     });
 
     /**
@@ -126,7 +126,7 @@ export function useTimeSlipsForm(employees: any, timeSlips: any) {
      * Only Developer and Administrator can delete time slips
      */
     const canDeleteTimeSlips = computed(() => {
-        return ['Developer', 'Administrator'].includes(usertype.value);
+        return ['Developer', 'Administrator', 'Administrative'].includes(usertype.value);
     });
 
     const openCreateModal = () => {

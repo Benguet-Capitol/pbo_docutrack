@@ -225,7 +225,7 @@ export function useTravelOrdersForm(employees: any, travelOrders: any) {
      * Only Developer and Administrator can create travel orders
      */
     const canCreateTravelOrders = computed(() => {
-        return ['Developer', 'Administrator'].includes(usertype.value);
+        return ['Developer', 'Administrator', 'Administrative'].includes(usertype.value);
     });
 
     /**
@@ -233,7 +233,7 @@ export function useTravelOrdersForm(employees: any, travelOrders: any) {
      * All authenticated users can edit travel orders (they all have travel_orders.edit permission)
      */
     const canEditTravelOrders = computed(() => {
-        return true;
+        return ['Developer', 'Administrator', 'Administrative'].includes(usertype.value);
     });
 
     /**
@@ -241,7 +241,7 @@ export function useTravelOrdersForm(employees: any, travelOrders: any) {
      * Only Developer and Administrator can delete travel orders
      */
     const canDeleteTravelOrders = computed(() => {
-        return ['Developer', 'Administrator'].includes(usertype.value);
+        return ['Developer', 'Administrator', 'Administrative'].includes(usertype.value);
     });
 
     const openCreateModal = () => {

@@ -276,7 +276,7 @@ export function usePassSlipsForm(employees: any, passSlips: any) {
      * Only Developer and Administrator can create pass slips
      */
     const canCreatePassSlips = computed(() => {
-        return ['Developer', 'Administrator'].includes(usertype.value);
+        return ['Developer', 'Administrator', 'Administrative'].includes(usertype.value);
     });
 
     /**
@@ -284,7 +284,7 @@ export function usePassSlipsForm(employees: any, passSlips: any) {
      * All authenticated users can edit pass slips (they all have pass_slips.edit permission)
      */
     const canEditPassSlips = computed(() => {
-        return true;
+        return ['Developer', 'Administrator', 'Administrative'].includes(usertype.value);
     });
 
     /**
@@ -292,7 +292,7 @@ export function usePassSlipsForm(employees: any, passSlips: any) {
      * Only Developer and Administrator can delete pass slips
      */
     const canDeletePassSlips = computed(() => {
-        return ['Developer', 'Administrator'].includes(usertype.value);
+        return ['Developer', 'Administrator', 'Administrative'].includes(usertype.value);
     });
 
     const openCreateModal = () => {

@@ -284,7 +284,7 @@ export function useTardinessForm(employees: any, tardiness: any) {
          * Only Developer and Administrator can create tardiness
          */
         const canCreateTardiness = computed(() => {
-            return ['Developer', 'Administrator'].includes(usertype.value);
+            return ['Developer', 'Administrator', 'Administrative'].includes(usertype.value);
         });
     
         /**
@@ -292,7 +292,7 @@ export function useTardinessForm(employees: any, tardiness: any) {
          * All authenticated users can edit tardiness (they all have tardiness.edit permission)
          */
         const canEditTardiness = computed(() => {
-            return true;
+            return ['Developer', 'Administrator', 'Administrative'].includes(usertype.value);
         });
     
         /**
@@ -300,7 +300,7 @@ export function useTardinessForm(employees: any, tardiness: any) {
          * Only Developer and Administrator can delete tardiness
          */
         const canDeleteTardiness = computed(() => {
-            return ['Developer', 'Administrator'].includes(usertype.value);
+            return ['Developer', 'Administrator', 'Administrative'].includes(usertype.value);
         });
 
     const openCreateModal = () => {
