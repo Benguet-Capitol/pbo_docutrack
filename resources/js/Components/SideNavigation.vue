@@ -34,18 +34,8 @@ const usertype = computed(() => auth.value?.usertype || '');
 const canViewItem = (item: string): boolean => {
     const role = usertype.value;
     
-    // Developer, Administrator, and Administrative can view Leaves, Pass Slips, Time Slips, Travel Orders, Tardiness
-    if (item === 'leaves' || item === 'pass-slips' || item === 'time-slips' || item === 'travel-orders' || item === 'tardiness') {
-        return ['Developer', 'Administrator', 'Administrative'].includes(role);
-    }
-    
-    // Only Developer, Administrator, Administrative, and Receiving can view Certificates
-    if (item === 'certificates-of-appearance' || item === 'locator-chart') {
-        return ['Developer', 'Administrator', 'Administrative', 'Receiving', 'Reviewer', 'Supervisor'].includes(role);
-    }
-    
-    // Everyone can view Documents and Records
-    if (item === 'documents' || item === 'records') return true;
+    // Everyone can view Documents, Records, Leaves, Pass Slips, Time Slips, Travel Orders, Tardiness, Certificates of Appearance, and Locator Chart
+    if (item === 'documents' || item === 'records' || item === 'leaves' || item === 'pass-slips' || item === 'time-slips' || item === 'travel-orders' || item === 'tardiness' || item === 'certificates-of-appearance' || item === 'locator-chart') return true;
     
     // Only Developer and Administrator can view Users
     if (item === 'users') return role === 'Developer' || role === 'Administrator';
