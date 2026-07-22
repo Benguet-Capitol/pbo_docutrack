@@ -83,41 +83,41 @@ export function usePassSlipsData() {
             const query = searchQuery.value.toLowerCase();
             filtered = filtered.filter(slip => {
                 // Search in control_no
-                if (slip.control_no.toLowerCase().includes(query)) return true;
-                
+                if (slip.control_no?.toLowerCase().includes(query)) return true;
+
                 // Search in date (both raw and formatted)
-                if (slip.date.toLowerCase().includes(query)) return true;
-                if (formattedDate(slip.date).toLowerCase().includes(query)) return true;
-                
+                if (slip.date?.toLowerCase().includes(query)) return true;
+                if (slip.date && formattedDate(slip.date).toLowerCase().includes(query)) return true;
+
                 // Search in inclusive_dates (both raw and formatted)
                 if (slip.inclusive_dates && slip.inclusive_dates.length > 0) {
-                    if (slip.inclusive_dates.some(date => date.toLowerCase().includes(query))) return true;
-                    if (slip.inclusive_dates.some(date => formatInclusiveDateForSearch(date).toLowerCase().includes(query))) return true;
+                    if (slip.inclusive_dates.some(date => date?.toLowerCase().includes(query))) return true;
+                    if (slip.inclusive_dates.some(date => date && formatInclusiveDateForSearch(date).toLowerCase().includes(query))) return true;
                 }
-                
+
                 // Search in requested_time (both raw and formatted)
-                if (slip.requested_time.toLowerCase().includes(query)) return true;
-                if (formatTimeForSearch(slip.requested_time).toLowerCase().includes(query)) return true;
-                
+                if (slip.requested_time?.toLowerCase().includes(query)) return true;
+                if (slip.requested_time && formatTimeForSearch(slip.requested_time).toLowerCase().includes(query)) return true;
+
                 // Search in purpose
-                if (slip.purpose.toLowerCase().includes(query)) return true;
-                
+                if (slip.purpose?.toLowerCase().includes(query)) return true;
+
                 // Search in location
-                if (slip.location.toLowerCase().includes(query)) return true;
-                
+                if (slip.location?.toLowerCase().includes(query)) return true;
+
                 // Search in expected_return_time (both raw and formatted)
-                if (slip.expected_return_time.toLowerCase().includes(query)) return true;
-                if (formatTimeForSearch(slip.expected_return_time).toLowerCase().includes(query)) return true;
-                
+                if (slip.expected_return_time?.toLowerCase().includes(query)) return true;
+                if (slip.expected_return_time && formatTimeForSearch(slip.expected_return_time).toLowerCase().includes(query)) return true;
+
                 // Search in remarks
                 if (slip.remarks && slip.remarks.toLowerCase().includes(query)) return true;
-                
+
                 // Search in vehicle
                 if (slip.vehicle && slip.vehicle.toLowerCase().includes(query)) return true;
-                
+
                 // Search in employee names
-                if (slip.employees.some(emp => emp.name.toLowerCase().includes(query))) return true;
-                
+                if (slip.employees.some(emp => emp.name?.toLowerCase().includes(query))) return true;
+
                 return false;
             });
         }
