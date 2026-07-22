@@ -139,7 +139,7 @@
                             <div class="flex items-center gap-2 mb-2">
                                 <span class="w-2.5 h-2.5 rounded-full" :class="dotClass(group.status)"></span>
                                 <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-200 uppercase tracking-wide">{{ group.status }}</h4>
-                                <span class="text-xs text-gray-400 dark:text-gray-500">({{ group.employees.length }})</span>
+                                <span class="text-sm font-semibold text-gray-700 dark:text-gray-200">({{ group.employees.length }})</span>
                             </div>
                             <div
                                 class="grid gap-3 locator-grid"
@@ -280,7 +280,7 @@
                     </div>
                     <div class="text-center mb-5 leading-snug">
                         <p class="text-lg font-bold uppercase tracking-wide mt-2">Daily Locator Chart</p>
-                        <p class="text-sm mt-1">{{ currentDateDisplay }}</p>
+                        <p class="text-sm text-gray-700">{{ currentDateDisplay }}</p>
                     </div>
 
                     <table class="w-full text-sm border-collapse">
