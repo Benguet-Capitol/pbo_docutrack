@@ -12,9 +12,9 @@
             <div class="w-full bg-white dark:bg-gray-800 rounded-lg shadow">
                 <!-- Header Section -->
                 <div class="px-6 py-5 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex items-center justify-between flex-wrap gap-4">
-                    <h3 class="text-xl font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                    <h3 class="text-2xl font-semibold text-gray-900 dark:text-white flex items-center gap-2">
                         <i class="fas fa-map-location-dot text-blue-600 dark:text-blue-400"></i>
-                        {{ currentDateDisplay }}
+                        Date: {{ currentDateDisplay }}
                     </h3>
                     <div class="flex items-center gap-3 flex-wrap print:hidden">
                         <!-- View toggle: grid (compact, no-scroll) vs list (original table) -->
@@ -116,7 +116,7 @@
 
                 <!-- Summary strip: quick counts so the user can see totals at a glance -->
                 <div v-if="employeesWithStatus.length > 0" class="px-6 py-3 border-b border-gray-200 dark:border-gray-700 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs bg-gray-50/60 dark:bg-gray-800/60 print:hidden">
-                    <span class="font-semibold text-gray-600 dark:text-gray-300">{{ employeesWithStatus.length }} total</span>
+                    <span class="font-semibold text-gray-600 dark:text-gray-300">{{ employeesWithStatus.length }} Total Employees</span>
                     <span v-for="s in statusSummary" :key="s.status" class="inline-flex items-center gap-1.5 text-gray-600 dark:text-gray-300">
                         <span class="w-2 h-2 rounded-full" :class="dotClass(s.status)"></span>
                         {{ s.status }}: <strong>{{ s.count }}</strong>
