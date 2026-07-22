@@ -38,10 +38,7 @@
 defineProps<{
     searchQuery: string;
     itemsPerPage: number;
-    canCreateTravelOrders: {
-        type: Boolean,
-        required: true,
-    },
+    canCreateTravelOrders: boolean;
 }>();
 
 defineEmits<{

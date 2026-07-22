@@ -14,6 +14,7 @@
                 <Header 
                     :search-query="searchQuery"
                     :items-per-page="itemsPerPage"
+                    :can-create-pass-slips="canCreatePassSlips"
                     @create-click="handleCreateClick"
                     @update:search-query="handleSearchQuery"
                     @update:items-per-page="handleItemsPerPage"
@@ -45,6 +46,8 @@
                     :records="paginatedPassSlips"
                     :sort-by="sortBy"
                     :sort-order="sortOrder"
+                    :can-edit-pass-slips="canEditPassSlips"
+                    :can-delete-pass-slips="canDeletePassSlips"
                     @edit="handleEditClick"
                     @delete="handleDeleteClick"
                     @preview="handlePreviewClick"
@@ -162,6 +165,9 @@ const updating = formComposable.updating;
 const deleting = formComposable.deleting;
 const recordToEdit = formComposable.passSlipToEdit;
 const recordToDelete = formComposable.passSlipToDelete;
+const canCreatePassSlips = formComposable.canCreatePassSlips;
+const canEditPassSlips = formComposable.canEditPassSlips;
+const canDeletePassSlips = formComposable.canDeletePassSlips;
 
 // ============== Event Handlers ==============
 

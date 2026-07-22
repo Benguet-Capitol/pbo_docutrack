@@ -14,6 +14,7 @@
                 <Header 
                     :search-query="searchQuery"
                     :items-per-page="itemsPerPage"
+                    :can-create-travel-orders="canCreateTravelOrders"
                     @create-click="formComposable.openCreateModal()"
                     @update:search-query="handleSearchQuery"
                     @update:items-per-page="handleItemsPerPage"
@@ -44,6 +45,8 @@
                     :records="paginatedTravelOrders"
                     :sort-by="sortBy"
                     :sort-order="sortOrder"
+                    :can-edit-travel-orders="canEditTravelOrders"
+                    :can-delete-travel-orders="canDeleteTravelOrders"
                     @edit="handleEditClick"
                     @delete="handleDeleteClick"
                     @preview="handlePreviewClick"
@@ -167,6 +170,9 @@ const requestingEmployees = formComposable.requestingEmployees;
 const supervisorOptions = formComposable.supervisorOptions;
 const approverOptions = formComposable.approverOptions;
 const driverOptions = formComposable.driverOptions;
+const canCreateTravelOrders = formComposable.canCreateTravelOrders;
+const canEditTravelOrders = formComposable.canEditTravelOrders;
+const canDeleteTravelOrders = formComposable.canDeleteTravelOrders;
 
 // ============== Event Handlers ==============
 

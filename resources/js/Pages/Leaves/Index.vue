@@ -12,9 +12,11 @@
                 <Header 
                     :search-query="searchQuery"
                     :items-per-page="itemsPerPage"
+                    :can-create-leaves="canCreateLeaves"
                     @update:search-query="searchQuery = $event"
                     @update:items-per-page="itemsPerPage = Number($event)"
                     @create-click="openCreateModal"
+                    
                 />
 
                 <!-- Loading State -->
@@ -43,6 +45,8 @@
                     :records="paginatedLeaves"
                     :sort-by="sortBy"
                     :sort-order="sortOrder"
+                    :can-edit-leaves="canEditLeaves"
+                    :can-delete-leaves="canDeleteLeaves"
                     @edit="openEditModal"
                     @delete="openDeleteModal"
                     @sort="toggleSort"
@@ -165,6 +169,9 @@ const {
     createLeave: _createLeave,
     updateLeave: _updateLeave,
     deleteLeave: _deleteLeave,
+    canCreateLeaves,
+    canEditLeaves,
+    canDeleteLeaves,
 } = useLeavesForm(leaves, fetchLeaves, showToast);
 
 const leaveTypes = [

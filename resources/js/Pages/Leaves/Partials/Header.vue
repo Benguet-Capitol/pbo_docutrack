@@ -38,10 +38,7 @@
 defineProps<{
     searchQuery: string;
     itemsPerPage: number;
-    canCreateLeaves: {
-        type: Boolean,
-        required: true,
-    },
+    canCreateLeaves: boolean;
 }>();
 
 defineEmits<{

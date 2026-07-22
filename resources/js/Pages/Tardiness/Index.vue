@@ -14,6 +14,7 @@
                 <Header 
                     :search-query="searchQuery"
                     :items-per-page="itemsPerPage"
+                    :can-create-tardiness="canCreateTardiness"
                     @create-click="handleCreateClick"
                     @update:search-query="handleSearchQuery"
                     @update:items-per-page="handleItemsPerPage"
@@ -45,6 +46,8 @@
                     :records="paginatedTardiness"
                     :sort-by="sortBy"
                     :sort-order="sortOrder"
+                    :can-edit-tardiness="canEditTardiness"
+                    :can-delete-tardiness="canDeleteTardiness"
                     @edit="handleEditClick"
                     @delete="handleDeleteClick"
                     @preview="handlePreviewClick"
@@ -166,6 +169,9 @@ const updating = formComposable.updating;
 const deleting = formComposable.deleting;
 const recordToEdit = formComposable.recordToEdit;
 const recordToDelete = formComposable.recordToDelete;
+const canCreateTardiness = formComposable.canCreateTardiness;
+const canEditTardiness = formComposable.canEditTardiness;
+const canDeleteTardiness = formComposable.canDeleteTardiness;
 
 // ============== Event Handlers ==============
 

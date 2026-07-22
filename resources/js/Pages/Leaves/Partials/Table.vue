@@ -107,14 +107,8 @@ defineProps<{
     records: Leave[];
     sortBy: string;
     sortOrder: 'asc' | 'desc';
-    canEditLeaves: {
-        type: Boolean,
-        required: true,
-    },
-    canDeleteLeaves: {
-        type: Boolean,
-        required: true,
-    },
+    canEditLeaves: boolean;
+    canDeleteLeaves: boolean;
 }>();
 
 defineEmits<{

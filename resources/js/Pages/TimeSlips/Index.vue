@@ -14,6 +14,7 @@
                 <Header 
                     :search-query="searchQuery"
                     :items-per-page="itemsPerPage"
+                    :can-create-time-slips="canCreateTimeSlips"
                     @create-click="handleCreateClick"
                     @update:search-query="handleSearchQuery"
                     @update:items-per-page="handleItemsPerPage"
@@ -45,6 +46,8 @@
                     :records="paginatedTimeSlips"
                     :sort-by="sortBy"
                     :sort-order="sortOrder"
+                    :can-edit-time-slips="canEditTimeSlips"
+                    :can-delete-time-slips="canDeleteTimeSlips"
                     @edit="handleEditClick"
                     @delete="handleDeleteClick"
                     @preview="handlePreviewClick"
@@ -157,6 +160,9 @@ const {
     timeSlipToDelete,
     sortedEmployees,
     formatTimeForAPI,
+    canCreateTimeSlips,
+    canEditTimeSlips,
+    canDeleteTimeSlips,
 } = formComposable;
 
 const toastRef = ref();

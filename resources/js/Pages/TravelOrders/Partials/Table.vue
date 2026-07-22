@@ -126,14 +126,8 @@ defineProps<{
     records: TravelOrder[];
     sortBy: string;
     sortOrder: 'asc' | 'desc';
-    canEditTravelOrders: {
-        type: Boolean,
-        required: true,
-    },
-    canDeleteTravelOrders: {
-        type: Boolean,
-        required: true,
-    },
+    canEditTravelOrders: boolean;
+    canDeleteTravelOrders: boolean;
 }>();
 
 defineEmits<{
