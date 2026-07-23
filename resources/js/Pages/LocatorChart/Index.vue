@@ -12,9 +12,9 @@
             <div class="w-full bg-white dark:bg-gray-800 rounded-lg shadow">
                 <!-- Header Section -->
                 <div class="px-6 py-5 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex items-center justify-between flex-wrap gap-4">
-                    <h3 class="text-2xl font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                    <h3 class="text-xl font-semibold text-gray-900 dark:text-white flex items-center gap-2">
                         <i class="fas fa-map-location-dot text-blue-600 dark:text-blue-400"></i>
-                        Date: {{ currentDateDisplay }}
+                        {{ currentDateDisplay }}
                     </h3>
                     <div class="flex items-center gap-3 flex-wrap print:hidden">
                         <!-- View toggle: grid (compact, no-scroll) vs list (original table) -->
@@ -116,7 +116,7 @@
 
                 <!-- Summary strip: quick counts so the user can see totals at a glance -->
                 <div v-if="employeesWithStatus.length > 0" class="px-6 py-3 border-b border-gray-200 dark:border-gray-700 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs bg-gray-50/60 dark:bg-gray-800/60 print:hidden">
-                    <span class="font-semibold text-gray-600 dark:text-gray-300">{{ employeesWithStatus.length }} Total Employees</span>
+                    <span class="font-semibold text-gray-600 dark:text-gray-300">{{ employeesWithStatus.length }} total</span>
                     <span v-for="s in statusSummary" :key="s.status" class="inline-flex items-center gap-1.5 text-gray-600 dark:text-gray-300">
                         <span class="w-2 h-2 rounded-full" :class="dotClass(s.status)"></span>
                         {{ s.status }}: <strong>{{ s.count }}</strong>
@@ -139,7 +139,7 @@
                             <div class="flex items-center gap-2 mb-2">
                                 <span class="w-2.5 h-2.5 rounded-full" :class="dotClass(group.status)"></span>
                                 <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-200 uppercase tracking-wide">{{ group.status }}</h4>
-                                <span class="text-sm font-semibold text-gray-700 dark:text-gray-200">({{ group.employees.length }})</span>
+                                <span class="text-xs text-gray-400 dark:text-gray-500">({{ group.employees.length }})</span>
                             </div>
                             <div
                                 class="grid gap-3 locator-grid"
@@ -151,17 +151,22 @@
                                     class="border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-3 hover:shadow-md transition-shadow flex flex-col gap-2 min-w-0"
                                     :class="recordBgClass(employee.status)"
                                 >
-                                    <div class="flex items-center gap-2 min-w-0">
+                                    <div class="flex items-start gap-2 min-w-0">
                                         <span
                                             class="w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
                                             :class="statusBadgeClass(employee.status)"
                                         >
                                             {{ getInitials(employee.name) }}
                                         </span>
-                                        <div class="flex-1 flex items-center justify-between gap-2 min-w-0">
-                                            <span class="font-semibold text-gray-900 dark:text-white text-base truncate" :title="employee.name">
-                                                {{ employee.name }}
-                                            </span>
+                                        <div class="flex-1 flex items-start justify-between gap-2 min-w-0">
+                                            <div class="min-w-0">
+                                                <p class="font-semibold text-gray-900 dark:text-white text-base truncate" :title="employee.name">
+                                                    {{ employee.name }}
+                                                </p>
+                                                <p v-if="employee.designation" class="text-xs text-gray-500 dark:text-gray-400 truncate" :title="employee.designation">
+                                                    {{ employee.designation }}
+                                                </p>
+                                            </div>
                                             <span
                                                 class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-sm font-bold whitespace-nowrap"
                                                 :class="statusBadgeClass(employee.status)"
@@ -212,15 +217,20 @@
                                 :class="recordBgClass(employee.status)"
                             >
                                 <td class="px-6 py-3 font-medium text-gray-900 dark:text-white">
-                                    <span class="inline-flex items-center gap-2">
+                                    <div class="flex items-center gap-2 min-w-0">
                                         <span
                                             class="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold flex-shrink-0"
                                             :class="statusBadgeClass(employee.status)"
                                         >
                                             {{ getInitials(employee.name) }}
                                         </span>
-                                        {{ employee.name }}
-                                    </span>
+                                        <div class="min-w-0">
+                                            <p class="truncate">{{ employee.name }}</p>
+                                            <p v-if="employee.designation" class="text-xs font-normal text-gray-500 dark:text-gray-400 truncate">
+                                                {{ employee.designation }}
+                                            </p>
+                                        </div>
+                                    </div>
                                 </td>
                                 <td class="px-6 py-3 text-gray-700 dark:text-gray-300 text-center">
                                     <span v-if="employee.status === 'Present'" class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300">
@@ -263,24 +273,12 @@
 
                 <!-- ============== PRINT-ONLY VIEW (formal government form layout) ============== -->
                 <div class="hidden print:block locator-print-area px-8 py-6 text-black">
-                    <!-- Header Section with Logos -->
-                    <div class="flex items-center justify-center gap-2 pb-2" style="border-bottom: 3px double #050505;">
-                        <div style="width: 85px; flex-shrink: 0;">
-                            <img src="/benguetlogo.png" alt="Benguet Logo" style="width: 100%; height: auto;">
-                        </div>
-                        <div class="text-center">
-                            <p class="text-sm font-semibold text-gray-700 mt-2">Republic of the Philippines</p>
-                            <p class="text-sm font-bold text-gray-900">PROVINCE OF BENGUET</p>
-                            <p class="text-lg font-bold text-gray-900">PROVINCIAL BUDGET OFFICE</p>
-                            <p class="text-sm text-gray-700 mb-1">Poblacion, La Trinidad, Benguet 2601</p>
-                        </div>
-                        <div style="width: 85px; flex-shrink: 0;">
-                            <img src="/bagongpilipinaslogo.png" alt="Bagong Pilipinas Logo" style="width: 100%; height: auto;">
-                        </div>
-                    </div>
                     <div class="text-center mb-5 leading-snug">
+                        <p class="text-sm">Republic of the Philippines</p>
+                        <p class="text-sm">Province of Benguet</p>
+                        <p class="text-base font-bold uppercase tracking-wide">Provincial Budget Office</p>
                         <p class="text-lg font-bold uppercase tracking-wide mt-2">Daily Locator Chart</p>
-                        <p class="text-sm text-gray-700">{{ currentDateDisplay }}</p>
+                        <p class="text-sm mt-1">{{ currentDateDisplay }}</p>
                     </div>
 
                     <table class="w-full text-sm border-collapse">
@@ -295,7 +293,10 @@
                         <tbody>
                             <tr v-for="(employee, idx) in employeesWithStatus" :key="`print-${employee.id}`">
                                 <td class="border border-black px-2 py-1 align-top">{{ idx + 1 }}</td>
-                                <td class="border border-black px-2 py-1 align-top">{{ employee.name }}</td>
+                                <td class="border border-black px-2 py-1 align-top">
+                                    <div class="font-medium">{{ employee.name }}</div>
+                                    <div v-if="employee.designation" class="text-xs text-gray-600">{{ employee.designation }}</div>
+                                </td>
                                 <td class="border border-black px-2 py-1 align-top">{{ employee.status }}</td>
                                 <td class="border border-black px-2 py-1 align-top">{{ employee.remarks || '-' }}</td>
                             </tr>
