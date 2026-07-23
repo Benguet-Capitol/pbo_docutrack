@@ -12,9 +12,9 @@
             <div class="w-full bg-white dark:bg-gray-800 rounded-lg shadow">
                 <!-- Header Section -->
                 <div class="px-6 py-5 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex items-center justify-between flex-wrap gap-4">
-                    <h3 class="text-xl font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                    <h3 class="text-2xl font-semibold text-gray-900 dark:text-white flex items-center gap-2">
                         <i class="fas fa-map-location-dot text-blue-600 dark:text-blue-400"></i>
-                        {{ currentDateDisplay }}
+                        Date: {{ currentDateDisplay }}
                     </h3>
                     <div class="flex items-center gap-3 flex-wrap print:hidden">
                         <!-- View toggle: grid (compact, no-scroll) vs list (original table) -->
@@ -273,12 +273,24 @@
 
                 <!-- ============== PRINT-ONLY VIEW (formal government form layout) ============== -->
                 <div class="hidden print:block locator-print-area px-8 py-6 text-black">
+                    <!-- Header Section with Logos -->
+                    <div class="flex items-center justify-center gap-2 pb-2" style="border-bottom: 3px double #050505;">
+                        <div style="width: 85px; flex-shrink: 0;">
+                            <img src="/benguetlogo.png" alt="Benguet Logo" style="width: 100%; height: auto;">
+                        </div>
+                        <div class="text-center">
+                            <p class="text-sm font-semibold text-gray-700 mt-2">Republic of the Philippines</p>
+                            <p class="text-sm font-bold text-gray-900">PROVINCE OF BENGUET</p>
+                            <p class="text-lg font-bold text-gray-900">PROVINCIAL BUDGET OFFICE</p>
+                            <p class="text-sm text-gray-700 mb-1">Poblacion, La Trinidad, Benguet 2601</p>
+                        </div>
+                        <div style="width: 85px; flex-shrink: 0;">
+                            <img src="/bagongpilipinaslogo.png" alt="Bagong Pilipinas Logo" style="width: 100%; height: auto;">
+                        </div>
+                    </div>
                     <div class="text-center mb-5 leading-snug">
-                        <p class="text-sm">Republic of the Philippines</p>
-                        <p class="text-sm">Province of Benguet</p>
-                        <p class="text-base font-bold uppercase tracking-wide">Provincial Budget Office</p>
                         <p class="text-lg font-bold uppercase tracking-wide mt-2">Daily Locator Chart</p>
-                        <p class="text-sm mt-1">{{ currentDateDisplay }}</p>
+                        <p class="text-sm text-gray-700">{{ currentDateDisplay }}</p>
                     </div>
 
                     <table class="w-full text-sm border-collapse">
