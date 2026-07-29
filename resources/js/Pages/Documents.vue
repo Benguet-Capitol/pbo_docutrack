@@ -57,28 +57,28 @@
                         </div>
                     </div>
                 </div>
+
                 <!-- Status Tabs: Filter documents by status -->
-                <div class="px-6 pt-1 pb-1 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-                    <div class="flex gap-2 overflow-x-auto">
+                <div class="px-6 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+                    <div class="flex gap-1 overflow-x-auto">
                         <button
                             v-for="tab in statusTabs"
                             :key="tab.key"
                             @click="activeStatusTab = tab.key"
                             :class="[
-                                'px-4 py-2.5 text-xs font-semibold whitespace-nowrap rounded-lg transition-all duration-150 flex items-center gap-2 border-2',
+                                'px-5 py-2 text-xs font-medium whitespace-nowrap border-b-2 transition-colors flex items-center gap-2',
                                 activeStatusTab === tab.key
                                     ? tabActiveStyles[tab.key]
-                                    : 'border-transparent bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                                    : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
                             ]"
                         >
-                            <i :class="tabIcons[tab.key]"></i>
                             {{ tab.label }}
                             <span
                                 :class="[
-                                    'px-2 py-0.5 rounded-full text-xs font-bold',
+                                    'px-1.5 py-0.5 rounded-full text-xs',
                                     activeStatusTab === tab.key
-                                        ? 'bg-white/25 text-white'
-                                        : 'bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-200'
+                                        ? tabBadgeStyles[tab.key]
+                                        : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
                                 ]"
                             >{{ tab.count }}</span>
                         </button>
@@ -1731,24 +1731,24 @@ const checklistData = ref<Array<{
 /** Stores checklist validation error message */
 const checklistValidationError = ref<string>('');
 
-/** Icon per status tab, matching the icon language used elsewhere in the table */
-const tabIcons: Record<string, string> = {
-    all: 'fas fa-layer-group',
-    created: 'fas fa-file',
-    forwarded: 'fas fa-share',
-    'to be received': 'fas fa-folder-open',
-    pending: 'fas fa-hourglass-half',
-    finalized: 'fas fa-calendar-xmark',
+/** Active-tab underline + text color per status, matching the Status column badge colors */
+const tabActiveStyles: Record<string, string> = {
+    all: 'border-emerald-600 text-emerald-600 dark:text-emerald-400 dark:border-emerald-400',
+    created: 'border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400',
+    forwarded: 'border-cyan-600 text-cyan-600 dark:text-cyan-400 dark:border-cyan-400',
+    'to be received': 'border-orange-600 text-orange-600 dark:text-orange-400 dark:border-orange-400',
+    pending: 'border-yellow-600 text-yellow-700 dark:text-yellow-400 dark:border-yellow-400',
+    finalized: 'border-green-600 text-green-600 dark:text-green-400 dark:border-green-400',
 };
 
-/** Active-tab background/border color per status, matching the Status column badge colors */
-const tabActiveStyles: Record<string, string> = {
-    all: 'border-emerald-600 bg-emerald-600 text-white',
-    created: 'border-blue-600 bg-blue-600 text-white',
-    forwarded: 'border-cyan-600 bg-cyan-600 text-white',
-    'to be received': 'border-orange-600 bg-orange-600 text-white',
-    pending: 'border-yellow-600 bg-yellow-500 text-white',
-    finalized: 'border-green-600 bg-green-600 text-white',
+/** Active-tab count badge background/text per status, matching the Status column badge colors */
+const tabBadgeStyles: Record<string, string> = {
+    all: 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300',
+    created: 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300',
+    forwarded: 'bg-cyan-100 dark:bg-cyan-900/30 text-cyan-800 dark:text-cyan-300',
+    'to be received': 'bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-300',
+    pending: 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300',
+    finalized: 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300',
 };
 
 /** Currently active status tab */
