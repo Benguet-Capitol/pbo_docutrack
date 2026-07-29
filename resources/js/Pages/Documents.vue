@@ -57,6 +57,33 @@
                         </div>
                     </div>
                 </div>
+                <!-- Status Tabs: Filter documents by status -->
+                <div class="px-6 pt-1 pb-1 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+                    <div class="flex gap-2 overflow-x-auto">
+                        <button
+                            v-for="tab in statusTabs"
+                            :key="tab.key"
+                            @click="activeStatusTab = tab.key"
+                            :class="[
+                                'px-4 py-2.5 text-xs font-semibold whitespace-nowrap rounded-lg transition-all duration-150 flex items-center gap-2 border-2',
+                                activeStatusTab === tab.key
+                                    ? tabActiveStyles[tab.key]
+                                    : 'border-transparent bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                            ]"
+                        >
+                            <i :class="tabIcons[tab.key]"></i>
+                            {{ tab.label }}
+                            <span
+                                :class="[
+                                    'px-2 py-0.5 rounded-full text-xs font-bold',
+                                    activeStatusTab === tab.key
+                                        ? 'bg-white/25 text-white'
+                                        : 'bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-200'
+                                ]"
+                            >{{ tab.count }}</span>
+                        </button>
+                    </div>
+                </div>
 
                 <!-- Loading State: v-if shows spinner while data is being fetched -->
                 <div v-if="loading" class="px-6 py-12 text-center">
@@ -1704,6 +1731,65 @@ const checklistData = ref<Array<{
 /** Stores checklist validation error message */
 const checklistValidationError = ref<string>('');
 
+/** Icon per status tab, matching the icon language used elsewhere in the table */
+const tabIcons: Record<string, string> = {
+    all: 'fas fa-layer-group',
+    created: 'fas fa-file',
+    forwarded: 'fas fa-share',
+    'to be received': 'fas fa-folder-open',
+    pending: 'fas fa-hourglass-half',
+    finalized: 'fas fa-calendar-xmark',
+};
+
+/** Active-tab background/border color per status, matching the Status column badge colors */
+const tabActiveStyles: Record<string, string> = {
+    all: 'border-emerald-600 bg-emerald-600 text-white',
+    created: 'border-blue-600 bg-blue-600 text-white',
+    forwarded: 'border-cyan-600 bg-cyan-600 text-white',
+    'to be received': 'border-orange-600 bg-orange-600 text-white',
+    pending: 'border-yellow-600 bg-yellow-500 text-white',
+    finalized: 'border-green-600 bg-green-600 text-white',
+};
+
+/** Currently active status tab */
+const activeStatusTab = ref<string>('all');
+
+/** Documents filtered by search + type only (for tab counts, independent of status) */
+const documentsForTabCounts = computed(() => {
+    let filtered = [...documents.value];
+    if (documentTypeFilter.value) {
+        filtered = filtered.filter(document => document.document_type === documentTypeFilter.value);
+    }
+    return filtered.filter(document =>
+        document.tracking_no.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
+        document.date.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
+        document.document_type.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
+        document.source?.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
+        document.particulars?.toLowerCase().includes(searchQuery.value.toLowerCase())
+    );
+});
+
+/** Status tab list with live counts, using the same per-user status as the table's Status column */
+const statusTabs = computed(() => {
+    const counts: Record<string, number> = { created: 0, forwarded: 0, 'to be received': 0, pending: 0, finalized: 0 };
+    documentsForTabCounts.value.forEach(document => {
+        const status = getDisplayStatus(document);
+        if (counts[status] !== undefined) counts[status]++;
+    });
+    return [
+        { key: 'all', label: 'All', count: documentsForTabCounts.value.length },
+        { key: 'created', label: 'Created', count: counts['created'] },
+        { key: 'forwarded', label: 'Forwarded', count: counts['forwarded'] },
+        { key: 'to be received', label: 'To Be Received', count: counts['to be received'] },
+        { key: 'pending', label: 'Pending', count: counts['pending'] },
+        { key: 'finalized', label: 'Transaction Ended', count: counts['finalized'] },
+    ];
+});
+
+watch(activeStatusTab, () => {
+    currentPage.value = 1;
+});
+
 /**
  * Get processing time limit in days based on document type
  */
@@ -2153,6 +2239,10 @@ const filteredDocuments = computed(() => {
     // Apply document type filter if selected
     if (documentTypeFilter.value) {
         filtered = filtered.filter(document => document.document_type === documentTypeFilter.value);
+    }
+    // Apply status tab filter
+    if (activeStatusTab.value !== 'all') {
+        filtered = filtered.filter(document => getDisplayStatus(document) === activeStatusTab.value);
     }
 
     // Apply search filter
