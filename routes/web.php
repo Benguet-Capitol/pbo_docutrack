@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\OfficeController;
 use App\Http\Controllers\Api\MunicipalityController;
 use App\Http\Controllers\Api\DocumentController;
 use App\Http\Controllers\Api\RecordController;
+use App\Http\Controllers\Api\NoticeOfMeetingController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -76,6 +77,14 @@ Route::middleware('auth')->group(function () {
     Route::get('/locator-chart', function () {
         return Inertia::render('LocatorChart/Index');
     })->name('locator-chart.index');
+});
+
+// Notice of Meetings
+Route::middleware(['web', 'auth'])->prefix('api')->group(function () {
+    Route::get('/notice-of-meetings', [NoticeOfMeetingController::class, 'api']);
+    Route::post('/notice-of-meetings', [NoticeOfMeetingController::class, 'store']);
+    Route::put('/notice-of-meetings/{noticeOfMeeting}', [NoticeOfMeetingController::class, 'update']);
+    Route::delete('/notice-of-meetings/{noticeOfMeeting}', [NoticeOfMeetingController::class, 'destroy']);
 });
 
 // API Routes - Stateless with Bearer token authentication (skip CSRF)

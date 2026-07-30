@@ -1,4 +1,5 @@
 <template>
+    <Toast ref="toastRef" />
     <PageHead />
     <AuthenticatedLayout>
         <template #header>
@@ -7,7 +8,28 @@
             </h2>
         </template>
 
-        <div class="py-6 px-4 sm:px-6 lg:px-8">
+        <div
+            ref="chartContainerRef"
+            class="py-6 px-4 sm:px-6 lg:px-8"
+            :class="{ 'bg-gray-50 dark:bg-gray-900 h-screen overflow-y-auto': isFullScreen }"
+        >
+            <!-- Fullscreen-only heading: AuthenticatedLayout's #header slot isn't
+                part of this element, so it disappears in fullscreen — this
+                re-shows the same heading, only while fullscreen is active -->
+            <div v-if="isFullScreen" class="flex items-center justify-between mb-4">
+                <h2 class="text-2xl font-semibold leading-tight text-gray-800 dark:text-gray-200">
+                    Locator Chart | <span class="text-blue-700 dark:text-blue-300">Provincial Budget Office</span>
+                </h2>
+                <button
+                    @click="toggleFullScreen"
+                    title="Exit full screen"
+                    class="text-xs px-2.5 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-1.5"
+                >
+                    <i class="fas fa-compress"></i>
+                    Exit Full Screen
+                </button>
+            </div>
+
             <!-- Locator Chart Section -->
             <div class="w-full bg-white dark:bg-gray-800 rounded-lg shadow">
                 <!-- Header Section -->
@@ -111,6 +133,18 @@
                                 Print
                             </button>
                         </div>
+
+                        <!-- Full Screen -->
+                        <div class="flex items-center gap-2 pl-3 border-l border-gray-200 dark:border-gray-700">
+                            <button
+                                @click="toggleFullScreen"
+                                :title="isFullScreen ? 'Exit full screen' : 'Full screen view'"
+                                class="text-xs px-2.5 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-1.5"
+                            >
+                                <i :class="isFullScreen ? 'fas fa-compress' : 'fas fa-expand'"></i>
+                                {{ isFullScreen ? 'Exit' : 'Full Screen' }}
+                            </button>
+                        </div>
                     </div>
                 </div>
 
@@ -149,7 +183,8 @@
                                     v-for="employee in group.employees"
                                     :key="employee.id"
                                     class="border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-3 hover:shadow-md transition-shadow flex flex-col gap-2 min-w-0"
-                                    :class="recordBgClass(employee.status)"
+                                    :class="[recordBgClass(employee.status), (isPresentStatus(employee.status) && !isFullScreen) ? 'cursor-pointer' : '']"
+                                    @click="isPresentStatus(employee.status) && !isFullScreen && openCreateMeetingModal({ id: employee.id, name: employee.name })"
                                 >
                                     <div class="flex items-start gap-2 min-w-0">
                                         <span
@@ -177,8 +212,37 @@
                                         </div>
                                     </div>
                                     <div>
-                                        <span v-if="employee.remarks" class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium break-words" :class="remarksBadgeClass(employee.status)">
-                                            {{ employee.remarks }}
+                                        <div
+                                            v-if="employee.meetings.length > 0"
+                                            @click.stop
+                                            class="text-xs px-3 py-2 rounded-lg"
+                                            :class="remarksBadgeClass(employee.status)"
+                                        >
+                                            <p class="font-semibold mb-0.5">Meeting / Activity:</p>
+                                            <div class="flex flex-col gap-1 pl-3">
+                                                <div v-for="meeting in employee.meetings" :key="meeting.id" class="flex items-center gap-2">
+                                                    <span><strong>{{ formatTime12h(meeting.time) }}</strong> - {{ meeting.particulars }}</span>
+                                                    <span v-if="!isFullScreen" class="flex items-center gap-1.5 text-gray-400">
+                                                        <button
+                                                            @click.stop="openEditMeetingModal({ id: employee.id, name: employee.name }, meeting)"
+                                                            title="Edit"
+                                                            class="hover:text-blue-600 dark:hover:text-blue-400"
+                                                        >
+                                                            <i class="fas fa-pen text-[10px]"></i>
+                                                        </button>
+                                                        <button
+                                                            @click.stop="openDeleteMeetingModal(employee.name, meeting)"
+                                                            title="Delete"
+                                                            class="hover:text-red-600"
+                                                        >
+                                                            <i class="fas fa-trash text-[10px]"></i>
+                                                        </button>
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <span v-else-if="employee.remarksText" class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium break-words" :class="remarksBadgeClass(employee.status)">
+                                            <strong v-if="employee.remarksLabel">{{ employee.remarksLabel }}:</strong>&nbsp; {{ employee.remarksText }}
                                         </span>
                                         <span v-else class="text-sm text-gray-400 dark:text-gray-500">-</span>
                                     </div>
@@ -198,7 +262,7 @@
                 <div v-else class="overflow-x-auto print:hidden">
                     <table class="w-full text-sm table-fixed">
                         <colgroup>
-                            <col class="w-1/4">
+                            <col class="w-1/3">
                             <col class="w-1/6">
                             <col class="w-auto">
                         </colgroup>
@@ -214,7 +278,8 @@
                                 v-for="employee in employeesWithStatus"
                                 :key="employee.id"
                                 class="transition-colors hover:brightness-95 dark:hover:brightness-110"
-                                :class="recordBgClass(employee.status)"
+                                :class="[recordBgClass(employee.status), (isPresentStatus(employee.status) && !isFullScreen) ? 'cursor-pointer' : '']"
+                                @click="isPresentStatus(employee.status) && !isFullScreen && openCreateMeetingModal({ id: employee.id, name: employee.name })"
                             >
                                 <td class="px-6 py-3 font-medium text-gray-900 dark:text-white">
                                     <div class="flex items-center gap-2 min-w-0">
@@ -233,7 +298,11 @@
                                     </div>
                                 </td>
                                 <td class="px-6 py-3 text-gray-700 dark:text-gray-300 text-center">
-                                    <span v-if="employee.status === 'Present'" class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300">
+                                    <span v-if="employee.status === 'Present with Meetings'" class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold bg-teal-100 dark:bg-teal-900/30 text-teal-800 dark:text-teal-300">
+                                        <i class="fas fa-comments"></i>
+                                        Present w/ Meeting
+                                    </span>
+                                    <span v-else-if="isPresentStatus(employee.status)" class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300">
                                         <i class="fas fa-check-circle"></i>
                                         Present
                                     </span>
@@ -255,8 +324,37 @@
                                     </span>
                                 </td>
                                 <td class="px-6 py-3 text-gray-700 dark:text-gray-300">
-                                    <span v-if="employee.remarks" class="inline-flex items-center px-3 py-1 rounded-full text-xs  font-medium" :class="remarksBadgeClass(employee.status)">
-                                        {{ employee.remarks }}
+                                    <div
+                                        v-if="employee.meetings.length > 0"
+                                        @click.stop
+                                        class="text-xs px-3 py-2 rounded-lg"
+                                        :class="remarksBadgeClass(employee.status)"
+                                    >
+                                        <p class="font-semibold mb-0.5">Meeting / Activity:</p>
+                                        <div class="flex flex-col gap-1 pl-3">
+                                            <div v-for="meeting in employee.meetings" :key="meeting.id" class="flex items-center gap-2">
+                                                <span><strong>{{ formatTime12h(meeting.time) }}</strong> - {{ meeting.particulars }}</span>
+                                                <span v-if="!isFullScreen" class="flex items-center gap-1.5 text-gray-400">
+                                                    <button
+                                                        @click.stop="openEditMeetingModal({ id: employee.id, name: employee.name }, meeting)"
+                                                        title="Edit"
+                                                        class="hover:text-blue-600 dark:hover:text-blue-400"
+                                                    >
+                                                        <i class="fas fa-pen text-[10px]"></i>
+                                                    </button>
+                                                    <button
+                                                        @click.stop="openDeleteMeetingModal(employee.name, meeting)"
+                                                        title="Delete"
+                                                        class="hover:text-red-600"
+                                                    >
+                                                        <i class="fas fa-trash text-[10px]"></i>
+                                                    </button>
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <span v-else-if="employee.remarksText" class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium" :class="remarksBadgeClass(employee.status)">
+                                        <strong v-if="employee.remarksLabel">{{ employee.remarksLabel }}: </strong>&nbsp; {{ employee.remarksText }}
                                     </span>
                                     <span v-else>-</span>
                                 </td>
@@ -309,8 +407,18 @@
                                     <div class="font-medium">{{ employee.name }}</div>
                                     <div v-if="employee.designation" class="text-xs text-gray-600">{{ employee.designation }}</div>
                                 </td>
-                                <td class="border border-black px-2 py-1 align-top">{{ employee.status }}</td>
-                                <td class="border border-black px-2 py-1 align-top">{{ employee.remarks || '-' }}</td>
+                                <td class="border border-black px-2 py-1 align-top">{{ printStatusLabel(employee.status) }}</td>
+                                <td class="border border-black px-2 py-1 align-top">
+                                    <template v-if="employee.meetings.length > 0">
+                                        <div v-for="meeting in employee.meetings" :key="`print-meeting-${meeting.id}`">
+                                            <strong>{{ formatTime12h(meeting.time) }}</strong> - {{ meeting.particulars }}
+                                        </div>
+                                    </template>
+                                    <template v-else-if="employee.remarksText">
+                                        <strong v-if="employee.remarksLabel">{{ employee.remarksLabel }}:</strong>&nbsp; {{ employee.remarksText }}
+                                    </template>
+                                    <template v-else>-</template>
+                                </td>
                             </tr>
                             <tr v-if="employeesWithStatus.length === 0">
                                 <td colspan="4" class="border border-black px-2 py-3 text-center">No employees found</td>
@@ -319,25 +427,79 @@
                     </table>
 
                     <p class="text-xs mt-2">
-                        Total: {{ employeesWithStatus.length }}<span v-for="s in statusSummary" :key="`printsum-${s.status}`"> &nbsp;|&nbsp; {{ s.status }}: {{ s.count }}</span>
+                        Total: {{ employeesWithStatus.length }}<span v-for="s in statusSummary" :key="`printsum-${s.status}`"> &nbsp;|&nbsp; {{ printStatusLabel(s.status) }}: {{ s.count }}</span>
                     </p>
                 </div>
             </div>
         </div>
+
+        <!-- ============== Notice of Meeting Modals (extracted components) ============== -->
+        <NoticeOfMeetingCreateModal
+            :show="showMeetingModal && !editingMeeting"
+            :employee-name="meetingModalEmployee?.name || ''"
+            :date-display="currentDateDisplay"
+            :form-data="meetingForm"
+            :form-errors="meetingFormErrors"
+            :creating="meetingFormSubmitting"
+            @update:form-data="(data) => (meetingForm = data)"
+            @close="closeMeetingModal"
+            @submit="submitMeetingForm"
+        />
+
+        <NoticeOfMeetingEditModal
+            :show="showMeetingModal && !!editingMeeting"
+            :meeting-to-edit="editingMeeting"
+            :employee-name="meetingModalEmployee?.name || ''"
+            :date-display="currentDateDisplay"
+            :form-data="meetingForm"
+            :form-errors="meetingFormErrors"
+            :updating="meetingFormSubmitting"
+            @update:form-data="(data) => (meetingForm = data)"
+            @close="closeMeetingModal"
+            @submit="submitMeetingForm"
+        />
+
+        <NoticeOfMeetingDeleteModal
+            :show="showDeleteMeetingModal"
+            :meeting-to-delete="meetingToDelete"
+            :employee-name="deleteMeetingEmployeeName"
+            :deleting="deletingMeeting"
+            @close="closeDeleteMeetingModal"
+            @confirm="confirmDeleteMeeting"
+        />
     </AuthenticatedLayout>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
+import Toast from '@/Components/Toast.vue';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import PageHead from '@/Components/PageHead.vue';
+import NoticeOfMeetingCreateModal from './Modals/CreateModal.vue';
+import NoticeOfMeetingEditModal from './Modals/EditModal.vue';
+import NoticeOfMeetingDeleteModal from './Modals/DeleteModal.vue';
 
 // ============== Data ==============
-const employees = ref<Array<{id: number; employee_id: string; name: string; office_id: number; designation: string}>>([]);
+const employees = ref<Array<{ id: number; employee_id: string; name: string; office_id: number; designation: string }>>([]);
 const leaves = ref<any[]>([]);
 const travelOrders = ref<any[]>([]);
 const passSlips = ref<any[]>([]);
 const tardiness = ref<any[]>([]);
+const noticeOfMeetings = ref<Array<{ id: number; employee_id: number; date: string; time: string; particulars: string }>>([]);
+
+// Toast ref
+const toastRef = ref<InstanceType<typeof Toast> | null>(null);
+
+// Toast function
+const showToast = (message: string, type: 'success' | 'error' | 'info' = 'info') => {
+    if (type === 'success') {
+        toastRef.value?.add('success', 'Success', message, 3000);
+    } else if (type === 'error') {
+        toastRef.value?.add('error', 'Error', message, 4000);
+    } else {
+        toastRef.value?.add('info', 'Info', message, 3000);
+    }
+};
 
 // Grid = compact multi-column cards (default, minimizes scrolling for large rosters).
 // List = original single-column table.
@@ -388,6 +550,27 @@ const lastUpdatedDisplay = computed(() => {
     if (!lastUpdatedAt.value) return '—';
     return lastUpdatedAt.value.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
 });
+
+// ============== Full Screen ==============
+const chartContainerRef = ref<HTMLElement | null>(null);
+const isFullScreen = ref<boolean>(false);
+
+const toggleFullScreen = async () => {
+    if (!chartContainerRef.value) return;
+    try {
+        if (!document.fullscreenElement) {
+            await chartContainerRef.value.requestFullscreen();
+        } else {
+            await document.exitFullscreen();
+        }
+    } catch (e) {
+        console.error('Fullscreen toggle failed:', e);
+    }
+};
+
+const handleFullScreenChange = () => {
+    isFullScreen.value = !!document.fullscreenElement;
+};
 
 // ============== Date rollover ==============
 
@@ -562,29 +745,63 @@ const getInitials = (fullName: string): string => {
 };
 
 /**
- * Get employee status and remarks for the selected date
+ * Formats a "HH:mm" 24-hour time string as 12-hour with AM/PM, e.g.
+ * "14:30" -> "2:30 PM". Shared by both the undertime remarks and the
+ * Notice of Meetings remarks.
  */
-const getEmployeeStatusAndRemarks = (employee: any): { status: string; remarks: string } => {
+const formatTime12h = (timeStr: string): string => {
+    if (!timeStr) return '';
+    const [hoursStr, minutesStr] = timeStr.split(':');
+    let hours = parseInt(hoursStr, 10);
+    const period = hours >= 12 ? 'PM' : 'AM';
+    hours = hours % 12 || 12;
+    return `${hours.toString().padStart(2, '0')}:${minutesStr} ${period}`;
+};
+
+/**
+ * "Present" and "Present with Meetings" both mean the employee is at
+ * work — used to gate click-to-add-meeting behavior and the List view's
+ * Status badge across both variants.
+ */
+const isPresentStatus = (status: string): boolean =>
+    status === 'Present' || status === 'Present with Meetings';
+
+/**
+ * Print sheet always says plain "Present" regardless of whether the
+ * employee has meetings scheduled — the meeting details already show
+ * in the Remarks column, so the Status column stays simple on paper.
+ */
+const printStatusLabel = (status: string): string =>
+    status === 'Present with Meetings' ? 'Present' : status;
+
+/**
+ * Notice of Meeting records for an employee on the selected date, sorted
+ * by time. Kept as objects (not a joined string) so each entry can carry
+ * its own edit/delete controls in the interactive views.
+ */
+const getEmployeeMeetings = (employeeId: number): Array<{ id: number; time: string; particulars: string }> => {
+    return noticeOfMeetings.value
+        .filter(m => m.employee_id === employeeId && isDateSelected(m.date))
+        .sort((a, b) => a.time.localeCompare(b.time))
+        .map(m => ({ id: m.id, time: m.time, particulars: m.particulars }));
+};
+
+/**
+ * Get employee status, remarks, and any Notice of Meetings for the
+ * selected date. `meetings` is only ever populated on the "Present with
+ * Meetings" branch — every other branch returns an empty array so the
+ * template's `employee.meetings` is always safe to read regardless of
+ * status.
+ */
+const getEmployeeStatusAndRemarks = (
+    employee: any
+): { status: string; remarksLabel: string; remarksText: string; meetings: Array<{ id: number; time: string; particulars: string }> } => {
     // Weekends override everything else — nobody's "Present" or "On Leave"
     // on a non-working day, the day itself is the reason.
     if (isSelectedDateWeekend.value) {
-        return {
-            status: 'Off Day',
-            remarks: ''
-        };
+        return { status: 'Off Day', remarksLabel: '', remarksText: '', meetings: [] };
     }
     const employeeId = employee.id;
-
-    const formatTime = (timeStr: string): string => {
-        if (!timeStr) return '';
-        const [hoursStr, minutesStr] = timeStr.split(':');
-        let hours = parseInt(hoursStr, 10);
-        const minutes = minutesStr;
-        const period = hours >= 12 ? 'PM' : 'AM';
-        hours = hours % 12;
-        if (hours === 0) hours = 12;
-        return `${hours.toString().padStart(2, '0')}:${minutes} ${period}`;
-    };
 
     // Check for undertime first
     const undertime = tardiness.value.find(t =>
@@ -593,7 +810,9 @@ const getEmployeeStatusAndRemarks = (employee: any): { status: string; remarks: 
     if (undertime) {
         return {
             status: 'Undertime',
-            remarks: `${undertime.reason} (${formatTime(undertime.requested_time)} - ${formatTime(undertime.return_time)})`
+            remarksLabel: '',
+            remarksText: `${undertime.reason} (${formatTime12h(undertime.requested_time)} - ${formatTime12h(undertime.return_time)})`,
+            meetings: []
         };
     }
 
@@ -604,7 +823,9 @@ const getEmployeeStatusAndRemarks = (employee: any): { status: string; remarks: 
     if (leave) {
         return {
             status: 'On Leave',
-            remarks: `${leave.type_of_leave}`
+            remarksLabel: '',
+            remarksText: `${leave.type_of_leave}`,
+            meetings: []
         };
     }
 
@@ -620,7 +841,9 @@ const getEmployeeStatusAndRemarks = (employee: any): { status: string; remarks: 
     if (passSlip) {
         return {
             status: 'On Official Business',
-            remarks: `Pass Slip: ${passSlip.purpose} at ${passSlip.location}`
+            remarksLabel: 'Pass Slip',
+            remarksText: `${passSlip.purpose} at ${passSlip.location}`,
+            meetings: []
         };
     }
 
@@ -636,19 +859,155 @@ const getEmployeeStatusAndRemarks = (employee: any): { status: string; remarks: 
     if (travelOrder) {
         return {
             status: 'On Official Business',
-            remarks: `Travel Order: ${Array.isArray(travelOrder.purpose) ? travelOrder.purpose.join(', ') : travelOrder.purpose} at ${travelOrder.going_to}`
+            remarksLabel: 'Travel Order',
+            remarksText: `${Array.isArray(travelOrder.purpose) ? travelOrder.purpose.join(', ') : travelOrder.purpose} at ${travelOrder.going_to}`,
+            meetings: []
         };
     }
 
-    // Default to present
+    // Notice of Meetings — only reached once nothing above matched.
+    const meetings = getEmployeeMeetings(employeeId);
+    if (meetings.length === 0) {
+        return { status: 'Present', remarksLabel: '', remarksText: '', meetings: [] };
+    }
     return {
-        status: 'Present',
-        remarks: ''
+        status: 'Present with Meetings',
+        remarksLabel: '',
+        remarksText: meetings.map(m => `${formatTime12h(m.time)}: ${m.particulars}`).join('; '),
+        meetings
     };
+};
+
+// ============== Notice of Meeting: create/edit modal state ==============
+const showMeetingModal = ref(false);
+const editingMeeting = ref<{ id: number; time: string; particulars: string } | null>(null);
+const meetingModalEmployee = ref<{ id: number; name: string } | null>(null);
+const meetingForm = ref({ time: '', particulars: '' });
+const meetingFormErrors = ref<{ time?: string; particulars?: string; submit?: string }>({});
+const meetingFormSubmitting = ref(false);
+
+const openCreateMeetingModal = (employee: { id: number; name: string }) => {
+    editingMeeting.value = null;
+    meetingModalEmployee.value = employee;
+    meetingForm.value = { time: '', particulars: '' };
+    meetingFormErrors.value = {};
+    showMeetingModal.value = true;
+};
+
+const openEditMeetingModal = (employee: { id: number; name: string }, meeting: { id: number; time: string; particulars: string }) => {
+    editingMeeting.value = meeting;
+    meetingModalEmployee.value = employee;
+    meetingForm.value = { time: meeting.time.slice(0, 5), particulars: meeting.particulars };
+    meetingFormErrors.value = {};
+    showMeetingModal.value = true;
+};
+
+const closeMeetingModal = () => {
+    showMeetingModal.value = false;
+    editingMeeting.value = null;
+    meetingModalEmployee.value = null;
+};
+
+const getCsrfToken = (): string =>
+    document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+
+const submitMeetingForm = async () => {
+    if (!meetingModalEmployee.value) return;
+    meetingFormSubmitting.value = true;
+    meetingFormErrors.value = {};
+
+    const payload = {
+        employee_id: meetingModalEmployee.value.id,
+        date: selectedDateInput.value,
+        time: meetingForm.value.time,
+        particulars: meetingForm.value.particulars,
+    };
+
+    try {
+        const url = editingMeeting.value
+            ? `/api/notice-of-meetings/${editingMeeting.value.id}`
+            : '/api/notice-of-meetings';
+        const response = await fetch(url, {
+            method: editingMeeting.value ? 'PUT' : 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': getCsrfToken(),
+            },
+            body: JSON.stringify(payload),
+        });
+
+        if (response.status === 422) {
+            const err = await response.json();
+            meetingFormErrors.value = {
+                time: err.errors?.time?.[0],
+                particulars: err.errors?.particulars?.[0],
+            };
+            return;
+        }
+
+        if (!response.ok) {
+            meetingFormErrors.value = { submit: 'Something went wrong. Please try again.' };
+            showToast('Failed to save the meeting. Please try again.', 'error');
+            return;
+        }
+
+        await fetchNoticeOfMeetings();
+        closeMeetingModal();
+        showToast(editingMeeting.value ? 'Meeting updated successfully.' : 'Meeting added successfully.', 'success');
+    } catch (e) {
+        console.error('Error saving notice of meeting:', e);
+        meetingFormErrors.value = { submit: 'Something went wrong. Please try again.' };
+        showToast('Something went wrong while saving the meeting.', 'error');
+    } finally {
+        meetingFormSubmitting.value = false;
+    }
+};
+
+// ============== Notice of Meeting: delete modal state ==============
+const showDeleteMeetingModal = ref(false);
+const meetingToDelete = ref<{ id: number; time: string; particulars: string } | null>(null);
+const deleteMeetingEmployeeName = ref('');
+const deletingMeeting = ref(false);
+
+const openDeleteMeetingModal = (employeeName: string, meeting: { id: number; time: string; particulars: string }) => {
+    meetingToDelete.value = meeting;
+    deleteMeetingEmployeeName.value = employeeName;
+    showDeleteMeetingModal.value = true;
+};
+
+const closeDeleteMeetingModal = () => {
+    showDeleteMeetingModal.value = false;
+    meetingToDelete.value = null;
+};
+
+const confirmDeleteMeeting = async () => {
+    if (!meetingToDelete.value) return;
+    deletingMeeting.value = true;
+    try {
+        const response = await fetch(`api/notice-of-meetings/${meetingToDelete.value.id}`, {
+            method: 'DELETE',
+            headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': getCsrfToken() },
+        });
+        if (response.ok) {
+            await fetchNoticeOfMeetings();
+            closeDeleteMeetingModal();
+            showToast('Meeting deleted successfully.', 'success');
+        } else {
+            showToast('Failed to delete the meeting.', 'error');
+        }
+    } catch (e) {
+        console.error('Error deleting notice of meeting:', e);
+        showToast('Something went wrong while deleting the meeting.', 'error');
+    } finally {
+        deletingMeeting.value = false;
+    }
 };
 
 const remarksBadgeClass = (status: string): string => {
     switch (status) {
+        case 'Present with Meetings':
+            return 'bg-teal-100 dark:bg-teal-900/30 text-teal-800 dark:text-teal-300';
         case 'On Leave':
             return 'bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-300';
         case 'On Official Business':
@@ -670,6 +1029,8 @@ const remarksBadgeClass = (status: string): string => {
  */
 const statusBadgeClass = (status: string): string => {
     switch (status) {
+        case 'Present with Meetings':
+            return 'bg-teal-100 dark:bg-teal-900/30 text-teal-800 dark:text-teal-300';
         case 'On Leave':
             return 'bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-300';
         case 'On Official Business':
@@ -686,6 +1047,8 @@ const statusBadgeClass = (status: string): string => {
 
 const statusIconClass = (status: string): string => {
     switch (status) {
+        case 'Present with Meetings':
+            return 'fas fa-comments';
         case 'On Leave':
             return 'fas fa-calendar-check';
         case 'On Official Business':
@@ -706,6 +1069,8 @@ const statusIconClass = (status: string): string => {
  */
 const statusShortLabel = (status: string): string => {
     switch (status) {
+        case 'Present with Meetings':
+            return 'Present w/ Meeting';
         case 'On Official Business':
             return 'On Official Business';
         default:
@@ -715,6 +1080,8 @@ const statusShortLabel = (status: string): string => {
 
 const dotClass = (status: string): string => {
     switch (status) {
+        case 'Present with Meetings':
+            return 'bg-teal-500';
         case 'On Leave':
             return 'bg-orange-500';
         case 'On Official Business':
@@ -736,6 +1103,8 @@ const dotClass = (status: string): string => {
  */
 const recordBgClass = (status: string): string => {
     switch (status) {
+        case 'Present with Meetings':
+            return 'bg-teal-50/60 dark:bg-teal-900/10';
         case 'On Leave':
             return 'bg-orange-50/60 dark:bg-orange-900/10';
         case 'On Official Business':
@@ -751,9 +1120,11 @@ const recordBgClass = (status: string): string => {
 };
 
 /**
- * Fixed display order for status groups in the Grid view.
+ * Fixed display order for status groups in the Grid view. Present with
+ * Meetings surfaces first so scheduled meetings are the most visible thing
+ * on the chart.
  */
-const STATUS_ORDER = ['On Official Business', 'On Leave', 'Undertime', 'Present', 'Off Day'];
+const STATUS_ORDER = ['Present with Meetings', 'On Official Business', 'On Leave', 'Undertime', 'Present', 'Off Day'];
 
 /**
  * Set of employee IDs that have an active leave, pass slip, travel order,
@@ -785,20 +1156,23 @@ const employeeIdsWithAnyRecord = computed(() => {
 });
 
 /**
- * Get all employees with their status and remarks for today —
- * filtered to only those with an active record in one of the four sources.
- * The Provincial Budget Officer (or department head holding that role)
- * is always pinned first; everyone else follows alphabetically by last name.
+ * Get all employees with their status, remarks, and meetings for the
+ * selected date — filtered to only those with an active record in one of
+ * the four sources. The Provincial Budget Officer (or department head
+ * holding that role) is always pinned first; everyone else follows
+ * alphabetically by last name.
  */
 const employeesWithStatus = computed(() => {
     return employees.value
         .filter(employee => employeeIdsWithAnyRecord.value.has(employee.id))
         .map(employee => {
-            const { status, remarks } = getEmployeeStatusAndRemarks(employee);
+            const { status, remarksLabel, remarksText, meetings } = getEmployeeStatusAndRemarks(employee);
             return {
                 ...employee,
                 status,
-                remarks
+                remarksLabel,
+                remarksText,
+                meetings
             };
         })
         .sort((a, b) => {
@@ -919,6 +1293,20 @@ const fetchTardiness = async () => {
 };
 
 /**
+ * Fetch notice of meetings from API
+ */
+const fetchNoticeOfMeetings = async () => {
+    try {
+        const response = await fetch('/api/notice-of-meetings');
+        if (response.ok) {
+            noticeOfMeetings.value = await response.json();
+        }
+    } catch (e) {
+        console.error('Error fetching notice of meetings:', e);
+    }
+};
+
+/**
  * Fetch all data sources and stamp the last-updated time. Used for the
  * initial load, the manual refresh button, the auto-refresh timer, and
  * whenever the selected date changes.
@@ -929,7 +1317,8 @@ const refreshAll = async () => {
         fetchLeaves(),
         fetchTravelOrders(),
         fetchPassSlips(),
-        fetchTardiness()
+        fetchTardiness(),
+        fetchNoticeOfMeetings()
     ]);
     lastUpdatedAt.value = new Date();
 };
@@ -944,7 +1333,9 @@ watch(selectedDate, () => {
 });
 
 /**
- * Initialize: Fetch all data on mount, then start auto-refresh if enabled.
+ * Initialize: Fetch all data on mount, start auto-refresh if enabled,
+ * start the date-rollover check, and listen for fullscreen changes
+ * (covers Esc-to-exit, not just the toolbar button).
  */
 onMounted(async () => {
     await refreshAll();
@@ -952,6 +1343,7 @@ onMounted(async () => {
         startAutoRefresh();
     }
     dateRolloverTimer = setInterval(checkForDateRollover, DATE_ROLLOVER_CHECK_MS);
+    document.addEventListener('fullscreenchange', handleFullScreenChange);
 });
 
 onUnmounted(() => {
@@ -960,6 +1352,7 @@ onUnmounted(() => {
         clearInterval(dateRolloverTimer);
         dateRolloverTimer = null;
     }
+    document.removeEventListener('fullscreenchange', handleFullScreenChange);
 });
 </script>
 
