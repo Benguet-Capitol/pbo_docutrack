@@ -4,7 +4,7 @@
     <AuthenticatedLayout>
         <template #header>
             <h2 class="text-xl font-semibold leading-tight text-gray-800 dark:text-gray-200">
-                Locator Chart | <span class="text-blue-700 dark:text-blue-300">Provincial Budget Office</span>
+                Locator Chart | <span class="text-blue-700 dark:text-blue-400">Provincial Budget Office</span>
             </h2>
         </template>
 
@@ -18,7 +18,7 @@
                 re-shows the same heading, only while fullscreen is active -->
             <div v-if="isFullScreen" class="flex items-center justify-between mb-4">
                 <h2 class="text-2xl font-semibold leading-tight text-gray-800 dark:text-gray-200">
-                    Locator Chart | <span class="text-blue-700 dark:text-blue-300">Provincial Budget Office</span>
+                    Locator Chart | <span class="text-blue-700 dark:text-blue-400">Provincial Budget Office</span>
                 </h2>
             </div>
 
@@ -39,7 +39,7 @@
                                     'px-3 py-2 flex items-center gap-1.5 transition-colors',
                                     viewMode === 'grid'
                                         ? 'bg-blue-600 text-white'
-                                        : 'bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600'
+                                        : 'bg-white dark:bg-gray-700 text-gray-600 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-600'
                                 ]"
                                 title="Compact grid view — fits more employees on screen"
                             >
@@ -52,7 +52,7 @@
                                     'px-3 py-2 flex items-center gap-1.5 transition-colors border-l border-gray-300 dark:border-gray-600',
                                     viewMode === 'list'
                                         ? 'bg-blue-600 text-white'
-                                        : 'bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600'
+                                        : 'bg-white dark:bg-gray-700 text-gray-600 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-600'
                                 ]"
                                 title="Traditional table view"
                             >
@@ -63,7 +63,7 @@
 
                         <!-- Column count control (grid view only) -->
                         <div v-if="viewMode === 'grid'" class="flex items-center gap-2">
-                            <label class="text-xs font-medium text-gray-600 dark:text-gray-300">Columns:</label>
+                            <label class="text-xs font-medium text-gray-600 dark:text-white">Columns:</label>
                             <div class="flex items-center rounded-lg border border-gray-300 dark:border-gray-600 overflow-hidden text-xs font-medium">
                                 <button
                                     v-for="(col, colIndex) in [2, 3, 4, 6]"
@@ -82,12 +82,12 @@
                             </div>
                         </div>
 
-                        <label for="locatorDate" class="text-xs font-medium text-gray-700 dark:text-gray-300">Date:</label>
+                        <label for="locatorDate" class="text-xs font-medium text-gray-700 dark:text-white">Date:</label>
                         <input
                             type="date"
                             id="locatorDate"
                             v-model="selectedDateInput"
-                            class="border border-gray-300 rounded-lg px-3 py-2 text-xs dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
+                            class="border border-gray-300 rounded-lg px-3 py-2 text-xs dark:border-gray-600 dark:bg-gray-700 dark:text-white"
                         />
                         <button
                             v-if="!isSelectedDateToday"
@@ -106,7 +106,7 @@
                             >
                                 <i :class="autoRefreshEnabled ? 'fas fa-toggle-on text-blue-600' : 'fas fa-toggle-off text-gray-400'"></i>
                             </button>
-                            <span class="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">
+                            <span class="text-xs text-gray-500 dark:text-white font-bold whitespace-nowrap">
                                 <span v-if="autoRefreshEnabled" class="inline-block w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse mr-1"></span>
                                 Updated {{ lastUpdatedDisplay }}
                             </span>
@@ -119,7 +119,7 @@
                         <div v-if="!isFullScreen" class="flex items-center gap-2 pl-3 border-l border-gray-200 dark:border-gray-700 print:hidden">
                             <button
                                 @click="openBulkMeetingModal"
-                                class="text-xs px-2.5 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-1.5"
+                                class="text-xs px-2.5 py-2 rounded-lg font-bold border border-gray-300 dark:border-gray-600 text-white dark:text-white bg-emerald-600 hover:bg-emerald-700 flex items-center gap-1.5"
                             >
                                 <i class="fas fa-users"></i>
                                 Bulk Create
@@ -130,7 +130,7 @@
                         <div v-if="!isFullScreen" class="flex items-center gap-2 pl-3 border-l border-gray-200 dark:border-gray-700">
                             <button
                                 @click="printChart"
-                                class="text-xs px-2.5 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-1.5"
+                                class="text-xs px-2.5 py-2 rounded-lg font-bold border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-1.5"
                             >
                                 <i class="fas fa-print"></i>
                                 Print
@@ -142,7 +142,7 @@
                             <button
                                 @click="toggleFullScreen"
                                 :title="isFullScreen ? 'Exit full screen' : 'Full screen view'"
-                                class="text-xs px-2.5 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-1.5"
+                                class="text-xs px-2.5 py-2 rounded-lg font-bold border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-1.5"
                             >
                                 <i :class="isFullScreen ? 'fas fa-compress' : 'fas fa-expand'"></i>
                                 {{ isFullScreen ? 'Exit' : 'Full Screen' }}
@@ -191,7 +191,7 @@
                                 >
                                     <div class="flex items-start gap-2 min-w-0">
                                         <span
-                                            class="w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
+                                            class="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0"
                                             :class="statusBadgeClass(employee.status)"
                                         >
                                             {{ getInitials(employee.name) }}
@@ -288,7 +288,7 @@
                                 <td class="px-6 py-3 font-medium text-gray-900 dark:text-white">
                                     <div class="flex items-center gap-2 min-w-0">
                                         <span
-                                            class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0"
+                                            class="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0"
                                             :class="statusBadgeClass(employee.status)"
                                         >
                                             {{ getInitials(employee.name) }}
