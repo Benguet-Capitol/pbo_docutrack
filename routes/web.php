@@ -83,6 +83,7 @@ Route::middleware('auth')->group(function () {
 Route::middleware(['web', 'auth'])->prefix('api')->group(function () {
     Route::get('/notice-of-meetings', [NoticeOfMeetingController::class, 'api']);
     Route::post('/notice-of-meetings', [NoticeOfMeetingController::class, 'store']);
+    Route::post('/notice-of-meetings/bulk', [NoticeOfMeetingController::class, 'storeBulk']);
     Route::put('/notice-of-meetings/{noticeOfMeeting}', [NoticeOfMeetingController::class, 'update']);
     Route::delete('/notice-of-meetings/{noticeOfMeeting}', [NoticeOfMeetingController::class, 'destroy']);
 });

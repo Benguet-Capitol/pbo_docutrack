@@ -40,6 +40,41 @@ class NoticeOfMeetingController extends Controller
         return back()->with('success', 'Notice of Meeting added.');
     }
 
+    public function storeBulk(Request $request)
+    {
+        $validated = $request->validate([
+            'employee_ids' => ['required', 'array', 'min:1'],
+            'employee_ids.*' => ['integer', 'exists:employees,id'],
+            'dates' => ['required', 'array', 'min:1'],
+            'dates.*' => ['date'],
+            'time' => ['required', 'date_format:H:i'],
+            'particulars' => ['required', 'string', 'max:255'],
+        ]);
+
+        $now = now();
+        $rows = [];
+        foreach ($validated['employee_ids'] as $employeeId) {
+            foreach ($validated['dates'] as $date) {
+                $rows[] = [
+                    'employee_id' => $employeeId,
+                    'date' => $date,
+                    'time' => $validated['time'],
+                    'particulars' => $validated['particulars'],
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ];
+            }
+        }
+
+        NoticeOfMeeting::insert($rows);
+
+        if ($request->wantsJson()) {
+            return response()->json(['created' => count($rows)]);
+        }
+
+        return back()->with('success', count($rows) . ' Notice(s) of Meeting added.');
+    }
+
     public function update(Request $request, NoticeOfMeeting $noticeOfMeeting)
     {
         $validated = $this->validated($request);

@@ -20,14 +20,6 @@
                 <h2 class="text-2xl font-semibold leading-tight text-gray-800 dark:text-gray-200">
                     Locator Chart | <span class="text-blue-700 dark:text-blue-300">Provincial Budget Office</span>
                 </h2>
-                <button
-                    @click="toggleFullScreen"
-                    title="Exit full screen"
-                    class="text-xs px-2.5 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-1.5"
-                >
-                    <i class="fas fa-compress"></i>
-                    Exit Full Screen
-                </button>
             </div>
 
             <!-- Locator Chart Section -->
@@ -90,12 +82,12 @@
                             </div>
                         </div>
 
-                        <label for="locatorDate" class="text-sm font-medium text-gray-700 dark:text-gray-300">Date:</label>
+                        <label for="locatorDate" class="text-xs font-medium text-gray-700 dark:text-gray-300">Date:</label>
                         <input
                             type="date"
                             id="locatorDate"
                             v-model="selectedDateInput"
-                            class="border border-gray-300 rounded-lg px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
+                            class="border border-gray-300 rounded-lg px-3 py-2 text-xs dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
                         />
                         <button
                             v-if="!isSelectedDateToday"
@@ -123,8 +115,19 @@
                             </button>
                         </div>
 
+                        <!-- Bulk Notice of Meeting -->
+                        <div v-if="!isFullScreen" class="flex items-center gap-2 pl-3 border-l border-gray-200 dark:border-gray-700 print:hidden">
+                            <button
+                                @click="openBulkMeetingModal"
+                                class="text-xs px-2.5 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-1.5"
+                            >
+                                <i class="fas fa-users"></i>
+                                Bulk Create
+                            </button>
+                        </div>
+
                         <!-- Print -->
-                        <div class="flex items-center gap-2 pl-3 border-l border-gray-200 dark:border-gray-700">
+                        <div v-if="!isFullScreen" class="flex items-center gap-2 pl-3 border-l border-gray-200 dark:border-gray-700">
                             <button
                                 @click="printChart"
                                 class="text-xs px-2.5 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-1.5"
@@ -241,9 +244,10 @@
                                                 </div>
                                             </div>
                                         </div>
-                                        <span v-else-if="employee.remarksText" class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium break-words" :class="remarksBadgeClass(employee.status)">
-                                            <strong v-if="employee.remarksLabel">{{ employee.remarksLabel }}:</strong>&nbsp; {{ employee.remarksText }}
-                                        </span>
+                                        <div v-else-if="employee.remarksText" class="text-xs px-3 py-2 rounded-lg" :class="remarksBadgeClass(employee.status)">
+                                            <p v-if="employee.remarksLabel" class="font-semibold mb-0.5">{{ employee.remarksLabel }}:</p>
+                                            <p :class="[employee.remarksLabel ? 'pl-3' : '', employee.status === 'On Leave' ? 'font-bold' : '']">{{ employee.remarksText }}</p>
+                                        </div>
                                         <span v-else class="text-sm text-gray-400 dark:text-gray-500">-</span>
                                     </div>
                                 </div>
@@ -284,13 +288,13 @@
                                 <td class="px-6 py-3 font-medium text-gray-900 dark:text-white">
                                     <div class="flex items-center gap-2 min-w-0">
                                         <span
-                                            class="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold flex-shrink-0"
+                                            class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0"
                                             :class="statusBadgeClass(employee.status)"
                                         >
                                             {{ getInitials(employee.name) }}
                                         </span>
                                         <div class="min-w-0">
-                                            <p class="truncate">{{ employee.name }}</p>
+                                            <p class="text-base font-bold truncate">{{ employee.name }}</p>
                                             <p v-if="employee.designation" class="text-xs font-normal text-gray-500 dark:text-gray-400 truncate">
                                                 {{ employee.designation }}
                                             </p>
@@ -298,27 +302,27 @@
                                     </div>
                                 </td>
                                 <td class="px-6 py-3 text-gray-700 dark:text-gray-300 text-center">
-                                    <span v-if="employee.status === 'Present with Meetings'" class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold bg-teal-100 dark:bg-teal-900/30 text-teal-800 dark:text-teal-300">
+                                    <span v-if="employee.status === 'Present with Meetings'" class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-bold bg-teal-100 dark:bg-teal-900/30 text-teal-800 dark:text-teal-300">
                                         <i class="fas fa-comments"></i>
                                         Present w/ Meeting
                                     </span>
-                                    <span v-else-if="isPresentStatus(employee.status)" class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300">
+                                    <span v-else-if="isPresentStatus(employee.status)" class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-bold bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300">
                                         <i class="fas fa-check-circle"></i>
                                         Present
                                     </span>
-                                    <span v-else-if="employee.status === 'On Official Business'" class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300">
+                                    <span v-else-if="employee.status === 'On Official Business'" class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-bold bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300">
                                         <i class="fas fa-briefcase"></i>
                                         On Official Business
                                     </span>
-                                    <span v-else-if="employee.status === 'On Leave'" class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-300">
+                                    <span v-else-if="employee.status === 'On Leave'" class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-bold bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-300">
                                         <i class="fas fa-calendar-check"></i>
                                         On Leave
                                     </span>
-                                    <span v-else-if="employee.status === 'Undertime'" class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300">
+                                    <span v-else-if="employee.status === 'Undertime'" class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-bold bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300">
                                         <i class="fas fa-hourglass-end"></i>
                                         Undertime
                                     </span>
-                                    <span v-else-if="employee.status === 'Off Day'" class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300">
+                                    <span v-else-if="employee.status === 'Off Day'" class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-bold bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300">
                                         <i class="fas fa-bed"></i>
                                         Off Day
                                     </span>
@@ -327,7 +331,7 @@
                                     <div
                                         v-if="employee.meetings.length > 0"
                                         @click.stop
-                                        class="text-xs px-3 py-2 rounded-lg"
+                                        class="text-sm px-3 py-2 rounded-lg"
                                         :class="remarksBadgeClass(employee.status)"
                                     >
                                         <p class="font-semibold mb-0.5">Meeting / Activity:</p>
@@ -353,9 +357,10 @@
                                             </div>
                                         </div>
                                     </div>
-                                    <span v-else-if="employee.remarksText" class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium" :class="remarksBadgeClass(employee.status)">
-                                        <strong v-if="employee.remarksLabel">{{ employee.remarksLabel }}: </strong>&nbsp; {{ employee.remarksText }}
-                                    </span>
+                                    <div v-else-if="employee.remarksText" class="text-sm px-3 py-2 rounded-lg" :class="remarksBadgeClass(employee.status)">
+                                        <p v-if="employee.remarksLabel" class="font-semibold mb-0.5">{{ employee.remarksLabel }}:</p>
+                                        <p :class="[employee.remarksLabel ? 'pl-3' : '', employee.status === 'On Leave' ? 'font-bold' : '']">{{ employee.remarksText }}</p>
+                                    </div>
                                     <span v-else>-</span>
                                 </td>
                             </tr>
@@ -467,6 +472,16 @@
             @close="closeDeleteMeetingModal"
             @confirm="confirmDeleteMeeting"
         />
+        <NoticeOfMeetingBulkCreateModal
+            :show="showBulkMeetingModal"
+            :employees="employees"
+            :form-data="bulkMeetingForm"
+            :form-errors="bulkMeetingFormErrors"
+            :creating="bulkMeetingFormSubmitting"
+            @update:form-data="(data) => (bulkMeetingForm = data)"
+            @close="closeBulkMeetingModal"
+            @submit="submitBulkMeetingForm"
+        />
     </AuthenticatedLayout>
 </template>
 
@@ -478,6 +493,7 @@ import PageHead from '@/Components/PageHead.vue';
 import NoticeOfMeetingCreateModal from './Modals/CreateModal.vue';
 import NoticeOfMeetingEditModal from './Modals/EditModal.vue';
 import NoticeOfMeetingDeleteModal from './Modals/DeleteModal.vue';
+import NoticeOfMeetingBulkCreateModal from './Modals/BulkCreateModal.vue';
 
 // ============== Data ==============
 const employees = ref<Array<{ id: number; employee_id: string; name: string; office_id: number; designation: string }>>([]);
@@ -772,7 +788,7 @@ const isPresentStatus = (status: string): boolean =>
  * in the Remarks column, so the Status column stays simple on paper.
  */
 const printStatusLabel = (status: string): string =>
-    status === 'Present with Meetings' ? 'Present' : status;
+    status === 'Present with Meetings' ? 'Present with Meeting' : status;
 
 /**
  * Notice of Meeting records for an employee on the selected date, sorted
@@ -1022,6 +1038,73 @@ const remarksBadgeClass = (status: string): string => {
     }
 };
 
+// ============== Notice of Meeting: bulk create modal state ==============
+const showBulkMeetingModal = ref(false);
+const bulkMeetingForm = ref<{ employee_ids: number[]; dates: string[]; time: string; particulars: string }>({
+    employee_ids: [],
+    dates: [],
+    time: '',
+    particulars: '',
+});
+const bulkMeetingFormErrors = ref<{ employee_ids?: string; dates?: string; time?: string; particulars?: string; submit?: string }>({});
+const bulkMeetingFormSubmitting = ref(false);
+
+const openBulkMeetingModal = () => {
+    // Pre-seed with the date currently being viewed, since that's the most likely intent.
+    bulkMeetingForm.value = { employee_ids: [], dates: [selectedDateInput.value], time: '', particulars: '' };
+    bulkMeetingFormErrors.value = {};
+    showBulkMeetingModal.value = true;
+};
+
+const closeBulkMeetingModal = () => {
+    showBulkMeetingModal.value = false;
+};
+
+const submitBulkMeetingForm = async () => {
+    bulkMeetingFormSubmitting.value = true;
+    bulkMeetingFormErrors.value = {};
+
+    try {
+        const response = await fetch('/api/notice-of-meetings/bulk', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': getCsrfToken(),
+            },
+            body: JSON.stringify(bulkMeetingForm.value),
+        });
+
+        if (response.status === 422) {
+            const err = await response.json();
+            bulkMeetingFormErrors.value = {
+                employee_ids: err.errors?.employee_ids?.[0],
+                dates: err.errors?.dates?.[0],
+                time: err.errors?.time?.[0],
+                particulars: err.errors?.particulars?.[0],
+            };
+            return;
+        }
+
+        if (!response.ok) {
+            bulkMeetingFormErrors.value = { submit: 'Something went wrong. Please try again.' };
+            showToast('Failed to save the meetings. Please try again.', 'error');
+            return;
+        }
+
+        const result = await response.json();
+        await fetchNoticeOfMeetings();
+        closeBulkMeetingModal();
+        showToast(`${result.created} Notice(s) of Meeting added successfully.`, 'success');
+    } catch (e) {
+        console.error('Error saving bulk notice of meetings:', e);
+        bulkMeetingFormErrors.value = { submit: 'Something went wrong. Please try again.' };
+        showToast('Something went wrong while saving the meetings.', 'error');
+    } finally {
+        bulkMeetingFormSubmitting.value = false;
+    }
+};
+
 /**
  * Compact badge classes for the grid view cards (same color language as
  * the list view, just reused under a different name for clarity). Also
@@ -1149,6 +1232,12 @@ const employeeIdsWithAnyRecord = computed(() => {
     travelOrders.value.forEach(to => {
         if (to.employees && Array.isArray(to.employees)) {
             to.employees.forEach((emp: any) => ids.add(emp.id));
+        }
+    });
+
+    noticeOfMeetings.value.forEach(m => {
+        if (isDateSelected(m.date)) {
+            ids.add(m.employee_id);
         }
     });
 
