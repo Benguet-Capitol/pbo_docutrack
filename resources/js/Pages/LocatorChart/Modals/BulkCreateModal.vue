@@ -6,7 +6,7 @@
                 <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 rounded-t-lg bg-gradient-to-r from-emerald-50 to-emerald-100 dark:from-gray-700 dark:to-gray-600 dark:border-gray-600">
                     <h3 class="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
                         <i class="fas fa-users text-emerald-600 dark:text-emerald-400"></i>
-                        Bulk Notice of Meeting
+                        Bulk Create Notice of Meeting
                     </h3>
                     <button @click="$emit('close')" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
                         <i class="fas fa-times text-xl"></i>
@@ -51,7 +51,7 @@
                                     />
                                     <span class="min-w-0">
                                         <span class="font-medium text-gray-900 dark:text-white">{{ employee.name }}</span>
-                                        <span v-if="employee.designation" class="block text-gray-400 dark:text-gray-500">{{ employee.designation }}</span>
+                                        <span v-if="employee.designation" class="block text-gray-500">{{ employee.designation }}</span>
                                     </span>
                                 </label>
                                 <p v-if="filteredEmployees.length === 0" class="px-3 py-4 text-center text-gray-400 text-xs">No employees match</p>
