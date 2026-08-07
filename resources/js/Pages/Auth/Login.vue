@@ -64,7 +64,7 @@ const submit = () => {
         <PageHead />
 
         <!-- Dark Mode Toggle Button -->
-        <div class="absolute top-4 right-4 z-50">
+        <div class="absolute top-2 right-2 sm:top-4 sm:right-4 z-50">
             <button
                 @click="toggleDarkMode"
                 type="button"
@@ -76,18 +76,18 @@ const submit = () => {
             </button>
         </div>
 
-        <div class="flex items-center justify-center h-full px-4 bg-gradient-to-br from-emerald-50 via-white to-emerald-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+        <div class="flex items-center justify-center min-h-full h-full px-4 py-8 sm:py-0 bg-gradient-to-br from-emerald-50 via-white to-emerald-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
             <div class="w-full max-w-md">
 
                 <!-- Header Section -->
-                <div class="text-center mb-8">
-                    <div class="flex justify-center items-center gap-6 mb-3">
+                <div class="text-center mb-6 sm:mb-8">
+                    <div class="flex justify-center items-center gap-3 sm:gap-6 mb-3">
                         <!-- Benguet Logo -->
                         <div class="animate-bounce-slow" style="animation-delay: 0s;">
                             <img
                                 src="/benguetlogo.ico"
                                 alt="Benguet Logo"
-                                class="w-32 h-32 object-contain drop-shadow-lg hover:scale-110 transition-transform duration-300"
+                                class="w-20 h-20 sm:w-32 sm:h-32 object-contain drop-shadow-lg hover:scale-110 transition-transform duration-300"
                             />
                         </div>
                         <!-- Bagong Pilipinas Logo -->
@@ -95,20 +95,20 @@ const submit = () => {
                             <img
                                 src="/bagongpilipinaslogo.png"
                                 alt="Bagong Pilipinas Logo"
-                                class="w-32 h-32 object-contain drop-shadow-lg hover:scale-110 transition-transform duration-300"
+                                class="w-20 h-20 sm:w-32 sm:h-32 object-contain drop-shadow-lg hover:scale-110 transition-transform duration-300"
                             />
                         </div>
                     </div>
-                    <h1 class="text-4xl font-bold text-gray-900 dark:text-white mb-1">
+                    <h1 class="text-2xl sm:text-4xl font-bold text-gray-900 dark:text-white mb-1">
                         PBO | DocuTrack
                     </h1>
-                    <p class="text-sm text-gray-600 dark:text-gray-400">
+                    <p class="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
                         Provincial Budget Office
                     </p>
                 </div>
 
                 <!-- Login Form Card -->
-                <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-8 border border-emerald-100 dark:border-gray-700">
+                <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-5 sm:p-8 border border-emerald-100 dark:border-gray-700">
 
                     <!-- Session Status -->
                     <div v-if="status" class="mb-6 p-4 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 text-sm font-medium border border-emerald-200 dark:border-emerald-800">
@@ -117,11 +117,11 @@ const submit = () => {
 
                     <!-- Form Header -->
                     <div class="mb-6">
-                        <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-1">
+                        <h2 class="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-1">
                             Sign In
                         </h2>
                         <p class="text-sm text-gray-600 dark:text-gray-400">
-                            Enter your credentials to continue
+                            Enter credentials
                         </p>
                     </div>
 
@@ -142,7 +142,7 @@ const submit = () => {
                                         v-model="form.username"
                                         autofocus
                                         autocomplete="username"
-                                        placeholder="Enter your username"
+                                        placeholder="Enter username"
                                     />
                                 </div>
                                 <InputError :message="form.errors.username" />
@@ -161,7 +161,7 @@ const submit = () => {
                                         class="pl-10 pr-10 block w-full border-gray-300 dark:border-gray-600 focus:ring-emerald-500 focus:border-emerald-500 dark:focus:ring-emerald-500 transition duration-200"
                                         v-model="form.password"
                                         autocomplete="current-password"
-                                        placeholder="Enter your password"
+                                        placeholder="Enter password"
                                     />
                                     <button
                                         type="button"
@@ -191,7 +191,7 @@ const submit = () => {
                             <!-- Footer Text -->
                             <p class="text-xs text-center text-gray-600 dark:text-gray-400 pt-2">
                                 For account assistance,<br>
-                                <span class="text-gray-700 dark:text-gray-300 font-medium">contact your administrator</span>
+                                <span class="text-gray-700 dark:text-gray-300 font-medium">contact the System Administrator</span>
                             </p>
                         </div>
                     </form>
