@@ -342,7 +342,7 @@ const isProvincialBudgetOfficerRequesting = (): boolean => {
     if (!props.formData?.employee_ids || !Array.isArray(props.formData.employee_ids)) return false;
     return props.formData.employee_ids.some((id: number) => {
         const emp = props.employees?.find((e: Employee) => e.id === id);
-        return emp?.designation?.toLowerCase().includes('budget officer');
+        return emp?.designation?.toLowerCase().includes('provincial budget officer');
     });
 };
 
