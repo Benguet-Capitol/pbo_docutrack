@@ -17,7 +17,7 @@
                 part of this element, so it disappears in fullscreen — this
                 re-shows the same heading, only while fullscreen is active -->
             <div v-if="isFullScreen" class="flex items-center justify-between mb-4">
-                <h2 class="text-2xl font-semibold leading-tight text-gray-800 dark:text-gray-200">
+                <h2 class="text-xl sm:text-2xl font-semibold leading-tight text-gray-800 dark:text-gray-200">
                     Locator Chart | <span class="text-blue-700 dark:text-blue-400">Provincial Budget Office</span>
                 </h2>
             </div>
@@ -25,12 +25,12 @@
             <!-- Locator Chart Section -->
             <div class="w-full bg-white dark:bg-gray-800 rounded-lg shadow">
                 <!-- Header Section -->
-                <div class="px-6 py-5 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex items-center justify-between flex-wrap gap-4">
-                    <h3 class="text-2xl font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                <div class="px-4 sm:px-6 py-5 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex items-center justify-between flex-wrap gap-4">
+                    <h3 class="text-lg sm:text-2xl font-semibold text-gray-900 dark:text-white flex items-center gap-2">
                         <i class="fas fa-map-location-dot text-blue-600 dark:text-blue-400"></i>
                         Date: {{ currentDateDisplay }}
                     </h3>
-                    <div class="flex items-center gap-3 flex-wrap print:hidden">
+                    <div class="flex items-center gap-3 flex-wrap print:hidden w-full sm:w-auto">
                         <!-- View toggle: grid (compact, no-scroll) vs list (original table) -->
                         <div class="flex items-center rounded-lg border border-gray-300 dark:border-gray-600 overflow-hidden text-xs font-medium">
                             <button
@@ -61,8 +61,9 @@
                             </button>
                         </div>
 
-                        <!-- Column count control (grid view only) -->
-                        <div v-if="viewMode === 'grid'" class="flex items-center gap-2">
+                        <!-- Column count control (grid view only — hidden on mobile,
+                             where the grid is always forced to 1 column anyway) -->
+                        <div v-if="viewMode === 'grid'" class="hidden sm:flex items-center gap-2">
                             <label class="text-xs font-medium text-gray-600 dark:text-white">Columns:</label>
                             <div class="flex items-center rounded-lg border border-gray-300 dark:border-gray-600 overflow-hidden text-xs font-medium">
                                 <button
@@ -98,7 +99,7 @@
                         </button>
 
                         <!-- Auto-refresh controls -->
-                        <div class="flex items-center gap-2 pl-3 border-l border-gray-200 dark:border-gray-700">
+                        <div class="flex items-center gap-2 sm:pl-3 sm:border-l sm:border-gray-200 sm:dark:border-gray-700">
                             <button
                                 @click="toggleAutoRefresh"
                                 :title="autoRefreshEnabled ? 'Auto-refresh is on — click to pause' : 'Auto-refresh is paused — click to resume'"
@@ -116,43 +117,43 @@
                         </div>
 
                         <!-- Bulk Notice of Meeting -->
-                        <div v-if="!isFullScreen" class="flex items-center gap-2 pl-3 border-l border-gray-200 dark:border-gray-700 print:hidden">
+                        <div v-if="!isFullScreen" class="flex items-center gap-2 sm:pl-3 sm:border-l sm:border-gray-200 sm:dark:border-gray-700 print:hidden">
                             <button
                                 @click="openBulkMeetingModal"
                                 class="text-xs px-2.5 py-2 rounded-lg font-bold border border-gray-300 dark:border-gray-600 text-white dark:text-white bg-emerald-600 hover:bg-emerald-700 flex items-center gap-1.5"
                             >
                                 <i class="fas fa-users"></i>
-                                Bulk Create
+                                <span class="hidden xs:inline sm:inline">Bulk Create</span>
                             </button>
                         </div>
 
                         <!-- Print -->
-                        <div v-if="!isFullScreen" class="flex items-center gap-2 pl-3 border-l border-gray-200 dark:border-gray-700">
+                        <div v-if="!isFullScreen" class="flex items-center gap-2 sm:pl-3 sm:border-l sm:border-gray-200 sm:dark:border-gray-700">
                             <button
                                 @click="printChart"
                                 class="text-xs px-2.5 py-2 rounded-lg font-bold border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-1.5"
                             >
                                 <i class="fas fa-print"></i>
-                                Print
+                                <span class="hidden sm:inline">Print</span>
                             </button>
                         </div>
 
                         <!-- Full Screen -->
-                        <div class="flex items-center gap-2 pl-3 border-l border-gray-200 dark:border-gray-700">
+                        <div class="flex items-center gap-2 sm:pl-3 sm:border-l sm:border-gray-200 sm:dark:border-gray-700">
                             <button
                                 @click="toggleFullScreen"
                                 :title="isFullScreen ? 'Exit full screen' : 'Full screen view'"
                                 class="text-xs px-2.5 py-2 rounded-lg font-bold border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-1.5"
                             >
                                 <i :class="isFullScreen ? 'fas fa-compress' : 'fas fa-expand'"></i>
-                                {{ isFullScreen ? 'Exit' : 'Full Screen' }}
+                                <span class="hidden sm:inline">{{ isFullScreen ? 'Exit' : 'Full Screen' }}</span>
                             </button>
                         </div>
                     </div>
                 </div>
 
                 <!-- Summary strip: quick counts so the user can see totals at a glance -->
-                <div v-if="employeesWithStatus.length > 0" class="px-6 py-3 border-b border-gray-200 dark:border-gray-700 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs bg-gray-50/60 dark:bg-gray-800/60 print:hidden">
+                <div v-if="employeesWithStatus.length > 0" class="px-4 sm:px-6 py-3 border-b border-gray-200 dark:border-gray-700 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs bg-gray-50/60 dark:bg-gray-800/60 print:hidden">
                     <span class="font-semibold text-gray-600 dark:text-gray-300">{{ employeesWithStatus.length }} total</span>
                     <span v-for="s in statusSummary" :key="s.status" class="inline-flex items-center gap-1.5 text-gray-600 dark:text-gray-300">
                         <span class="w-2 h-2 rounded-full" :class="dotClass(s.status)"></span>
@@ -163,14 +164,14 @@
                 <!-- Weekend banner: friendlier messaging than a silently all-"Off Day" list -->
                 <div
                     v-if="isSelectedDateWeekend"
-                    class="mx-6 mt-4 px-4 py-3 rounded-lg bg-gray-50 dark:bg-gray-700/40 border border-gray-200 dark:border-gray-600 text-sm text-gray-600 dark:text-gray-300 flex items-center gap-2 print:hidden"
+                    class="mx-4 sm:mx-6 mt-4 px-4 py-3 rounded-lg bg-gray-50 dark:bg-gray-700/40 border border-gray-200 dark:border-gray-600 text-sm text-gray-600 dark:text-gray-300 flex items-center gap-2 print:hidden"
                 >
                     <i class="fas fa-mug-hot text-gray-400"></i>
                     It's the weekend — listed staff are marked Off Day.
                 </div>
 
                 <!-- ============== GRID VIEW (compact, multi-column, minimal scrolling) ============== -->
-                <div v-if="viewMode === 'grid'" class="p-4 print:hidden">
+                <div v-if="viewMode === 'grid'" class="p-3 sm:p-4 print:hidden">
                     <div v-if="employeesWithStatus.length > 0" class="flex flex-col gap-6">
                         <div v-for="group in groupedEmployees" :key="group.status">
                             <div class="flex items-center gap-2 mb-2">
@@ -180,7 +181,7 @@
                             </div>
                             <div
                                 class="grid gap-3 locator-grid"
-                                :style="{ gridTemplateColumns: `repeat(${gridColumns}, minmax(0, 1fr))` }"
+                                :style="{ '--locator-cols': gridColumns }"
                             >
                                 <div
                                     v-for="employee in group.employees"
@@ -223,7 +224,7 @@
                                         >
                                             <p class="font-semibold mb-0.5">Meeting / Activity:</p>
                                             <div class="flex flex-col gap-1 pl-3">
-                                                <div v-for="meeting in employee.meetings" :key="meeting.id" class="flex items-center gap-2">
+                                                <div v-for="meeting in employee.meetings" :key="meeting.id" class="flex items-center gap-2 flex-wrap">
                                                     <span><strong>{{ formatTime12h(meeting.time) }}</strong> - {{ meeting.particulars }}</span>
                                                     <span v-if="!isFullScreen" class="flex items-center gap-1.5 text-gray-400">
                                                         <button
@@ -262,115 +263,197 @@
                     </div>
                 </div>
 
-                <!-- ============== LIST VIEW (original single-column table) ============== -->
-                <div v-else class="overflow-x-auto print:hidden">
-                    <table class="w-full text-sm table-fixed">
-                        <colgroup>
-                            <col class="w-1/3">
-                            <col class="w-1/6">
-                            <col class="w-auto">
-                        </colgroup>
-                        <thead class="bg-gray-100 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">
-                            <tr>
-                                <th class="px-6 py-3 text-center font-semibold text-gray-700 dark:text-gray-200">Employee Name</th>
-                                <th class="px-6 py-3 text-center font-semibold text-gray-700 dark:text-gray-200">Status</th>
-                                <th class="px-6 py-3 text-center font-semibold text-gray-700 dark:text-gray-200">Remarks</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
-                            <tr
-                                v-for="employee in employeesWithStatus"
-                                :key="employee.id"
-                                class="transition-colors hover:brightness-95 dark:hover:brightness-110"
-                                :class="[recordBgClass(employee.status), (isPresentStatus(employee.status) && !isFullScreen) ? 'cursor-pointer' : '']"
-                                @click="isPresentStatus(employee.status) && !isFullScreen && openCreateMeetingModal({ id: employee.id, name: employee.name })"
-                            >
-                                <td class="px-6 py-3 font-medium text-gray-900 dark:text-white">
-                                    <div class="flex items-center gap-2 min-w-0">
-                                        <span
-                                            class="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0"
-                                            :class="statusBadgeClass(employee.status)"
-                                        >
-                                            {{ getInitials(employee.name) }}
-                                        </span>
-                                        <div class="min-w-0">
-                                            <p class="text-base font-bold truncate">{{ employee.name }}</p>
-                                            <p v-if="employee.designation" class="text-xs font-normal text-gray-500 dark:text-gray-400 truncate">
-                                                {{ employee.designation }}
-                                            </p>
+                <!-- ============== LIST VIEW (stacked cards on mobile, table on sm+) ============== -->
+                <div v-else class="print:hidden">
+                    <!-- Mobile: stacked cards (same visual language as Grid view) -->
+                    <div class="sm:hidden p-3 flex flex-col gap-3">
+                        <div
+                            v-for="employee in employeesWithStatus"
+                            :key="`mobile-${employee.id}`"
+                            class="border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-3 flex flex-col gap-2"
+                            :class="[recordBgClass(employee.status), (isPresentStatus(employee.status) && !isFullScreen) ? 'cursor-pointer' : '']"
+                            @click="isPresentStatus(employee.status) && !isFullScreen && openCreateMeetingModal({ id: employee.id, name: employee.name })"
+                        >
+                            <div class="flex items-start gap-2 min-w-0">
+                                <span
+                                    class="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0"
+                                    :class="statusBadgeClass(employee.status)"
+                                >
+                                    {{ getInitials(employee.name) }}
+                                </span>
+                                <div class="flex-1 flex items-start justify-between gap-2 min-w-0">
+                                    <div class="min-w-0">
+                                        <p class="font-semibold text-gray-900 dark:text-white text-base truncate" :title="employee.name">
+                                            {{ employee.name }}
+                                        </p>
+                                        <p v-if="employee.designation" class="text-xs text-gray-500 dark:text-gray-400 truncate" :title="employee.designation">
+                                            {{ employee.designation }}
+                                        </p>
+                                    </div>
+                                    <span
+                                        class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-sm font-bold whitespace-nowrap"
+                                        :class="statusBadgeClass(employee.status)"
+                                    >
+                                        <i :class="statusIconClass(employee.status)"></i>
+                                        {{ statusShortLabel(employee.status) }}
+                                    </span>
+                                </div>
+                            </div>
+                            <div>
+                                <div
+                                    v-if="employee.meetings.length > 0"
+                                    @click.stop
+                                    class="text-xs px-3 py-2 rounded-lg"
+                                    :class="remarksBadgeClass(employee.status)"
+                                >
+                                    <p class="font-semibold mb-0.5">Meeting / Activity:</p>
+                                    <div class="flex flex-col gap-1 pl-3">
+                                        <div v-for="meeting in employee.meetings" :key="meeting.id" class="flex items-center gap-2 flex-wrap">
+                                            <span><strong>{{ formatTime12h(meeting.time) }}</strong> - {{ meeting.particulars }}</span>
+                                            <span v-if="!isFullScreen" class="flex items-center gap-1.5 text-gray-400">
+                                                <button
+                                                    @click.stop="openEditMeetingModal({ id: employee.id, name: employee.name }, meeting)"
+                                                    title="Edit"
+                                                    class="hover:text-blue-600 dark:hover:text-blue-400"
+                                                >
+                                                    <i class="fas fa-pen text-[10px]"></i>
+                                                </button>
+                                                <button
+                                                    @click.stop="openDeleteMeetingModal(employee.name, meeting)"
+                                                    title="Delete"
+                                                    class="hover:text-red-600"
+                                                >
+                                                    <i class="fas fa-trash text-[10px]"></i>
+                                                </button>
+                                            </span>
                                         </div>
                                     </div>
-                                </td>
-                                <td class="px-6 py-3 text-gray-700 dark:text-gray-300 text-center">
-                                    <span v-if="employee.status === 'Present with Meetings'" class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-bold bg-teal-100 dark:bg-teal-900/30 text-teal-800 dark:text-teal-300">
-                                        <i class="fas fa-comments"></i>
-                                        Present w/ Meeting
-                                    </span>
-                                    <span v-else-if="isPresentStatus(employee.status)" class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-bold bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300">
-                                        <i class="fas fa-check-circle"></i>
-                                        Present
-                                    </span>
-                                    <span v-else-if="employee.status === 'On Official Business'" class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-bold bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300">
-                                        <i class="fas fa-briefcase"></i>
-                                        On Official Business
-                                    </span>
-                                    <span v-else-if="employee.status === 'On Leave'" class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-bold bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-300">
-                                        <i class="fas fa-calendar-check"></i>
-                                        On Leave
-                                    </span>
-                                    <span v-else-if="employee.status === 'Undertime'" class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-bold bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300">
-                                        <i class="fas fa-hourglass-end"></i>
-                                        Undertime
-                                    </span>
-                                    <span v-else-if="employee.status === 'Off Day'" class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-bold bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300">
-                                        <i class="fas fa-bed"></i>
-                                        Off Day
-                                    </span>
-                                </td>
-                                <td class="px-6 py-3 text-gray-700 dark:text-gray-300">
-                                    <div
-                                        v-if="employee.meetings.length > 0"
-                                        @click.stop
-                                        class="text-sm px-3 py-2 rounded-lg"
-                                        :class="remarksBadgeClass(employee.status)"
-                                    >
-                                        <p class="font-semibold mb-0.5">Meeting / Activity:</p>
-                                        <div class="flex flex-col gap-1 pl-3">
-                                            <div v-for="meeting in employee.meetings" :key="meeting.id" class="flex items-center gap-2">
-                                                <span><strong>{{ formatTime12h(meeting.time) }}</strong> - {{ meeting.particulars }}</span>
-                                                <span v-if="!isFullScreen" class="flex items-center gap-1.5 text-gray-400">
-                                                    <button
-                                                        @click.stop="openEditMeetingModal({ id: employee.id, name: employee.name }, meeting)"
-                                                        title="Edit"
-                                                        class="hover:text-blue-600 dark:hover:text-blue-400"
-                                                    >
-                                                        <i class="fas fa-pen text-[10px]"></i>
-                                                    </button>
-                                                    <button
-                                                        @click.stop="openDeleteMeetingModal(employee.name, meeting)"
-                                                        title="Delete"
-                                                        class="hover:text-red-600"
-                                                    >
-                                                        <i class="fas fa-trash text-[10px]"></i>
-                                                    </button>
-                                                </span>
+                                </div>
+                                <div v-else-if="employee.remarksText" class="text-xs px-3 py-2 rounded-lg" :class="remarksBadgeClass(employee.status)">
+                                    <p v-if="employee.remarksLabel" class="font-semibold mb-0.5">{{ employee.remarksLabel }}:</p>
+                                    <p :class="[employee.remarksLabel ? 'pl-3' : '', employee.status === 'On Leave' ? 'font-bold' : '']">{{ employee.remarksText }}</p>
+                                </div>
+                                <span v-else class="text-sm text-gray-400 dark:text-gray-500">-</span>
+                            </div>
+                        </div>
+
+                        <!-- No Data State (mobile) -->
+                        <div v-if="employeesWithStatus.length === 0 && !isSelectedDateWeekend" class="text-center py-12 bg-gray-50 dark:bg-gray-700 rounded-md">
+                            <i class="fas fa-inbox text-gray-400 dark:text-gray-600 text-4xl mb-3 block"></i>
+                            <p class="text-gray-600 dark:text-gray-400">No employees found</p>
+                        </div>
+                    </div>
+
+                    <!-- sm and up: original table -->
+                    <div class="hidden sm:block overflow-x-auto">
+                        <table class="w-full text-sm table-fixed min-w-[640px]">
+                            <colgroup>
+                                <col class="w-1/3">
+                                <col class="w-1/6">
+                                <col class="w-auto">
+                            </colgroup>
+                            <thead class="bg-gray-100 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">
+                                <tr>
+                                    <th class="px-6 py-3 text-center font-semibold text-gray-700 dark:text-gray-200">Employee Name</th>
+                                    <th class="px-6 py-3 text-center font-semibold text-gray-700 dark:text-gray-200">Status</th>
+                                    <th class="px-6 py-3 text-center font-semibold text-gray-700 dark:text-gray-200">Remarks</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+                                <tr
+                                    v-for="employee in employeesWithStatus"
+                                    :key="employee.id"
+                                    class="transition-colors hover:brightness-95 dark:hover:brightness-110"
+                                    :class="[recordBgClass(employee.status), (isPresentStatus(employee.status) && !isFullScreen) ? 'cursor-pointer' : '']"
+                                    @click="isPresentStatus(employee.status) && !isFullScreen && openCreateMeetingModal({ id: employee.id, name: employee.name })"
+                                >
+                                    <td class="px-6 py-3 font-medium text-gray-900 dark:text-white">
+                                        <div class="flex items-center gap-2 min-w-0">
+                                            <span
+                                                class="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0"
+                                                :class="statusBadgeClass(employee.status)"
+                                            >
+                                                {{ getInitials(employee.name) }}
+                                            </span>
+                                            <div class="min-w-0">
+                                                <p class="text-base font-bold truncate">{{ employee.name }}</p>
+                                                <p v-if="employee.designation" class="text-xs font-normal text-gray-500 dark:text-gray-400 truncate">
+                                                    {{ employee.designation }}
+                                                </p>
                                             </div>
                                         </div>
-                                    </div>
-                                    <div v-else-if="employee.remarksText" class="text-sm px-3 py-2 rounded-lg" :class="remarksBadgeClass(employee.status)">
-                                        <p v-if="employee.remarksLabel" class="font-semibold mb-0.5">{{ employee.remarksLabel }}:</p>
-                                        <p :class="[employee.remarksLabel ? 'pl-3' : '', employee.status === 'On Leave' ? 'font-bold' : '']">{{ employee.remarksText }}</p>
-                                    </div>
-                                    <span v-else>-</span>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
+                                    </td>
+                                    <td class="px-6 py-3 text-gray-700 dark:text-gray-300 text-center">
+                                        <span v-if="employee.status === 'Present with Meetings'" class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-bold bg-teal-100 dark:bg-teal-900/30 text-teal-800 dark:text-teal-300">
+                                            <i class="fas fa-comments"></i>
+                                            Present w/ Meeting
+                                        </span>
+                                        <span v-else-if="isPresentStatus(employee.status)" class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-bold bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300">
+                                            <i class="fas fa-check-circle"></i>
+                                            Present
+                                        </span>
+                                        <span v-else-if="employee.status === 'On Official Business'" class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-bold bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300">
+                                            <i class="fas fa-briefcase"></i>
+                                            On Official Business
+                                        </span>
+                                        <span v-else-if="employee.status === 'On Leave'" class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-bold bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-300">
+                                            <i class="fas fa-calendar-check"></i>
+                                            On Leave
+                                        </span>
+                                        <span v-else-if="employee.status === 'Undertime'" class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-bold bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300">
+                                            <i class="fas fa-hourglass-end"></i>
+                                            Undertime
+                                        </span>
+                                        <span v-else-if="employee.status === 'Off Day'" class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-bold bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300">
+                                            <i class="fas fa-bed"></i>
+                                            Off Day
+                                        </span>
+                                    </td>
+                                    <td class="px-6 py-3 text-gray-700 dark:text-gray-300">
+                                        <div
+                                            v-if="employee.meetings.length > 0"
+                                            @click.stop
+                                            class="text-sm px-3 py-2 rounded-lg"
+                                            :class="remarksBadgeClass(employee.status)"
+                                        >
+                                            <p class="font-semibold mb-0.5">Meeting / Activity:</p>
+                                            <div class="flex flex-col gap-1 pl-3">
+                                                <div v-for="meeting in employee.meetings" :key="meeting.id" class="flex items-center gap-2 flex-wrap">
+                                                    <span><strong>{{ formatTime12h(meeting.time) }}</strong> - {{ meeting.particulars }}</span>
+                                                    <span v-if="!isFullScreen" class="flex items-center gap-1.5 text-gray-400">
+                                                        <button
+                                                            @click.stop="openEditMeetingModal({ id: employee.id, name: employee.name }, meeting)"
+                                                            title="Edit"
+                                                            class="hover:text-blue-600 dark:hover:text-blue-400"
+                                                        >
+                                                            <i class="fas fa-pen text-[10px]"></i>
+                                                        </button>
+                                                        <button
+                                                            @click.stop="openDeleteMeetingModal(employee.name, meeting)"
+                                                            title="Delete"
+                                                            class="hover:text-red-600"
+                                                        >
+                                                            <i class="fas fa-trash text-[10px]"></i>
+                                                        </button>
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div v-else-if="employee.remarksText" class="text-sm px-3 py-2 rounded-lg" :class="remarksBadgeClass(employee.status)">
+                                            <p v-if="employee.remarksLabel" class="font-semibold mb-0.5">{{ employee.remarksLabel }}:</p>
+                                            <p :class="[employee.remarksLabel ? 'pl-3' : '', employee.status === 'On Leave' ? 'font-bold' : '']">{{ employee.remarksText }}</p>
+                                        </div>
+                                        <span v-else>-</span>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
 
-                    <!-- No Data State -->
-                    <div v-if="employeesWithStatus.length === 0 && !isSelectedDateWeekend" class="text-center py-12 bg-gray-50 dark:bg-gray-700">
-                        <i class="fas fa-inbox text-gray-400 dark:text-gray-600 text-4xl mb-3 block"></i>
-                        <p class="text-gray-600 dark:text-gray-400">No employees found</p>
+                        <!-- No Data State (table) -->
+                        <div v-if="employeesWithStatus.length === 0 && !isSelectedDateWeekend" class="text-center py-12 bg-gray-50 dark:bg-gray-700">
+                            <i class="fas fa-inbox text-gray-400 dark:text-gray-600 text-4xl mb-3 block"></i>
+                            <p class="text-gray-600 dark:text-gray-400">No employees found</p>
+                        </div>
                     </div>
                 </div>
 
@@ -521,7 +604,8 @@ const showToast = (message: string, type: 'success' | 'error' | 'info' = 'info')
 // List = original single-column table.
 const viewMode = ref<'grid' | 'list'>('grid');
 
-// Number of columns in the Grid view — user-adjustable.
+// Number of columns in the Grid view — user-adjustable (desktop only; mobile
+// is forced to 1 column and tablet to 2 via CSS, see the .locator-grid rules).
 const gridColumns = ref<number>(4);
 
 // The date the Locator Chart is being viewed for — defaults to today,
@@ -1472,6 +1556,23 @@ onUnmounted(() => {
     }
     table tr {
         break-inside: avoid;
+    }
+}
+
+/* Grid view column count — user-adjustable via --locator-cols on desktop,
+   force-collapsed on smaller screens where the picker isn't shown since
+   it wouldn't do anything useful at those widths. */
+.locator-grid {
+    grid-template-columns: repeat(var(--locator-cols, 4), minmax(0, 1fr));
+}
+@media (max-width: 639px) {
+    .locator-grid {
+        grid-template-columns: 1fr !important;
+    }
+}
+@media (min-width: 640px) and (max-width: 1023px) {
+    .locator-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
     }
 }
 </style>
