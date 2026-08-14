@@ -25,12 +25,12 @@
             <!-- Locator Chart Section -->
             <div class="w-full bg-white dark:bg-gray-800 rounded-lg shadow">
                 <!-- Header Section -->
-                <div class="px-4 sm:px-6 py-5 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex items-center justify-between flex-wrap gap-4">
+                <div class="px-4 sm:px-6 py-5 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
                     <h3 class="text-lg sm:text-2xl font-semibold text-gray-900 dark:text-white flex items-center gap-2">
                         <i class="fas fa-map-location-dot text-blue-600 dark:text-blue-400"></i>
                         Date: {{ currentDateDisplay }}
                     </h3>
-                    <div class="flex items-center gap-3 flex-wrap print:hidden w-full sm:w-auto">
+                    <div class="flex items-center gap-2 sm:gap-3 flex-wrap print:hidden w-full sm:w-auto">
                         <!-- View toggle: grid (compact, no-scroll) vs list (original table) -->
                         <div class="flex items-center rounded-lg border border-gray-300 dark:border-gray-600 overflow-hidden text-xs font-medium">
                             <button
@@ -83,23 +83,25 @@
                             </div>
                         </div>
 
-                        <label for="locatorDate" class="text-xs font-medium text-gray-700 dark:text-white">Date:</label>
-                        <input
-                            type="date"
-                            id="locatorDate"
-                            v-model="selectedDateInput"
-                            class="border border-gray-300 rounded-lg px-3 py-2 text-xs dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-                        />
-                        <button
-                            v-if="!isSelectedDateToday"
-                            @click="resetToToday"
-                            class="text-xs text-blue-600 dark:text-blue-400 hover:underline"
-                        >
-                            Reset to Today
-                        </button>
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <label for="locatorDate" class="text-xs font-medium text-gray-700 dark:text-white whitespace-nowrap">Date:</label>
+                            <input
+                                type="date"
+                                id="locatorDate"
+                                v-model="selectedDateInput"
+                                class="border border-gray-300 rounded-lg px-3 py-2 text-xs dark:border-gray-600 dark:bg-gray-700 dark:text-white flex-1 sm:flex-none min-w-0"
+                            />
+                            <button
+                                v-if="!isSelectedDateToday"
+                                @click="resetToToday"
+                                class="text-xs text-blue-600 dark:text-blue-400 hover:underline whitespace-nowrap"
+                            >
+                                Reset to Today
+                            </button>
+                        </div>
 
                         <!-- Auto-refresh controls -->
-                        <div class="flex items-center gap-2 sm:pl-3 sm:border-l sm:border-gray-200 sm:dark:border-gray-700">
+                        <div class="flex items-center gap-2 sm:pl-3 sm:border-l sm:border-gray-200 sm:dark:border-gray-700 flex-wrap">
                             <button
                                 @click="toggleAutoRefresh"
                                 :title="autoRefreshEnabled ? 'Auto-refresh is on — click to pause' : 'Auto-refresh is paused — click to resume'"
@@ -123,7 +125,7 @@
                                 class="text-xs px-2.5 py-2 rounded-lg font-bold border border-gray-300 dark:border-gray-600 text-white dark:text-white bg-emerald-600 hover:bg-emerald-700 flex items-center gap-1.5"
                             >
                                 <i class="fas fa-users"></i>
-                                <span class="hidden xs:inline sm:inline">Bulk Create</span>
+                                <span class="hidden sm:inline">Bulk Create</span>
                             </button>
                         </div>
 
@@ -153,10 +155,10 @@
                 </div>
 
                 <!-- Summary strip: quick counts so the user can see totals at a glance -->
-                <div v-if="employeesWithStatus.length > 0" class="px-4 sm:px-6 py-3 border-b border-gray-200 dark:border-gray-700 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs bg-gray-50/60 dark:bg-gray-800/60 print:hidden">
+                <div v-if="employeesWithStatus.length > 0" class="px-4 sm:px-6 py-3 border-b border-gray-200 dark:border-gray-700 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs bg-gray-50/60 dark:bg-gray-800/60 print:hidden">
                     <span class="font-semibold text-gray-600 dark:text-gray-300">{{ employeesWithStatus.length }} total</span>
-                    <span v-for="s in statusSummary" :key="s.status" class="inline-flex items-center gap-1.5 text-gray-600 dark:text-gray-300">
-                        <span class="w-2 h-2 rounded-full" :class="dotClass(s.status)"></span>
+                    <span v-for="s in statusSummary" :key="s.status" class="inline-flex items-center gap-1.5 text-gray-600 dark:text-gray-300 whitespace-nowrap">
+                        <span class="w-2 h-2 rounded-full flex-shrink-0" :class="dotClass(s.status)"></span>
                         {{ s.status }}: <strong>{{ s.count }}</strong>
                     </span>
                 </div>
@@ -166,7 +168,7 @@
                     v-if="isSelectedDateWeekend"
                     class="mx-4 sm:mx-6 mt-4 px-4 py-3 rounded-lg bg-gray-50 dark:bg-gray-700/40 border border-gray-200 dark:border-gray-600 text-sm text-gray-600 dark:text-gray-300 flex items-center gap-2 print:hidden"
                 >
-                    <i class="fas fa-mug-hot text-gray-400"></i>
+                    <i class="fas fa-mug-hot text-gray-400 flex-shrink-0"></i>
                     It's the weekend — listed staff are marked Off Day.
                 </div>
 
@@ -175,7 +177,7 @@
                     <div v-if="employeesWithStatus.length > 0" class="flex flex-col gap-6">
                         <div v-for="group in groupedEmployees" :key="group.status">
                             <div class="flex items-center gap-2 mb-2">
-                                <span class="w-2.5 h-2.5 rounded-full" :class="dotClass(group.status)"></span>
+                                <span class="w-2.5 h-2.5 rounded-full flex-shrink-0" :class="dotClass(group.status)"></span>
                                 <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-200 uppercase tracking-wide">{{ group.status }}</h4>
                                 <span class="text-xs text-gray-400 dark:text-gray-500">({{ group.employees.length }})</span>
                             </div>
@@ -207,7 +209,7 @@
                                                 </p>
                                             </div>
                                             <span
-                                                class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-sm font-bold whitespace-nowrap"
+                                                class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-sm font-bold whitespace-nowrap flex-shrink-0"
                                                 :class="statusBadgeClass(employee.status)"
                                             >
                                                 <i :class="statusIconClass(employee.status)"></i>
@@ -225,7 +227,7 @@
                                             <p class="font-semibold mb-0.5">Meeting / Activity:</p>
                                             <div class="flex flex-col gap-1 pl-3">
                                                 <div v-for="meeting in employee.meetings" :key="meeting.id" class="flex items-center gap-2 flex-wrap">
-                                                    <span><strong>{{ formatTime12h(meeting.time) }}</strong> - {{ meeting.particulars }}</span>
+                                                    <span class="break-words"><strong>{{ formatTime12h(meeting.time) }}</strong> - {{ meeting.particulars }}</span>
                                                     <span v-if="!isFullScreen" class="flex items-center gap-1.5 text-gray-400">
                                                         <button
                                                             @click.stop="openEditMeetingModal({ id: employee.id, name: employee.name }, meeting)"
@@ -245,7 +247,7 @@
                                                 </div>
                                             </div>
                                         </div>
-                                        <div v-else-if="employee.remarksText" class="text-xs px-3 py-2 rounded-lg" :class="remarksBadgeClass(employee.status)">
+                                        <div v-else-if="employee.remarksText" class="text-xs px-3 py-2 rounded-lg break-words" :class="remarksBadgeClass(employee.status)">
                                             <p v-if="employee.remarksLabel" class="font-semibold mb-0.5">{{ employee.remarksLabel }}:</p>
                                             <p :class="[employee.remarksLabel ? 'pl-3' : '', employee.status === 'On Leave' ? 'font-bold' : '']">{{ employee.remarksText }}</p>
                                         </div>
@@ -291,7 +293,7 @@
                                         </p>
                                     </div>
                                     <span
-                                        class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-sm font-bold whitespace-nowrap"
+                                        class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-sm font-bold whitespace-nowrap flex-shrink-0"
                                         :class="statusBadgeClass(employee.status)"
                                     >
                                         <i :class="statusIconClass(employee.status)"></i>
@@ -309,7 +311,7 @@
                                     <p class="font-semibold mb-0.5">Meeting / Activity:</p>
                                     <div class="flex flex-col gap-1 pl-3">
                                         <div v-for="meeting in employee.meetings" :key="meeting.id" class="flex items-center gap-2 flex-wrap">
-                                            <span><strong>{{ formatTime12h(meeting.time) }}</strong> - {{ meeting.particulars }}</span>
+                                            <span class="break-words"><strong>{{ formatTime12h(meeting.time) }}</strong> - {{ meeting.particulars }}</span>
                                             <span v-if="!isFullScreen" class="flex items-center gap-1.5 text-gray-400">
                                                 <button
                                                     @click.stop="openEditMeetingModal({ id: employee.id, name: employee.name }, meeting)"
@@ -329,7 +331,7 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div v-else-if="employee.remarksText" class="text-xs px-3 py-2 rounded-lg" :class="remarksBadgeClass(employee.status)">
+                                <div v-else-if="employee.remarksText" class="text-xs px-3 py-2 rounded-lg break-words" :class="remarksBadgeClass(employee.status)">
                                     <p v-if="employee.remarksLabel" class="font-semibold mb-0.5">{{ employee.remarksLabel }}:</p>
                                     <p :class="[employee.remarksLabel ? 'pl-3' : '', employee.status === 'On Leave' ? 'font-bold' : '']">{{ employee.remarksText }}</p>
                                 </div>

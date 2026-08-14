@@ -281,10 +281,9 @@ export function useTardinessForm(employees: any, tardiness: any) {
     
         /**
          * Check if current user can create tardiness
-         * Only Developer and Administrator can create tardiness
          */
         const canCreateTardiness = computed(() => {
-            return ['Developer', 'Administrator', 'Administrative'].includes(usertype.value);
+            return ['Developer', 'Administrator', 'Administrative', 'Receiving', 'Reviewer', 'Supervisor'].includes(usertype.value);
         });
     
         /**

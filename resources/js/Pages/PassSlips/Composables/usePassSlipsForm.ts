@@ -273,10 +273,9 @@ export function usePassSlipsForm(employees: any, passSlips: any) {
 
     /**
      * Check if current user can create pass slips
-     * Only Developer and Administrator can create pass slips
      */
     const canCreatePassSlips = computed(() => {
-        return ['Developer', 'Administrator', 'Administrative'].includes(usertype.value);
+        return ['Developer', 'Administrator', 'Administrative', 'Receiving', 'Reviewer', 'Supervisor'].includes(usertype.value);
     });
 
     /**

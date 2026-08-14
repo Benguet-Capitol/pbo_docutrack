@@ -107,10 +107,9 @@ export function useTimeSlipsForm(employees: any, timeSlips: any) {
 
     /**
      * Check if current user can create time slips
-     * Only Developer and Administrator can create time slips
      */
     const canCreateTimeSlips = computed(() => {
-        return ['Developer', 'Administrator', 'Administrative'].includes(usertype.value);
+        return ['Developer', 'Administrator', 'Administrative', 'Receiving', 'Reviewer', 'Supervisor'].includes(usertype.value);
     });
 
     /**
