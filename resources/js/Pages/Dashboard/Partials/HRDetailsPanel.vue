@@ -1,13 +1,20 @@
 <template>
-    <div class="border-t border-gray-200 dark:border-gray-700 p-6">
+    <!-- Expanded Details Section -->
+    <div v-if="expandedType" class="border-t border-gray-200 dark:border-gray-700 p-6">
         <!-- Leaves Details -->
         <div v-if="expandedType === 'leaves'">
             <h4 class="font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
                 <i class="fas fa-calendar-alt text-blue-600"></i>
                 Leaves by Type
             </h4>
-            <div class="space-y-4 max-h-96 overflow-y-auto">
-                <div v-for="(data, type) in currentMonthLeavesTypeWithEmployees" :key="type" class="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-200 dark:border-blue-800">
+            <div v-if="!currentMonthLeavesByTypeWithEmployees || Object.keys(currentMonthLeavesByTypeWithEmployees).length === 0" class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg border border-gray-200 dark:border-gray-600 text-center">
+                <p class="text-gray-600 dark:text-gray-400 text-sm">
+                    <i class="fas fa-inbox text-gray-400 mr-2"></i>
+                    No leave records found for this period.
+                </p>
+            </div>
+            <div v-else class="space-y-4 max-h-96 overflow-y-auto">
+                <div v-for="(data, type) in currentMonthLeavesByTypeWithEmployees" :key="type" class="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-200 dark:border-blue-800">
                     <div class="flex items-center justify-between mb-3">
                         <p class="font-semibold text-gray-900 dark:text-white">{{ type }}</p>
                         <span class="px-2 py-1 bg-blue-200 dark:bg-blue-900/50 text-blue-800 dark:text-blue-300 rounded text-xs font-medium">{{ data.count }}</span>
@@ -36,7 +43,13 @@
                 <i class="fas fa-map-marked-alt text-orange-600"></i>
                 Travel Orders by Employee
             </h4>
-            <div class="space-y-3 max-h-96 overflow-y-auto">
+            <div v-if="!currentMonthTravelOrdersByEmp || Object.keys(currentMonthTravelOrdersByEmp).length === 0" class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg border border-gray-200 dark:border-gray-600 text-center">
+                <p class="text-gray-600 dark:text-gray-400 text-sm">
+                    <i class="fas fa-inbox text-gray-400 mr-2"></i>
+                    No travel order records found for this period.
+                </p>
+            </div>
+            <div v-else class="space-y-3 max-h-96 overflow-y-auto">
                 <div v-for="(orders, empName) in currentMonthTravelOrdersByEmp" :key="empName" class="bg-orange-50 dark:bg-orange-900/20 p-3 rounded-lg border border-orange-200 dark:border-orange-800">
                     <p class="font-medium text-gray-900 dark:text-white mb-2">{{ empName }}</p>
                     <div class="space-y-2">
@@ -46,9 +59,9 @@
                                 <i class="fas fa-map-pin text-orange-500 mr-1"></i>
                                 {{ order.destination }}
                             </p>
-                            <p v-if="formatDateRange(order.from_date, order.to_date)" class="text-gray-600 dark:text-gray-400">
+                            <p v-if="order.inclusive_dates && Array.isArray(order.inclusive_dates) && order.inclusive_dates.length > 0" class="text-gray-600 dark:text-gray-400">
                                 <i class="fas fa-calendar text-orange-500 mr-1"></i>
-                                {{ formatDateRange(order.from_date, order.to_date) }}
+                                {{ formatInclusiveDatesForDisplay(order.inclusive_dates) }}
                             </p>
                         </div>
                     </div>
@@ -62,7 +75,13 @@
                 <i class="fas fa-clipboard-list text-emerald-600"></i>
                 Pass Slips by Employee
             </h4>
-            <div class="space-y-3 max-h-96 overflow-y-auto">
+            <div v-if="!currentMonthPassSlipsByEmp || Object.keys(currentMonthPassSlipsByEmp).length === 0" class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg border border-gray-200 dark:border-gray-600 text-center">
+                <p class="text-gray-600 dark:text-gray-400 text-sm">
+                    <i class="fas fa-inbox text-gray-400 mr-2"></i>
+                    No pass slip records found for this period.
+                </p>
+            </div>
+            <div v-else class="space-y-3 max-h-96 overflow-y-auto">
                 <div v-for="(slips, empName) in currentMonthPassSlipsByEmp" :key="empName" class="bg-emerald-50 dark:bg-emerald-900/20 p-3 rounded-lg border border-emerald-200 dark:border-emerald-800">
                     <p class="font-medium text-gray-900 dark:text-white mb-2">{{ empName }}</p>
                     <div class="space-y-2">
@@ -96,8 +115,14 @@
                 <i class="fas fa-hourglass-end text-red-600"></i>
                 Tardiness/Undertime by Employee
             </h4>
-            <div class="space-y-3 max-h-96 overflow-y-auto">
-                <div v-for="(records, empName) in currentMonthTardinesssByEmp" :key="empName" class="bg-red-50 dark:bg-red-900/20 p-3 rounded-lg border border-red-200 dark:border-red-800">
+            <div v-if="!currentMonthTardinessByEmp || Object.keys(currentMonthTardinessByEmp).length === 0" class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg border border-gray-200 dark:border-gray-600 text-center">
+                <p class="text-gray-600 dark:text-gray-400 text-sm">
+                    <i class="fas fa-inbox text-gray-400 mr-2"></i>
+                    No tardiness/undertime records found for this period.
+                </p>
+            </div>
+            <div v-else class="space-y-3 max-h-96 overflow-y-auto">
+                <div v-for="(records, empName) in currentMonthTardinessByEmp" :key="empName" class="bg-red-50 dark:bg-red-900/20 p-3 rounded-lg border border-red-200 dark:border-red-800">
                     <p class="font-medium text-gray-900 dark:text-white mb-2">{{ empName }}</p>
                     <div class="space-y-2">
                         <div v-for="(record, idx) in records" :key="idx" class="bg-white dark:bg-gray-700 p-2 rounded border border-gray-200 dark:border-gray-600 text-xs">
@@ -114,9 +139,9 @@
                                 <i class="fas fa-clock text-red-500 mr-1"></i>
                                 Time: {{ formatTime(record.requested_time) }}
                             </p>
-                            <p class="text-gray-600 dark:text-gray-400 mt-1">
-                                <i class="fas fa-note-sticky text-gray-400 mr-1"></i>
-                                {{ record.reason }}
+                            <p class="text-gray-600 dark:text-gray-400">
+                                <i class="fas fa-note-sticky text-red-500 mr-1"></i>
+                                Reason: {{ record.reason }}
                             </p>
                         </div>
                     </div>
@@ -127,39 +152,46 @@
 </template>
 
 <script setup lang="ts">
-defineProps<{
-    expandedType: 'leaves' | 'travelOrders' | 'passSlips' | 'tardiness';
-    currentMonthLeaves: any[];
-    currentMonthLeavesTypeWithEmployees: Record<string, any>;
-    currentMonthTravelOrders: any[];
-    currentMonthTravelOrdersByEmp: Record<string, any[]>;
-    currentMonthPassSlips: any[];
-    currentMonthPassSlipsByEmp: Record<string, any[]>;
-    currentMonthTardiness: any[];
-    currentMonthTardinesssByEmp: Record<string, any[]>;
-    formatDateRange: (from: any, to: any) => string;
-    formatTime: (time: string) => string;
-    formatInclusiveDates: (dates: any) => string;
-}>();
+defineProps({
+    expandedType: String,
+    currentMonthLeavesByTypeWithEmployees: Object,
+    currentMonthTravelOrdersByEmp: Object,
+    currentMonthPassSlipsByEmp: Object,
+    currentMonthTardinessByEmp: Object,
+    formatDateRange: Function,
+    formatTime: Function,
+    formatInclusiveDates: Function,
+});
 
 const formatInclusiveDatesForDisplay = (inclusiveDates: string[] | undefined): string => {
     if (!inclusiveDates || !Array.isArray(inclusiveDates) || inclusiveDates.length === 0) {
         return '';
     }
     
+    // Helper function to parse date string in YYYY-MM-DD format using local time
+    const parseDateString = (dateString: string): Date => {
+        const [year, month, day] = dateString.trim().split('-').map(Number);
+        return new Date(year, month - 1, day);
+    };
+    
     const formattedDates = inclusiveDates.map((dateEntry: string) => {
         if (!dateEntry) return '';
         if (dateEntry.includes(' - ')) {
-            const [startStr, endStr] = dateEntry.split(' - ');
-            const startDate = new Date(startStr.trim());
-            const endDate = new Date(endStr.trim());
-            const start = startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-            const end = endDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-            return `${start} - ${end}`;
+            const parts = dateEntry.split(' - ');
+            if (parts.length === 2) {
+                const startStr = parts[0].trim();
+                const endStr = parts[1].trim();
+                const startDate = parseDateString(startStr);
+                const endDate = parseDateString(endStr);
+                const start = startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                const end = endDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                return `${start} - ${end}`;
+            }
         } else {
-            const date = new Date(dateEntry.trim());
+            const date = parseDateString(dateEntry);
             return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
         }
+        return '';
     }).filter((d: string) => d);
     
     return formattedDates.join(', ');

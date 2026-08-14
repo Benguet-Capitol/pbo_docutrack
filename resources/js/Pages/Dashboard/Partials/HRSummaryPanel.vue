@@ -1,128 +1,161 @@
 <template>
-    <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-        <!-- HR Summary Header and Filters -->
-        <div class="mb-6">
-            <div class="flex items-center justify-between mb-4">
-                <h2 class="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                    <i class="fas fa-chart-bar text-emerald-600 dark:text-emerald-400"></i>
-                    HR Summary
-                </h2>
-                <div class="flex gap-3">
-                    <select
-                        v-model.number="selectedMonth"
-                        class="border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 rounded-lg px-3 py-2 text-xs text-gray-900 dark:text-white focus:outline-none focus:border-emerald-500"
-                    >
-                        <option v-for="(name, idx) in months" :key="idx" :value="idx">
-                            {{ name }}
-                        </option>
-                    </select>
-                    <select
-                        v-model.number="selectedYear"
-                        class="border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 rounded-lg px-3 py-2 text-xs text-gray-900 dark:text-white focus:outline-none focus:border-emerald-500"
-                    >
-                        <option v-for="year in availableHRYears" :key="year" :value="year">
-                            {{ year }}
-                        </option>
-                    </select>
-                </div>
-            </div>
+    <!-- HR Summary Panel: Leaves, Travel Orders, Pass Slips for Current Month -->
+    <div v-if="canViewHRSummary" class="w-full bg-white dark:bg-gray-800 rounded-lg shadow relative">
+        <!-- Loading Animation Overlay -->
+        <div v-if="hrLoading" class="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent dark:via-gray-600/30 rounded-lg hr-loading-shimmer"></div>
+        <!-- Header Section -->
+        <div class="px-4 sm:px-6 py-5 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+            <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+                <!-- Left side: Title and Filters -->
+                <div class="flex flex-col gap-4">
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                        <i class="fas fa-users text-emerald-600 dark:text-emerald-400"></i>
+                        Leaves, Travel Orders, Pass Slips and Tardiness/Undertime Summary
+                    </h3>
 
-            <!-- Summary Cards Grid -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <!-- Leaves Card -->
-                <div 
-                    @click="emit('toggle-hr-expanded', 'leaves')"
-                    class="rounded-lg border-2 p-4 cursor-pointer transition-all duration-200"
-                    :class="expandedHRType === 'leaves' ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-500' : 'bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600 hover:border-blue-400'"
-                >
-                    <div class="flex items-center justify-between mb-2">
-                        <h4 class="font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-                            <i class="fas fa-calendar-alt text-blue-600 dark:text-blue-400"></i>
-                            Leaves
-                        </h4>
-                        <i :class="['fas', expandedHRType === 'leaves' ? 'fa-chevron-up' : 'fa-chevron-down', 'text-gray-400 text-xs']"></i>
+                    <!-- Month and Year Filters -->
+                    <div class="flex flex-col sm:flex-row gap-2 items-stretch sm:items-end">
+                        <!-- Year Filter -->
+                        <div class="flex flex-col gap-1 w-full sm:w-auto">
+                            <label class="text-xs font-semibold text-gray-700 dark:text-gray-300">Year</label>
+                            <select
+                                v-model.number="selectedHRYearLocal"
+                                class="border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 rounded-lg px-2 py-2 text-xs text-gray-900 dark:text-white focus:outline-none focus:border-emerald-500 dark:focus:border-emerald-500 transition-colors cursor-pointer w-full sm:w-auto"
+                            >
+                                <option v-for="year in availableHRYears" :key="year" :value="year">
+                                    {{ year }}
+                                </option>
+                            </select>
+                        </div>
+
+                        <!-- Month Filter -->
+                        <div class="flex flex-col gap-1 w-full sm:w-auto">
+                            <label class="text-xs font-semibold text-gray-700 dark:text-gray-300">Month</label>
+                            <select
+                                v-model.number="selectedHRMonthLocal"
+                                class="border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 rounded-lg px-2 py-2 text-xs text-gray-900 dark:text-white focus:outline-none focus:border-emerald-500 dark:focus:border-emerald-500 transition-colors cursor-pointer w-full sm:w-auto sm:max-w-[120px]"
+                            >
+                                <option v-for="(monthName, index) in months" :key="index" :value="index">
+                                    {{ monthName }}
+                                </option>
+                            </select>
+                        </div>
                     </div>
-                    <div class="text-3xl font-bold text-blue-600 dark:text-blue-400 mb-1">
-                        {{ currentMonthLeaves.length }}
-                    </div>
-                    <p class="text-sm text-gray-600 dark:text-gray-400">
-                        <span class="font-medium">{{ Object.keys(currentMonthLeavesByType).length }}</span> types filed
-                    </p>
                 </div>
 
-                <!-- Travel Orders Card -->
-                <div 
-                    @click="emit('toggle-hr-expanded', 'travelOrders')"
-                    class="rounded-lg border-2 p-4 cursor-pointer transition-all duration-200"
-                    :class="expandedHRType === 'travelOrders' ? 'bg-orange-50 dark:bg-orange-900/20 border-orange-500' : 'bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600 hover:border-orange-400'"
+                <!-- Right side: Generate Report Button -->
+                <button
+                    @click="$emit('showSummaryModal')"
+                    class="inline-flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 transition-colors text-xs font-medium w-full sm:w-auto text-center"
                 >
-                    <div class="flex items-center justify-between mb-2">
-                        <h4 class="font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-                            <i class="fas fa-map-marked-alt text-orange-600 dark:text-orange-400"></i>
-                            Travel Orders
-                        </h4>
-                        <i :class="['fas', expandedHRType === 'travelOrders' ? 'fa-chevron-up' : 'fa-chevron-down', 'text-gray-400 text-xs']"></i>
-                    </div>
-                    <div class="text-3xl font-bold text-orange-600 dark:text-orange-400 mb-1">
-                        {{ currentMonthTravelOrders.length }}
-                    </div>
-                    <p class="text-sm text-gray-600 dark:text-gray-400">
-                        <span class="font-medium">{{ uniqueEmployeesTravelOrders.size }}</span> employees involved
-                    </p>
-                </div>
-
-                <!-- Pass Slips Card -->
-                <div 
-                    @click="emit('toggle-hr-expanded', 'passSlips')"
-                    class="rounded-lg border-2 p-4 cursor-pointer transition-all duration-200"
-                    :class="expandedHRType === 'passSlips' ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-500' : 'bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600 hover:border-emerald-400'"
-                >
-                    <div class="flex items-center justify-between mb-2">
-                        <h4 class="font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-                            <i class="fas fa-clipboard-list text-emerald-600 dark:text-emerald-400"></i>
-                            Pass Slips
-                        </h4>
-                        <i :class="['fas', expandedHRType === 'passSlips' ? 'fa-chevron-up' : 'fa-chevron-down', 'text-gray-400 text-xs']"></i>
-                    </div>
-                    <div class="text-3xl font-bold text-emerald-600 dark:text-emerald-400 mb-1">
-                        {{ currentMonthPassSlips.length }}
-                    </div>
-                    <p class="text-sm text-gray-600 dark:text-gray-400">
-                        <span class="font-medium">{{ uniqueEmployeesPassSlips.size }}</span> employees involved
-                    </p>
-                </div>
-
-                <!-- Tardiness/Undertime Card -->
-                <div 
-                    @click="emit('toggle-hr-expanded', 'tardiness')"
-                    class="rounded-lg border-2 p-4 cursor-pointer transition-all duration-200"
-                    :class="expandedHRType === 'tardiness' ? 'bg-red-50 dark:bg-red-900/20 border-red-500' : 'bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600 hover:border-red-400'"
-                >
-                    <div class="flex items-center justify-between mb-2">
-                        <h4 class="font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-                            <i class="fas fa-hourglass-end text-red-600 dark:text-red-400"></i>
-                            Tardiness/Undertime
-                        </h4>
-                        <i :class="['fas', expandedHRType === 'tardiness' ? 'fa-chevron-up' : 'fa-chevron-down', 'text-gray-400 text-xs']"></i>
-                    </div>
-                    <div class="text-3xl font-bold text-red-600 dark:text-red-400 mb-1">
-                        {{ currentMonthTardiness.length }}
-                    </div>
-                    <p class="text-sm text-gray-600 dark:text-gray-400">
-                        <span class="font-medium">{{ uniqueEmployeesTardiness.size }}</span> employees involved
-                    </p>
-                </div>
+                    <i class="fas fa-file-pdf shrink-0"></i>
+                    <span>Summary of Leaves, TOs, PS and Tardiness/Undertimes</span>
+                </button>
             </div>
         </div>
 
-        <!-- Expanded Details Section -->
-        <HRDetailsPanel
-            v-if="expandedHRType"
-            v-bind="hrDetailsPanelProps"
+        <!-- Summary Cards Grid -->
+        <div class="w-full p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 auto-rows-max">
+            <!-- Leaves Card -->
+            <div 
+                @click="expandedHRTypeLocal = expandedHRTypeLocal === 'leaves' ? null : 'leaves'"
+                class="rounded-lg border-2 p-4 cursor-pointer transition-all duration-200"
+                :class="expandedHRTypeLocal === 'leaves' ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-500' : 'bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600 hover:border-blue-400'"
+            >
+                <div class="flex items-center justify-between mb-2">
+                    <h4 class="font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                        <i class="fas fa-calendar-alt text-blue-600 dark:text-blue-400"></i>
+                        Leaves
+                    </h4>
+                    <i :class="['fas', expandedHRTypeLocal === 'leaves' ? 'fa-chevron-up' : 'fa-chevron-down', 'text-gray-400 text-xs']"></i>
+                </div>
+                <div class="text-3xl font-bold text-blue-600 dark:text-blue-400 mb-1">
+                    {{ currentMonthLeaves.length }}
+                </div>
+                <p class="text-sm text-gray-600 dark:text-gray-400">
+                    <span class="font-medium">{{ Object.keys(currentMonthLeavesByType).length }}</span> types filed
+                </p>
+            </div>
+
+            <!-- Travel Orders Card -->
+            <div 
+                @click="expandedHRTypeLocal = expandedHRTypeLocal === 'travelOrders' ? null : 'travelOrders'"
+                class="rounded-lg border-2 p-4 cursor-pointer transition-all duration-200"
+                :class="expandedHRTypeLocal === 'travelOrders' ? 'bg-orange-50 dark:bg-orange-900/20 border-orange-500' : 'bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600 hover:border-orange-400'"
+            >
+                <div class="flex items-center justify-between mb-2">
+                    <h4 class="font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                        <i class="fas fa-map-marked-alt text-orange-600 dark:text-orange-400"></i>
+                        Travel Orders
+                    </h4>
+                    <i :class="['fas', expandedHRTypeLocal === 'travelOrders' ? 'fa-chevron-up' : 'fa-chevron-down', 'text-gray-400 text-xs']"></i>
+                </div>
+                <div class="text-3xl font-bold text-orange-600 dark:text-orange-400 mb-1">
+                    {{ currentMonthTravelOrders.length }}
+                </div>
+                <p class="text-sm text-gray-600 dark:text-gray-400">
+                    <span class="font-medium">{{ uniqueEmployeesTravelOrders.size }}</span> employees involved
+                </p>
+            </div>
+
+            <!-- Pass Slips Card -->
+            <div 
+                @click="expandedHRTypeLocal = expandedHRTypeLocal === 'passSlips' ? null : 'passSlips'"
+                class="rounded-lg border-2 p-4 cursor-pointer transition-all duration-200"
+                :class="expandedHRTypeLocal === 'passSlips' ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-500' : 'bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600 hover:border-emerald-400'"
+            >
+                <div class="flex items-center justify-between mb-2">
+                    <h4 class="font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                        <i class="fas fa-clipboard-list text-emerald-600 dark:text-emerald-400"></i>
+                        Pass Slips
+                    </h4>
+                    <i :class="['fas', expandedHRTypeLocal === 'passSlips' ? 'fa-chevron-up' : 'fa-chevron-down', 'text-gray-400 text-xs']"></i>
+                </div>
+                <div class="text-3xl font-bold text-emerald-600 dark:text-emerald-400 mb-1">
+                    {{ currentMonthPassSlips.length }}
+                </div>
+                <p class="text-sm text-gray-600 dark:text-gray-400">
+                    <span class="font-medium">{{ uniqueEmployeesPassSlips.size }}</span> employees involved
+                </p>
+            </div>
+
+            <!-- Tardiness/Undertime Card -->
+            <div 
+                @click="expandedHRTypeLocal = expandedHRTypeLocal === 'tardiness' ? null : 'tardiness'"
+                class="rounded-lg border-2 p-4 cursor-pointer transition-all duration-200"
+                :class="expandedHRTypeLocal === 'tardiness' ? 'bg-red-50 dark:bg-red-900/20 border-red-500' : 'bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600 hover:border-red-400'"
+            >
+                <div class="flex items-center justify-between mb-2">
+                    <h4 class="font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                        <i class="fas fa-hourglass-end text-red-600 dark:text-red-400"></i>
+                        Tardiness/Undertime
+                    </h4>
+                    <i :class="['fas', expandedHRTypeLocal === 'tardiness' ? 'fa-chevron-up' : 'fa-chevron-down', 'text-gray-400 text-xs']"></i>
+                </div>
+                <div class="text-3xl font-bold text-red-600 dark:text-red-400 mb-1">
+                    {{ currentMonthTardiness.length }}
+                </div>
+                <p class="text-sm text-gray-600 dark:text-gray-400">
+                    <span class="font-medium">{{ uniqueEmployeesTardiness.size }}</span> employees involved
+                </p>
+            </div>
+        </div>
+
+        <!-- Expanded Details Section (moved to HRDetailsPanel) -->
+        <HRDetailsPanel 
+            v-if="expandedHRTypeLocal"
+            :expanded-type="expandedHRTypeLocal"
+            :current-month-leaves-by-type-with-employees="currentMonthLeavesByTypeWithEmployees"
+            :current-month-travel-orders-by-emp="currentMonthTravelOrdersByEmp"
+            :current-month-pass-slips-by-emp="currentMonthPassSlipsByEmp"
+            :current-month-tardiness-by-emp="currentMonthTardinessByEmp"
+            :format-date-range="formatDateRange"
+            :format-time="formatTime"
+            :format-inclusive-dates="formatInclusiveDates"
         />
 
-        <!-- Employee Leaves Summary Table -->
-        <HREmployeesSummaryTable
+        <!-- Employee Leaves by Type Summary (Yearly) (moved to HREmployeesTable) -->
+        <HREmployeesTable 
             v-if="employeeLeavesSummary.length > 0"
             :employee-leaves-summary="employeeLeavesSummary"
             :unique-leave-types="uniqueLeaveTypes"
@@ -134,235 +167,66 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import HRDetailsPanel from './HRDetailsPanel.vue';
-import HREmployeesSummaryTable from './HREmployeesSummaryTable.vue';
+import HREmployeesTable from './HREmployeesTable.vue';
 
-const props = defineProps<{
-    leaves: any[];
-    travelOrders: any[];
-    passSlips: any[];
-    tardiness: any[];
-    expandedHRType: 'leaves' | 'travelOrders' | 'passSlips' | 'tardiness' | null;
-    selectedHRMonth: number;
-    selectedHRYear: number;
-    employeeLeavesSummary: any[];
-    uniqueLeaveTypes: string[];
-    formatDateRange: (from: any, to: any) => string;
-    formatTime: (time: string) => string;
-    formatInclusiveDates: (dates: any) => string;
-    getOtherLeaveTypes: (emp: any) => string[];
-    getOtherLeaveTypesMap: (emp: any) => Record<string, number>;
-}>();
+const props = defineProps({
+    canViewHRSummary: Boolean,
+    hrLoading: Boolean,
+    selectedHRYear: Number,
+    selectedHRMonth: Number,
+    availableHRYears: Array<number>,
+    currentMonthLeaves: Array<any>,
+    currentMonthLeavesByType: Object,
+    currentMonthLeavesByTypeWithEmployees: Object,
+    currentMonthTravelOrders: Array<any>,
+    uniqueEmployeesTravelOrders: Object,
+    currentMonthTravelOrdersByEmp: Object,
+    currentMonthPassSlips: Array<any>,
+    uniqueEmployeesPassSlips: Object,
+    currentMonthPassSlipsByEmp: Object,
+    currentMonthTardiness: Array<any>,
+    uniqueEmployeesTardiness: Object,
+    currentMonthTardinessByEmp: Object,
+    employeeLeavesSummary: Array<any>,
+    uniqueLeaveTypes: Array<any>,
+    formatDateRange: Function,
+    formatTime: Function,
+    formatInclusiveDates: Function,
+    getOtherLeaveTypes: Function,
+    getOtherLeaveTypesMap: Function,
+});
 
-const emit = defineEmits<{
-    'toggle-hr-expanded': [type: 'leaves' | 'travelOrders' | 'passSlips' | 'tardiness'];
-    'update:selected-month': [value: number];
-    'update:selected-year': [value: number];
-}>();
+const emit = defineEmits(['update:selectedHRYear', 'update:selectedHRMonth', 'showSummaryModal']);
 
 const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-const selectedMonth = computed({
-    get: () => props.selectedHRMonth,
-    set: (val) => emit('update:selected-month', val)
-});
-const selectedYear = computed({
+
+const selectedHRYearLocal = computed({
     get: () => props.selectedHRYear,
-    set: (val) => emit('update:selected-year', val)
+    set: (val) => emit('update:selectedHRYear', val),
 });
 
-const leaveInSelectedMonth = (leave: any): boolean => {
-    if (!leave.inclusive_dates || leave.inclusive_dates.length === 0) return false;
-    
-    const monthStart = new Date(selectedYear.value, selectedMonth.value, 1);
-    const monthEnd = new Date(selectedYear.value, selectedMonth.value + 1, 0);
-    
-    for (const dateEntry of leave.inclusive_dates) {
-        if (!dateEntry) continue;
-        if (dateEntry.includes(' - ')) {
-            const [startStr, endStr] = dateEntry.split(' - ');
-            const rangeStart = new Date(startStr.trim());
-            const rangeEnd = new Date(endStr.trim());
-            if (rangeStart <= monthEnd && rangeEnd >= monthStart) {
-                return true;
-            }
-        } else {
-            const date = new Date(dateEntry.trim());
-            if (date.getMonth() === selectedMonth.value && date.getFullYear() === selectedYear.value) {
-                return true;
-            }
-        }
-    }
-    return false;
-};
-
-const currentMonthLeaves = computed(() => props.leaves.filter(leave => leaveInSelectedMonth(leave)));
-
-const currentMonthLeavesByType = computed(() => {
-    const grouped: Record<string, number> = {};
-    currentMonthLeaves.value.forEach(leave => {
-        const type = leave.type_of_leave;
-        grouped[type] = (grouped[type] || 0) + 1;
-    });
-    return grouped;
+const selectedHRMonthLocal = computed({
+    get: () => props.selectedHRMonth,
+    set: (val) => emit('update:selectedHRMonth', val),
 });
 
-const currentMonthLeavesByTypeWithEmployees = computed(() => {
-    const grouped: Record<string, { count: number; entries: Array<{ name: string; dates: string; isHalfDay: boolean; halfDayPeriod: string | null }> }> = {};
-    currentMonthLeaves.value.forEach(leave => {
-        const type = leave.type_of_leave;
-        const empName = leave.employee?.name || 'Unknown Employee';
-        
-        let datesStr = props.formatDateRange ? '' : '';
-        if (Array.isArray(leave.inclusive_dates) && leave.inclusive_dates.length === 2) {
-            datesStr = `${leave.inclusive_dates[0]} - ${leave.inclusive_dates[1]}`;
-        } else if (Array.isArray(leave.inclusive_dates) && leave.inclusive_dates.length === 1) {
-            datesStr = leave.inclusive_dates[0];
-        }
-        
-        if (!grouped[type]) {
-            grouped[type] = { count: 0, entries: [] };
-        }
-        grouped[type].count += 1;
-        grouped[type].entries.push({ 
-            name: empName, 
-            dates: datesStr,
-            isHalfDay: leave.is_half_day || false,
-            halfDayPeriod: leave.half_day_period || null
-        });
-    });
-    
-    Object.keys(grouped).forEach(type => {
-        grouped[type].entries.sort((a, b) => a.name.localeCompare(b.name));
-    });
-    return grouped;
-});
-
-// Alias for HRDetailsPanel component (expected prop name)
-const currentMonthLeavesTypeWithEmployees = computed(() => currentMonthLeavesByTypeWithEmployees.value);
-
-// Alias for HREmployeesSummaryTable component (expected prop name - selectedHRYear not selectedYear)
-const selectedHRYear = computed(() => selectedYear.value);
-
-// Create readonly props object for HRDetailsPanel component
-const hrDetailsPanelProps = computed(() => ({
-    expandedType: props.expandedHRType,
-    currentMonthLeaves: currentMonthLeaves.value,
-    currentMonthLeavesTypeWithEmployees: currentMonthLeavesTypeWithEmployees.value,
-    currentMonthTravelOrders: currentMonthTravelOrders.value,
-    currentMonthTravelOrdersByEmp: currentMonthTravelOrdersByEmp.value,
-    currentMonthPassSlips: currentMonthPassSlips.value,
-    currentMonthPassSlipsByEmp: currentMonthPassSlipsByEmp.value,
-    currentMonthTardiness: currentMonthTardiness.value,
-    currentMonthTardinesssByEmp: currentMonthTardinesssByEmp.value,
-    formatDateRange: props.formatDateRange,
-    formatTime: props.formatTime,
-    formatInclusiveDates: props.formatInclusiveDates,
-} as const));
-
-const travelOrderInSelectedMonth = (to: any): boolean => {
-    if (!to.from_date || !to.to_date) return false;
-    const fromDate = new Date(to.from_date);
-    const toDate = new Date(to.to_date);
-    const monthStart = new Date(selectedYear.value, selectedMonth.value, 1);
-    const monthEnd = new Date(selectedYear.value, selectedMonth.value + 1, 0);
-    return fromDate <= monthEnd && toDate >= monthStart;
-};
-
-const currentMonthTravelOrders = computed(() => props.travelOrders.filter(to => travelOrderInSelectedMonth(to)));
-
-const uniqueEmployeesTravelOrders = computed(() => {
-    const empSet = new Set<string>();
-    currentMonthTravelOrders.value.forEach(to => {
-        if (to.employees && Array.isArray(to.employees)) {
-            to.employees.forEach(emp => empSet.add(emp.name));
-        }
-    });
-    return empSet;
-});
-
-const currentMonthTravelOrdersByEmp = computed(() => {
-    const grouped: Record<string, any[]> = {};
-    currentMonthTravelOrders.value.forEach(to => {
-        if (to.employees && Array.isArray(to.employees)) {
-            to.employees.forEach(emp => {
-                if (!grouped[emp.name]) grouped[emp.name] = [];
-                grouped[emp.name].push(to);
-            });
-        }
-    });
-    return grouped;
-});
-
-const currentMonthPassSlips = computed(() => {
-    return props.passSlips.filter(ps => {
-        const psDate = new Date(ps.date);
-        return psDate.getMonth() === selectedMonth.value && psDate.getFullYear() === selectedYear.value;
-    });
-});
-
-const uniqueEmployeesPassSlips = computed(() => {
-    const empSet = new Set<string>();
-    currentMonthPassSlips.value.forEach(ps => {
-        if (ps.employees && Array.isArray(ps.employees)) {
-            ps.employees.forEach(emp => empSet.add(emp.name));
-        }
-    });
-    return empSet;
-});
-
-const currentMonthPassSlipsByEmp = computed(() => {
-    const grouped: Record<string, any[]> = {};
-    currentMonthPassSlips.value.forEach(ps => {
-        if (ps.employees && Array.isArray(ps.employees)) {
-            ps.employees.forEach(emp => {
-                if (!grouped[emp.name]) grouped[emp.name] = [];
-                grouped[emp.name].push(ps);
-            });
-        }
-    });
-    return grouped;
-});
-
-const tardinessInSelectedMonth = (tu: any): boolean => {
-    if (!tu.date_filed) return false;
-    const tuDate = new Date(tu.date_filed);
-    return tuDate.getMonth() === selectedMonth.value && tuDate.getFullYear() === selectedYear.value;
-};
-
-const currentMonthTardiness = computed(() => props.tardiness.filter(tu => tardinessInSelectedMonth(tu)));
-
-const uniqueEmployeesTardiness = computed(() => {
-    const empSet = new Set<string>();
-    currentMonthTardiness.value.forEach(tu => {
-        if (tu.employee) empSet.add(tu.employee.name);
-    });
-    return empSet;
-});
-
-const currentMonthTardinesssByEmp = computed(() => {
-    const grouped: Record<string, any[]> = {};
-    currentMonthTardiness.value.forEach(tu => {
-        const empName = tu.employee?.name || 'Unknown Employee';
-        if (!grouped[empName]) grouped[empName] = [];
-        grouped[empName].push(tu);
-    });
-    return grouped;
-});
-
-const availableHRYears = computed(() => {
-    const yearsSet = new Set<number>();
-    props.leaves.forEach(leave => {
-        if (leave.inclusive_dates && Array.isArray(leave.inclusive_dates)) {
-            leave.inclusive_dates.forEach((dateEntry: string) => {
-                if (dateEntry) {
-                    const dateStr = dateEntry.includes(' - ') ? dateEntry.split(' - ')[0] : dateEntry;
-                    const year = new Date(dateStr.trim()).getFullYear();
-                    yearsSet.add(year);
-                }
-            });
-        }
-    });
-    return Array.from(yearsSet).sort((a, b) => a - b);
-});
+const expandedHRTypeLocal = ref<'leaves' | 'travelOrders' | 'passSlips' | 'tardiness' | null>(null);
 </script>
+
+<style scoped>
+@keyframes shimmer {
+    0% {
+        background-position: -1000px 0;
+    }
+    100% {
+        background-position: 1000px 0;
+    }
+}
+
+.hr-loading-shimmer {
+    animation: shimmer 2s infinite;
+    background-size: 200% 100%;
+}
+</style>
