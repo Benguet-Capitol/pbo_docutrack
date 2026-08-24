@@ -28,42 +28,43 @@
                 <div class="px-4 sm:px-6 py-5 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
                     <h3 class="text-lg sm:text-2xl font-semibold text-gray-900 dark:text-white flex items-center gap-2">
                         <i class="fas fa-map-location-dot text-blue-600 dark:text-blue-400"></i>
-                        Date: {{ currentDateDisplay }}
+                        <span v-if="viewPeriod === 'daily'">Date: {{ currentDateDisplay }}</span>
+                        <span v-else>Month: {{ monthLabel }}</span>
                     </h3>
                     <div class="flex items-center gap-2 sm:gap-3 flex-wrap print:hidden w-full sm:w-auto">
-                        <!-- View toggle: grid (compact, no-scroll) vs list (original table) -->
+                        <!-- Period toggle: Daily (single-day chart) vs Monthly (whole-month summary matrix) -->
                         <div class="flex items-center rounded-lg border border-gray-300 dark:border-gray-600 overflow-hidden text-xs font-medium">
                             <button
-                                @click="viewMode = 'grid'"
+                                @click="viewPeriod = 'daily'"
                                 :class="[
                                     'px-3 py-2 flex items-center gap-1.5 transition-colors',
-                                    viewMode === 'grid'
+                                    viewPeriod === 'daily'
                                         ? 'bg-blue-600 text-white'
                                         : 'bg-white dark:bg-gray-700 text-gray-600 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-600'
                                 ]"
-                                title="Compact grid view — fits more employees on screen"
+                                title="Daily Locator Chart"
                             >
-                                <i class="fas fa-table-cells"></i>
-                                Grid
+                                <i class="fas fa-calendar-day"></i>
+                                Daily
                             </button>
                             <button
-                                @click="viewMode = 'list'"
+                                @click="viewPeriod = 'monthly'"
                                 :class="[
                                     'px-3 py-2 flex items-center gap-1.5 transition-colors border-l border-gray-300 dark:border-gray-600',
-                                    viewMode === 'list'
+                                    viewPeriod === 'monthly'
                                         ? 'bg-blue-600 text-white'
                                         : 'bg-white dark:bg-gray-700 text-gray-600 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-600'
                                 ]"
-                                title="Traditional table view"
+                                title="Monthly Locator Chart summary"
                             >
-                                <i class="fas fa-list"></i>
-                                List
+                                <i class="fas fa-calendar-days"></i>
+                                Monthly
                             </button>
                         </div>
 
-                        <!-- Column count control (grid view only — hidden on mobile,
+                        <!-- Column count control (grid view — hidden on mobile,
                              where the grid is always forced to 1 column anyway) -->
-                        <div v-if="viewMode === 'grid'" class="hidden sm:flex items-center gap-2">
+                        <div v-if="viewPeriod === 'daily'" class="hidden sm:flex items-center gap-2">
                             <label class="text-xs font-medium text-gray-600 dark:text-white">Columns:</label>
                             <div class="flex items-center rounded-lg border border-gray-300 dark:border-gray-600 overflow-hidden text-xs font-medium">
                                 <button
@@ -83,12 +84,29 @@
                             </div>
                         </div>
 
-                        <div class="flex items-center gap-2 flex-wrap">
+                        <div v-if="viewPeriod === 'daily'" class="flex items-center gap-2 flex-wrap">
                             <label for="locatorDate" class="text-xs font-medium text-gray-700 dark:text-white whitespace-nowrap">Date:</label>
                             <input
                                 type="date"
                                 id="locatorDate"
                                 v-model="selectedDateInput"
+                                class="border border-gray-300 rounded-lg px-3 py-2 text-xs dark:border-gray-600 dark:bg-gray-700 dark:text-white flex-1 sm:flex-none min-w-0"
+                            />
+                            <button
+                                v-if="!isSelectedDateToday"
+                                @click="resetToToday"
+                                class="text-xs text-blue-600 dark:text-blue-400 hover:underline whitespace-nowrap"
+                            >
+                                Reset to Today
+                            </button>
+                        </div>
+
+                        <div v-else class="flex items-center gap-2 flex-wrap">
+                            <label for="locatorMonth" class="text-xs font-medium text-gray-700 dark:text-white whitespace-nowrap">Month:</label>
+                            <input
+                                type="month"
+                                id="locatorMonth"
+                                v-model="selectedMonthInput"
                                 class="border border-gray-300 rounded-lg px-3 py-2 text-xs dark:border-gray-600 dark:bg-gray-700 dark:text-white flex-1 sm:flex-none min-w-0"
                             />
                             <button
@@ -130,7 +148,7 @@
                         </div>
 
                         <!-- Print -->
-                        <div v-if="!isFullScreen" class="flex items-center gap-2 sm:pl-3 sm:border-l sm:border-gray-200 sm:dark:border-gray-700">
+                        <div v-if="!isFullScreen && viewPeriod === 'daily'" class="flex items-center gap-2 sm:pl-3 sm:border-l sm:border-gray-200 sm:dark:border-gray-700">
                             <button
                                 @click="printChart"
                                 class="text-xs px-2.5 py-2 rounded-lg font-bold border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-1.5"
@@ -155,7 +173,7 @@
                 </div>
 
                 <!-- Summary strip: quick counts so the user can see totals at a glance -->
-                <div v-if="employeesWithStatus.length > 0" class="px-4 sm:px-6 py-3 border-b border-gray-200 dark:border-gray-700 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs bg-gray-50/60 dark:bg-gray-800/60 print:hidden">
+                <div v-if="viewPeriod === 'daily' && employeesWithStatus.length > 0" class="px-4 sm:px-6 py-3 border-b border-gray-200 dark:border-gray-700 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs bg-gray-50/60 dark:bg-gray-800/60 print:hidden">
                     <span class="font-semibold text-gray-600 dark:text-gray-300">{{ employeesWithStatus.length }} total</span>
                     <span v-for="s in statusSummary" :key="s.status" class="inline-flex items-center gap-1.5 text-gray-600 dark:text-gray-300 whitespace-nowrap">
                         <span class="w-2 h-2 rounded-full flex-shrink-0" :class="dotClass(s.status)"></span>
@@ -165,15 +183,87 @@
 
                 <!-- Weekend banner: friendlier messaging than a silently all-"Off Day" list -->
                 <div
-                    v-if="isSelectedDateWeekend"
+                    v-if="viewPeriod === 'daily' && isSelectedDateWeekend"
                     class="mx-4 sm:mx-6 mt-4 px-4 py-3 rounded-lg bg-gray-50 dark:bg-gray-700/40 border border-gray-200 dark:border-gray-600 text-sm text-gray-600 dark:text-gray-300 flex items-center gap-2 print:hidden"
                 >
                     <i class="fas fa-mug-hot text-gray-400 flex-shrink-0"></i>
                     It's the weekend — listed staff are marked Off Day.
                 </div>
 
+                <!-- ============== MONTHLY VIEW (day-by-day status matrix for the selected month) ============== -->
+                <div v-if="viewPeriod === 'monthly'" class="p-3 sm:p-4 print:hidden">
+                    <div v-if="monthlyEmployeeRows.length > 0" class="overflow-x-auto">
+                        <table class="w-full min-w-[720px] table-fixed text-xs border-collapse">
+                            <colgroup>
+                                <col style="width: 180px">
+                                <col
+                                    v-for="day in daysInSelectedMonth"
+                                    :key="`col-${day.getDate()}`"
+                                    :style="{ width: `calc((100% - 180px) / ${daysInSelectedMonth.length})` }"
+                                >
+                            </colgroup>
+                            <thead>
+                                <tr>
+                                    <th class="sticky left-0 z-10 bg-slate-700 dark:bg-slate-800 border border-slate-800 dark:border-slate-900 px-3 py-2 text-left font-semibold text-white">
+                                        Employee
+                                    </th>
+                                    <th
+                                        v-for="day in daysInSelectedMonth"
+                                        :key="day.getDate()"
+                                        class="border border-slate-800 dark:border-slate-900 px-1 py-2 text-center font-semibold text-white"
+                                        :class="isWeekend(day) ? 'bg-slate-800 dark:bg-slate-900' : 'bg-slate-700 dark:bg-slate-800'"
+                                    >
+                                        <div>{{ day.getDate() }}</div>
+                                        <div class="font-normal text-[10px] text-slate-300 dark:text-slate-400">{{ day.toLocaleDateString('en-US', { weekday: 'narrow' }) }}</div>
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-for="(employee, employeeIndex) in monthlyEmployeeRows" :key="employee.id">
+                                    <td
+                                        class="sticky left-0 z-10 border border-gray-200 dark:border-gray-700 px-3 py-1.5"
+                                        :class="monthlyRowStripeClass(employeeIndex)"
+                                    >
+                                        <p class="font-semibold text-gray-900 dark:text-white truncate" :title="employee.name">{{ employee.name }}</p>
+                                        <p v-if="employee.designation" class="text-[10px] text-gray-500 dark:text-gray-400 truncate">{{ employee.designation }}</p>
+                                    </td>
+                                    <td
+                                        v-for="day in employee.dayStatuses"
+                                        :key="day.date.getDate()"
+                                        class="border border-gray-200 dark:border-gray-700 text-center align-middle py-1.5 font-semibold text-[11px] transition-all"
+                                        :class="[
+                                            monthlyCellClass(day.status, employeeIndex),
+                                            isMonthlyCellInteractive(day.status)
+                                                ? 'cursor-pointer hover:opacity-80 hover:shadow-sm'
+                                                : 'cursor-default'
+                                        ]"
+                                        :title="monthlyCellTitle(day)"
+                                        @click="handleMonthlyCellClick({ id: employee.id, name: employee.name, designation: employee.designation }, day)"
+                                    >
+                                        {{ statusAbbrev(day.status) }}
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Legend -->
+                    <div v-if="monthlyEmployeeRows.length > 0" class="flex flex-wrap items-center gap-x-4 gap-y-1 mt-3 text-xs text-gray-600 dark:text-gray-300">
+                        <span v-for="status in STATUS_ORDER" :key="`legend-${status}`" class="inline-flex items-center gap-1.5">
+                            <span class="w-2 h-2 rounded-full flex-shrink-0" :class="dotClass(status)"></span>
+                            {{ statusAbbrev(status) }} = {{ statusShortLabel(status) }}
+                        </span>
+                    </div>
+
+                    <!-- No Data State -->
+                    <div v-else class="text-center py-12 bg-gray-50 dark:bg-gray-700 rounded-md">
+                        <i class="fas fa-inbox text-gray-400 dark:text-gray-600 text-4xl mb-3 block"></i>
+                        <p class="text-gray-600 dark:text-gray-400">No employees with records found for {{ monthLabel }}</p>
+                    </div>
+                </div>
+
                 <!-- ============== GRID VIEW (compact, multi-column, minimal scrolling) ============== -->
-                <div v-if="viewMode === 'grid'" class="p-3 sm:p-4 print:hidden">
+                <div v-if="viewPeriod === 'daily'" class="p-3 sm:p-4 print:hidden">
                     <div v-if="employeesWithStatus.length > 0" class="flex flex-col gap-6">
                         <div v-for="group in groupedEmployees" :key="group.status">
                             <div class="flex items-center gap-2 mb-2">
@@ -265,200 +355,6 @@
                     </div>
                 </div>
 
-                <!-- ============== LIST VIEW (stacked cards on mobile, table on sm+) ============== -->
-                <div v-else class="print:hidden">
-                    <!-- Mobile: stacked cards (same visual language as Grid view) -->
-                    <div class="sm:hidden p-3 flex flex-col gap-3">
-                        <div
-                            v-for="employee in employeesWithStatus"
-                            :key="`mobile-${employee.id}`"
-                            class="border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-3 flex flex-col gap-2"
-                            :class="[recordBgClass(employee.status), (isPresentStatus(employee.status) && !isFullScreen) ? 'cursor-pointer' : '']"
-                            @click="isPresentStatus(employee.status) && !isFullScreen && openCreateMeetingModal({ id: employee.id, name: employee.name })"
-                        >
-                            <div class="flex items-start gap-2 min-w-0">
-                                <span
-                                    class="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0"
-                                    :class="statusBadgeClass(employee.status)"
-                                >
-                                    {{ getInitials(employee.name) }}
-                                </span>
-                                <div class="flex-1 flex items-start justify-between gap-2 min-w-0">
-                                    <div class="min-w-0">
-                                        <p class="font-semibold text-gray-900 dark:text-white text-base truncate" :title="employee.name">
-                                            {{ employee.name }}
-                                        </p>
-                                        <p v-if="employee.designation" class="text-xs text-gray-500 dark:text-gray-400 truncate" :title="employee.designation">
-                                            {{ employee.designation }}
-                                        </p>
-                                    </div>
-                                    <span
-                                        class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-sm font-bold whitespace-nowrap flex-shrink-0"
-                                        :class="statusBadgeClass(employee.status)"
-                                    >
-                                        <i :class="statusIconClass(employee.status)"></i>
-                                        {{ statusShortLabel(employee.status) }}
-                                    </span>
-                                </div>
-                            </div>
-                            <div>
-                                <div
-                                    v-if="employee.meetings.length > 0"
-                                    @click.stop
-                                    class="text-xs px-3 py-2 rounded-lg"
-                                    :class="remarksBadgeClass(employee.status)"
-                                >
-                                    <p class="font-semibold mb-0.5">Meeting / Activity:</p>
-                                    <div class="flex flex-col gap-1 pl-3">
-                                        <div v-for="meeting in employee.meetings" :key="meeting.id" class="flex items-center gap-2 flex-wrap">
-                                            <span class="break-words"><strong>{{ formatTime12h(meeting.time) }}</strong> - {{ meeting.particulars }}</span>
-                                            <span v-if="!isFullScreen" class="flex items-center gap-1.5 text-gray-400">
-                                                <button
-                                                    @click.stop="openEditMeetingModal({ id: employee.id, name: employee.name }, meeting)"
-                                                    title="Edit"
-                                                    class="hover:text-blue-600 dark:hover:text-blue-400"
-                                                >
-                                                    <i class="fas fa-pen text-[10px]"></i>
-                                                </button>
-                                                <button
-                                                    @click.stop="openDeleteMeetingModal(employee.name, meeting)"
-                                                    title="Delete"
-                                                    class="hover:text-red-600"
-                                                >
-                                                    <i class="fas fa-trash text-[10px]"></i>
-                                                </button>
-                                            </span>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div v-else-if="employee.remarksText" class="text-xs px-3 py-2 rounded-lg break-words" :class="remarksBadgeClass(employee.status)">
-                                    <p v-if="employee.remarksLabel" class="font-semibold mb-0.5">{{ employee.remarksLabel }}:</p>
-                                    <p :class="[employee.remarksLabel ? 'pl-3' : '', employee.status === 'On Leave' ? 'font-bold' : '']">{{ employee.remarksText }}</p>
-                                </div>
-                                <span v-else class="text-sm text-gray-400 dark:text-gray-500">-</span>
-                            </div>
-                        </div>
-
-                        <!-- No Data State (mobile) -->
-                        <div v-if="employeesWithStatus.length === 0 && !isSelectedDateWeekend" class="text-center py-12 bg-gray-50 dark:bg-gray-700 rounded-md">
-                            <i class="fas fa-inbox text-gray-400 dark:text-gray-600 text-4xl mb-3 block"></i>
-                            <p class="text-gray-600 dark:text-gray-400">No employees found</p>
-                        </div>
-                    </div>
-
-                    <!-- sm and up: original table -->
-                    <div class="hidden sm:block overflow-x-auto">
-                        <table class="w-full text-sm table-fixed min-w-[640px]">
-                            <colgroup>
-                                <col class="w-1/3">
-                                <col class="w-1/6">
-                                <col class="w-auto">
-                            </colgroup>
-                            <thead class="bg-gray-100 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">
-                                <tr>
-                                    <th class="px-6 py-3 text-center font-semibold text-gray-700 dark:text-gray-200">Employee Name</th>
-                                    <th class="px-6 py-3 text-center font-semibold text-gray-700 dark:text-gray-200">Status</th>
-                                    <th class="px-6 py-3 text-center font-semibold text-gray-700 dark:text-gray-200">Remarks</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
-                                <tr
-                                    v-for="employee in employeesWithStatus"
-                                    :key="employee.id"
-                                    class="transition-colors hover:brightness-95 dark:hover:brightness-110"
-                                    :class="[recordBgClass(employee.status), (isPresentStatus(employee.status) && !isFullScreen) ? 'cursor-pointer' : '']"
-                                    @click="isPresentStatus(employee.status) && !isFullScreen && openCreateMeetingModal({ id: employee.id, name: employee.name })"
-                                >
-                                    <td class="px-6 py-3 font-medium text-gray-900 dark:text-white">
-                                        <div class="flex items-center gap-2 min-w-0">
-                                            <span
-                                                class="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0"
-                                                :class="statusBadgeClass(employee.status)"
-                                            >
-                                                {{ getInitials(employee.name) }}
-                                            </span>
-                                            <div class="min-w-0">
-                                                <p class="text-base font-bold truncate">{{ employee.name }}</p>
-                                                <p v-if="employee.designation" class="text-xs font-normal text-gray-500 dark:text-gray-400 truncate">
-                                                    {{ employee.designation }}
-                                                </p>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td class="px-6 py-3 text-gray-700 dark:text-gray-300 text-center">
-                                        <span v-if="employee.status === 'Present with Meetings'" class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-bold bg-teal-100 dark:bg-teal-900/30 text-teal-800 dark:text-teal-300">
-                                            <i class="fas fa-comments"></i>
-                                            Present w/ Meeting
-                                        </span>
-                                        <span v-else-if="isPresentStatus(employee.status)" class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-bold bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300">
-                                            <i class="fas fa-check-circle"></i>
-                                            Present
-                                        </span>
-                                        <span v-else-if="employee.status === 'On Official Business'" class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-bold bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300">
-                                            <i class="fas fa-briefcase"></i>
-                                            On Official Business
-                                        </span>
-                                        <span v-else-if="employee.status === 'On Leave'" class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-bold bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-300">
-                                            <i class="fas fa-calendar-check"></i>
-                                            On Leave
-                                        </span>
-                                        <span v-else-if="employee.status === 'Undertime'" class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-bold bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300">
-                                            <i class="fas fa-hourglass-end"></i>
-                                            Undertime
-                                        </span>
-                                        <span v-else-if="employee.status === 'Off Day'" class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-bold bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300">
-                                            <i class="fas fa-bed"></i>
-                                            Off Day
-                                        </span>
-                                    </td>
-                                    <td class="px-6 py-3 text-gray-700 dark:text-gray-300">
-                                        <div
-                                            v-if="employee.meetings.length > 0"
-                                            @click.stop
-                                            class="text-sm px-3 py-2 rounded-lg"
-                                            :class="remarksBadgeClass(employee.status)"
-                                        >
-                                            <p class="font-semibold mb-0.5">Meeting / Activity:</p>
-                                            <div class="flex flex-col gap-1 pl-3">
-                                                <div v-for="meeting in employee.meetings" :key="meeting.id" class="flex items-center gap-2 flex-wrap">
-                                                    <span><strong>{{ formatTime12h(meeting.time) }}</strong> - {{ meeting.particulars }}</span>
-                                                    <span v-if="!isFullScreen" class="flex items-center gap-1.5 text-gray-400">
-                                                        <button
-                                                            @click.stop="openEditMeetingModal({ id: employee.id, name: employee.name }, meeting)"
-                                                            title="Edit"
-                                                            class="hover:text-blue-600 dark:hover:text-blue-400"
-                                                        >
-                                                            <i class="fas fa-pen text-[10px]"></i>
-                                                        </button>
-                                                        <button
-                                                            @click.stop="openDeleteMeetingModal(employee.name, meeting)"
-                                                            title="Delete"
-                                                            class="hover:text-red-600"
-                                                        >
-                                                            <i class="fas fa-trash text-[10px]"></i>
-                                                        </button>
-                                                    </span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div v-else-if="employee.remarksText" class="text-sm px-3 py-2 rounded-lg" :class="remarksBadgeClass(employee.status)">
-                                            <p v-if="employee.remarksLabel" class="font-semibold mb-0.5">{{ employee.remarksLabel }}:</p>
-                                            <p :class="[employee.remarksLabel ? 'pl-3' : '', employee.status === 'On Leave' ? 'font-bold' : '']">{{ employee.remarksText }}</p>
-                                        </div>
-                                        <span v-else>-</span>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-
-                        <!-- No Data State (table) -->
-                        <div v-if="employeesWithStatus.length === 0 && !isSelectedDateWeekend" class="text-center py-12 bg-gray-50 dark:bg-gray-700">
-                            <i class="fas fa-inbox text-gray-400 dark:text-gray-600 text-4xl mb-3 block"></i>
-                            <p class="text-gray-600 dark:text-gray-400">No employees found</p>
-                        </div>
-                    </div>
-                </div>
-
                 <!-- ============== PRINT-ONLY VIEW (formal government form layout) ============== -->
                 <div class="hidden print:block locator-print-area px-8 py-6 text-black">
                     <!-- Header Section with Logos -->
@@ -527,7 +423,7 @@
         <NoticeOfMeetingCreateModal
             :show="showMeetingModal && !editingMeeting"
             :employee-name="meetingModalEmployee?.name || ''"
-            :date-display="currentDateDisplay"
+            :date-display="meetingModalDateDisplay"
             :form-data="meetingForm"
             :form-errors="meetingFormErrors"
             :creating="meetingFormSubmitting"
@@ -540,7 +436,7 @@
             :show="showMeetingModal && !!editingMeeting"
             :meeting-to-edit="editingMeeting"
             :employee-name="meetingModalEmployee?.name || ''"
-            :date-display="currentDateDisplay"
+            :date-display="meetingModalDateDisplay"
             :form-data="meetingForm"
             :form-errors="meetingFormErrors"
             :updating="meetingFormSubmitting"
@@ -559,7 +455,7 @@
         />
         <NoticeOfMeetingBulkCreateModal
             :show="showBulkMeetingModal"
-            :employees="employees"
+            :employees="employeesWithStatus"
             :form-data="bulkMeetingForm"
             :form-errors="bulkMeetingFormErrors"
             :creating="bulkMeetingFormSubmitting"
@@ -567,6 +463,50 @@
             @close="closeBulkMeetingModal"
             @submit="submitBulkMeetingForm"
         />
+
+        <!-- ============== Monthly view: status details modal ============== -->
+        <Teleport to="body" v-if="showMonthlyDetailsModal && monthlyDetailsEmployee && monthlyDetailsDay">
+            <div class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50" @click.self="closeMonthlyDetailsModal">
+                <div class="relative w-full max-w-md mx-4 bg-white rounded-lg shadow-lg dark:bg-gray-800 animate-scaleInUp">
+                    <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 rounded-t-lg dark:border-gray-600" :class="statusBadgeClass(monthlyDetailsDay.status)">
+                        <h3 class="text-lg font-semibold flex items-center gap-2">
+                            <i :class="statusIconClass(monthlyDetailsDay.status)"></i>
+                            {{ statusShortLabel(monthlyDetailsDay.status) }}
+                        </h3>
+                        <button @click="closeMonthlyDetailsModal" class="hover:opacity-70 transition-opacity">
+                            <i class="fas fa-times text-xl"></i>
+                        </button>
+                    </div>
+
+                    <div class="px-6 py-6">
+                        <p class="font-semibold text-gray-900 dark:text-white text-base">{{ monthlyDetailsEmployee.name }}</p>
+                        <p v-if="monthlyDetailsEmployee.designation" class="text-xs text-gray-500 dark:text-gray-400">{{ monthlyDetailsEmployee.designation }}</p>
+                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{ monthlyDetailsDateDisplay }}</p>
+
+                        <div v-if="monthlyDetailsDay.meetings.length > 0" class="mt-4 flex flex-col gap-2">
+                            <p class="text-xs font-semibold text-gray-600 dark:text-gray-300">Meetings / Activities</p>
+                            <div v-for="meeting in monthlyDetailsDay.meetings" :key="meeting.id" class="text-sm px-3 py-2 rounded-lg" :class="remarksBadgeClass(monthlyDetailsDay.status)">
+                                <strong>{{ formatTime12h(meeting.time) }}</strong> - {{ meeting.particulars }}
+                            </div>
+                        </div>
+                        <div v-else-if="monthlyDetailsDay.remarksText" class="mt-4 text-sm px-3 py-2 rounded-lg" :class="remarksBadgeClass(monthlyDetailsDay.status)">
+                            <p v-if="monthlyDetailsDay.remarksLabel" class="font-semibold mb-0.5">{{ monthlyDetailsDay.remarksLabel }}</p>
+                            <p>{{ monthlyDetailsDay.remarksText }}</p>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center justify-center p-6 border-t-2 border-gray-200 rounded-b-lg dark:border-gray-600 bg-gray-50 dark:bg-gray-800">
+                        <button
+                            @click="closeMonthlyDetailsModal"
+                            class="inline-flex items-center gap-2 px-5 py-3 text-xs font-medium text-gray-600 dark:text-gray-400 border border-gray-600 dark:border-gray-500 hover:text-white hover:bg-gray-600 dark:hover:bg-gray-600 rounded-lg transition-all duration-200"
+                        >
+                            <i class="fas fa-times"></i>
+                            Close
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </Teleport>
     </AuthenticatedLayout>
 </template>
 
@@ -602,9 +542,9 @@ const showToast = (message: string, type: 'success' | 'error' | 'info' = 'info')
     }
 };
 
-// Grid = compact multi-column cards (default, minimizes scrolling for large rosters).
-// List = original single-column table.
-const viewMode = ref<'grid' | 'list'>('grid');
+// Daily = single-day chart (compact multi-column card grid). Monthly = day-by-day
+// status matrix summarizing the whole month for every employee with records.
+const viewPeriod = ref<'daily' | 'monthly'>('daily');
 
 // Number of columns in the Grid view — user-adjustable (desktop only; mobile
 // is forced to 1 column and tablet to 2 via CSS, see the .locator-grid rules).
@@ -714,6 +654,22 @@ const selectedDateInput = computed({
     }
 });
 
+// Bridges the <input type="month"> (which needs "YYYY-MM" strings) to/from
+// selectedDate — always resets to the 1st of the chosen month.
+const selectedMonthInput = computed({
+    get: () => {
+        const y = selectedDate.value.getFullYear();
+        const m = (selectedDate.value.getMonth() + 1).toString().padStart(2, '0');
+        return `${y}-${m}`;
+    },
+    set: (value: string) => {
+        if (!value) return;
+        const [y, m] = value.split('-').map(Number);
+        selectedDate.value = new Date(y, m - 1, 1);
+        isDateManuallySet.value = true;
+    }
+});
+
 const isSelectedDateToday = computed(() => {
     const today = new Date();
     return selectedDate.value.getDate() === today.getDate() &&
@@ -724,6 +680,17 @@ const isSelectedDateToday = computed(() => {
 const resetToToday = () => {
     selectedDate.value = new Date();
     isDateManuallySet.value = false;
+};
+
+/**
+ * Format a Date as "YYYY-MM-DD" for API payloads / <input type="date">,
+ * using local calendar fields (not toISOString, which shifts by timezone).
+ */
+const toDateInputString = (date: Date): string => {
+    const y = date.getFullYear();
+    const m = (date.getMonth() + 1).toString().padStart(2, '0');
+    const d = date.getDate().toString().padStart(2, '0');
+    return `${y}-${m}-${d}`;
 };
 
 // ============== Computed Properties ==============
@@ -740,23 +707,43 @@ const currentDateDisplay = computed(() => {
 });
 
 /**
- * Check if the selected date is a Saturday or Sunday.
+ * Display label for the month currently selected in the Monthly view
+ * (e.g., "July 2026").
  */
-const isSelectedDateWeekend = computed(() => {
-    const day = selectedDate.value.getDay();
-    return day === 0 || day === 6;
+const monthLabel = computed(() => {
+    return selectedDate.value.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long'
+    });
 });
 
 /**
- * Check if a date matches the selected date
+ * Check if an arbitrary date is a Saturday or Sunday.
  */
-const isDateSelected = (dateStr: string): boolean => {
+const isWeekend = (date: Date): boolean => {
+    const day = date.getDay();
+    return day === 0 || day === 6;
+};
+
+/**
+ * Check if the selected date is a Saturday or Sunday.
+ */
+const isSelectedDateWeekend = computed(() => isWeekend(selectedDate.value));
+
+/**
+ * Check if a date matches an arbitrary target date.
+ */
+const isSameDate = (dateStr: string, target: Date): boolean => {
     const date = new Date(dateStr);
-    const target = selectedDate.value;
     return date.getDate() === target.getDate() &&
            date.getMonth() === target.getMonth() &&
            date.getFullYear() === target.getFullYear();
 };
+
+/**
+ * Check if a date matches the selected date
+ */
+const isDateSelected = (dateStr: string): boolean => isSameDate(dateStr, selectedDate.value);
 
 /**
  * Strip the time component from a Date, leaving just the calendar date
@@ -768,36 +755,47 @@ const toDateOnly = (date: Date): Date => {
 };
 
 /**
- * Check if a date range includes the selected date (date-only comparison)
+ * Check if a date range includes an arbitrary target date (date-only comparison)
  */
-const isDateRangeSelected = (dateRangeStr: string): boolean => {
+const isDateInRange = (dateRangeStr: string, target: Date): boolean => {
     if (!dateRangeStr) return false;
 
     if (dateRangeStr.includes(' - ')) {
         const [startStr, endStr] = dateRangeStr.split(' - ');
         const startDate = toDateOnly(new Date(startStr.trim()));
         const endDate = toDateOnly(new Date(endStr.trim()));
-        const target = toDateOnly(selectedDate.value);
+        const targetOnly = toDateOnly(target);
 
-        return target >= startDate && target <= endDate;
+        return targetOnly >= startDate && targetOnly <= endDate;
     } else {
-        return isDateSelected(dateRangeStr.trim());
+        return isSameDate(dateRangeStr.trim(), target);
     }
 };
 
 /**
- * Check if the selected date falls within inclusive_dates array
+ * Check if a date range includes the selected date (date-only comparison)
  */
-const isSelectedDateInInclusiveDates = (inclusiveDates: string[] | undefined): boolean => {
+const isDateRangeSelected = (dateRangeStr: string): boolean => isDateInRange(dateRangeStr, selectedDate.value);
+
+/**
+ * Check if an arbitrary target date falls within inclusive_dates array
+ */
+const isDateInInclusiveDates = (inclusiveDates: string[] | undefined, target: Date): boolean => {
     if (!inclusiveDates || !Array.isArray(inclusiveDates)) return false;
 
     for (const dateEntry of inclusiveDates) {
-        if (isDateRangeSelected(dateEntry)) {
+        if (isDateInRange(dateEntry, target)) {
             return true;
         }
     }
     return false;
 };
+
+/**
+ * Check if the selected date falls within inclusive_dates array
+ */
+const isSelectedDateInInclusiveDates = (inclusiveDates: string[] | undefined): boolean =>
+    isDateInInclusiveDates(inclusiveDates, selectedDate.value);
 
 /**
  * Designations that should always be pinned to the top of the roster,
@@ -881,12 +879,15 @@ const printStatusLabel = (status: string): string =>
  * by time. Kept as objects (not a joined string) so each entry can carry
  * its own edit/delete controls in the interactive views.
  */
-const getEmployeeMeetings = (employeeId: number): Array<{ id: number; time: string; particulars: string }> => {
+const getEmployeeMeetingsFor = (employeeId: number, target: Date): Array<{ id: number; time: string; particulars: string }> => {
     return noticeOfMeetings.value
-        .filter(m => m.employee_id === employeeId && isDateSelected(m.date))
+        .filter(m => m.employee_id === employeeId && isSameDate(m.date, target))
         .sort((a, b) => a.time.localeCompare(b.time))
         .map(m => ({ id: m.id, time: m.time, particulars: m.particulars }));
 };
+
+const getEmployeeMeetings = (employeeId: number): Array<{ id: number; time: string; particulars: string }> =>
+    getEmployeeMeetingsFor(employeeId, selectedDate.value);
 
 /**
  * Get employee status, remarks, and any Notice of Meetings for the
@@ -895,19 +896,20 @@ const getEmployeeMeetings = (employeeId: number): Array<{ id: number; time: stri
  * template's `employee.meetings` is always safe to read regardless of
  * status.
  */
-const getEmployeeStatusAndRemarks = (
-    employee: any
+const getEmployeeStatusAndRemarksFor = (
+    employee: any,
+    target: Date
 ): { status: string; remarksLabel: string; remarksText: string; meetings: Array<{ id: number; time: string; particulars: string }> } => {
     // Weekends override everything else — nobody's "Present" or "On Leave"
     // on a non-working day, the day itself is the reason.
-    if (isSelectedDateWeekend.value) {
+    if (isWeekend(target)) {
         return { status: 'Off Day', remarksLabel: '', remarksText: '', meetings: [] };
     }
     const employeeId = employee.id;
 
     // Check for undertime first
     const undertime = tardiness.value.find(t =>
-        t.employee_id === employeeId && isDateSelected(t.date_filed)
+        t.employee_id === employeeId && isSameDate(t.date_filed, target)
     );
     if (undertime) {
         return {
@@ -920,7 +922,7 @@ const getEmployeeStatusAndRemarks = (
 
     // Check for leave
     const leave = leaves.value.find(l =>
-        l.employee_id === employeeId && isSelectedDateInInclusiveDates(l.inclusive_dates)
+        l.employee_id === employeeId && isDateInInclusiveDates(l.inclusive_dates, target)
     );
     if (leave) {
         return {
@@ -937,7 +939,7 @@ const getEmployeeStatusAndRemarks = (
         const isEmployeeInPS = ps.employees.some((emp: any) => emp.id === employeeId);
         if (!isEmployeeInPS) return false;
 
-        return isSelectedDateInInclusiveDates(ps.inclusive_dates);
+        return isDateInInclusiveDates(ps.inclusive_dates, target);
     });
 
     if (passSlip) {
@@ -955,7 +957,7 @@ const getEmployeeStatusAndRemarks = (
         const isEmployeeInTO = to.employees.some((emp: any) => emp.id === employeeId);
         if (!isEmployeeInTO) return false;
 
-        return isSelectedDateInInclusiveDates(to.inclusive_dates);
+        return isDateInInclusiveDates(to.inclusive_dates, target);
     });
 
     if (travelOrder) {
@@ -968,7 +970,7 @@ const getEmployeeStatusAndRemarks = (
     }
 
     // Notice of Meetings — only reached once nothing above matched.
-    const meetings = getEmployeeMeetings(employeeId);
+    const meetings = getEmployeeMeetingsFor(employeeId, target);
     if (meetings.length === 0) {
         return { status: 'Present', remarksLabel: '', remarksText: '', meetings: [] };
     }
@@ -980,25 +982,38 @@ const getEmployeeStatusAndRemarks = (
     };
 };
 
+const getEmployeeStatusAndRemarks = (
+    employee: any
+): { status: string; remarksLabel: string; remarksText: string; meetings: Array<{ id: number; time: string; particulars: string }> } =>
+    getEmployeeStatusAndRemarksFor(employee, selectedDate.value);
+
 // ============== Notice of Meeting: create/edit modal state ==============
 const showMeetingModal = ref(false);
 const editingMeeting = ref<{ id: number; time: string; particulars: string } | null>(null);
 const meetingModalEmployee = ref<{ id: number; name: string } | null>(null);
+const meetingModalDate = ref<Date>(new Date());
 const meetingForm = ref({ time: '', particulars: '' });
 const meetingFormErrors = ref<{ time?: string; particulars?: string; submit?: string }>({});
 const meetingFormSubmitting = ref(false);
 
-const openCreateMeetingModal = (employee: { id: number; name: string }) => {
+/**
+ * @param date Day the meeting is being created for — defaults to the
+ * currently selected date (Daily view's only option); the Monthly view
+ * passes the specific clicked day instead.
+ */
+const openCreateMeetingModal = (employee: { id: number; name: string }, date: Date = selectedDate.value) => {
     editingMeeting.value = null;
     meetingModalEmployee.value = employee;
+    meetingModalDate.value = date;
     meetingForm.value = { time: '', particulars: '' };
     meetingFormErrors.value = {};
     showMeetingModal.value = true;
 };
 
-const openEditMeetingModal = (employee: { id: number; name: string }, meeting: { id: number; time: string; particulars: string }) => {
+const openEditMeetingModal = (employee: { id: number; name: string }, meeting: { id: number; time: string; particulars: string }, date: Date = selectedDate.value) => {
     editingMeeting.value = meeting;
     meetingModalEmployee.value = employee;
+    meetingModalDate.value = date;
     meetingForm.value = { time: meeting.time.slice(0, 5), particulars: meeting.particulars };
     meetingFormErrors.value = {};
     showMeetingModal.value = true;
@@ -1010,6 +1025,14 @@ const closeMeetingModal = () => {
     meetingModalEmployee.value = null;
 };
 
+const meetingModalDateDisplay = computed(() => {
+    return meetingModalDate.value.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+    });
+});
+
 const getCsrfToken = (): string =>
     document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
 
@@ -1020,7 +1043,7 @@ const submitMeetingForm = async () => {
 
     const payload = {
         employee_id: meetingModalEmployee.value.id,
-        date: selectedDateInput.value,
+        date: toDateInputString(meetingModalDate.value),
         time: meetingForm.value.time,
         particulars: meetingForm.value.particulars,
     };
@@ -1289,6 +1312,41 @@ const recordBgClass = (status: string): string => {
 };
 
 /**
+ * Alternating row background for the Monthly matrix (zebra striping),
+ * keyed off the employee's row index — makes long rosters scannable
+ * without relying on color to separate rows.
+ */
+const monthlyRowStripeClass = (rowIndex: number): string =>
+    rowIndex % 2 === 0 ? 'bg-white dark:bg-gray-800' : 'bg-gray-50 dark:bg-gray-900/40';
+
+/**
+ * Monthly matrix cell classes — flat, muted design: "Present" blends into
+ * the row's zebra stripe with muted text so it stays quiet, "Off Day" gets
+ * a solid darker gray fill so weekends are still easy to spot at a glance,
+ * and the four exception statuses (meetings, leave, official business,
+ * undertime) get a solid flat color fill with white text — the same
+ * "color only the outliers" language as a clean Gantt/dashboard chart, so
+ * a whole month of cells doesn't read as noise.
+ */
+const monthlyCellClass = (status: string, rowIndex: number): string => {
+    switch (status) {
+        case 'Present with Meetings':
+            return 'bg-teal-500 dark:bg-teal-600 text-white';
+        case 'On Leave':
+            return 'bg-orange-500 dark:bg-orange-600 text-white';
+        case 'On Official Business':
+            return 'bg-blue-500 dark:bg-blue-600 text-white';
+        case 'Undertime':
+            return 'bg-red-500 dark:bg-red-600 text-white';
+        case 'Off Day':
+            return 'bg-slate-300 dark:bg-slate-600 text-slate-600 dark:text-slate-300';
+        case 'Present':
+        default:
+            return `${monthlyRowStripeClass(rowIndex)} text-gray-400 dark:text-gray-600`;
+    }
+};
+
+/**
  * Fixed display order for status groups in the Grid view. Present with
  * Meetings surfaces first so scheduled meetings are the most visible thing
  * on the chart.
@@ -1386,6 +1444,153 @@ const groupedEmployees = computed(() => {
             employees: employeesWithStatus.value.filter(e => e.status === status)
         }))
         .filter(group => group.employees.length > 0);
+});
+
+// ============== Monthly view ==============
+
+/**
+ * Every calendar date in the month containing selectedDate, as Date objects
+ * at local midnight — the columns of the Monthly view matrix.
+ */
+const daysInSelectedMonth = computed(() => {
+    const year = selectedDate.value.getFullYear();
+    const month = selectedDate.value.getMonth();
+    const numDays = new Date(year, month + 1, 0).getDate();
+    return Array.from({ length: numDays }, (_, i) => new Date(year, month, i + 1));
+});
+
+/**
+ * One row per employee with a per-day status for every day in the selected
+ * month — filtered the same way as the Daily view's employeesWithStatus
+ * (employeeIdsWithAnyRecord), just applied once for the whole roster rather
+ * than re-filtered per day.
+ */
+const monthlyEmployeeRows = computed(() => {
+    const days = daysInSelectedMonth.value;
+
+    return employees.value
+        .filter(employee => employeeIdsWithAnyRecord.value.has(employee.id))
+        .map(employee => {
+            const dayStatuses = days.map(day => {
+                const { status, remarksLabel, remarksText, meetings } = getEmployeeStatusAndRemarksFor(employee, day);
+                return { date: day, status, remarksLabel, remarksText, meetings };
+            });
+            return { ...employee, dayStatuses };
+        })
+        .sort((a, b) => {
+            const aIsPriority = PRIORITY_DESIGNATIONS.has(a.designation);
+            const bIsPriority = PRIORITY_DESIGNATIONS.has(b.designation);
+
+            if (aIsPriority && !bIsPriority) return -1;
+            if (!aIsPriority && bIsPriority) return 1;
+
+            const lastNameCompare = getLastName(a.name).localeCompare(getLastName(b.name));
+            if (lastNameCompare !== 0) return lastNameCompare;
+            return a.name.localeCompare(b.name);
+        });
+});
+
+/**
+ * One-or-two-letter abbreviation for a status, used inside the compact
+ * Monthly matrix cells where a full badge label wouldn't fit.
+ */
+const statusAbbrev = (status: string): string => {
+    switch (status) {
+        case 'Present with Meetings':
+            return 'M';
+        case 'On Official Business':
+            return 'OB';
+        case 'On Leave':
+            return 'L';
+        case 'Undertime':
+            return 'U';
+        case 'Off Day':
+            return '';
+        case 'Present':
+        default:
+            return '';
+    }
+};
+
+/**
+ * Hover tooltip for a Monthly matrix cell — full date, status, and remarks
+ * (or meeting particulars) so the abbreviation isn't the only detail available.
+ */
+const monthlyCellTitle = (day: { date: Date; status: string; remarksLabel: string; remarksText: string; meetings: Array<{ time: string; particulars: string }> }): string => {
+    const dateLabel = day.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    const parts = [`${dateLabel}: ${printStatusLabel(day.status)}`];
+    if (day.meetings.length > 0) {
+        parts.push(day.meetings.map(m => `${formatTime12h(m.time)} - ${m.particulars}`).join('; '));
+    } else if (day.remarksText) {
+        parts.push(day.remarksLabel ? `${day.remarksLabel}: ${day.remarksText}` : day.remarksText);
+    } else if (day.status === 'Present') {
+        parts.push('Click to add a meeting');
+    }
+    return parts.join(' — ');
+};
+
+// ============== Monthly view: status details modal ==============
+
+type MonthlyDayStatus = {
+    date: Date;
+    status: string;
+    remarksLabel: string;
+    remarksText: string;
+    meetings: Array<{ id: number; time: string; particulars: string }>;
+};
+
+/**
+ * Statuses that carry enough detail (a meeting agenda, a leave type, an
+ * official business purpose, an undertime reason/time range) to be worth
+ * opening a details modal for. Present/Off Day cells stay static.
+ */
+const MONTHLY_CLICKABLE_STATUSES = new Set(['Present with Meetings', 'On Leave', 'On Official Business', 'Undertime']);
+
+const isMonthlyStatusClickable = (status: string): boolean => MONTHLY_CLICKABLE_STATUSES.has(status);
+
+/**
+ * Whether a Monthly matrix cell should show the hover/click affordance at
+ * all — the details statuses above, plus plain "Present" days, which are
+ * clickable to add a meeting for that employee/date (mirrors the Daily
+ * view's "click a Present card to add a meeting" behavior).
+ */
+const isMonthlyCellInteractive = (status: string): boolean =>
+    isMonthlyStatusClickable(status) || status === 'Present';
+
+/**
+ * Routes a Monthly matrix cell click: "Present" opens the create-meeting
+ * modal for that employee/date; the detail-bearing statuses open the
+ * read-only details modal. Off Day and other static statuses no-op.
+ */
+const handleMonthlyCellClick = (employee: { id: number; name: string; designation?: string }, day: MonthlyDayStatus) => {
+    if (day.status === 'Present') {
+        if (isFullScreen.value) return;
+        openCreateMeetingModal({ id: employee.id, name: employee.name }, day.date);
+        return;
+    }
+    openMonthlyDetailsModal(employee, day);
+};
+
+const showMonthlyDetailsModal = ref(false);
+const monthlyDetailsEmployee = ref<{ id: number; name: string; designation?: string } | null>(null);
+const monthlyDetailsDay = ref<MonthlyDayStatus | null>(null);
+
+const openMonthlyDetailsModal = (employee: { id: number; name: string; designation?: string }, day: MonthlyDayStatus) => {
+    if (!isMonthlyStatusClickable(day.status)) return;
+    monthlyDetailsEmployee.value = employee;
+    monthlyDetailsDay.value = day;
+    showMonthlyDetailsModal.value = true;
+};
+
+const closeMonthlyDetailsModal = () => {
+    showMonthlyDetailsModal.value = false;
+    monthlyDetailsEmployee.value = null;
+    monthlyDetailsDay.value = null;
+};
+
+const monthlyDetailsDateDisplay = computed(() => {
+    if (!monthlyDetailsDay.value) return '';
+    return monthlyDetailsDay.value.date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
 });
 
 // ============== Print ==============
@@ -1576,5 +1781,19 @@ onUnmounted(() => {
     .locator-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
     }
+}
+
+@keyframes scaleInUp {
+    from {
+        opacity: 0;
+        transform: scale(0.9) translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+.animate-scaleInUp {
+    animation: scaleInUp 0.3s ease-out;
 }
 </style>
