@@ -230,17 +230,22 @@
                                     <td
                                         v-for="day in employee.dayStatuses"
                                         :key="day.date.getDate()"
-                                        class="border border-gray-200 dark:border-gray-700 text-center align-middle py-1.5 font-semibold text-[11px] transition-all"
+                                        class="group relative border border-gray-200 dark:border-gray-700 text-center align-middle py-1.5 font-semibold text-[11px] transition-all"
                                         :class="[
                                             monthlyCellClass(day.status, employeeIndex),
                                             isMonthlyCellInteractive(day.status)
                                                 ? 'cursor-pointer hover:opacity-80 hover:shadow-sm'
                                                 : 'cursor-default'
                                         ]"
-                                        :title="monthlyCellTitle(day)"
+                                        :aria-label="monthlyCellTitle(employee.name, day)"
                                         @click="handleMonthlyCellClick({ id: employee.id, name: employee.name, designation: employee.designation }, day)"
                                     >
                                         {{ statusAbbrev(day.status) }}
+                                        <span
+                                            class="pointer-events-none absolute bottom-full left-1/2 z-30 mb-1 hidden w-max max-w-[220px] -translate-x-1/2 whitespace-normal rounded-md bg-gray-900 px-2 py-1 text-[10px] font-normal leading-snug text-white shadow-lg group-hover:block dark:bg-gray-950"
+                                        >
+                                            {{ monthlyCellTitle(employee.name, day) }}
+                                        </span>
                                     </td>
                                 </tr>
                             </tbody>
@@ -465,7 +470,11 @@
         />
 
         <!-- ============== Monthly view: status details modal ============== -->
-        <Teleport to="body" v-if="showMonthlyDetailsModal && monthlyDetailsEmployee && monthlyDetailsDay">
+        <!-- Teleport into the fullscreen element (not body) while fullscreen is
+             active — the Fullscreen API only paints the fullscreen element's own
+             subtree, so a body-teleported modal would be invisible/unclickable
+             behind it otherwise. -->
+        <Teleport :to="isFullScreen && chartContainerRef ? chartContainerRef : 'body'" v-if="showMonthlyDetailsModal && monthlyDetailsEmployee && monthlyDetailsDay">
             <div class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50" @click.self="closeMonthlyDetailsModal">
                 <div class="relative w-full max-w-md mx-4 bg-white rounded-lg shadow-lg dark:bg-gray-800 animate-scaleInUp">
                     <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 rounded-t-lg dark:border-gray-600" :class="statusBadgeClass(monthlyDetailsDay.status)">
@@ -1513,12 +1522,13 @@ const statusAbbrev = (status: string): string => {
 };
 
 /**
- * Hover tooltip for a Monthly matrix cell — full date, status, and remarks
- * (or meeting particulars) so the abbreviation isn't the only detail available.
+ * Hover tooltip for a Monthly matrix cell — employee name, full date,
+ * status, and remarks (or meeting particulars) so the abbreviation isn't
+ * the only detail available without opening the details modal.
  */
-const monthlyCellTitle = (day: { date: Date; status: string; remarksLabel: string; remarksText: string; meetings: Array<{ time: string; particulars: string }> }): string => {
+const monthlyCellTitle = (employeeName: string, day: { date: Date; status: string; remarksLabel: string; remarksText: string; meetings: Array<{ time: string; particulars: string }> }): string => {
     const dateLabel = day.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-    const parts = [`${dateLabel}: ${printStatusLabel(day.status)}`];
+    const parts = [`${employeeName} — ${dateLabel}: ${printStatusLabel(day.status)}`];
     if (day.meetings.length > 0) {
         parts.push(day.meetings.map(m => `${formatTime12h(m.time)} - ${m.particulars}`).join('; '));
     } else if (day.remarksText) {
