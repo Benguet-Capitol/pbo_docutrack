@@ -230,22 +230,19 @@
                                     <td
                                         v-for="day in employee.dayStatuses"
                                         :key="day.date.getDate()"
-                                        class="group relative border border-gray-200 dark:border-gray-700 text-center align-middle py-1.5 font-semibold text-[11px] transition-all"
+                                        class="border border-gray-200 dark:border-gray-700 text-center align-middle py-1.5 font-semibold text-[11px] transition-all"
                                         :class="[
                                             monthlyCellClass(day.status, employeeIndex),
                                             isMonthlyCellInteractive(day.status)
                                                 ? 'cursor-pointer hover:opacity-80 hover:shadow-sm'
                                                 : 'cursor-default'
                                         ]"
-                                        :aria-label="monthlyCellTitle(employee.name, day)"
+                                        :aria-label="[day.tooltip.name, day.tooltip.dateStatus, ...day.tooltip.details].join(' — ')"
                                         @click="handleMonthlyCellClick({ id: employee.id, name: employee.name, designation: employee.designation }, day)"
+                                        @mouseenter="showMonthlyTooltip($event, day.tooltip)"
+                                        @mouseleave="hideMonthlyTooltip"
                                     >
                                         {{ statusAbbrev(day.status) }}
-                                        <span
-                                            class="pointer-events-none absolute bottom-full left-1/2 z-30 mb-1 hidden w-max max-w-[220px] -translate-x-1/2 whitespace-normal rounded-md bg-gray-900 px-2 py-1 text-[10px] font-normal leading-snug text-white shadow-lg group-hover:block dark:bg-gray-950"
-                                        >
-                                            {{ monthlyCellTitle(employee.name, day) }}
-                                        </span>
                                     </td>
                                 </tr>
                             </tbody>
@@ -514,6 +511,23 @@
                         </button>
                     </div>
                 </div>
+            </div>
+        </Teleport>
+
+        <!-- ============== Monthly view: hover tooltip ============== -->
+        <!-- Positioned in JS (fixed, viewport coords) and teleported out of the
+             scrolling table wrapper entirely — a CSS-only tooltip nested inside
+             the table's overflow-x-auto wrapper gets clipped vertically for rows
+             near the top (setting overflow-x forces overflow-y to also clip, per
+             the CSS spec), which hid the first employee row's tooltip. -->
+        <Teleport :to="isFullScreen && chartContainerRef ? chartContainerRef : 'body'" v-if="monthlyTooltip">
+            <div
+                class="pointer-events-none fixed z-40 flex w-max max-w-[220px] flex-col gap-0.5 whitespace-normal rounded-md bg-gray-900 px-2 py-1.5 text-left text-[10px] font-normal leading-snug text-white shadow-lg dark:bg-gray-950"
+                :style="{ top: `${monthlyTooltip.top}px`, left: `${monthlyTooltip.left}px`, transform: `translate(-50%, ${monthlyTooltip.placeAbove ? '-100%' : '0'})` }"
+            >
+                <span class="font-semibold">{{ monthlyTooltip.name }}</span>
+                <span class="text-gray-300 dark:text-gray-400">{{ monthlyTooltip.dateStatus }}</span>
+                <span v-for="(detail, detailIndex) in monthlyTooltip.details" :key="detailIndex">{{ detail }}</span>
             </div>
         </Teleport>
     </AuthenticatedLayout>
@@ -1482,7 +1496,8 @@ const monthlyEmployeeRows = computed(() => {
         .map(employee => {
             const dayStatuses = days.map(day => {
                 const { status, remarksLabel, remarksText, meetings } = getEmployeeStatusAndRemarksFor(employee, day);
-                return { date: day, status, remarksLabel, remarksText, meetings };
+                const cellDay = { date: day, status, remarksLabel, remarksText, meetings };
+                return { ...cellDay, tooltip: monthlyCellTooltipParts(employee.name, cellDay) };
             });
             return { ...employee, dayStatuses };
         })
@@ -1526,17 +1541,57 @@ const statusAbbrev = (status: string): string => {
  * status, and remarks (or meeting particulars) so the abbreviation isn't
  * the only detail available without opening the details modal.
  */
-const monthlyCellTitle = (employeeName: string, day: { date: Date; status: string; remarksLabel: string; remarksText: string; meetings: Array<{ time: string; particulars: string }> }): string => {
+type MonthlyTooltipCellDay = { date: Date; status: string; remarksLabel: string; remarksText: string; meetings: Array<{ time: string; particulars: string }> };
+
+/**
+ * Structured tooltip content for a Monthly matrix cell — name on its own
+ * line, date/status on the next, then one line per detail (each meeting
+ * gets its own row when there are several, instead of being run together).
+ */
+const monthlyCellTooltipParts = (employeeName: string, day: MonthlyTooltipCellDay): { name: string; dateStatus: string; details: string[] } => {
     const dateLabel = day.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-    const parts = [`${employeeName} — ${dateLabel}: ${printStatusLabel(day.status)}`];
+    const details: string[] = [];
     if (day.meetings.length > 0) {
-        parts.push(day.meetings.map(m => `${formatTime12h(m.time)} - ${m.particulars}`).join('; '));
+        details.push(...day.meetings.map(m => `${formatTime12h(m.time)} - ${m.particulars}`));
     } else if (day.remarksText) {
-        parts.push(day.remarksLabel ? `${day.remarksLabel}: ${day.remarksText}` : day.remarksText);
+        details.push(day.remarksLabel ? `${day.remarksLabel}: ${day.remarksText}` : day.remarksText);
     } else if (day.status === 'Present') {
-        parts.push('Click to add a meeting');
+        details.push('Click to add a meeting');
     }
-    return parts.join(' — ');
+    return {
+        name: employeeName,
+        dateStatus: `${dateLabel} - ${printStatusLabel(day.status)}`,
+        details
+    };
+};
+
+type MonthlyTooltipParts = { name: string; dateStatus: string; details: string[] };
+
+/**
+ * Current Monthly matrix hover tooltip — fixed viewport coordinates plus
+ * whether it should render above or below the hovered cell, computed on
+ * mouseenter from the cell's own bounding rect. Kept as a single ref/single
+ * teleported element (rather than one CSS tooltip per cell) so it can be
+ * teleported out of the table's overflow-x-auto wrapper entirely, which
+ * would otherwise clip a per-cell tooltip vertically near the table edges.
+ */
+const monthlyTooltip = ref<(MonthlyTooltipParts & { top: number; left: number; placeAbove: boolean }) | null>(null);
+
+const showMonthlyTooltip = (event: MouseEvent, tooltip: MonthlyTooltipParts) => {
+    const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
+    const placeAbove = rect.top > 100;
+    const rawLeft = rect.left + rect.width / 2;
+    const left = Math.min(Math.max(rawLeft, 118), window.innerWidth - 118);
+    monthlyTooltip.value = {
+        ...tooltip,
+        top: placeAbove ? rect.top - 6 : rect.bottom + 6,
+        left,
+        placeAbove
+    };
+};
+
+const hideMonthlyTooltip = () => {
+    monthlyTooltip.value = null;
 };
 
 // ============== Monthly view: status details modal ==============
