@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Record;
 use App\Services\RoleService;
+use App\Services\ActivityLogService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -17,8 +18,14 @@ class RecordController extends Controller
     public function index(): JsonResponse
     {
         try {
-            $records = Record::with('user')->get();
-            
+            $user = auth()->user();
+
+            $query = Record::with('user');
+            if (!$user || !RoleService::canViewAdministrativeRecords($user)) {
+                $query->where('record_type', '!=', 'Administrative');
+            }
+            $records = $query->get();
+
             // Add file details to each record
             $records->each(function ($record) {
                 if ($record->image_path && Storage::disk('public')->exists($record->image_path)) {
@@ -54,11 +61,17 @@ class RecordController extends Controller
                 return response()->json(['error' => 'record_type is required'], 400);
             }
 
+            $user = auth()->user();
+            if ($recordType === 'Administrative' && (!$user || !RoleService::canViewAdministrativeRecords($user))) {
+                return response()->json(['error' => 'Forbidden'], 403);
+            }
+
             // Record type abbreviations mapping (must match Vue frontend)
             $abbreviations = [
                 'Provincial Budget' => 'PB',
                 'Municipal Budget' => 'MB',
                 'Issuances / Circulars / Other References and Documents' => 'ISO',
+                'Administrative' => 'ADM',
             ];
 
             $abbr = $abbreviations[$recordType] ?? 'REC';
@@ -110,6 +123,10 @@ class RecordController extends Controller
                 'file' => 'nullable|file|mimes:pdf,jpg,jpeg,png,gif,doc,docx,xls,xlsx|max:204800',
             ]);
 
+            if ($validated['record_type'] === 'Administrative' && !RoleService::canViewAdministrativeRecords($user)) {
+                return response()->json(['error' => 'Forbidden'], 403);
+            }
+
             // Automatically set user_id to the authenticated user's numeric ID
             $validated['user_id'] = $user->id;
 
@@ -124,6 +141,9 @@ class RecordController extends Controller
             unset($validated['file']);
             
             $record = Record::create($validated);
+            
+            // Log activity
+            ActivityLogService::logCreate('Record', $record, $validated);
             
             return response()->json($record->load('user'), 201);
         } catch (\Exception $e) {
@@ -143,7 +163,14 @@ class RecordController extends Controller
             }
 
             $record = Record::findOrFail($id);
-            
+
+            if ($record->record_type === 'Administrative' && !RoleService::canViewAdministrativeRecords($user)) {
+                return response()->json(['error' => 'Forbidden'], 403);
+            }
+
+            // Store old values before update
+            $oldValues = $record->toArray();
+
             $validated = $request->validate([
                 'record_no' => 'sometimes|string|unique:records,record_no,' . $id,
                 'record_type' => 'sometimes|string',
@@ -152,6 +179,10 @@ class RecordController extends Controller
                 'remarks' => 'nullable|string',
                 'file' => 'nullable|file|mimes:pdf,jpg,jpeg,png,gif,doc,docx,xls,xlsx|max:204800',
             ]);
+
+            if (($validated['record_type'] ?? null) === 'Administrative' && !RoleService::canViewAdministrativeRecords($user)) {
+                return response()->json(['error' => 'Forbidden'], 403);
+            }
 
             // Handle file upload
             if ($request->hasFile('file')) {
@@ -168,6 +199,13 @@ class RecordController extends Controller
 
             unset($validated['file']);
             $record->update($validated);
+            
+            // Log activity
+            ActivityLogService::logUpdate('Record', $record, [
+                'old_values' => $oldValues,
+                'attributes' => $validated,
+            ]);
+            
             return response()->json($record->load('user'));
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], 500);
@@ -180,7 +218,18 @@ class RecordController extends Controller
     public function destroy($id): JsonResponse
     {
         try {
+            $user = auth()->user();
+            if (!$user) {
+                return response()->json(['error' => 'Unauthorized'], 401);
+            }
+
             $record = Record::findOrFail($id);
+
+            if ($record->record_type === 'Administrative' && !RoleService::canViewAdministrativeRecords($user)) {
+                return response()->json(['error' => 'Forbidden'], 403);
+            }
+
+            $recordData = $record->toArray();
             
             // Delete file if exists
             if ($record->image_path && Storage::disk('public')->exists($record->image_path)) {
@@ -188,6 +237,10 @@ class RecordController extends Controller
             }
 
             $record->delete();
+            
+            // Log activity
+            ActivityLogService::logDelete('Record', $recordData);
+            
             return response()->json(['message' => 'Record deleted successfully']);
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], 500);
@@ -206,14 +259,18 @@ class RecordController extends Controller
             }
 
             $record = Record::findOrFail($id);
-            
+
+            if ($record->record_type === 'Administrative' && !RoleService::canViewAdministrativeRecords($user)) {
+                return response()->json(['error' => 'Forbidden'], 403);
+            }
+
             if (!$record->image_path || !Storage::disk('public')->exists($record->image_path)) {
                 return response()->json(['error' => 'File not found'], 404);
             }
 
             // Get the file path
             $filePath = Storage::disk('public')->path($record->image_path);
-            
+
             // Display the file in the browser
             return response()->file($filePath);
         } catch (\Exception $e) {
@@ -233,7 +290,11 @@ class RecordController extends Controller
             }
 
             $record = Record::findOrFail($id);
-            
+
+            if ($record->record_type === 'Administrative' && !RoleService::canViewAdministrativeRecords($user)) {
+                return response()->json(['error' => 'Forbidden'], 403);
+            }
+
             if (!$record->image_path || !Storage::disk('public')->exists($record->image_path)) {
                 return response()->json(['error' => 'File not found'], 404);
             }

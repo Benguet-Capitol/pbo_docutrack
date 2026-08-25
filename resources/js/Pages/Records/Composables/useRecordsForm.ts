@@ -15,6 +15,7 @@ const recordTypeAbbreviations = {
     'Provincial Budget': 'PB',
     'Municipal Budget': 'MB',
     'Issuances / Circulars / Other References and Documents': 'ISO',
+    'Administrative': 'ADM',
 };
 
 export function useRecordsForm(records: { value: RecordModel[] }) {

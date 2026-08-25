@@ -52,6 +52,7 @@ class RoleService
             'records.create',
             'records.edit',
             'records.delete',
+            'records.view.administrative',
             'hr_summary.view',
         ],
         'Administrator' => [
@@ -96,6 +97,7 @@ class RoleService
             'records.create',
             'records.edit',
             'records.delete',
+            'records.view.administrative',
             'hr_summary.view',
         ],
         'Receiving' => [
@@ -226,6 +228,7 @@ class RoleService
             'tardiness.edit',
             'tardiness.delete',
             'hr_summary.view',
+            'records.view.administrative',
         ],
     ];
 
@@ -531,6 +534,15 @@ class RoleService
     public static function canDeleteRecord(User $user): bool
     {
         return self::hasPermission($user, 'records.delete');
+    }
+
+    /**
+     * Check if user can view records of the "Administrative" record type.
+     * Restricted to the Administrative role only.
+     */
+    public static function canViewAdministrativeRecords(User $user): bool
+    {
+        return self::hasPermission($user, 'records.view.administrative');
     }
 
     /**

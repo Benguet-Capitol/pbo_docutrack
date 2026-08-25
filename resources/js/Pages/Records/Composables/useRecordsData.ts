@@ -1,4 +1,5 @@
 import { ref, computed } from 'vue';
+import { usePage } from '@inertiajs/vue3';
 
 export interface Record {
     id: number;
@@ -27,45 +28,57 @@ export function useRecordsData() {
     const sortBy = ref<'id' | 'record_no' | 'title' | 'created_at' | 'record_subtype' | 'remarks' | 'file_extension'>('id');
     const sortOrder = ref<'asc' | 'desc'>('desc');
 
+    const page = usePage();
+    const usertype = computed(() => (page.props as any).auth?.user?.usertype || '');
+
     // Record Types with Hierarchical Structure (Types and Sub-types)
-    const recordTypesHierarchy = ref({
-        'Provincial Budget': [],
-        'Municipal Budget': ['Atok', 'Bakun', 'Bokod', 'Buguias', 'Itogon', 'Kabayan', 'Kapangan', 'Kibungan', 'La Trinidad', 'Mankayan', 'Sablan', 'Tuba', 'Tublay'],
-        'Issuances / Circulars / Other References and Documents': [
-            'Provincial Ordinances',
-            'DILG Memorandum Circulars',
-            'DOF Department Orders',
-            'Memorandum Circulars (Office of the President)',
-            'PAG-IBIG',
-            'COMELEC Resolutions',
-            'DBM Budget Circulars',
-            'COA Circulars',
-            'CSC Circulars',
-            'Local Budget Circulars',
-            'Local Budget Memorandums',
-            'DBM Orders / Circular Letters',
-            'Joint Circulars',
-            'Executive Orders (Office of the President)',
-            'Presidential Decrees',
-            'Republic Acts',
-            'GPPB Circulars',
-            'GSIS Memorandum Circulars',
-            'DOH Circulars / Administrative Orders',
-            'PHIC Circulars',
-            'National Budget Circulars / Memorandums',
-            'CHED Memorandum Circulars',
-            'Budget Call',
-            'Queries',
-            'Annual Budget Transmittal / Indorsement to SPO',
-            'Transmitted PPMPs to BAC',
-            'SP Indorsement to DBM (APB)',
-            'PBO Certifications to Plans / Other Reports',
-            'DBM Letters / Reports / Matters',
-            'List of Documentary Requirements',
-            'Provincial NTAs',
-            'Municipal NTAs',
-            'PLGU Annual Budget Review'
-        ]
+    // "Administrative" is only visible to users with the Administrative role
+    const recordTypesHierarchy = computed(() => {
+        const hierarchy: { [key: string]: string[] } = {
+            'Provincial Budget': [],
+            'Municipal Budget': ['Atok', 'Bakun', 'Bokod', 'Buguias', 'Itogon', 'Kabayan', 'Kapangan', 'Kibungan', 'La Trinidad', 'Mankayan', 'Sablan', 'Tuba', 'Tublay'],
+            'Issuances / Circulars / Other References and Documents': [
+                'Provincial Ordinances',
+                'DILG Memorandum Circulars',
+                'DOF Department Orders',
+                'Memorandum Circulars (Office of the President)',
+                'PAG-IBIG',
+                'COMELEC Resolutions',
+                'DBM Budget Circulars',
+                'COA Circulars',
+                'CSC Circulars',
+                'Local Budget Circulars',
+                'Local Budget Memorandums',
+                'DBM Orders / Circular Letters',
+                'Joint Circulars',
+                'Executive Orders (Office of the President)',
+                'Presidential Decrees',
+                'Republic Acts',
+                'GPPB Circulars',
+                'GSIS Memorandum Circulars',
+                'DOH Circulars / Administrative Orders',
+                'PHIC Circulars',
+                'National Budget Circulars / Memorandums',
+                'CHED Memorandum Circulars',
+                'Budget Call',
+                'Queries',
+                'Annual Budget Transmittal / Indorsement to SPO',
+                'Transmitted PPMPs to BAC',
+                'SP Indorsement to DBM (APB)',
+                'PBO Certifications to Plans / Other Reports',
+                'DBM Letters / Reports / Matters',
+                'List of Documentary Requirements',
+                'Provincial NTAs',
+                'Municipal NTAs',
+                'PLGU Annual Budget Review'
+            ]
+        };
+
+        if (['Administrative', 'Administrator', 'Developer'].includes(usertype.value)) {
+            hierarchy['Administrative'] = [];
+        }
+
+        return hierarchy;
     });
 
     const recordTypes = computed(() => Object.keys(recordTypesHierarchy.value));

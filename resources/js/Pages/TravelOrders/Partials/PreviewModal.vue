@@ -9,13 +9,37 @@
                             <i class="fas fa-file-pdf text-emerald-600 dark:text-emerald-400"></i>
                             Travel Order Preview
                         </h3>
-                        <button @click="$emit('close')" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
-                            <i class="fas fa-times text-xl"></i>
-                        </button>
+                        <div class="flex items-center gap-3">
+                            <div class="flex items-center gap-1 text-xs bg-white/60 dark:bg-gray-800/60 rounded-lg p-1">
+                                <button
+                                    type="button"
+                                    @click="paperSize = 'short'"
+                                    :class="paperSize === 'short' ? 'bg-emerald-600 text-white' : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'"
+                                    class="px-3 py-1.5 rounded-md font-medium transition-colors"
+                                >
+                                    8.5 x 11 (Short)
+                                </button>
+                                <button
+                                    type="button"
+                                    @click="paperSize = 'long'"
+                                    :class="paperSize === 'long' ? 'bg-emerald-600 text-white' : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'"
+                                    class="px-3 py-1.5 rounded-md font-medium transition-colors"
+                                >
+                                    8.5 x 13 (Long)
+                                </button>
+                            </div>
+                            <button @click="$emit('close')" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
+                                <i class="fas fa-times text-xl"></i>
+                            </button>
+                        </div>
                     </div>
 
                     <!-- Modal Body - Document Preview -->
-                    <div class="p-4 flex flex-col" style="background-color: white; min-height: 1050px;">
+                    <div
+                        class="p-4 flex flex-col"
+                        :class="paperSize === 'long' ? 'paper-long' : 'paper-short'"
+                        style="background-color: white;"
+                    >
                         <!-- Header Section with Logos -->
                         <div class="flex items-center justify-center gap-2 mb-6 pb-2" style="border-bottom: 3px double #050505;">
                             <div style="width: 85px; flex-shrink: 0;">
@@ -24,7 +48,7 @@
                             <div class="text-center">
                                 <p class="text-sm font-semibold text-gray-700 mt-2">Republic of the Philippines</p>
                                 <p class="text-sm font-bold text-gray-900">PROVINCE OF BENGUET</p>
-                                <p class="text-lg font-bold text-gray-900" v-if="isApproverProvincialGovernor()">OFFICE OF THE PROVINCIAL GOVERNOR</p>
+                                <p class="text-lg font-bold text-gray-900" v-if="isApproverProvincialGovernor()">OFFICE OF THE GOVERNOR</p>
                                 <p class="text-lg font-bold text-gray-900" v-else>PROVINCIAL BUDGET OFFICE</p>
                                 <p class="text-sm text-gray-700 mb-1">Poblacion, La Trinidad, Benguet 2601</p>
                             </div>
@@ -70,7 +94,7 @@
                                 <!-- 2-Column Grid Layout for 5-8 employees -->
                                 <div v-if="formData.employee_ids && formData.employee_ids.length >= 5 && formData.employee_ids.length < 9" class="mb-6">
                                     <p class="mb-1">TO:</p>
-                                    <div class="grid grid-cols-2 gap-1 space-y-2">
+                                    <div class="grid grid-cols-2 gap-x-1 gap-y-3">
                                         <div v-for="(empId, index) in formData.employee_ids" :key="empId" class="text-center">
                                             <span class="block text-center font-semibold uppercase text-sm">{{ employees.find(e => e.id === empId)?.name || '' }}</span>
                                             <span class="text-xs text-gray-700">{{ employees.find(e => e.id === empId)?.designation || '' }}</span>
@@ -173,11 +197,11 @@
                         <!-- Footer -->
                         <div class="mb-6 mt-auto" style="border-top: 3px double #050505;">
                             <div class="flex justify-between items-center mt-2" style="line-height: 1;">
-                                <p v-if="!isApproverProvincialGovernor()"><span class="font-semibold text-sm">PBO Telephone No.:</span> <span class="text-sm text-gray-900">(074) 422-1378, Local: 134</span></p>
-                                <p v-else><span class="font-semibold text-sm">Benguet Capitol Trunklines:</span> <span class="text-sm text-gray-900">(074) 422-5657; 422-1116; 422-2306; 422-5760; Local: 134</span></p>
-                                <p><span class="font-semibold text-sm">Website:</span> <span class="text-sm font-semibold text-blue-800 underline">www.benguet.gov.ph</span></p>
+                                <p v-if="!isApproverProvincialGovernor()"><span class="font-semibold text-xs">PBO Telephone No.:</span> <span class="text-xs text-gray-900">(074) 422-1378, Local: 134</span></p>
+                                <p v-else class="whitespace-nowrap"><span class="font-semibold text-xs">Benguet Capitol Trunklines:</span> <span class="text-xs text-gray-900">(074) 422-5657; 422-1116; 422-2306; 422-5760; Local: 134</span></p>
+                                <p><span class="font-semibold text-xs">Website:</span> <span class="text-xs font-semibold text-blue-800 underline">www.benguet.gov.ph</span></p>
                             </div>
-                            <p><span class="font-semibold text-sm">Email Address:</span> <span class="text-sm font-semibold text-blue-800 underline">benguetpbo@benguet.gov.ph</span></p>
+                            <p><span class="font-semibold text-xs">Email Address:</span> <span class="text-xs font-semibold text-blue-800 underline">benguetpbo@benguet.gov.ph</span></p>
                         </div>
                     </div>
 
@@ -211,7 +235,10 @@
 </template>
 
 <script setup lang="ts">
+import { ref } from 'vue';
 import type { Employee, TravelOrder } from '../Composables/useTravelOrdersData';
+
+const paperSize = ref<'short' | 'long'>('long');
 
 const props = defineProps<{
     show: boolean;
@@ -348,33 +375,41 @@ const printPreview = () => {
     animation: scaleInUp 0.3s ease-out;
 }
 
+.paper-short {
+    min-height: 1050px;
+}
+
+.paper-long {
+    min-height: 1250px;
+}
+
 @media print {
 
     .sticky {
         position: static !important;
     }
-    
+
     .sticky.top-0 {
         display: none !important;
     }
-    
+
     .sticky.bottom-0 {
         display: none !important;
     }
-    
+
     .overflow-y-auto {
         overflow: visible !important;
     }
-    
+
     .max-h-\[90vh\] {
         max-height: none !important;
     }
-    
+
     body, html {
         margin: 0 !important;
         padding: 0 !important;
     }
-    
+
     .fixed.inset-0.flex.items-center.justify-center {
         align-items: flex-start !important;
         padding-top: 0 !important;
@@ -384,9 +419,30 @@ const printPreview = () => {
     .shadow-2xl {
         box-shadow: none !important;
     }
-    
+
     [class*="shadow"] {
         box-shadow: none !important;
+    }
+
+    /* Assign named pages so each paper size prints with its own @page size */
+    .paper-short {
+        page: travel-order-short;
+        min-height: 10in;
+    }
+
+    .paper-long {
+        page: travel-order-long;
+        min-height: 12in;
+    }
+
+    @page travel-order-short {
+        size: 8.5in 11in;
+        margin: 0.5in;
+    }
+
+    @page travel-order-long {
+        size: 8.5in 13in;
+        margin: 0.5in;
     }
 }
 </style>
