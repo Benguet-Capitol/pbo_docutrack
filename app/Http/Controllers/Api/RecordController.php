@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Record;
 use App\Services\RoleService;
-use App\Services\ActivityLogService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -141,10 +140,7 @@ class RecordController extends Controller
             unset($validated['file']);
             
             $record = Record::create($validated);
-            
-            // Log activity
-            ActivityLogService::logCreate('Record', $record, $validated);
-            
+
             return response()->json($record->load('user'), 201);
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], 500);
@@ -167,9 +163,6 @@ class RecordController extends Controller
             if ($record->record_type === 'Administrative' && !RoleService::canViewAdministrativeRecords($user)) {
                 return response()->json(['error' => 'Forbidden'], 403);
             }
-
-            // Store old values before update
-            $oldValues = $record->toArray();
 
             $validated = $request->validate([
                 'record_no' => 'sometimes|string|unique:records,record_no,' . $id,
@@ -199,13 +192,7 @@ class RecordController extends Controller
 
             unset($validated['file']);
             $record->update($validated);
-            
-            // Log activity
-            ActivityLogService::logUpdate('Record', $record, [
-                'old_values' => $oldValues,
-                'attributes' => $validated,
-            ]);
-            
+
             return response()->json($record->load('user'));
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], 500);
@@ -229,18 +216,13 @@ class RecordController extends Controller
                 return response()->json(['error' => 'Forbidden'], 403);
             }
 
-            $recordData = $record->toArray();
-            
             // Delete file if exists
             if ($record->image_path && Storage::disk('public')->exists($record->image_path)) {
                 Storage::disk('public')->delete($record->image_path);
             }
 
             $record->delete();
-            
-            // Log activity
-            ActivityLogService::logDelete('Record', $recordData);
-            
+
             return response()->json(['message' => 'Record deleted successfully']);
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], 500);
