@@ -219,9 +219,9 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr v-for="(employee, employeeIndex) in monthlyEmployeeRows" :key="employee.id">
+                                <tr v-for="(employee, employeeIndex) in monthlyEmployeeRows" :key="employee.id" class="group">
                                     <td
-                                        class="sticky left-0 z-10 border border-gray-200 dark:border-gray-700 px-3 py-1.5"
+                                        class="sticky left-0 z-10 border border-gray-200 dark:border-gray-700 px-3 py-1.5 transition-all group-hover:brightness-95 dark:group-hover:brightness-125"
                                         :class="monthlyRowStripeClass(employeeIndex)"
                                     >
                                         <p class="font-semibold text-gray-900 dark:text-white truncate" :title="employee.name">{{ employee.name }}</p>
@@ -230,7 +230,7 @@
                                     <td
                                         v-for="day in employee.dayStatuses"
                                         :key="day.date.getDate()"
-                                        class="border border-gray-200 dark:border-gray-700 text-center align-middle py-1.5 font-semibold text-[11px] transition-all"
+                                        class="border border-gray-200 dark:border-gray-700 text-center align-middle py-1.5 font-semibold text-[11px] transition-all group-hover:brightness-95 dark:group-hover:brightness-125"
                                         :class="[
                                             monthlyCellClass(day.status, employeeIndex),
                                             isMonthlyCellInteractive(day.status)
