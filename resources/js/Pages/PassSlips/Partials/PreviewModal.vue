@@ -294,6 +294,7 @@
 
 <script setup lang="ts">
 import type { Employee } from '../Composables/usePassSlipsData';
+import { printSafely } from '@/Composables/usePrint';
 
 const props = defineProps<{
     show: boolean;
@@ -400,7 +401,7 @@ const formatInclusiveDatesForDisplay = (): string => {
 };
 
 const printPassSlip = (): void => {
-    window.print();
+    printSafely();
 };
 
 const printGeneratedAtDisplay = (): string => {

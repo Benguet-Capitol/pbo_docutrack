@@ -252,6 +252,8 @@
 </template>
 
 <script setup lang="ts">
+import { printSafely } from '@/Composables/usePrint';
+
 const props = defineProps<{
     show: boolean;
     formData: any;
@@ -322,7 +324,7 @@ const getApprovedBySignatory = () => {
 };
 
 const printPreview = () => {
-    window.print();
+    printSafely();
 };
 
 const printGeneratedAtDisplay = (): string => {

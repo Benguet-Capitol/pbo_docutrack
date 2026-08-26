@@ -241,6 +241,7 @@
 
 <script setup lang="ts">
 import type { Employee } from '../Composables/useTardinessData';
+import { printSafely } from '@/Composables/usePrint';
 
 const props = defineProps<{
     show: boolean;
@@ -376,7 +377,7 @@ const computeUndertime = (): string => {
 };
 
 const printTardinessRequest = () => {
-    window.print();
+    printSafely();
 };
 
 const printGeneratedAtDisplay = (): string => {

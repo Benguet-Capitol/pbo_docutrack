@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { CertificateOfAppearance } from '../Composables/useCoaData';
+import { printSafely } from '@/Composables/usePrint';
 
 interface Employee {
     id: number;
@@ -22,7 +23,7 @@ defineEmits<{
 }>();
 
 const printPreview = () => {
-    window.print();
+    printSafely();
 };
 
 const printGeneratedAtDisplay = (): string => {

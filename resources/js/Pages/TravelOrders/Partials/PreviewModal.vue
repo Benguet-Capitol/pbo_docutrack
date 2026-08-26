@@ -243,6 +243,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import type { Employee, TravelOrder } from '../Composables/useTravelOrdersData';
+import { printSafely } from '@/Composables/usePrint';
 
 const paperSize = ref<'short' | 'long'>('long');
 
@@ -361,7 +362,7 @@ const getPurposeMaxWidth = (purpose: string): string => {
 };
 
 const printPreview = () => {
-    window.print();
+    printSafely();
 };
 
 const printGeneratedAtDisplay = (): string => {
