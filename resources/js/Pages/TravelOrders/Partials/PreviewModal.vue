@@ -90,7 +90,7 @@
                                         </div>
                                     </div>
                                 </div>
-                                
+
                                 <!-- 2-Column Grid Layout for 5-8 employees -->
                                 <div v-if="formData.employee_ids && formData.employee_ids.length >= 5 && formData.employee_ids.length < 9" class="mb-6">
                                     <p class="mb-1">TO:</p>
@@ -195,13 +195,19 @@
                         </div>
 
                         <!-- Footer -->
-                        <div class="mb-6 mt-auto" style="border-top: 3px double #050505;">
-                            <div class="flex justify-between items-center mt-2" style="line-height: 1;">
-                                <p v-if="!isApproverProvincialGovernor()"><span class="font-semibold text-xs">PBO Telephone No.:</span> <span class="text-xs text-gray-900">(074) 422-1378, Local: 134</span></p>
-                                <p v-else class="whitespace-nowrap"><span class="font-semibold text-xs">Benguet Capitol Trunklines:</span> <span class="text-xs text-gray-900">(074) 422-5657; 422-1116; 422-2306; 422-5760; Local: 134</span></p>
-                                <p><span class="font-semibold text-xs">Website:</span> <span class="text-xs font-semibold text-blue-800 underline">www.benguet.gov.ph</span></p>
+                        <div class="mb-6 mt-auto">
+                            <div class="text-right" style="font-size: 9px; color: #555;">
+                                <p class="m-0">Generated on {{ printGeneratedAtDisplay() }}</p>
+                                <p class="m-0 font-bold">PBO|DocuTrack</p>
                             </div>
-                            <p><span class="font-semibold text-xs">Email Address:</span> <span class="text-xs font-semibold text-blue-800 underline">benguetpbo@benguet.gov.ph</span></p>
+                            <div style="border-top: 3px double #050505;">
+                                <div class="flex justify-between items-center mt-2" style="line-height: 1;">
+                                    <p v-if="!isApproverProvincialGovernor()"><span class="font-semibold text-xs">PBO Telephone No.:</span> <span class="text-xs text-gray-900">(074) 422-1378, Local: 134</span></p>
+                                    <p v-else class="whitespace-nowrap"><span class="font-semibold text-xs">Benguet Capitol Trunklines:</span> <span class="text-xs text-gray-900">(074) 422-5657; 422-1116; 422-2306; 422-5760; Local: 134</span></p>
+                                    <p><span class="font-semibold text-xs">Website:</span> <span class="text-xs font-semibold text-blue-800 underline">www.benguet.gov.ph</span></p>
+                                </div>
+                                <p><span class="font-semibold text-xs">Email Address:</span> <span class="text-xs font-semibold text-blue-800 underline">benguetpbo@benguet.gov.ph</span></p>
+                            </div>
                         </div>
                     </div>
 
@@ -356,6 +362,13 @@ const getPurposeMaxWidth = (purpose: string): string => {
 
 const printPreview = () => {
     window.print();
+};
+
+const printGeneratedAtDisplay = (): string => {
+    const now = new Date();
+    return now.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+        + ' at '
+        + now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
 };
 </script>
 

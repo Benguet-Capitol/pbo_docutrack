@@ -417,6 +417,11 @@
                     <p class="text-xs mt-2">
                         Total: {{ employeesWithStatus.length }}<span v-for="s in statusSummary" :key="`printsum-${s.status}`"> &nbsp;|&nbsp; {{ printStatusLabel(s.status) }}: {{ s.count }}</span>
                     </p>
+
+                    <div class="text-right mt-4" style="font-size: 9px; color: #555;">
+                        <p class="m-0">Generated on {{ printGeneratedAtDisplay }}</p>
+                        <p class="m-0 font-bold">PBO|DocuTrack</p>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1660,7 +1665,16 @@ const monthlyDetailsDateDisplay = computed(() => {
 
 // ============== Print ==============
 
+const printGeneratedAt = ref<Date>(new Date());
+
+const printGeneratedAtDisplay = computed(() => {
+    return printGeneratedAt.value.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+        + ' at '
+        + printGeneratedAt.value.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+});
+
 const printChart = () => {
+    printGeneratedAt.value = new Date();
     window.print();
 };
 

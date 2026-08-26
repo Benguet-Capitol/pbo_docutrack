@@ -109,8 +109,12 @@
                     </div>
 
                     <!-- Approved Section -->
-                    <div class="mb-6 flex justify-end pr-8">
-                        <div class="w-72 text-center">
+                    <div class="flex justify-between items-end pr-8">
+                        <div class="text-left" style="font-size: 9px; color: #555;">
+                            <p class="m-0">Generated on {{ printGeneratedAtDisplay() }}</p>
+                            <p class="m-0 font-bold">PBO|DocuTrack</p>
+                        </div>
+                        <div class="w-72 text-center mb-6">
                             <p class="text-xs text-left text-gray-900 mb-6">APPROVED:</p>
                             <p v-if="isProvincialBudgetOfficerRequesting() && getProvincialGovernor()" class="text-xs text-center text-gray-900 font-bold uppercase">{{ getProvincialGovernor().name }}</p>
                             <p v-else class="text-xs text-center text-gray-900 font-bold uppercase">{{ getProvincialBudgetOfficer() }}</p>
@@ -126,7 +130,7 @@
                         <p class="text-xs text-gray-700 leading-relaxed">
                             This is to CERTIFY that the above mentioned person appeared in this office on {{ formatInclusiveDatesForDisplay() }}.
                         </p>
-                        
+
                         <!-- Signature and Printed Name Section -->
                         <div class="mt-2 w-72 text-center">
                                 <p class="text-xs text-center text-gray-700 border-b border-gray-900 pb-6 mb-1"></p>
@@ -229,8 +233,12 @@
                     </div>
 
                     <!-- Approved Section -->
-                    <div class="mb-6 flex justify-end pr-8">
-                        <div class="w-72 text-center">
+                    <div class="flex justify-between items-end pr-8">
+                        <div class="text-left" style="font-size: 9px; visibility: hidden;">
+                            <p class="m-0">Generated on {{ printGeneratedAtDisplay() }}</p>
+                            <p class="m-0 font-bold">PBO|DocuTrack</p>
+                        </div>
+                        <div class="w-72 text-center mb-6">
                             <p class="text-xs text-left text-gray-900 mb-6">APPROVED:</p>
                             <p v-if="isProvincialBudgetOfficerRequesting() && getProvincialGovernor()" class="text-xs text-center text-gray-900 font-bold uppercase">{{ getProvincialGovernor().name }}</p>
                             <p v-else class="text-xs text-center text-gray-900 font-bold uppercase">{{ getProvincialBudgetOfficer() }}</p>
@@ -246,7 +254,7 @@
                         <p class="text-xs text-gray-700 leading-relaxed">
                             This is to CERTIFY that the above mentioned person appeared in this office on {{ formatInclusiveDatesForDisplay() }}.
                         </p>
-                        
+
                         <!-- Signature and Printed Name Section -->
                         <div class="mt-2 w-72 text-center">
                                 <p class="text-xs text-center text-gray-900 border-b border-gray-900 pb-6 mb-1"></p>
@@ -393,6 +401,13 @@ const formatInclusiveDatesForDisplay = (): string => {
 
 const printPassSlip = (): void => {
     window.print();
+};
+
+const printGeneratedAtDisplay = (): string => {
+    const now = new Date();
+    return now.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+        + ' at '
+        + now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
 };
 </script>
 

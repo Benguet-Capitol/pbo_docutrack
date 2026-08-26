@@ -90,7 +90,13 @@
                         </div>
 
                         <!-- Certified By & Approved By (Inline) -->
-                        <div v-if="(getCertifiedBySignatory() && formData.certified_by_employee_id) || getApprovedBySignatory()" class="mb-6 flex items-start pr-8" :class="(getCertifiedBySignatory() && formData.certified_by_employee_id) && getApprovedBySignatory() ? 'justify-between' : 'justify-end'">
+                        <div v-if="(getCertifiedBySignatory() && formData.certified_by_employee_id) || getApprovedBySignatory()" class="mb-6 flex items-start justify-between pr-8">
+                            <!-- Generated On -->
+                            <div class="self-end text-left" style="font-size: 9px; color: #555;">
+                                <p class="m-0">Generated on {{ printGeneratedAtDisplay() }}</p>
+                                <p class="m-0 font-bold">PBO|DocuTrack</p>
+                            </div>
+
                             <!-- Certified By -->
                             <div v-if="getCertifiedBySignatory() && formData.certified_by_employee_id">
                                 <p class="text-sm text-gray-900 mb-8">CERTIFIED BY:</p>
@@ -188,7 +194,13 @@
                         </div>
 
                         <!-- Certified By & Approved By (Inline) - Copy 2 -->
-                        <div v-if="(getCertifiedBySignatory() && formData.certified_by_employee_id) || getApprovedBySignatory()" class="mb-6 flex items-start pr-8" :class="(getCertifiedBySignatory() && formData.certified_by_employee_id) && getApprovedBySignatory() ? 'justify-between' : 'justify-end'">
+                        <div v-if="(getCertifiedBySignatory() && formData.certified_by_employee_id) || getApprovedBySignatory()" class="mb-6 flex items-start justify-between pr-8">
+                            <!-- Generated On -->
+                            <div class="self-end text-left" style="font-size: 9px; color: #555;">
+                                <p class="m-0">Generated on {{ printGeneratedAtDisplay() }}</p>
+                                <p class="m-0 font-bold">PBO|DocuTrack</p>
+                            </div>
+
                             <!-- Certified By -->
                             <div v-if="getCertifiedBySignatory() && formData.certified_by_employee_id">
                                 <p class="text-sm text-gray-900 mb-8">CERTIFIED BY:</p>
@@ -311,6 +323,13 @@ const getApprovedBySignatory = () => {
 
 const printPreview = () => {
     window.print();
+};
+
+const printGeneratedAtDisplay = (): string => {
+    const now = new Date();
+    return now.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+        + ' at '
+        + now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
 };
 </script>
 

@@ -25,6 +25,13 @@ const printPreview = () => {
     window.print();
 };
 
+const printGeneratedAtDisplay = (): string => {
+    const now = new Date();
+    return now.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+        + ' at '
+        + now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+};
+
 const getProvincialBudgetOfficer = () => {
     if (!props.sortedEmployees) return null;
     return props.sortedEmployees.find((e: Employee) => 
@@ -104,12 +111,18 @@ const getProvincialBudgetOfficer = () => {
                         </div>
 
                         <!-- Footer Section -->
-                        <div class="mb-6 mt-auto" style="border-top: 4px double #050505;">
-                            <div class="flex justify-between items-center mt-2" style="line-height: 1;">
-                                <p><span class="font-semibold text-sm">PBO Telephone No.:</span> <span class="text-sm text-gray-900">(074) 422-1378, Local: 134</span></p>
-                                <p><span class="font-semibold text-sm">Website:</span> <span class="text-sm font-semibold text-blue-800 underline">www.benguet.gov.ph</span></p>
+                        <div class="mb-6 mt-auto">
+                            <div class="text-right" style="font-size: 9px; color: #555;">
+                                <p class="m-0">Generated on {{ printGeneratedAtDisplay() }}</p>
+                                <p class="m-0 font-bold">PBO|DocuTrack</p>
                             </div>
-                            <p><span class="font-semibold text-sm">Email Address:</span> <span class="text-sm font-semibold text-blue-800 underline">benguetpbo@benguet.gov.ph</span></p>
+                            <div style="border-top: 4px double #050505;">
+                                <div class="flex justify-between items-center mt-2" style="line-height: 1;">
+                                    <p><span class="font-semibold text-sm">PBO Telephone No.:</span> <span class="text-sm text-gray-900">(074) 422-1378, Local: 134</span></p>
+                                    <p><span class="font-semibold text-sm">Website:</span> <span class="text-sm font-semibold text-blue-800 underline">www.benguet.gov.ph</span></p>
+                                </div>
+                                <p><span class="font-semibold text-sm">Email Address:</span> <span class="text-sm font-semibold text-blue-800 underline">benguetpbo@benguet.gov.ph</span></p>
+                            </div>
                         </div>
                     </div>
 

@@ -138,6 +138,8 @@ export const useReports = (
         .signature-line { border-top: 1px solid #000; margin: 40px 0 5px 0; }
         .signature-name { font-weight: bold; font-size: 11px; margin-top: 5px; }
         .signature-designation { font-size: 11px; }
+        .report-footer { margin-top: 10px; text-align: left; font-size: 9px; color: #555; }
+        .report-footer p { margin: 2px 0; }
     </style>
 </head>
 <body>
@@ -199,6 +201,11 @@ export const useReports = (
         ` : ''}
     </div>
     ` : ''}
+
+    <div class="report-footer">
+        <p>Generated on ${new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })} at ${new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}</p>
+        <p style="font-weight: bold;">PBO|DocuTrack</p>
+    </div>
 </body>
 </html>
             `;
@@ -885,6 +892,8 @@ export const useReports = (
         .signature-line { border-top: 1px solid #000; margin: 40px 0 5px 0; }
         .signature-name { font-weight: bold; font-size: 11px; margin-top: 5px; }
         .signature-designation { font-size: 11px; }
+        .report-footer { margin-top: 10px; text-align: left; font-size: 9px; color: #555; }
+        .report-footer p { margin: 2px 0; }
     </style>
 </head>
 <body>
@@ -900,7 +909,7 @@ export const useReports = (
             <img src="/bagongpilipinaslogo.png" alt="Bagong Pilipinas Logo" style="width: 80px; height: auto;">
         </div>
     </div>
-    
+
     <p style="text-align: center; font-size: 14px; font-weight: bold; margin-bottom: 0;">SUMMARY OF LEAVES, TRAVEL ORDERS, PASS SLIPS AND TARDINESS/UNDERTIME</p>
     <p style="text-align: center; font-size: 12px; margin-top: 0; margin-bottom: 20px;">For the month of ` + (summaryData.value.employmentType === 'casual' ? (summaryData.value.casualPeriod === '1-15' ? monthName + ' 1-15, ' + currentYear : monthName + ' 16-' + new Date(currentYear, summaryData.value.month!, 0).getDate() + ', ' + currentYear) : monthName + ' ' + currentYear) + ` (` + (summaryData.value.employmentType.charAt(0).toUpperCase() + summaryData.value.employmentType.slice(1).toLowerCase()) + `)</p>
     
@@ -1156,6 +1165,11 @@ export const useReports = (
             <div class="signature-name">${capitalizeWords(certifiedByUser?.name || 'N/A')}</div>
             <div class="signature-designation">${certifiedByEmployee?.designation || ''}</div>
         </div>
+    </div>
+
+    <div class="report-footer">
+        <p>Generated on ${new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })} at ${new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}</p>
+        <p style="font-weight: bold;">PBO|DocuTrack</p>
     </div>
 </body>
 </html>

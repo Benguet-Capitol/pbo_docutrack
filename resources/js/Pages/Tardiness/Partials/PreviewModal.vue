@@ -94,8 +94,12 @@
                         </div>
 
                         <!-- Approved Section -->
-                        <div class="mb-6 flex justify-end">
-                            <div class="w-96 text-center">
+                        <div class="flex justify-between items-end">
+                            <div class="text-left" style="font-size: 9px; color: #555;">
+                                <p class="m-0">Generated on {{ printGeneratedAtDisplay() }}</p>
+                                <p class="m-0 font-bold">PBO|DocuTrack</p>
+                            </div>
+                            <div class="w-96 text-center mb-6">
                                 <p class="text-xs text-left text-gray-900 mb-8">APPROVED:</p>
                                 <p v-if="isRequestingEmployeeProvincialBudgetOfficer() && getProvincialGovernor()" class="font-bold text-xs text-gray-900 uppercase w-72">{{ getProvincialGovernor()?.name }}</p>
                                 <p v-else-if="getProvincialBudgetOfficer()" class="font-bold text-xs text-gray-900 uppercase w-72">{{ getProvincialBudgetOfficer()?.name }}</p>
@@ -187,8 +191,12 @@
                         </div>
 
                         <!-- Approved Section -->
-                        <div class="mb-6 flex justify-end">
-                            <div class="w-96 text-center">
+                        <div class="flex justify-between items-end">
+                            <div class="text-left" style="font-size: 9px; color: #555;">
+                                <p class="m-0">Generated on {{ printGeneratedAtDisplay() }}</p>
+                                <p class="m-0 font-bold">PBO|DocuTrack</p>
+                            </div>
+                            <div class="w-96 text-center mb-6">
                                 <p class="text-xs text-left text-gray-900 mb-8">APPROVED:</p>
                                 <p v-if="isRequestingEmployeeProvincialBudgetOfficer() && getProvincialGovernor()" class="font-bold text-xs text-gray-900 uppercase w-72">{{ getProvincialGovernor()?.name }}</p>
                                 <p v-else-if="getProvincialBudgetOfficer()" class="font-bold text-xs text-gray-900 uppercase w-72">{{ getProvincialBudgetOfficer()?.name }}</p>
@@ -369,6 +377,13 @@ const computeUndertime = (): string => {
 
 const printTardinessRequest = () => {
     window.print();
+};
+
+const printGeneratedAtDisplay = (): string => {
+    const now = new Date();
+    return now.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+        + ' at '
+        + now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
 };
 </script>
 
