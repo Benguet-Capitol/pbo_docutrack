@@ -9,8 +9,8 @@
                 <!-- Left side: Title and Filters -->
                 <div class="flex flex-col gap-4">
                     <h3 class="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-                        <i class="fas fa-users text-emerald-600 dark:text-emerald-400"></i>
-                        Leaves, Travel Orders, Pass Slips and Tardiness/Undertime Summary
+                        <i class="fas fa-users text-emerald-600 dark:text-emerald-400 shrink-0"></i>
+                        <span class="min-w-0">Leaves, Travel Orders, Pass Slips and Tardiness/Undertime Summary</span>
                     </h3>
 
                     <!-- Month and Year Filters -->
@@ -49,7 +49,7 @@
                     class="inline-flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 transition-colors text-xs font-medium w-full sm:w-auto text-center"
                 >
                     <i class="fas fa-file-pdf shrink-0"></i>
-                    <span>Summary of Leaves, TOs, PS and Tardiness/Undertimes</span>
+                    <span class="min-w-0">Summary of Leaves, TOs, PS and Tardiness/Undertimes</span>
                 </button>
             </div>
         </div>

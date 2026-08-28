@@ -18,20 +18,22 @@
                             <i class="fas fa-plus"></i>
                             Create Document
                         </button>
-                        <div :class="['flex items-center gap-3', !hasPermission('documents.create') && 'sm:ml-auto']">
-                                <i class="fas fa-search text-gray-400"></i>
-                                <!-- Search Input: v-model binds to searchQuery, triggers filter recomputation -->
-                                <input
-                                    v-model="searchQuery"
-                                    type="text"
-                                    placeholder="Search documents..."
-                                    class="border border-gray-300 rounded-lg px-4 py-2 text-xs flex-1 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white w-80"
-                                />
+                        <div :class="['flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto', !hasPermission('documents.create') && 'sm:ml-auto']">
+                                <div class="relative flex-1 sm:flex-none">
+                                    <i class="fas fa-search text-gray-400 absolute left-3 top-1/2 -translate-y-1/2 text-xs"></i>
+                                    <!-- Search Input: v-model binds to searchQuery, triggers filter recomputation -->
+                                    <input
+                                        v-model="searchQuery"
+                                        type="text"
+                                        placeholder="Search documents..."
+                                        class="border border-gray-300 rounded-lg pl-8 pr-4 py-2 text-xs w-full sm:w-80 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
+                                    />
+                                </div>
 
                             <!-- Document Type Filter: Filters table rows by document_type -->
                             <select
                                 v-model="documentTypeFilter"
-                                class="border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 rounded-lg px-3 py-2 text-xs text-gray-900 dark:text-white focus:outline-none focus:border-emerald-500 dark:focus:border-emerald-500 transition-colors cursor-pointer"
+                                class="border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 rounded-lg px-3 py-2 text-xs text-gray-900 dark:text-white focus:outline-none focus:border-emerald-500 dark:focus:border-emerald-500 transition-colors cursor-pointer w-full sm:w-auto"
                             >
                                 <option value="">All Document Types</option>
                                 <option value="Annual Budget">Annual Budget</option>
@@ -46,7 +48,7 @@
                             <!-- Items Per Page Selector: Controls number of items displayed per page -->
                             <select
                                 v-model.number="itemsPerPage"
-                                class="border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 rounded-lg px-3 py-2 text-xs text-gray-900 dark:text-white focus:outline-none focus:border-emerald-500 dark:focus:border-emerald-500 transition-colors cursor-pointer"
+                                class="border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 rounded-lg px-3 py-2 text-xs text-gray-900 dark:text-white focus:outline-none focus:border-emerald-500 dark:focus:border-emerald-500 transition-colors cursor-pointer w-full sm:w-auto"
                             >
                                 <option value="10">10</option>
                                 <option value="25">25</option>

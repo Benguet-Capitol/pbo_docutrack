@@ -3,8 +3,8 @@
         <!-- Header Section -->
         <div class="px-4 sm:px-6 py-5 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
             <h3 class="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-                <i class="fas fa-file-archive text-gray-600 dark:text-gray-400"></i>
-                Records Summary
+                <i class="fas fa-file-archive text-gray-600 dark:text-gray-400 shrink-0"></i>
+                <span class="min-w-0">Records Summary</span>
             </h3>
         </div>
 

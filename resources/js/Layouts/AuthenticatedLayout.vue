@@ -37,7 +37,7 @@ const toggleDarkMode = () => {
         <SideNavigation :show="showingSideNavigation" v-model:isOpen="isSidebarOpen" />
 
         <!-- Main Content Area with Left Margin for Sidebar -->
-        <div :class="['flex-1 flex flex-col', isSidebarOpen ? 'md:ml-64' : 'md:ml-16']">
+        <div :class="['flex-1 flex flex-col min-w-0', isSidebarOpen ? 'md:ml-64' : 'md:ml-16']">
             <!-- Top Navigation (User Profile & Logout) -->
             <nav class="border-b border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
                 <div class="mx-auto flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
