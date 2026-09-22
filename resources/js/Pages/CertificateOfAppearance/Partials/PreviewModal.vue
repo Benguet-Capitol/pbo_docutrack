@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { ref } from 'vue';
 import type { CertificateOfAppearance } from '../Composables/useCoaData';
 import { printSafely } from '@/Composables/usePrint';
 
@@ -8,6 +9,8 @@ interface Employee {
     employee_id: string;
     designation?: string;
 }
+
+const paperSize = ref<'short' | 'long'>('short');
 
 const props = defineProps<{
     show: boolean;
@@ -52,13 +55,33 @@ const getProvincialBudgetOfficer = () => {
                             <i class="fas fa-location-dot text-emerald-600 dark:text-emerald-400"></i>
                             Certificate of Appearance Preview
                         </h3>
-                        <button @click="$emit('close')" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
-                            <i class="fas fa-times text-xl"></i>
-                        </button>
+                        <div class="flex items-center gap-3">
+                            <div class="flex items-center gap-1 text-xs bg-white/60 dark:bg-gray-800/60 rounded-lg p-1">
+                                <button
+                                    type="button"
+                                    @click="paperSize = 'short'"
+                                    :class="paperSize === 'short' ? 'bg-emerald-600 text-white' : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'"
+                                    class="px-3 py-1.5 rounded-md font-medium transition-colors"
+                                >
+                                    8.5 x 11 (Short)
+                                </button>
+                                <button
+                                    type="button"
+                                    @click="paperSize = 'long'"
+                                    :class="paperSize === 'long' ? 'bg-emerald-600 text-white' : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'"
+                                    class="px-3 py-1.5 rounded-md font-medium transition-colors"
+                                >
+                                    8.5 x 13 (Long)
+                                </button>
+                            </div>
+                            <button @click="$emit('close')" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
+                                <i class="fas fa-times text-xl"></i>
+                            </button>
+                        </div>
                     </div>
 
                     <!-- Certificate Content -->
-                    <div class="p-4 flex flex-col" style="background-color: white; min-height: 1000px;">
+                    <div class="p-4 flex flex-col" :class="paperSize === 'long' ? 'paper-long' : 'paper-short'" style="background-color: white;">
                         <div v-if="formData" class="space-y-6">
                             <!-- Header Section with Logos -->
                             <div class="flex items-center justify-center gap-2 mb-6 pb-2" style="border-bottom: 4px double #050505;">
@@ -172,32 +195,40 @@ const getProvincialBudgetOfficer = () => {
     animation: scaleInUp 0.3s ease-out;
 }
 
+.paper-short {
+    min-height: 1050px;
+}
+
+.paper-long {
+    min-height: 1250px;
+}
+
 @media print {
     .sticky {
         position: static !important;
     }
-    
+
     .sticky.top-0 {
         display: none !important;
     }
-    
+
     .sticky.bottom-0 {
         display: none !important;
     }
-    
+
     .overflow-y-auto {
         overflow: visible !important;
     }
-    
+
     .max-h-\[90vh\] {
         max-height: none !important;
     }
-    
+
     body, html {
         margin: 0 !important;
         padding: 0 !important;
     }
-    
+
     .fixed.inset-0.flex.items-center.justify-center {
         align-items: flex-start !important;
         padding-top: 0 !important;
@@ -207,9 +238,30 @@ const getProvincialBudgetOfficer = () => {
     .shadow-2xl {
         box-shadow: none !important;
     }
-    
+
     [class*="shadow"] {
         box-shadow: none !important;
+    }
+
+    /* Assign named pages so each paper size prints at its exact dimensions */
+    .paper-short {
+        page: coa-short;
+        min-height: 10.5in;
+    }
+
+    .paper-long {
+        page: coa-long;
+        min-height: 12.5in;
+    }
+
+    @page coa-short {
+        size: 8.5in 11in;
+        margin: 0.75in;
+    }
+
+    @page coa-long {
+        size: 8.5in 13in;
+        margin: 0.75in;
     }
 }
 

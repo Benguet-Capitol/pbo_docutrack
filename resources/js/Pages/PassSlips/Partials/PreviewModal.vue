@@ -8,13 +8,41 @@
                         <i class="fas fa-file-pdf text-emerald-600 dark:text-emerald-400"></i>
                         Pass Slip Preview
                     </h3>
-                    <button @click="$emit('close')" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
-                        <i class="fas fa-times text-xl"></i>
-                    </button>
+                    <div class="flex items-center gap-3">
+                        <div class="flex items-center gap-1 text-xs bg-white/60 dark:bg-gray-800/60 rounded-lg p-1">
+                            <button
+                                type="button"
+                                @click="paperSize = 'short'"
+                                :class="paperSize === 'short' ? 'bg-emerald-600 text-white' : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'"
+                                class="px-3 py-1.5 rounded-md font-medium transition-colors"
+                            >
+                                8.5 x 11 (Short)
+                            </button>
+                            <button
+                                type="button"
+                                @click="paperSize = 'long'"
+                                :class="paperSize === 'long' ? 'bg-emerald-600 text-white' : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'"
+                                class="px-3 py-1.5 rounded-md font-medium transition-colors"
+                            >
+                                8.5 x 13 (Long)
+                            </button>
+                        </div>
+                        <button @click="$emit('close')" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
+                            <i class="fas fa-times text-xl"></i>
+                        </button>
+                    </div>
                 </div>
 
                 <!-- Preview Content - Two Column Layout -->
-                <div id="preview-content" class="grid grid-cols-2 gap-4 p-4" style="background-color: white;">
+                <div
+                    id="preview-content"
+                    class="grid grid-cols-2 gap-4 p-4"
+                    :class="paperSize === 'long' ? 'paper-long' : 'paper-short'"
+                    :data-page-width-in="paperSize === 'long' ? 13 : 11"
+                    data-page-height-in="8.5"
+                    data-page-margin-in="0.3"
+                    style="background-color: white;"
+                >
                     <!-- Copy 1 -->
                     <div>
                     <!-- Header Section with Logos -->
@@ -293,8 +321,11 @@
 </template>
 
 <script setup lang="ts">
+import { ref } from 'vue';
 import type { Employee } from '../Composables/usePassSlipsData';
 import { printSafely } from '@/Composables/usePrint';
+
+const paperSize = ref<'short' | 'long'>('long');
 
 const props = defineProps<{
     show: boolean;
@@ -414,12 +445,35 @@ const printGeneratedAtDisplay = (): string => {
 
 <style scoped>
 
+.paper-short {
+    min-height: 720px;
+}
+
+.paper-long {
+    min-height: 720px;
+}
+
 /* Print Styles: Hide modal chrome and scrollbars */
 @media print {
-    /* Remove page margins */
-    @page {
-        margin: 0 !important;
-        padding: 0 !important;
+    /* Assign named pages so each paper size prints at its exact dimensions (landscape) */
+    .paper-short {
+        page: pass-slip-short;
+        min-height: 7.5in;
+    }
+
+    .paper-long {
+        page: pass-slip-long;
+        min-height: 7.5in;
+    }
+
+    @page pass-slip-short {
+        size: 11in 8.5in landscape;
+        margin: 0.3in;
+    }
+
+    @page pass-slip-long {
+        size: 13in 8.5in landscape;
+        margin: 0.3in;
     }
 
     /* Hide all modal chrome and UI elements */
