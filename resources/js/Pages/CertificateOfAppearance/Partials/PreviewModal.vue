@@ -48,7 +48,7 @@ const getProvincialBudgetOfficer = () => {
     <Teleport to="body" v-if="show">
         <Transition>
             <div class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4" @click.self="$emit('close')">
-                <div class="relative w-full max-w-4xl mx-4 bg-white rounded-lg shadow-lg dark:bg-gray-800 animate-scaleInUp max-h-[90vh] overflow-y-auto">
+                <div class="relative w-full max-w-4xl mx-4 bg-white rounded-lg shadow-lg dark:bg-gray-800 max-h-[90vh] overflow-y-auto">
                     <!-- Modal Header -->
                     <div class="sticky top-0 flex items-center justify-between px-6 py-4 border-b border-gray-200 rounded-t-lg bg-gradient-to-r from-emerald-50 to-emerald-100 dark:from-gray-700 dark:to-gray-600 dark:border-gray-600 z-10">
                         <h3 class="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
@@ -81,7 +81,7 @@ const getProvincialBudgetOfficer = () => {
                     </div>
 
                     <!-- Certificate Content -->
-                    <div class="p-4 flex flex-col" :class="paperSize === 'long' ? 'paper-long' : 'paper-short'" style="background-color: white;">
+                    <div class="p-4 flex flex-col bg-white" :class="paperSize === 'long' ? 'paper-long' : 'paper-short'" style="background-color: #ffffff; color-scheme: light;">
                         <div v-if="formData" class="space-y-6">
                             <!-- Header Section with Logos -->
                             <div class="flex items-center justify-center gap-2 mb-6 pb-2" style="border-bottom: 4px double #050505;">
@@ -105,19 +105,19 @@ const getProvincialBudgetOfficer = () => {
                             
                             <!-- Date & Control Numbers -->
                             <div class="mb-8 flex justify-start pr-8">
-                                <div class="text-center text-base">
+                                <div class="text-center text-base text-gray-900">
                                     <p><span class="w-26 inline-block text-right">Control No.: </span><span class="font-bold text-gray-900 w-48 border-b border-gray-900 inline-block text-center">{{ formData.control_no }}</span></p>
                                     <p class="mt-1 mb-8"><span class="w-26 inline-block text-right">Date: </span><span class="font-bold text-gray-900 w-48 border-b border-gray-900 inline-block text-center">{{ formattedDate(formData.date) }}</span></p>
                                 </div>
                             </div>
 
                             <!-- Details Body -->
-                            <div class="space-y-4 text-lg mb-10">
+                            <div class="space-y-4 text-lg mb-10 text-gray-900">
                                 <p class="text-justify indent-8">This is to certify that <span class="font-semibold uppercase">{{ formData.name }}</span>, of <span class="font-semibold uppercase">{{ formData.office }}</span>, has appeared in this office on <span class="font-semibold">{{ formattedDate(formData.date) }}</span> on Official Business for the purpose of <span class="font-semibold">{{ formData.purpose }}</span>.</p>
-                                
+
                                 <!-- Closing Statement -->
                                 <p class="text-justify indent-8">This certification is issued upon the request of the above-named person for whatever legal purpose it may serve.</p>
-                                
+
                                 <!-- Issued Statement -->
                                 <p class="text-justify indent-8 mb-10">Issued this <span class="font-semibold">{{ formattedDate(formData.date) }}</span> at <span class="font-semibold">La Trinidad, Benguet, Philippines</span>.</p>
                             </div>
@@ -197,10 +197,12 @@ const getProvincialBudgetOfficer = () => {
 
 .paper-short {
     min-height: 1050px;
+    background-color: #ffffff !important;
 }
 
 .paper-long {
     min-height: 1250px;
+    background-color: #ffffff !important;
 }
 
 @media print {
@@ -231,7 +233,24 @@ const getProvincialBudgetOfficer = () => {
 
     .fixed.inset-0.flex.items-center.justify-center {
         align-items: flex-start !important;
-        padding-top: 0 !important;
+        justify-content: flex-start !important;
+        padding: 0 !important;
+    }
+
+    /* Remove modal chrome padding/margins so the certificate sits flush against the page margin */
+    .relative {
+        box-shadow: none !important;
+        border-radius: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        max-width: 100% !important;
+        width: 100% !important;
+    }
+
+    .paper-short,
+    .paper-long {
+        padding: 0 !important;
+        margin: 0 !important;
     }
 
     /* Remove shadows from printed form */
@@ -246,22 +265,22 @@ const getProvincialBudgetOfficer = () => {
     /* Assign named pages so each paper size prints at its exact dimensions */
     .paper-short {
         page: coa-short;
-        min-height: 10.5in;
+        min-height: 9.5in;
     }
 
     .paper-long {
         page: coa-long;
-        min-height: 12.5in;
+        min-height: 11.5in;
     }
 
     @page coa-short {
         size: 8.5in 11in;
-        margin: 0.75in;
+        margin: 0.5in;
     }
 
     @page coa-long {
         size: 8.5in 13in;
-        margin: 0.75in;
+        margin: 0.5in;
     }
 }
 

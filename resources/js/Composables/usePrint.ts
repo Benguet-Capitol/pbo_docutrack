@@ -1,21 +1,26 @@
 import { nextTick } from 'vue';
 
-/**
- * Printing the live modal is unreliable: Chrome lays out the print preview from
- * the on-screen fixed/scrolling overlay and, on a cold first print (typical for
- * production builds where CSS/fonts/images are not yet cached), can produce a
- * blank page. Instead, clone the modal into a hidden same-origin iframe with
- * the page's stylesheets, wait for everything to load, and print the iframe.
- */
+// Printing the live modal directly is unreliable (can yield a blank page on a cold first print), so clone it into a hidden iframe with the page's styles, wait for everything to load, and print that instead.
 
 const IFRAME_OVERRIDES = `
-    html, body { margin: 0 !important; padding: 0 !important; background: #fff !important; overflow: visible !important; }
+    html, body { margin: 0 !important; padding: 0 !important; background: #fff !important; overflow: visible !important; color-scheme: light !important; }
     .fixed { position: static !important; }
     .fixed.inset-0 { display: block !important; padding: 0 !important; background: none !important; }
     .max-h-\\[90vh\\] { max-height: none !important; }
     .overflow-y-auto { overflow: visible !important; }
     .relative { margin: 0 auto !important; }
     .print\\:hidden { display: none !important; }
+    /* A cloned entrance-animation class replays from its starting frame here, so printing can fire mid-fade; kill all animations/transitions in the clone. */
+    *, *::before, *::after {
+        animation: none !important;
+        transition: none !important;
+    }
+    /* Force exact colors so Chrome's print "economy" mode doesn't wash out text/borders/logos. */
+    * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        color-adjust: exact !important;
+    }
 `;
 
 const findModalRoot = (): HTMLElement | null => {
@@ -56,15 +61,7 @@ const nextFrames = (win: Window): Promise<void> =>
 
 const PRINT_DPI = 96;
 
-/**
- * Some forms (e.g. Pass Slip / Tardiness) render two carbon-copy columns whose
- * on-screen size rarely matches the printed page's exact dimensions — content
- * can spill onto a near-empty second page, or (once shrunk to avoid that) sit
- * small in a corner with the rest of the sheet left blank. When the printed
- * element carries data-page-width-in/height-in(/margin-in) attributes, scale it
- * (visually only, via transform) up or down and center it so it always fills a
- * single page of that exact size, without affecting the on-screen preview.
- */
+// Scales #preview-content (visually, via transform) to exactly fill a single page of the size given by its data-page-width-in/height-in/margin-in attributes.
 const fitContentToOnePage = (doc: Document): void => {
     const target = doc.getElementById('preview-content');
     if (!target) return;
@@ -106,10 +103,7 @@ export const printSafely = async (): Promise<void> => {
         return;
     }
 
-    // Give the iframe a real, generous viewport (roughly the modal's natural on-screen
-    // width) rather than 0x0. A near-zero viewport forces percentage-width content to
-    // wrap into a narrow, artificially tall column *before* print layout kicks in, which
-    // throws off any measurement (e.g. fit-to-one-page scaling) taken against it.
+    // A real, generous viewport (not 0x0) so percentage-width content lays out naturally instead of wrapping narrow/tall before measurement.
     const iframe = document.createElement('iframe');
     iframe.setAttribute('aria-hidden', 'true');
     iframe.style.cssText = 'position:fixed;left:-10000px;top:-10000px;width:1400px;height:2000px;border:0;visibility:hidden;';
