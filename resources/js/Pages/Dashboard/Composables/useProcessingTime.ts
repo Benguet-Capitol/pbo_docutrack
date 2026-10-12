@@ -307,15 +307,19 @@ export const useProcessingTime = (
 
         const latestTransaction = document.transactions[0];
 
+        // The office/municipality/user lists exclude trashed records, so fall back to the
+        // relations embedded in the transaction (they include trashed ones)
         if (latestTransaction.forwarded_to_office_id) {
-            const office = offices.value.find(o => o.id === latestTransaction.forwarded_to_office_id);
+            const office = offices.value.find(o => o.id === latestTransaction.forwarded_to_office_id)
+                || latestTransaction.forwarded_to_office;
             if (office) {
                 return office.office_name;
             }
         }
 
         if (latestTransaction.forwarded_to_municipality_id) {
-            const municipality = municipalities.value.find(m => m.id === latestTransaction.forwarded_to_municipality_id);
+            const municipality = municipalities.value.find(m => m.id === latestTransaction.forwarded_to_municipality_id)
+                || latestTransaction.forwarded_to_municipality;
             if (municipality) {
                 return municipality.name;
             }
@@ -328,7 +332,8 @@ export const useProcessingTime = (
             );
 
             if (hasReceived) {
-                const forwardedUser = users.value.find(u => u.id === latestTransaction.forwarded_to_user_id);
+                const forwardedUser = users.value.find(u => u.id === latestTransaction.forwarded_to_user_id)
+                    || latestTransaction.forwarded_to_user;
                 if (forwardedUser) {
                     return forwardedUser.name;
                 }

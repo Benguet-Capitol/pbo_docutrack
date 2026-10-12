@@ -23,6 +23,10 @@ return Application::configure(basePath: dirname(__DIR__))
             \Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets::class,
         ]);
 
+        $middleware->alias([
+            'admin.or.developer' => \App\Http\Middleware\EnsureAdminOrDeveloper::class,
+        ]);
+
         // Exclude API routes from CSRF verification
         $middleware->validateCsrfTokens(except: [
             'api/*',

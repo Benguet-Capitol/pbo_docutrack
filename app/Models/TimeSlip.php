@@ -2,14 +2,18 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\LogsActivity;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
  * Model for time slips
  */
 class TimeSlip extends Model
 {
+    use SoftDeletes, LogsActivity;
+
     protected $table = 'time_slips';
     public $timestamps = true;
 
@@ -34,7 +38,7 @@ class TimeSlip extends Model
      */
     public function requestingEmployee(): BelongsTo
     {
-        return $this->belongsTo(Employee::class, 'requesting_employee_id');
+        return $this->belongsTo(Employee::class, 'requesting_employee_id')->withTrashed();
     }
 
     /**
@@ -42,6 +46,6 @@ class TimeSlip extends Model
      */
     public function certifiedByEmployee(): BelongsTo
     {
-        return $this->belongsTo(Employee::class, 'certified_by_employee_id');
+        return $this->belongsTo(Employee::class, 'certified_by_employee_id')->withTrashed();
     }
 }

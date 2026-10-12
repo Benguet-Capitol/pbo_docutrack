@@ -2,14 +2,18 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\LogsActivity;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
  * Model for travel orders
  */
 class TravelOrder extends Model
 {
+    use SoftDeletes, LogsActivity;
+
     protected $table = 'travel_orders';
     public $timestamps = true;
 
@@ -55,7 +59,7 @@ class TravelOrder extends Model
      */
     public function employees(): BelongsToMany
     {
-        return $this->belongsToMany(Employee::class, 'travel_order_employee', 'travel_order_id', 'employee_id');
+        return $this->belongsToMany(Employee::class, 'travel_order_employee', 'travel_order_id', 'employee_id')->withTrashed();
     }
 
     /**
@@ -63,6 +67,6 @@ class TravelOrder extends Model
      */
     public function supervisor()
     {
-        return $this->belongsTo(Employee::class, 'supervisor_employee_id');
+        return $this->belongsTo(Employee::class, 'supervisor_employee_id')->withTrashed();
     }
 }

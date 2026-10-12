@@ -52,7 +52,8 @@ class DocumentController extends Controller
 
             // Get all tracking numbers with same year prefix (ignores month)
             // This allows sequence to continue across months within the same year
-            $existingNumbers = Document::where('tracking_no', 'like', "{$year}-%")
+            // Include trashed documents so their tracking numbers are not reused
+            $existingNumbers = Document::withTrashed()->where('tracking_no', 'like', "{$year}-%")
                 ->pluck('tracking_no')
                 ->map(function($trackingNo) {
                     // Extract the numeric part after the last dash

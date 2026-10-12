@@ -2,15 +2,19 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\LogsActivity;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
  * Model for documents
  */
 class Document extends Model
 {
+    use SoftDeletes, LogsActivity;
+
     protected $table = 'documents';
     public $timestamps = true;
 
@@ -31,7 +35,7 @@ class Document extends Model
      */
     public function user(): BelongsTo
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class)->withTrashed();
     }
 
     /**

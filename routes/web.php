@@ -77,6 +77,16 @@ Route::middleware('auth')->group(function () {
     Route::get('/locator-chart', function () {
         return Inertia::render('LocatorChart/Index');
     })->name('locator-chart.index');
+
+    Route::middleware('admin.or.developer')->group(function () {
+        Route::get('/trash', function () {
+            return Inertia::render('Trash/Index');
+        })->name('trash.index');
+
+        Route::get('/activity-logs', function () {
+            return Inertia::render('ActivityLogs/Index');
+        })->name('activity-logs.index');
+    });
 });
 
 // Notice of Meetings

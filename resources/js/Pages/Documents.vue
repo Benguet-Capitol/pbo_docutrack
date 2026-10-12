@@ -831,7 +831,7 @@
                                     Are you sure you want to delete document <span class="font-semibold">{{ documentToDelete.tracking_no }}</span>?
                                 </p>
                                 <p class="text-xs text-gray-600 dark:text-gray-400 mt-2">
-                                    This action cannot be undone. All associated data will be permanently deleted.
+                                    It will be moved to the Trash, where an Administrator or Developer can restore it or delete it permanently.
                                 </p>
                             </div>
                         </div>
@@ -1699,6 +1699,10 @@ interface DocumentTransaction {
     forwardedToUser?: { id: number; name: string } | null;
     forwardedToOffice?: { id: number; office_name: string } | null;
     forwardedToMunicipality?: { id: number; name: string } | null;
+    // Laravel serializes eager-loaded relations in snake_case
+    forwarded_to_user?: { id: number; name: string } | null;
+    forwarded_to_office?: { id: number; office_name: string } | null;
+    forwarded_to_municipality?: { id: number; name: string } | null;
 }
 
 /** Controls visibility of the Document Checklist modal */
@@ -2764,15 +2768,18 @@ const getCustodianDisplay = (document: Document): string => {
     
     // Check for office forwarding (by ID field)
     if (latestTransaction.forwarded_to_office_id) {
-        const office = offices.value.find(o => o.id === latestTransaction.forwarded_to_office_id);
+        // Fall back to the embedded relation for offices that are in the Trash
+        const office = offices.value.find(o => o.id === latestTransaction.forwarded_to_office_id)
+            || latestTransaction.forwarded_to_office;
         if (office) {
             return office.office_name;
         }
     }
-    
+
     // Check for municipality forwarding (by ID field)
     if (latestTransaction.forwarded_to_municipality_id) {
-        const municipality = municipalities.value.find(m => m.id === latestTransaction.forwarded_to_municipality_id);
+        const municipality = municipalities.value.find(m => m.id === latestTransaction.forwarded_to_municipality_id)
+            || latestTransaction.forwarded_to_municipality;
         if (municipality) {
             return municipality.name;
         }
@@ -2788,7 +2795,8 @@ const getCustodianDisplay = (document: Document): string => {
         
         if (hasReceived) {
             // User has received it, show that user as custodian
-            const forwardedUser = users.value.find(u => u.id === latestTransaction.forwarded_to_user_id);
+            const forwardedUser = users.value.find(u => u.id === latestTransaction.forwarded_to_user_id)
+                || latestTransaction.forwarded_to_user;
             if (forwardedUser) {
                 return forwardedUser.name;
             }

@@ -3,15 +3,17 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Models\Concerns\LogsActivity;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
 class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable;
+    use HasFactory, Notifiable, SoftDeletes, LogsActivity;
 
     /**
      * The attributes that are mass assignable.
@@ -61,7 +63,12 @@ class User extends Authenticatable
      */
     public function office(): BelongsTo
     {
-        return $this->belongsTo(Office::class, 'fk_office_id');
+        return $this->belongsTo(Office::class, 'fk_office_id')->withTrashed();
+    }
+
+    public function getActivityLabel(): string
+    {
+        return "{$this->name} ({$this->username})";
     }
 }
 

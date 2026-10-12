@@ -23,7 +23,7 @@
                             Control No: <span class="font-bold text-red-600">{{ recordToDelete.control_no }}</span>
                         </p>
                         <p class="text-xs text-gray-500 dark:text-gray-400">
-                            This action cannot be undone.
+                            It will be moved to the Trash, where an Administrator or Developer can restore it or delete it permanently.
                         </p>
                     </div>
 

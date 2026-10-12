@@ -25,7 +25,7 @@
                                 Are you sure you want to delete tardiness/undertime record <span class="font-semibold">{{ recordToDelete.control_no }}</span>?
                             </p>
                             <p class="text-xs text-gray-600 dark:text-gray-400 mt-2">
-                                This action cannot be undone. All associated data will be permanently deleted.
+                                It will be moved to the Trash, where an Administrator or Developer can restore it or delete it permanently.
                             </p>
                         </div>
                     </div>

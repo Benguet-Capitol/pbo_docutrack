@@ -2,10 +2,14 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\LogsActivity;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Tardiness extends Model
 {
+    use SoftDeletes, LogsActivity;
+
     protected $table = 'tardiness';
 
     protected $fillable = [
@@ -31,7 +35,7 @@ class Tardiness extends Model
      */
     public function employee()
     {
-        return $this->belongsTo(Employee::class);
+        return $this->belongsTo(Employee::class)->withTrashed();
     }
 
     /**
@@ -39,6 +43,16 @@ class Tardiness extends Model
      */
     public function supervisor()
     {
-        return $this->belongsTo(Employee::class, 'supervisor_employee_id');
+        return $this->belongsTo(Employee::class, 'supervisor_employee_id')->withTrashed();
+    }
+
+    public function getActivityModule(): string
+    {
+        return 'Tardiness/Undertime';
+    }
+
+    public function getActivitySubjectName(): string
+    {
+        return $this->type ?: 'Tardiness/Undertime';
     }
 }

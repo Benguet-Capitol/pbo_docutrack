@@ -2,13 +2,17 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\LogsActivity;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
  * Model for certificate of appearances
  */
 class CertificateOfAppearance extends Model
 {
+    use SoftDeletes, LogsActivity;
+
     protected $table = 'certificate_of_appearances';
     public $timestamps = true;
 
@@ -33,5 +37,15 @@ class CertificateOfAppearance extends Model
     protected function serializeDate(\DateTimeInterface $date)
     {
         return $date->format('Y-m-d');
+    }
+
+    public function getActivityModule(): string
+    {
+        return 'Certificates of Appearance';
+    }
+
+    public function getActivitySubjectName(): string
+    {
+        return 'Certificate of Appearance';
     }
 }

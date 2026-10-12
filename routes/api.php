@@ -15,6 +15,8 @@ use App\Http\Controllers\Api\LeaveController;
 use App\Http\Controllers\Api\TardinessController;
 use App\Http\Controllers\Api\CertificateOfAppearanceController;
 use App\Http\Controllers\Api\SyncController;
+use App\Http\Controllers\Api\TrashController;
+use App\Http\Controllers\Api\ActivityLogController;
 
 // Users API
 Route::get('/users', [UserController::class, 'index']);
@@ -120,6 +122,25 @@ Route::middleware(['web', 'auth'])->group(function () {
     Route::post('/tardiness', [TardinessController::class, 'store']);
     Route::put('/tardiness/{tardiness}', [TardinessController::class, 'update']);
     Route::delete('/tardiness/{tardiness}', [TardinessController::class, 'destroy']);
+});
+
+// Trash API
+Route::middleware(['web', 'auth'])->group(function () {
+    // Used by every create form to skip control numbers reserved by trashed records
+    Route::get('/trash/control-numbers/{module}', [TrashController::class, 'controlNumbers']);
+
+    Route::middleware('admin.or.developer')->group(function () {
+        Route::get('/trash', [TrashController::class, 'index']);
+        Route::get('/trash/modules', [TrashController::class, 'modules']);
+        Route::post('/trash/restore', [TrashController::class, 'restore']);
+        Route::post('/trash/force-delete', [TrashController::class, 'forceDelete'])->middleware('throttle:10,1');
+    });
+});
+
+// Activity Logs API
+Route::middleware(['web', 'auth', 'admin.or.developer'])->group(function () {
+    Route::get('/activity-logs', [ActivityLogController::class, 'index']);
+    Route::get('/activity-logs/filters', [ActivityLogController::class, 'filters']);
 });
 
 // Sync API - Fetch and update data from pbo-registry

@@ -80,7 +80,8 @@ class RecordController extends Controller
             $yearPrefix = "{$abbr}-{$year}-";
 
             // Get all records of same type in current year (all months)
-            $existingNumbers = Record::where('record_type', $recordType)
+            // Include trashed records so their numbers are not reused
+            $existingNumbers = Record::withTrashed()->where('record_type', $recordType)
                 ->where('record_no', 'like', "{$yearPrefix}%")
                 ->pluck('record_no')
                 ->map(function($recordNo) {
@@ -216,11 +217,7 @@ class RecordController extends Controller
                 return response()->json(['error' => 'Forbidden'], 403);
             }
 
-            // Delete file if exists
-            if ($record->image_path && Storage::disk('public')->exists($record->image_path)) {
-                Storage::disk('public')->delete($record->image_path);
-            }
-
+            // Soft delete: the file is kept until the record is permanently deleted from the Trash
             $record->delete();
 
             return response()->json(['message' => 'Record deleted successfully']);

@@ -1,4 +1,5 @@
 import { ref, watch, computed } from 'vue';
+import { useTrashedControlNumbers } from '@/Composables/useTrashedControlNumbers';
 import type { CertificateOfAppearance } from './useCoaData';
 
 export function useCoaForm(certificates: any) {
@@ -41,6 +42,9 @@ export function useCoaForm(certificates: any) {
         }
     );
 
+    // Control numbers of trashed records stay reserved until permanently deleted
+    const { maxTrashedSeries } = useTrashedControlNumbers('certificate_of_appearances');
+
     const generateControlNo = (dateString?: string): string => {
         const dateToUse = dateString ? new Date(dateString) : new Date();
         const year = dateToUse.getFullYear();
@@ -61,7 +65,7 @@ export function useCoaForm(certificates: any) {
             }
         });
 
-        const series = String(maxSeries + 1).padStart(4, '0');
+        const series = String(Math.max(maxSeries, maxTrashedSeries(prefix, year)) + 1).padStart(4, '0');
         return `${prefix}-${year}-${month}-${series}`;
     };
 

@@ -96,7 +96,8 @@ export const useDocuments = () => {
         const usersMap = new Map<number, string>();
         documents.value.forEach(doc => {
             doc.transactions?.forEach(transaction => {
-                if (transaction.user && !usersMap.has(transaction.user.id)) {
+                // Skip users that are in the Trash
+                if (transaction.user && !transaction.user.deleted_at && !usersMap.has(transaction.user.id)) {
                     usersMap.set(transaction.user.id, transaction.user.name);
                 }
             });
@@ -163,25 +164,29 @@ export const useDocuments = () => {
                 
                 // Check if custodian is an office
                 if (latestTransaction.forwarded_to_office_id) {
-                    const office = offices.value.find(o => o.id === latestTransaction.forwarded_to_office_id);
+                    const office = offices.value.find(o => o.id === latestTransaction.forwarded_to_office_id)
+                        || latestTransaction.forwarded_to_office;
                     if (office?.office_name.toLowerCase().includes(searchLower)) return true;
                 }
                 
                 // Check if custodian is a municipality
                 if (latestTransaction.forwarded_to_municipality_id) {
-                    const municipality = municipalities.value.find(m => m.id === latestTransaction.forwarded_to_municipality_id);
+                    const municipality = municipalities.value.find(m => m.id === latestTransaction.forwarded_to_municipality_id)
+                        || latestTransaction.forwarded_to_municipality;
                     if (municipality?.name.toLowerCase().includes(searchLower)) return true;
                 }
                 
                 // Check if custodian is a user
                 if (latestTransaction.forwarded_to_user_id) {
-                    const user = users.value.find(u => u.id === latestTransaction.forwarded_to_user_id);
+                    const user = users.value.find(u => u.id === latestTransaction.forwarded_to_user_id)
+                        || latestTransaction.forwarded_to_user;
                     if (user?.name?.toLowerCase().includes(searchLower)) return true;
                 }
                 
                 // Check original user
                 if (latestTransaction.user_id) {
-                    const user = users.value.find(u => u.id === latestTransaction.user_id);
+                    const user = users.value.find(u => u.id === latestTransaction.user_id)
+                        || latestTransaction.user;
                     if (user?.name?.toLowerCase().includes(searchLower)) return true;
                 }
                 

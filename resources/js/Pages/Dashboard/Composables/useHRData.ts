@@ -11,6 +11,29 @@ export const useHRData = () => {
     const timeSlips = ref<any[]>([]);
     const hrLoading = ref(true);
 
+    // ============== Soft Delete Handling ==============
+    // The APIs already exclude trashed filings, but a filing can still reference an
+    // employee that was moved to the Trash (relations include trashed employees so
+    // module pages keep showing names). Those are left out of the summary and reports.
+
+    const isTrashed = (employee: any): boolean => !!employee?.deleted_at;
+
+    /** Drop records whose (single) employee is in the Trash */
+    const withoutTrashedEmployee = (records: any[], employeeKey: string): any[] =>
+        records.filter((record) => !isTrashed(record?.[employeeKey]));
+
+    /** Remove trashed employees from multi-employee records; drop records left with none */
+    const withoutTrashedEmployees = (records: any[]): any[] =>
+        records
+            .map((record) => {
+                if (!Array.isArray(record?.employees)) return record;
+                return { ...record, employees: record.employees.filter((emp: any) => !isTrashed(emp)) };
+            })
+            .filter((record, index) => {
+                const original = records[index];
+                return !(Array.isArray(original?.employees) && original.employees.length > 0 && record.employees.length === 0);
+            });
+
     const selectedHRMonth = ref<number>(new Date().getMonth());
     const selectedHRYear = ref<number>(new Date().getFullYear());
     const expandedHRType = ref<'leaves' | 'travelOrders' | 'passSlips' | 'tardiness' | null>(null);
@@ -22,7 +45,7 @@ export const useHRData = () => {
         try {
             const response = await fetch('/api/leaves');
             if (response.ok) {
-                leaves.value = await response.json();
+                leaves.value = withoutTrashedEmployee(await response.json(), 'employee');
             }
         } catch (e) {
             console.error('Error fetching leaves:', e);
@@ -38,7 +61,7 @@ export const useHRData = () => {
         try {
             const response = await fetch('/api/travel-orders');
             if (response.ok) {
-                travelOrders.value = await response.json();
+                travelOrders.value = withoutTrashedEmployees(await response.json());
             }
         } catch (e) {
             console.error('Error fetching travel orders:', e);
@@ -54,7 +77,7 @@ export const useHRData = () => {
         try {
             const response = await fetch('/api/pass-slips');
             if (response.ok) {
-                passSlips.value = await response.json();
+                passSlips.value = withoutTrashedEmployees(await response.json());
             }
         } catch (e) {
             console.error('Error fetching pass slips:', e);
@@ -71,7 +94,7 @@ export const useHRData = () => {
             const response = await fetch('/api/tardiness');
             if (response.ok) {
                 const result = await response.json();
-                tardiness.value = result.data || result;
+                tardiness.value = withoutTrashedEmployee(result.data || result, 'employee');
             }
         } catch (e) {
             console.error('Error fetching tardiness:', e);
@@ -87,7 +110,7 @@ export const useHRData = () => {
         try {
             const response = await fetch('/api/time-slips');
             if (response.ok) {
-                timeSlips.value = await response.json();
+                timeSlips.value = withoutTrashedEmployee(await response.json(), 'requesting_employee');
             }
         } catch (e) {
             console.error('Error fetching time slips:', e);

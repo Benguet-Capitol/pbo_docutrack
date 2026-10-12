@@ -1,4 +1,5 @@
 import { ref, watch, computed } from 'vue';
+import { useTrashedControlNumbers } from '@/Composables/useTrashedControlNumbers';
 import { usePage } from '@inertiajs/vue3';
 import type { TravelOrder, Employee } from './useTravelOrdersData';
 
@@ -89,6 +90,9 @@ export function useTravelOrdersForm(employees: any, travelOrders: any) {
             .sort();
     });
 
+    // Control numbers of trashed records stay reserved until permanently deleted
+    const { maxTrashedSeries } = useTrashedControlNumbers('travel_orders');
+
     const generateControlNo = (dateString?: string): string => {
         const dateToUse = dateString ? new Date(dateString) : new Date();
         const year = dateToUse.getFullYear();
@@ -105,7 +109,7 @@ export function useTravelOrdersForm(employees: any, travelOrders: any) {
             0
         );
 
-        const series = String(maxSeries + 1).padStart(4, '0');
+        const series = String(Math.max(maxSeries, maxTrashedSeries(prefix, year)) + 1).padStart(4, '0');
         return `${prefix}-${year}-${month}-${series}`;
     };
 

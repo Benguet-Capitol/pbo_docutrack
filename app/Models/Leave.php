@@ -2,11 +2,15 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\LogsActivity;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Leave extends Model
 {
+    use SoftDeletes, LogsActivity;
+
     protected $fillable = [
         'control_no',
         'employee_id',
@@ -34,7 +38,7 @@ class Leave extends Model
 
     public function employee(): BelongsTo
     {
-        return $this->belongsTo(Employee::class);
+        return $this->belongsTo(Employee::class)->withTrashed();
     }
 
     protected function serializeDate($date)

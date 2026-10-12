@@ -24,7 +24,8 @@ class SyncController extends Controller
             $skipped = 0;
 
             foreach ($registryOffices as $registryOffice) {
-                $localOffice = Office::firstOrCreate(
+                // withTrashed: update offices in the Trash instead of re-inserting (unique abbreviation)
+                $localOffice = Office::withTrashed()->firstOrCreate(
                     ['office_abbreviation' => $registryOffice->office_abbreviation],
                     [
                         'office_name' => $registryOffice->office_name,
@@ -77,7 +78,7 @@ class SyncController extends Controller
                     ->orWhere('office_name', $registryEmployee->office)
                     ->first();
 
-                Employee::updateOrCreate(
+                Employee::withTrashed()->updateOrCreate(
                     ['employee_id' => $registryEmployee->employee_id],
                     [
                         'name' => $registryEmployee->name,
@@ -113,7 +114,7 @@ class SyncController extends Controller
                     ->orWhere('office_name', $registryUser->office)
                     ->first();
 
-                User::updateOrCreate(
+                User::withTrashed()->updateOrCreate(
                     ['username' => $registryUser->username],
                     [
                         'name' => $registryUser->name,
