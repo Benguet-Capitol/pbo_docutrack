@@ -74,6 +74,7 @@
             :form-data="formData"
             :form-errors="formErrors"
             :offices="offices"
+            :roles="roles"
             :employees="employees"
             @close="handleCloseCreateModal"
             @save="handleSaveCreate"
@@ -85,6 +86,7 @@
             :form-data="formData"
             :form-errors="formErrors"
             :offices="offices"
+            :roles="roles"
             @close="handleCloseEditModal"
             @save="handleSaveEdit"
         />
@@ -131,6 +133,7 @@ const formComposable = useUserForm(dataComposable.employees);
 const users = dataComposable.users;
 const employees = dataComposable.employees;
 const offices = dataComposable.offices;
+const roles = dataComposable.roles;
 const loading = dataComposable.loading;
 const error = dataComposable.error;
 const searchQuery = dataComposable.searchQuery;

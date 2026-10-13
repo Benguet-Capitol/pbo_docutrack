@@ -18,6 +18,9 @@
                     @create-click="handleCreateClick"
                     @update:search-query="handleSearchQuery"
                     @update:items-per-page="handleItemsPerPage"
+                    :selected-year="selectedYear"
+                    :available-years="availableYears"
+                    @update:selected-year="selectedYear = $event"
                     :view-mode="viewMode"
                     @update:view-mode="setViewMode"
                 />
@@ -39,7 +42,7 @@
                 <EmptyState 
                     v-else-if="filteredTimeSlips.length === 0"
                     title="No Time Slips found"
-                    message="Try adjusting your search or create a new time slip"
+                    message="Try another year, adjust your search, or create a new time slip"
                 />
 
                 <!-- Data Table -->
@@ -122,7 +125,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
+import { useYearFilter } from '@/Composables/useYearFilter';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import Toast from '@/Components/Toast.vue';
 import PageHead from '@/Components/PageHead.vue';
@@ -189,12 +193,18 @@ const currentPage = ref(1);
 const sortBy = ref<'control_no' | 'date' | 'reason'>('control_no');
 const sortOrder = ref<'asc' | 'desc'>('desc');
 
+/** Year shown in the list, based on the time slip date (defaults to the current year) */
+const { selectedYear, availableYears, filterByYear } = useYearFilter(timeSlips, (slip) => slip.date);
+watch(selectedYear, () => {
+    currentPage.value = 1;
+});
+
 const creating_local = ref(false);
 const updating_local = ref(false);
 const deleting_local = ref(false);
 
 const filteredTimeSlips = computed(() => {
-    let filtered = timeSlips.value;
+    let filtered = filterByYear(timeSlips.value);
 
     if (searchQuery.value) {
         const query = searchQuery.value.toLowerCase();

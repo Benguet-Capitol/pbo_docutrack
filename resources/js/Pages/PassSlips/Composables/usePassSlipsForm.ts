@@ -1,9 +1,12 @@
 import { ref, watch, computed } from 'vue';
+import { usePermissions } from '@/Composables/usePermissions';
 import { useTrashedControlNumbers } from '@/Composables/useTrashedControlNumbers';
 import { usePage } from '@inertiajs/vue3';
 import type { PassSlip, Employee } from './usePassSlipsData';
 
 export function usePassSlipsForm(employees: any, passSlips: any) {
+    const { can } = usePermissions();
+
     const formData = ref({
         control_no: '',
         date: '',
@@ -280,25 +283,19 @@ export function usePassSlipsForm(employees: any, passSlips: any) {
     /**
      * Check if current user can create pass slips
      */
-    const canCreatePassSlips = computed(() => {
-        return ['Developer', 'Administrator', 'Administrative', 'Receiving', 'Reviewer', 'Supervisor'].includes(usertype.value);
-    });
+    const canCreatePassSlips = computed(() => can('pass_slips.create'));
 
     /**
      * Check if current user can edit pass slips
      * All authenticated users can edit pass slips (they all have pass_slips.edit permission)
      */
-    const canEditPassSlips = computed(() => {
-        return ['Developer', 'Administrator', 'Administrative'].includes(usertype.value);
-    });
+    const canEditPassSlips = computed(() => can('pass_slips.edit'));
 
     /**
      * Check if current user can delete pass slips
      * Only Developer and Administrator can delete pass slips
      */
-    const canDeletePassSlips = computed(() => {
-        return ['Developer', 'Administrator', 'Administrative'].includes(usertype.value);
-    });
+    const canDeletePassSlips = computed(() => can('pass_slips.delete'));
 
     const openCreateModal = () => {
         isRegeneratingControlNo.value = true;

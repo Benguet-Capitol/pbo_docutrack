@@ -18,6 +18,9 @@
                     @create-click="handleCreateClick"
                     @update:search-query="handleSearchQuery"
                     @update:items-per-page="handleItemsPerPage"
+                    :selected-year="selectedYear"
+                    :available-years="availableYears"
+                    @update:selected-year="selectedYear = $event"
                     :view-mode="viewMode"
                     @update:view-mode="setViewMode"
                 />
@@ -39,7 +42,7 @@
                 <EmptyState 
                     v-else-if="filteredPassSlips.length === 0"
                     title="No Pass Slips found"
-                    message="Try adjusting your search or create a new pass slip"
+                    message="Try another year, adjust your search, or create a new pass slip"
                 />
 
                 <!-- Data Table -->
@@ -151,6 +154,8 @@ const toastRef = ref<InstanceType<typeof Toast> | null>(null);
 
 // ============== Composables ==============
 const dataComposable = usePassSlipsData();
+const selectedYear = dataComposable.selectedYear;
+const availableYears = dataComposable.availableYears;
 const formComposable = usePassSlipsForm(dataComposable.employees, dataComposable.passSlips);
 
 // ============== Expose State from Composables ==============

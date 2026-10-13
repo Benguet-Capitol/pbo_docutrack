@@ -156,9 +156,16 @@ class DocumentController extends Controller
                 'user_id' => 'nullable|exists:users,id',
             ]);
 
+            // Changing a document's date needs its own permission (the field is locked in the edit form otherwise)
+            if (isset($validated['date'])
+                && \Illuminate\Support\Carbon::parse($validated['date'])->toDateString() !== \Illuminate\Support\Carbon::parse($document->date)->toDateString()
+                && !RoleService::hasPermission($user, 'documents.edit_date')) {
+                return response()->json(['error' => "You do not have permission to change a document's date"], 403);
+            }
+
             $document->update($validated);
-            
-            
+
+
             return response()->json($document->load('user'));
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], 500);
@@ -272,7 +279,12 @@ class DocumentController extends Controller
             }
 
             $document = Document::findOrFail($id);
-            
+
+            // Only the recipient (or, for office/municipality forwards, permitted roles and the forwarder) may receive
+            if (!RoleService::canReceiveSpecificDocument($user, $document)) {
+                return response()->json(['error' => 'You cannot receive this document'], 403);
+            }
+
             // Get the last forward transaction with relationships
             $lastForwardTransaction = DocumentTransaction::where('document_id', $id)
                 ->whereRaw("action LIKE 'Forwarded%'")

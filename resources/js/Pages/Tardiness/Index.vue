@@ -18,6 +18,9 @@
                     @create-click="handleCreateClick"
                     @update:search-query="handleSearchQuery"
                     @update:items-per-page="handleItemsPerPage"
+                    :selected-year="selectedYear"
+                    :available-years="availableYears"
+                    @update:selected-year="selectedYear = $event"
                     :view-mode="viewMode"
                     @update:view-mode="setViewMode"
                 />
@@ -39,7 +42,7 @@
                 <EmptyState 
                     v-else-if="filteredTardiness.length === 0"
                     title="No Tardiness/Undertime found"
-                    message="Try adjusting your search or create a new record"
+                    message="Try another year, adjust your search, or create a new record"
                 />
 
                 <!-- Data Table -->
@@ -157,6 +160,8 @@ const toastRef = ref<InstanceType<typeof Toast> | null>(null);
 
 // ============== Composables ==============
 const dataComposable = useTardinessData();
+const selectedYear = dataComposable.selectedYear;
+const availableYears = dataComposable.availableYears;
 const formComposable = useTardinessForm(dataComposable.employees, dataComposable.tardiness);
 
 // ============== Expose State from Composables ==============

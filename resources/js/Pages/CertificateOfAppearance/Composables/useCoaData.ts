@@ -1,4 +1,5 @@
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
+import { useYearFilter } from '@/Composables/useYearFilter';
 
 export interface Employee {
     id: number;
@@ -26,6 +27,12 @@ export function useCoaData() {
     const employees = ref<Employee[]>([]);
     const searchQuery = ref('');
     const currentPage = ref(1);
+
+    /** Year shown in the list, based on date (defaults to the current year) */
+    const { selectedYear, availableYears, filterByYear } = useYearFilter(certificates, (certificate) => certificate.date);
+    watch(selectedYear, () => {
+        currentPage.value = 1;
+    });
     const itemsPerPage = ref(10);
     const sortBy = ref<'control_no' | 'name' | 'office' | 'purpose' | 'date'>('control_no');
     const sortOrder = ref<'asc' | 'desc'>('desc');
@@ -39,7 +46,7 @@ export function useCoaData() {
     };
 
     const filteredCertificates = computed(() => {
-        let filtered = certificates.value;
+        let filtered = filterByYear(certificates.value);
 
         if (searchQuery.value) {
             const query = searchQuery.value.toLowerCase();
@@ -155,6 +162,8 @@ export function useCoaData() {
     };
 
     return {
+        selectedYear,
+        availableYears,
         certificates,
         employees,
         searchQuery,

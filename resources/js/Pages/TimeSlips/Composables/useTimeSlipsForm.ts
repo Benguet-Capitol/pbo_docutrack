@@ -1,9 +1,12 @@
 import { ref, watch, computed } from 'vue';
+import { usePermissions } from '@/Composables/usePermissions';
 import { useTrashedControlNumbers } from '@/Composables/useTrashedControlNumbers';
 import { usePage } from '@inertiajs/vue3';
 import type { TimeSlip, Employee } from './useTimeSlipsData';
 
 export function useTimeSlipsForm(employees: any, timeSlips: any) {
+    const { can } = usePermissions();
+
     const formData = ref({
         control_no: '',
         requesting_employee_id: null as number | null,
@@ -116,25 +119,19 @@ export function useTimeSlipsForm(employees: any, timeSlips: any) {
     /**
      * Check if current user can create time slips
      */
-    const canCreateTimeSlips = computed(() => {
-        return ['Developer', 'Administrator', 'Administrative', 'Receiving', 'Reviewer', 'Supervisor'].includes(usertype.value);
-    });
+    const canCreateTimeSlips = computed(() => can('time_slips.create'));
 
     /**
      * Check if current user can edit time slips
      * All authenticated users can edit time slips (they all have time_slips.edit permission)
      */
-    const canEditTimeSlips = computed(() => {
-        return ['Developer', 'Administrator', 'Administrative'].includes(usertype.value);
-    });
+    const canEditTimeSlips = computed(() => can('time_slips.edit'));
 
     /**
      * Check if current user can delete time slips
      * Only Developer and Administrator can delete time slips
      */
-    const canDeleteTimeSlips = computed(() => {
-        return ['Developer', 'Administrator', 'Administrative'].includes(usertype.value);
-    });
+    const canDeleteTimeSlips = computed(() => can('time_slips.delete'));
 
     const openCreateModal = () => {
         isRegeneratingControlNo.value = true;

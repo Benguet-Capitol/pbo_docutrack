@@ -1,4 +1,5 @@
 import { ref, computed } from 'vue';
+import { usePermissions } from '@/Composables/usePermissions';
 import { usePage } from '@inertiajs/vue3';
 import type { User, Employee } from './useUserData';
 
@@ -17,6 +18,8 @@ export interface FormData {
  * Manages form state, validation, and API operations for users
  */
 export function useUserForm(employees: any) {
+    const { can } = usePermissions();
+
     // ============== State ==============
 
     /** Controls visibility of the Create User modal */
@@ -57,9 +60,7 @@ export function useUserForm(employees: any) {
      * Check if current user can manage users
      * Only Developer and Administrator can manage users
      */
-    const canManageUsers = computed(() => {
-        return ['Developer', 'Administrator'].includes(usertype.value);
-    });
+    const canManageUsers = computed(() => can('users.manage'));
 
     // ============== Form Methods ==============
 
@@ -211,7 +212,18 @@ export function useUserForm(employees: any) {
         if (!formData.value.office || Number(formData.value.office) === 0) {
             formErrors.value['office'] = 'The office field is required';
         }
-        
+
+        // Password reset is optional: only validated when a new password is entered
+        if (formData.value.password || formData.value.password_confirmation) {
+            if (formData.value.password.length < 6) {
+                formErrors.value['password'] = 'Password must be at least 6 characters';
+            }
+
+            if (formData.value.password !== formData.value.password_confirmation) {
+                formErrors.value['password_confirmation'] = 'Passwords do not match';
+            }
+        }
+
         return Object.keys(formErrors.value).length === 0;
     };
 
@@ -265,10 +277,12 @@ export function useUserForm(employees: any) {
                     name: formData.value.name,
                     username: formData.value.username,
                     usertype: formData.value.usertype,
-                    office: formData.value.office
+                    office: formData.value.office,
+                    // Only sent when resetting; omitted keeps the current password
+                    ...(formData.value.password ? { password: formData.value.password } : {}),
                 })
             });
-            
+
             if (!response.ok) {
                 const errorData = await response.json().catch(() => ({}));
                 throw new Error(errorData.message || errorData.error || 'Failed to update user');

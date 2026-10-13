@@ -1,4 +1,5 @@
 import { ref, watch, computed } from 'vue';
+import { usePermissions } from '@/Composables/usePermissions';
 import { useTrashedControlNumbers } from '@/Composables/useTrashedControlNumbers';
 import { usePage } from '@inertiajs/vue3';
 import type { Leave } from './useLeavesData';
@@ -29,6 +30,8 @@ export function useLeavesForm(
     onFetchLeaves: () => Promise<void>,
     showToastFn: (message: string, type: 'success' | 'error' | 'info') => void
 ) {
+    const { can } = usePermissions();
+
     // Modal visibility state
     const showCreateModal = ref(false);
     const showEditModal = ref(false);
@@ -141,25 +144,19 @@ export function useLeavesForm(
      * Check if current user can create offices
      * Only Developer and Administrator can create offices
      */
-    const canCreateLeaves = computed(() => {
-        return ['Developer', 'Administrator', 'Administrative'].includes(usertype.value);
-    });
+    const canCreateLeaves = computed(() => can('leaves.create'));
 
     /**
      * Check if current user can edit offices
      * All authenticated users can edit offices (they all have offices.edit permission)
      */
-    const canEditLeaves = computed(() => {
-        return ['Developer', 'Administrator', 'Administrative'].includes(usertype.value);
-    });
+    const canEditLeaves = computed(() => can('leaves.edit'));
 
     /**
      * Check if current user can delete offices
      * Only Developer and Administrator can delete offices
      */
-    const canDeleteLeaves = computed(() => {
-        return ['Developer', 'Administrator', 'Administrative'].includes(usertype.value);
-    });
+    const canDeleteLeaves = computed(() => can('leaves.delete'));
 
     const openCreateModal = () => {
         const today = new Date().toISOString().split('T')[0];

@@ -28,7 +28,7 @@ class ProfileController extends Controller
     public function update(ProfileUpdateRequest $request): RedirectResponse
     {
         return back()->withErrors([
-            'profile' => 'Profile updates are managed by the pbo-registry system. Contact your administrator to modify your profile.',
+            'profile' => 'Profile updates are handled by your administrator. Contact your administrator to modify your profile.',
         ]);
     }
 
@@ -38,7 +38,7 @@ class ProfileController extends Controller
     public function destroy(Request $request): RedirectResponse
     {
         return back()->withErrors([
-            'profile' => 'Account deletion is managed by the pbo-registry system. Contact your administrator to delete your account.',
+            'profile' => 'Account deletion is handled by your administrator. Contact your administrator to delete your account.',
         ]);
     }
 }

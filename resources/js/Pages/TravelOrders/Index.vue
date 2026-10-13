@@ -18,6 +18,9 @@
                     @create-click="formComposable.openCreateModal()"
                     @update:search-query="handleSearchQuery"
                     @update:items-per-page="handleItemsPerPage"
+                    :selected-year="selectedYear"
+                    :available-years="availableYears"
+                    @update:selected-year="selectedYear = $event"
                     :view-mode="viewMode"
                     @update:view-mode="setViewMode"
                 />
@@ -38,7 +41,7 @@
                 <EmptyState 
                     v-else-if="filteredTravelOrders.length === 0"
                     title="No Travel Orders found"
-                    message="Try adjusting your search or create a new travel order"
+                    message="Try another year, adjust your search, or create a new travel order"
                 />
 
                 <!-- Data Table -->
@@ -152,6 +155,8 @@ const toastRef = ref<InstanceType<typeof Toast> | null>(null);
 
 // ============== Composables ==============
 const dataComposable = useTravelOrdersData();
+const selectedYear = dataComposable.selectedYear;
+const availableYears = dataComposable.availableYears;
 const formComposable = useTravelOrdersForm(dataComposable.employees, dataComposable.travelOrders);
 
 // ============== Expose State from Composables ==============

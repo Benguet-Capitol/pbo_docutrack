@@ -60,12 +60,7 @@
                                     class="block w-full pl-10 pr-4 py-2 text-xs border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:outline-none focus:border-blue-500 appearance-none"
                                 >
                                     <option value="">Select Role</option>
-                                    <option value="Administrator">Administrator</option>
-                                    <option value="Developer">Developer</option>
-                                    <option value="Supervisor">Supervisor</option>
-                                    <option value="Reviewer">Reviewer</option>
-                                    <option value="Receiving">Receiving</option>
-                                    <option value="Administrative">Administrative</option>
+                                    <option v-for="role in roles" :key="role" :value="role">{{ role }}</option>
                                 </select>
                             </div>
                             <span v-if="formErrors.usertype" class="text-red-500 text-xs">{{ formErrors.usertype }}</span>
@@ -88,6 +83,57 @@
                                 </select>
                             </div>
                             <span v-if="formErrors.office" class="text-red-500 text-xs">{{ formErrors.office }}</span>
+                        </div>
+
+                        <!-- Reset Password: optional; blank keeps the current password -->
+                        <div class="space-y-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+                            <div>
+                                <p class="text-xs font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                                    <i class="fas fa-key text-amber-500"></i>
+                                    Reset Password
+                                </p>
+                                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Leave blank to keep the current password. Give the new password to the user.</p>
+                            </div>
+
+                            <div class="space-y-2">
+                                <label for="edit_password" class="block text-xs font-medium text-gray-700 dark:text-gray-300">New Password</label>
+                                <div class="relative flex items-center">
+                                    <i class="fas fa-lock absolute left-3 text-gray-400 text-sm"></i>
+                                    <input
+                                        v-model="formData.password"
+                                        id="edit_password"
+                                        :type="showPassword ? 'text' : 'password'"
+                                        placeholder="New Password (min. 6 characters)"
+                                        autocomplete="new-password"
+                                        class="block w-full pl-10 pr-10 py-2 text-xs border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:outline-none focus:border-emerald-500"
+                                    />
+                                    <button
+                                        type="button"
+                                        @click="showPassword = !showPassword"
+                                        class="absolute right-3 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                                        :title="showPassword ? 'Hide password' : 'Show password'"
+                                    >
+                                        <i :class="showPassword ? 'fas fa-eye-slash' : 'fas fa-eye'"></i>
+                                    </button>
+                                </div>
+                                <span v-if="formErrors.password" class="text-red-500 text-xs">{{ formErrors.password }}</span>
+                            </div>
+
+                            <div class="space-y-2">
+                                <label for="edit_password_confirmation" class="block text-xs font-medium text-gray-700 dark:text-gray-300">Confirm New Password</label>
+                                <div class="relative flex items-center">
+                                    <i class="fas fa-lock absolute left-3 text-gray-400 text-sm"></i>
+                                    <input
+                                        v-model="formData.password_confirmation"
+                                        id="edit_password_confirmation"
+                                        :type="showPassword ? 'text' : 'password'"
+                                        placeholder="Confirm New Password"
+                                        autocomplete="new-password"
+                                        class="block w-full pl-10 pr-4 py-2 text-xs border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:outline-none focus:border-emerald-500"
+                                    />
+                                </div>
+                                <span v-if="formErrors.password_confirmation" class="text-red-500 text-xs">{{ formErrors.password_confirmation }}</span>
+                            </div>
                         </div>
 
                         <!-- Submit error -->
@@ -120,10 +166,11 @@
 </template>
 
 <script setup lang="ts">
+import { ref, watch } from 'vue';
 import type { FormData } from '../Composables/useUserForm';
 import type { Office } from '../Composables/useUserData';
 
-defineProps({
+const props = defineProps({
     showEditModal: {
         type: Boolean,
         required: true,
@@ -140,6 +187,10 @@ defineProps({
         type: Array as () => Office[],
         required: true,
     },
+    roles: {
+        type: Array as () => string[],
+        required: true,
+    },
 });
 
 const emit = defineEmits<{
@@ -154,6 +205,12 @@ const onClose = () => {
 const onSave = () => {
     emit('save');
 };
+
+/** Reveals the new password while typing; hidden again each time the modal opens */
+const showPassword = ref(false);
+watch(() => props.showEditModal, () => {
+    showPassword.value = false;
+});
 </script>
 
 <style scoped>

@@ -1,4 +1,5 @@
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
+import { useYearFilter } from '@/Composables/useYearFilter';
 
 export interface Employee {
     id: number;
@@ -36,6 +37,12 @@ export function useTardinessData() {
     const employees = ref<Employee[]>([]);
     const searchQuery = ref('');
     const currentPage = ref(1);
+
+    /** Year shown in the list, based on date_filed (defaults to the current year) */
+    const { selectedYear, availableYears, filterByYear } = useYearFilter(tardiness, (record) => record.date_filed);
+    watch(selectedYear, () => {
+        currentPage.value = 1;
+    });
     const itemsPerPage = ref(10);
     const sortBy = ref<'id' | 'control_no' | 'requested_date' | 'type' | 'reason'>('id');
     const sortOrder = ref<'asc' | 'desc'>('desc');
@@ -63,7 +70,7 @@ export function useTardinessData() {
     };
 
     const filteredTardiness = computed(() => {
-        let filtered = tardiness.value;
+        let filtered = filterByYear(tardiness.value);
 
         if (searchQuery.value) {
             const query = searchQuery.value.toLowerCase();
@@ -236,6 +243,8 @@ export function useTardinessData() {
     };
 
     return {
+        selectedYear,
+        availableYears,
         tardiness,
         employees,
         searchQuery,

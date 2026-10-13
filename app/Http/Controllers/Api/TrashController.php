@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Http\Middleware\EnsureAdminOrDeveloper;
+use App\Services\RoleService;
 use App\Models\ActivityLog;
 use App\Models\CertificateOfAppearance;
 use App\Models\Document;
@@ -26,7 +26,7 @@ use Illuminate\Support\Facades\Hash;
 
 /**
  * Trash: lists soft-deleted records of every module, restores them,
- * and permanently deletes them after re-confirming an Administrator/Developer password.
+ * and permanently deletes them after re-confirming the signed-in user's password.
  */
 class TrashController extends Controller
 {
@@ -160,7 +160,7 @@ class TrashController extends Controller
 
     /**
      * Permanently delete one or more trashed items. Requires the current
-     * Administrator/Developer user's password.
+     * user's password (and the trash.manage permission).
      */
     public function forceDelete(Request $request): JsonResponse
     {
@@ -199,18 +199,18 @@ class TrashController extends Controller
     }
 
     /**
-     * The password must belong to the signed-in Administrator/Developer.
+     * The password must belong to the signed-in user, who must be allowed to manage the Trash.
      */
     private function passwordMatches(?User $user, string $password): bool
     {
-        if (!$user || !in_array($user->usertype, EnsureAdminOrDeveloper::ROLES, true)) {
+        if (!$user || !RoleService::hasPermission($user, 'trash.manage')) {
             return false;
         }
 
         try {
             return Hash::check($password, $user->password);
         } catch (\RuntimeException $e) {
-            // Stored hash uses an unsupported algorithm (e.g. synced from the registry)
+            // Stored hash uses an unsupported algorithm (e.g. imported from another system)
             return false;
         }
     }

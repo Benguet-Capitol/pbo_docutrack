@@ -32,8 +32,8 @@
             <div class="flex-1"></div>
             <div class="mt-3 flex justify-end gap-2 px-4 py-2 bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 rounded-b-lg">
                 <RowIconButton color="purple" icon="fas fa-eye" tooltip="Preview" @click.stop="$emit('preview', certificate)" />
-                <RowIconButton color="blue" icon="fas fa-pencil-alt" tooltip="Edit" @click.stop="$emit('edit', certificate)" />
-                <RowIconButton color="red" icon="fas fa-trash-alt" tooltip="Delete" @click.stop="$emit('delete', certificate)" />
+                <RowIconButton v-if="can('certificate_of_appearances.edit')" color="blue" icon="fas fa-pencil-alt" tooltip="Edit" @click.stop="$emit('edit', certificate)" />
+                <RowIconButton v-if="can('certificate_of_appearances.delete')" color="red" icon="fas fa-trash-alt" tooltip="Delete" @click.stop="$emit('delete', certificate)" />
             </div>
         </div>
     </div>
@@ -41,7 +41,10 @@
 
 <script setup lang="ts">
 import RowIconButton from '@/Components/RowIconButton.vue';
+import { usePermissions } from '@/Composables/usePermissions';
 import type { CertificateOfAppearance } from '../Composables/useCoaData';
+
+const { can } = usePermissions();
 
 defineProps<{
     certificates: CertificateOfAppearance[];

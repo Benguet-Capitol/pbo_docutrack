@@ -47,6 +47,9 @@ export function useUserData() {
     /** Stores the list of all offices for reference */
     const offices = ref<Office[]>([]);
 
+    /** Role names from the Roles & Permissions module, for the role dropdown */
+    const roles = ref<string[]>([]);
+
     /** Tracks the loading state of the page */
     const loading = ref(true);
 
@@ -187,6 +190,21 @@ export function useUserData() {
     };
 
     /**
+     * fetchRoles: Fetches role names for the role dropdown
+     */
+    const fetchRoles = async () => {
+        try {
+            const response = await fetch('/api/roles/options', { headers: { Accept: 'application/json' } });
+            if (!response.ok) {
+                throw new Error('Failed to fetch roles');
+            }
+            roles.value = await response.json();
+        } catch (e) {
+            error.value = e instanceof Error ? e.message : 'An error occurred';
+        }
+    };
+
+    /**
      * changePage: Navigate to a specific page
      */
     const changePage = (page: number) => {
@@ -266,7 +284,8 @@ export function useUserData() {
         await Promise.all([
             fetchUsers(),
             fetchEmployees(),
-            fetchOffices()
+            fetchOffices(),
+            fetchRoles()
         ]);
     });
 
@@ -275,6 +294,7 @@ export function useUserData() {
         users,
         employees,
         offices,
+        roles,
         loading,
         error,
         searchQuery,

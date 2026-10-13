@@ -1,4 +1,5 @@
 import { ref, computed } from 'vue';
+import { usePermissions } from '@/Composables/usePermissions';
 import { usePage } from '@inertiajs/vue3';
 import type { Municipality } from './useMunicipalityData';
 
@@ -15,6 +16,8 @@ export interface FormData {
  * Manages form state, validation, and API operations for municipalities
  */
 export function useMunicipalityForm() {
+    const { can } = usePermissions();
+
     // ============== State ==============
 
     /** Controls visibility of the Create Municipality modal */
@@ -53,25 +56,19 @@ export function useMunicipalityForm() {
      * Check if current user can create municipalities
      * Only Developer and Administrator can create municipalities
      */
-    const canCreateMunicipalities = computed(() => {
-        return ['Developer', 'Administrator'].includes(usertype.value);
-    });
+    const canCreateMunicipalities = computed(() => can('municipalities.create'));
 
     /**
      * Check if current user can edit municipalities
      * All authenticated users can edit municipalities (they all have municipalities.edit permission)
      */
-    const canEditMunicipalities = computed(() => {
-        return true;
-    });
+    const canEditMunicipalities = computed(() => can('municipalities.edit'));
 
     /**
      * Check if current user can delete municipalities
      * Only Developer and Administrator can delete municipalities
      */
-    const canDeleteMunicipalities = computed(() => {
-        return ['Developer', 'Administrator'].includes(usertype.value);
-    });
+    const canDeleteMunicipalities = computed(() => can('municipalities.delete'));
 
     // ============== Form Methods ==============
 

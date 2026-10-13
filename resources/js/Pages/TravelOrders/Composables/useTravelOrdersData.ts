@@ -1,4 +1,5 @@
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
+import { useYearFilter } from '@/Composables/useYearFilter';
 
 export interface Employee {
     id: number;
@@ -41,6 +42,12 @@ export function useTravelOrdersData() {
 
     const searchQuery = ref('');
     const currentPage = ref(1);
+
+    /** Year shown in the list, based on date (defaults to the current year) */
+    const { selectedYear, availableYears, filterByYear } = useYearFilter(travelOrders, (order) => order.date);
+    watch(selectedYear, () => {
+        currentPage.value = 1;
+    });
     const itemsPerPage = ref(10);
     const sortBy = ref('id');
     const sortOrder = ref<'asc' | 'desc'>('desc');
@@ -94,7 +101,7 @@ export function useTravelOrdersData() {
     };
 
     const filteredTravelOrders = computed(() => {
-        let filtered = travelOrders.value;
+        let filtered = filterByYear(travelOrders.value);
 
         if (searchQuery.value) {
             const query = searchQuery.value.toLowerCase();
@@ -255,6 +262,8 @@ export function useTravelOrdersData() {
     };
 
     return {
+        selectedYear,
+        availableYears,
         // State
         travelOrders,
         employees,

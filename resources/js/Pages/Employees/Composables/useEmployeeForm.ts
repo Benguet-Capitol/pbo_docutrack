@@ -1,4 +1,5 @@
 import { ref, computed } from 'vue';
+import { usePermissions } from '@/Composables/usePermissions';
 import { usePage } from '@inertiajs/vue3';
 import type { Employee } from './useEmployeeData';
 
@@ -14,6 +15,8 @@ export interface FormData {
  * Manages form state, validation, and API operations for employees
  */
 export function useEmployeeForm() {
+    const { can } = usePermissions();
+
     // ============== State ==============
 
     /** Controls visibility of the Create Employee modal */
@@ -51,17 +54,14 @@ export function useEmployeeForm() {
      * Check if current user can create/edit employees
      * Developer, Administrator, and Administrative can create/edit employees
      */
-    const canCreateEditEmployees = computed(() => {
-        return ['Developer', 'Administrator', 'Administrative'].includes(usertype.value);
-    });
+    const canCreateEmployees = computed(() => can('employees.create'));
+    const canEditEmployees = computed(() => can('employees.edit'));
 
     /**
      * Check if current user can delete employees
      * Developer, Administrator, and Administrative can delete employees
      */
-    const canDeleteEmployees = computed(() => {
-        return ['Developer', 'Administrator', 'Administrative'].includes(usertype.value);
-    });
+    const canDeleteEmployees = computed(() => can('employees.delete'));
 
     // ============== Form Methods ==============
 
@@ -295,7 +295,8 @@ export function useEmployeeForm() {
         formErrors,
 
         // Permissions
-        canCreateEditEmployees,
+        canCreateEmployees,
+        canEditEmployees,
         canDeleteEmployees,
 
         // Modal Methods

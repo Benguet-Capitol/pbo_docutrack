@@ -6,7 +6,7 @@ use Illuminate\Foundation\Configuration\Middleware;
 use Inertia\Inertia;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
-use Illuminate\Auth\AuthorizationException;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Session\TokenMismatchException;
 
@@ -24,7 +24,7 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
 
         $middleware->alias([
-            'admin.or.developer' => \App\Http\Middleware\EnsureAdminOrDeveloper::class,
+            'permission' => \App\Http\Middleware\EnsurePermission::class,
         ]);
 
         // Exclude API routes from CSRF verification

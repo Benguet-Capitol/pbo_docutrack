@@ -14,7 +14,7 @@
                 <Header 
                     :search-query="searchQuery"
                     :items-per-page="itemsPerPage"
-                    :can-create-edit-employees="canCreateEditEmployees"
+                    :can-create-edit-employees="canCreateEmployees"
                     @update:search-query="searchQuery = $event"
                     @update:items-per-page="itemsPerPage = Number($event)"
                     @create-click="handleCreateClick"
@@ -41,7 +41,7 @@
                 <Table
                     v-else-if="viewMode === 'table'"
                     :employees="paginatedEmployees"
-                    :can-edit-employees="canCreateEditEmployees"
+                    :can-edit-employees="canEditEmployees"
                     :can-delete-employees="canDeleteEmployees"
                     :sort-by="sortBy"
                     :sort-order="sortOrder"
@@ -53,7 +53,7 @@
                 <div v-else class="p-4">
                     <CardView
                         :employees="paginatedEmployees"
-                        :can-edit-employees="canCreateEditEmployees"
+                        :can-edit-employees="canEditEmployees"
                         :can-delete-employees="canDeleteEmployees"
                         :get-office-name="getOfficeNameById"
                         @edit="handleEditClick"
@@ -153,7 +153,8 @@ const editingEmployee = formComposable.editingEmployee;
 const employeeToDelete = formComposable.employeeToDelete;
 const formData = formComposable.formData;
 const formErrors = formComposable.formErrors;
-const canCreateEditEmployees = formComposable.canCreateEditEmployees;
+const canCreateEmployees = formComposable.canCreateEmployees;
+const canEditEmployees = formComposable.canEditEmployees;
 const canDeleteEmployees = formComposable.canDeleteEmployees;
 
 // ============== Helper Methods ==============

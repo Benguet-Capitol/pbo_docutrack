@@ -45,6 +45,7 @@
                                     <option value="Referral - Highly Technical">Referral - Highly Technical</option>
                                 </optgroup>
                             </select>
+                            <YearFilter v-model="selectedYear" :years="availableYears" />
                             <ViewToggle v-model="viewMode" />
                             <!-- Items Per Page Selector: Controls number of items displayed per page -->
                             <select
@@ -708,9 +709,9 @@
                                         v-model="formData.date"
                                         id="edit_date"
                                         type="date"
-                                        :disabled="!['Administrator', 'Developer'].includes(currentUser?.usertype)"
+                                        :disabled="!hasPermission('documents.edit_date')"
                                         :max="todayDate"
-                                        :class="!['Administrator', 'Developer'].includes(currentUser?.usertype) ? 'opacity-60 cursor-not-allowed' : 'focus:border-blue-500'"
+                                        :class="!hasPermission('documents.edit_date') ? 'opacity-60 cursor-not-allowed' : 'focus:border-blue-500'"
                                         class="block w-full pl-10 pr-4 py-2 text-xs border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:outline-none"
                                     />
                                 </div>
@@ -1613,6 +1614,8 @@ import Toast from '@/Components/Toast.vue';
 import ViewToggle from '@/Components/ViewToggle.vue';
 import RowIconButton from '@/Components/RowIconButton.vue';
 import { useResponsiveView } from '@/Composables/useResponsiveView';
+import YearFilter from '@/Components/YearFilter.vue';
+import { useYearFilter } from '@/Composables/useYearFilter';
 import { ref, onMounted, computed, watch, onUnmounted } from 'vue';
 
 // Table on desktop (user can switch to cards), always cards on small screens
@@ -1674,6 +1677,18 @@ const searchQuery = ref('');
 
 /** Current page number for pagination */
 const currentPage = ref(1);
+
+/**
+ * Year shown in the list and tab counts, based on the document date (defaults to the current year).
+ * Documents still in progress (forwarded / to be received / pending) stay visible in every year so they aren't missed;
+ * "created only" and ended documents follow the year, since some are intentionally left as created.
+ */
+const IN_PROGRESS_STATUSES = ['forwarded', 'pending'];
+const { selectedYear, availableYears, filterByYear } = useYearFilter(
+    documents,
+    (document) => document.date,
+    (document) => IN_PROGRESS_STATUSES.includes(document.status),
+);
 
 /** Number of items to display per page */
 const itemsPerPage = ref(10);
@@ -1839,9 +1854,9 @@ const tabBadgeStyles: Record<string, string> = {
 /** Currently active status tab */
 const activeStatusTab = ref<string>('all');
 
-/** Documents filtered by search + type only (for tab counts, independent of status) */
+/** Documents filtered by year + search + type only (for tab counts, independent of status) */
 const documentsForTabCounts = computed(() => {
-    let filtered = [...documents.value];
+    let filtered = filterByYear(documents.value);
     if (documentTypeFilter.value) {
         filtered = filtered.filter(document => document.document_type === documentTypeFilter.value);
     }
@@ -2335,7 +2350,7 @@ const formErrors = ref<Record<string, string>>({});
  */
 const filteredDocuments = computed(() => {
     // All roles can view all document records — no per-role visibility gating.
-    let filtered = [...documents.value];
+    let filtered = filterByYear(documents.value);
 
     // Apply document type filter if selected
     if (documentTypeFilter.value) {
@@ -2398,6 +2413,10 @@ watch(documentTypeFilter, () => {
 
 watch(searchQuery, () => {
     currentPage.value = 1; // Reset to first page when search query changes
+});
+
+watch(selectedYear, () => {
+    currentPage.value = 1; // Reset to first page when the year changes
 });
 
 /**
@@ -2840,7 +2859,7 @@ const canReceiveDocument = (document: Document): boolean => {
 
     // Forwarded to office/municipality — allowed roles or original forwarder can still receive
     if (latestTransaction.forwarded_to_office_id || latestTransaction.forwarded_to_municipality_id) {
-        const isAllowedRole = ['Receiving', 'Administrator', 'Developer', 'Supervisor', 'Reviewer'].includes(currentUser.value?.usertype || '');
+        const isAllowedRole = hasPermission('documents.receive_office');
         const isForwarder = latestTransaction.user_id === currentUser.value?.id;
         return isAllowedRole || isForwarder;
     }

@@ -1,4 +1,5 @@
 import { ref, computed } from 'vue';
+import { usePermissions } from '@/Composables/usePermissions';
 import { usePage } from '@inertiajs/vue3';
 import type { Office } from './useOfficeData';
 
@@ -17,6 +18,8 @@ export interface FormData {
  * Manages form state, validation, and API operations for offices
  */
 export function useOfficeForm() {
+    const { can } = usePermissions();
+
     // ============== State ==============
 
     /** Controls visibility of the Create Office modal */
@@ -57,25 +60,19 @@ export function useOfficeForm() {
      * Check if current user can create offices
      * Only Developer and Administrator can create offices
      */
-    const canCreateOffices = computed(() => {
-        return ['Developer', 'Administrator'].includes(usertype.value);
-    });
+    const canCreateOffices = computed(() => can('offices.create'));
 
     /**
      * Check if current user can edit offices
      * All authenticated users can edit offices (they all have offices.edit permission)
      */
-    const canEditOffices = computed(() => {
-        return true;
-    });
+    const canEditOffices = computed(() => can('offices.edit'));
 
     /**
      * Check if current user can delete offices
      * Only Developer and Administrator can delete offices
      */
-    const canDeleteOffices = computed(() => {
-        return ['Developer', 'Administrator'].includes(usertype.value);
-    });
+    const canDeleteOffices = computed(() => can('offices.delete'));
 
     // ============== Form Methods ==============
 

@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Auth;
 class OfficeController extends Controller
 {
     /**
-     * Display a listing of offices from pbo-registry.
+     * Display a listing of offices.
      */
     public function index(): JsonResponse
     {

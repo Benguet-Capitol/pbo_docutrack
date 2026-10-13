@@ -33,9 +33,9 @@ class UserController extends Controller
         try {
             $validated = $request->validate([
                 'name' => 'required|string',
-                'username' => 'required|string|unique:' . env('DB_DATABASE_REGISTRY', 'pbo_registry') . '.users,username',
+                'username' => 'required|string|unique:users,username',
                 'password' => 'required|string|min:6',
-                'usertype' => 'required|string',
+                'usertype' => 'required|string|exists:roles,name',
                 'office' => 'required|integer',
             ]);
 
@@ -68,9 +68,9 @@ class UserController extends Controller
             
             $validated = $request->validate([
                 'name' => 'sometimes|string',
-                'username' => 'sometimes|string|unique:' . env('DB_DATABASE_REGISTRY', 'pbo_registry') . '.users,username,' . $id,
+                'username' => 'sometimes|string|unique:users,username,' . $id,
                 'password' => 'sometimes|string|min:6',
-                'usertype' => 'sometimes|string',
+                'usertype' => 'sometimes|string|exists:roles,name',
                 'office' => 'sometimes|integer',
             ]);
 

@@ -74,7 +74,7 @@ export function useRecordsData() {
             ]
         };
 
-        if (['Administrative', 'Administrator', 'Developer'].includes(usertype.value)) {
+        if (((page.props as any).auth?.permissions || []).includes('records.view.administrative')) {
             hierarchy['Administrative'] = [];
         }
 

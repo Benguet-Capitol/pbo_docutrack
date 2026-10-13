@@ -3,6 +3,7 @@
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <!-- Create Certificate Button -->
             <button
+                v-if="can('certificate_of_appearances.create')"
                 @click="$emit('create')"
                 class="inline-flex items-center gap-2 px-5 py-2.5 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-700 dark:hover:bg-emerald-800 rounded-lg transition-colors duration-200"
             >
@@ -19,6 +20,7 @@
                     placeholder="Search certificates..."
                     class="border border-gray-300 rounded-lg px-4 py-2 text-xs flex-1 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white w-80"
                 />
+                <YearFilter :model-value="selectedYear" :years="availableYears" @update:model-value="$emit('update:selectedYear', $event)" />
                 <ViewToggle :model-value="viewMode" @update:model-value="$emit('update:viewMode', $event)" />
                 <select
                     :value="itemsPerPage"
@@ -37,18 +39,25 @@
 </template>
 
 <script setup lang="ts">
+import YearFilter from '@/Components/YearFilter.vue';
+import { usePermissions } from '@/Composables/usePermissions';
 import ViewToggle from '@/Components/ViewToggle.vue';
 import type { ViewMode } from '@/Composables/useResponsiveView';
 defineProps<{
+    selectedYear: number | null;
+    availableYears: number[];
     viewMode: ViewMode;
     searchQuery: string;
     itemsPerPage: number;
 }>();
 
 defineEmits<{
+    'update:selectedYear': [value: number | null];
     'update:viewMode': [value: ViewMode];
     'create': [];
     'update:searchQuery': [value: string];
     'update:itemsPerPage': [value: number];
 }>();
+
+const { can } = usePermissions();
 </script>

@@ -101,12 +101,7 @@
                                     class="block w-full pl-10 pr-4 py-2 text-xs border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:outline-none focus:border-emerald-500 appearance-none"
                                 >
                                     <option value="">Select Role</option>
-                                    <option value="Administrator">Administrator</option>
-                                    <option value="Developer">Developer</option>
-                                    <option value="Supervisor">Supervisor</option>
-                                    <option value="Reviewer">Reviewer</option>
-                                    <option value="Receiving">Receiving</option>
-                                    <option value="Administrative">Administrative</option>
+                                    <option v-for="role in roles" :key="role" :value="role">{{ role }}</option>
                                 </select>
                             </div>
                             <span v-if="formErrors.usertype" class="text-red-500 text-xs">{{ formErrors.usertype }}</span>
@@ -192,6 +187,10 @@ defineProps({
     },
     offices: {
         type: Array as () => Office[],
+        required: true,
+    },
+    roles: {
+        type: Array as () => string[],
         required: true,
     },
     employees: {

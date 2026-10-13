@@ -1,9 +1,12 @@
 import { ref, watch, computed } from 'vue';
+import { usePermissions } from '@/Composables/usePermissions';
 import { useTrashedControlNumbers } from '@/Composables/useTrashedControlNumbers';
 import { usePage } from '@inertiajs/vue3';
 import type { TravelOrder, Employee } from './useTravelOrdersData';
 
 export function useTravelOrdersForm(employees: any, travelOrders: any) {
+    const { can } = usePermissions();
+
     const formData = ref({
         control_no: '',
         date: '',
@@ -228,25 +231,19 @@ export function useTravelOrdersForm(employees: any, travelOrders: any) {
      * Check if current user can create travel orders
      * Only Developer and Administrator can create travel orders
      */
-    const canCreateTravelOrders = computed(() => {
-        return ['Developer', 'Administrator', 'Administrative'].includes(usertype.value);
-    });
+    const canCreateTravelOrders = computed(() => can('travel_orders.create'));
 
     /**
      * Check if current user can edit travel orders
      * All authenticated users can edit travel orders (they all have travel_orders.edit permission)
      */
-    const canEditTravelOrders = computed(() => {
-        return ['Developer', 'Administrator', 'Administrative'].includes(usertype.value);
-    });
+    const canEditTravelOrders = computed(() => can('travel_orders.edit'));
 
     /**
      * Check if current user can delete travel orders
      * Only Developer and Administrator can delete travel orders
      */
-    const canDeleteTravelOrders = computed(() => {
-        return ['Developer', 'Administrator', 'Administrative'].includes(usertype.value);
-    });
+    const canDeleteTravelOrders = computed(() => can('travel_orders.delete'));
 
     const openCreateModal = () => {
         const today = todayDate.value;

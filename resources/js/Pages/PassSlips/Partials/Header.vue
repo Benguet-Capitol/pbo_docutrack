@@ -20,6 +20,7 @@
                     placeholder="Search pass slips..."
                     class="border border-gray-300 rounded-lg px-4 py-2 text-xs flex-1 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white w-80"
                 />
+                <YearFilter :model-value="selectedYear" :years="availableYears" @update:model-value="$emit('update:selectedYear', $event)" />
                 <ViewToggle :model-value="viewMode" @update:model-value="$emit('update:viewMode', $event)" />
                 <select
                     :value="itemsPerPage"
@@ -38,9 +39,12 @@
 </template>
 
 <script setup lang="ts">
+import YearFilter from '@/Components/YearFilter.vue';
 import ViewToggle from '@/Components/ViewToggle.vue';
 import type { ViewMode } from '@/Composables/useResponsiveView';
 defineProps<{
+    selectedYear: number | null;
+    availableYears: number[];
     viewMode: ViewMode;
     searchQuery: string;
     itemsPerPage: number;
@@ -48,6 +52,7 @@ defineProps<{
 }>();
 
 defineEmits<{
+    'update:selectedYear': [value: number | null];
     'update:viewMode': [value: ViewMode];
     'create-click': [];
     'update:searchQuery': [value: string];

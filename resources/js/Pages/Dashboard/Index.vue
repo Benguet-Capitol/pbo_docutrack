@@ -172,10 +172,7 @@ const utilitiesComposable = useUtilities();
 
 // ============== Computed Properties (before reportsComposable initialization) ==============
 const page = usePage();
-const canViewHRSummary = computed(() => {
-    const usertype = (page.props.auth?.user as any)?.usertype || '';
-    return ['Developer', 'Administrator', 'Administrative'].includes(usertype);
-});
+const canViewHRSummary = computed(() => ((page.props.auth as any)?.permissions || []).includes('hr_summary.view'));
 
 const supervisorUsers = computed(() => {
     return documentsComposable.users.value.filter(user => user.usertype === 'Supervisor');

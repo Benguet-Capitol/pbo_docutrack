@@ -1,4 +1,5 @@
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
+import { useYearFilter } from '@/Composables/useYearFilter';
 
 export interface Employee {
     id: number;
@@ -36,6 +37,12 @@ export function useLeavesData() {
 
     const searchQuery = ref('');
     const currentPage = ref(1);
+
+    /** Year shown in the list, based on date_of_filing (defaults to the current year) */
+    const { selectedYear, availableYears, filterByYear } = useYearFilter(leaves, (leave) => leave.date_of_filing);
+    watch(selectedYear, () => {
+        currentPage.value = 1;
+    });
     const itemsPerPage = ref(10);
     const sortBy = ref('id');
     const sortOrder = ref<'asc' | 'desc'>('desc');
@@ -89,7 +96,7 @@ export function useLeavesData() {
     };
 
     const filteredLeaves = computed(() => {
-        let filtered = leaves.value;
+        let filtered = filterByYear(leaves.value);
 
         if (searchQuery.value) {
             const query = searchQuery.value.toLowerCase();
@@ -243,6 +250,8 @@ export function useLeavesData() {
     };
 
     return {
+        selectedYear,
+        availableYears,
         // State
         leaves,
         employees,

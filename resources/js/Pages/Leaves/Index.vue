@@ -17,6 +17,9 @@
                     @update:items-per-page="itemsPerPage = Number($event)"
                     @create-click="openCreateModal"
                     
+                    :selected-year="selectedYear"
+                    :available-years="availableYears"
+                    @update:selected-year="selectedYear = $event"
                     :view-mode="viewMode"
                     @update:view-mode="setViewMode"
                 />
@@ -38,7 +41,7 @@
                 <EmptyState 
                     v-else-if="filteredLeaves.length === 0"
                     title="No Leaves found"
-                    message="Try adjusting your search or create a new leave"
+                    message="Try another year, adjust your search, or create a new leave"
                 />
 
                 <!-- Data Table -->
@@ -150,6 +153,8 @@ const {
     fetchLeaves,
     fetchEmployees,
     toggleSort,
+    selectedYear,
+    availableYears,
 } = useLeavesData();
 
 // Toast ref

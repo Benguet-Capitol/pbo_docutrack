@@ -30,9 +30,9 @@ class RegisteredUserController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
-        // User registration is disabled - users are managed in pbo-registry
+        // User registration is disabled - users are managed by an Administrator in the Users module
         return back()->withErrors([
-            'registration' => 'User registration is managed by the pbo-registry system. Contact your administrator to create a new account.',
+            'registration' => 'Self-registration is disabled. Contact your administrator to create a new account.',
         ]);
     }
 }

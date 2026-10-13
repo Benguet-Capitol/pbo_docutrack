@@ -10,7 +10,7 @@ use Illuminate\Http\Request;
 class EmployeeController extends Controller
 {
     /**
-     * Display a listing of employees from pbo-registry.
+     * Display a listing of employees.
      */
     public function index(): JsonResponse
     {

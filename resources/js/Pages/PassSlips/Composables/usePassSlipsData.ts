@@ -1,4 +1,5 @@
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
+import { useYearFilter } from '@/Composables/useYearFilter';
 
 export interface Employee {
     id: number;
@@ -36,6 +37,12 @@ export function usePassSlipsData() {
     const employees = ref<Employee[]>([]);
     const searchQuery = ref('');
     const currentPage = ref(1);
+
+    /** Year shown in the list, based on date (defaults to the current year) */
+    const { selectedYear, availableYears, filterByYear } = useYearFilter(passSlips, (slip) => slip.date);
+    watch(selectedYear, () => {
+        currentPage.value = 1;
+    });
     const itemsPerPage = ref(10);
     const sortBy = ref<'id' | 'control_no' | 'date' | 'requested_time' | 'purpose' | 'location'>('control_no');
     const sortOrder = ref<'asc' | 'desc'>('desc');
@@ -79,7 +86,7 @@ export function usePassSlipsData() {
     };
 
     const filteredPassSlips = computed(() => {
-        let filtered = passSlips.value;
+        let filtered = filterByYear(passSlips.value);
 
         if (searchQuery.value) {
             const query = searchQuery.value.toLowerCase();
@@ -250,6 +257,8 @@ export function usePassSlipsData() {
     };
 
     return {
+        selectedYear,
+        availableYears,
         passSlips,
         employees,
         searchQuery,

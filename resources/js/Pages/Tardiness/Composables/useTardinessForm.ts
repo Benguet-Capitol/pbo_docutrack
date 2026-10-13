@@ -1,9 +1,12 @@
 import { ref, watch, computed } from 'vue';
+import { usePermissions } from '@/Composables/usePermissions';
 import { useTrashedControlNumbers } from '@/Composables/useTrashedControlNumbers';
 import { usePage } from '@inertiajs/vue3';
 import type { TardinessRecord, Employee } from './useTardinessData';
 
 export function useTardinessForm(employees: any, tardiness: any) {
+    const { can } = usePermissions();
+
     const formData = ref({
         control_no: '',
         date_filed: '',
@@ -288,25 +291,19 @@ export function useTardinessForm(employees: any, tardiness: any) {
         /**
          * Check if current user can create tardiness
          */
-        const canCreateTardiness = computed(() => {
-            return ['Developer', 'Administrator', 'Administrative', 'Receiving', 'Reviewer', 'Supervisor'].includes(usertype.value);
-        });
+        const canCreateTardiness = computed(() => can('tardiness.create'));
     
         /**
          * Check if current user can edit tardiness
          * All authenticated users can edit tardiness (they all have tardiness.edit permission)
          */
-        const canEditTardiness = computed(() => {
-            return ['Developer', 'Administrator', 'Administrative'].includes(usertype.value);
-        });
+        const canEditTardiness = computed(() => can('tardiness.edit'));
     
         /**
          * Check if current user can delete tardiness
          * Only Developer and Administrator can delete tardiness
          */
-        const canDeleteTardiness = computed(() => {
-            return ['Developer', 'Administrator', 'Administrative'].includes(usertype.value);
-        });
+        const canDeleteTardiness = computed(() => can('tardiness.delete'));
 
     const openCreateModal = () => {
         isRegeneratingControlNo.value = true;

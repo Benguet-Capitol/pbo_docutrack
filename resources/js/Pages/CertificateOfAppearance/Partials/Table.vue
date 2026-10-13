@@ -75,6 +75,7 @@
                                 <span class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-1 text-xs font-medium text-white bg-gray-900 dark:bg-gray-950 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-20">Preview</span>
                             </button>
                             <button
+                                v-if="can('certificate_of_appearances.edit')"
                                 @click.stop="$emit('edit', certificate)"
                                 class="relative p-2 text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/30 hover:text-blue-700 dark:hover:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-900/50 rounded-lg transition-all duration-200 group"
                             >
@@ -82,6 +83,7 @@
                                 <span class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-1 text-xs font-medium text-white bg-gray-900 dark:bg-gray-950 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-20">Edit</span>
                             </button>
                             <button
+                                v-if="can('certificate_of_appearances.delete')"
                                 @click.stop="$emit('delete', certificate)"
                                 class="relative p-2 text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-900/30 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-200 dark:hover:bg-red-900/50 rounded-lg transition-all duration-200 group"
                             >
@@ -97,7 +99,10 @@
 </template>
 
 <script setup lang="ts">
+import { usePermissions } from '@/Composables/usePermissions';
 import type { CertificateOfAppearance } from '../Composables/useCoaData';
+
+const { can } = usePermissions();
 
 defineProps<{
     certificates: CertificateOfAppearance[];

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Link, usePage } from '@inertiajs/vue3';
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
+import { usePermissions } from '@/Composables/usePermissions';
 
 interface Props {
     show: boolean;
@@ -18,46 +19,76 @@ const emit = defineEmits<{
 const isSidebarOpen = ref(props.isOpen);
 const isSidebarHovered = ref(false);
 
+// Opened/closed from outside too (the layout's mobile menu button)
+watch(() => props.isOpen, (value) => {
+    isSidebarOpen.value = value;
+});
+
 const toggleSidebar = () => {
     isSidebarOpen.value = !isSidebarOpen.value;
+    isSidebarHovered.value = false;
     emit('update:isOpen', isSidebarOpen.value);
 };
+
+const closeSidebar = () => {
+    if (isSidebarOpen.value) toggleSidebar();
+};
+
+// Hover-to-expand only on devices with a real mouse: touchscreens fire mouseenter on tap but never
+// mouseleave, which left the menu stuck open after tapping close.
+const canHover = typeof window !== 'undefined' && window.matchMedia('(hover: hover) and (pointer: fine)').matches;
 const page = usePage();
 
 const auth = computed(() => page.props.auth.user);
 const userInitial = computed(() => auth.value?.name?.charAt(0).toUpperCase() || 'U');
 const usertype = computed(() => auth.value?.usertype || '');
+const { can } = usePermissions();
+
+/** Permission needed to open each navigation item (the same permission guards its page route) */
+const ITEM_PERMISSIONS: Record<string, string> = {
+    'documents': 'documents.view',
+    'records': 'records.view',
+    'locator-chart': 'locator_chart.view',
+    'leaves': 'leaves.view',
+    'travel-orders': 'travel_orders.view',
+    'pass-slips': 'pass_slips.view',
+    'time-slips': 'time_slips.view',
+    'tardiness': 'tardiness.view',
+    'certificates-of-appearance': 'certificate_of_appearances.view',
+    'users': 'users.manage',
+    'roles-permissions': 'roles.manage',
+    'employees': 'employees.view',
+    'offices': 'offices.view',
+    'municipalities': 'municipalities.view',
+    'activity-logs': 'activity_logs.view',
+    'trash': 'trash.manage',
+};
 
 /**
  * Check if current user can view a specific navigation item
  */
 const canViewItem = (item: string): boolean => {
-    const role = usertype.value;
-    
-    // Everyone can view Documents, Records, Leaves, Pass Slips, Time Slips, Travel Orders, Tardiness, Certificates of Appearance, and Locator Chart
-    if (item === 'documents' || item === 'records' || item === 'leaves' || item === 'pass-slips' || item === 'time-slips' || item === 'travel-orders' || item === 'tardiness' || item === 'certificates-of-appearance' || item === 'locator-chart') return true;
-    
-    // Only Developer and Administrator can view Users
-    if (item === 'users') return role === 'Developer' || role === 'Administrator';
-    
-    // Developer, Administrator, and Administrative can view Employees
-    if (item === 'employees') return ['Developer', 'Administrator', 'Administrative'].includes(role);
-    
-    // Everyone except none can view Offices and Municipalities
-    if (item === 'offices' || item === 'municipalities') return true;
-
-    // Only Developer and Administrator can view the Trash and Activity Logs
-    if (item === 'trash' || item === 'activity-logs') return role === 'Developer' || role === 'Administrator';
-    
-    return false;
+    const permission = ITEM_PERMISSIONS[item];
+    return !!permission && can(permission);
 };
 
+const canViewAny = (...items: string[]): boolean => items.some(canViewItem);
+
 const handleSidebarHover = (hovered: boolean) => {
+    if (!canHover) return;
     isSidebarHovered.value = hovered;
 };
 </script>
 
 <template>
+    <!-- Mobile backdrop: tap outside the open menu to close it -->
+    <div
+        v-if="show && isSidebarOpen"
+        class="fixed inset-0 z-10 bg-black/40 md:hidden"
+        aria-hidden="true"
+        @click="closeSidebar"
+    ></div>
+
     <!-- Side Navigation -->
     <aside
         v-show="show"
@@ -131,6 +162,7 @@ const handleSidebarHover = (hovered: boolean) => {
 
             <!-- Documents Link -->
             <Link
+                v-if="canViewItem('documents')"
                 :href="route('documents.index')"
                 :class="[
                     route().current('documents.*')
@@ -160,7 +192,7 @@ const handleSidebarHover = (hovered: boolean) => {
 
             <!-- Section Divider -->
             <div
-                v-show="isSidebarOpen || isSidebarHovered"
+                v-show="(isSidebarOpen || isSidebarHovered) && canViewAny('locator-chart', 'leaves', 'travel-orders', 'pass-slips', 'time-slips', 'tardiness', 'certificates-of-appearance')"
                 class="text-xs font-bold uppercase tracking-widest text-emerald-600 dark:text-emerald-400 px-3 pt-4 pb-2 mt-2 border-b-2 border-emerald-200 dark:border-emerald-900 transition-opacity"
             >
                 Admin
@@ -273,7 +305,7 @@ const handleSidebarHover = (hovered: boolean) => {
 
             <!-- Auxiliary Section Divider -->
             <div
-                v-show="(isSidebarOpen || isSidebarHovered) && (canViewItem('users') || canViewItem('employees') || canViewItem('offices') || canViewItem('municipalities'))"
+                v-show="(isSidebarOpen || isSidebarHovered) && canViewAny('users', 'roles-permissions', 'employees', 'offices', 'municipalities')"
                 class="text-xs font-bold uppercase tracking-widest text-emerald-600 dark:text-emerald-400 px-3 pt-4 pb-2 mt-2 border-b-2 border-emerald-200 dark:border-emerald-900 transition-opacity"
             >
                 Auxiliary
@@ -292,6 +324,21 @@ const handleSidebarHover = (hovered: boolean) => {
             >
                 <i class="fas fa-users text-xl flex-shrink-0 dark:text-gray-100" aria-hidden="true"></i>
                 <span class="text-sm font-medium whitespace-nowrap" v-show="isSidebarOpen || isSidebarHovered">Users</span>
+            </Link>
+
+            <!-- Roles & Permissions Link -->
+            <Link
+                v-if="canViewItem('roles-permissions')"
+                :href="route('roles-permissions.index')"
+                :class="[
+                    route().current('roles-permissions.*')
+                        ? 'text-white bg-gradient-to-r from-emerald-500 to-emerald-600 shadow-md hover:from-emerald-600 hover:to-emerald-700'
+                        : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 hover:shadow-sm',
+                    'flex-shrink-0 flex items-center gap-3 px-3 py-1.5 transition-all rounded-lg overflow-hidden',
+                ]"
+            >
+                <i class="fas fa-user-shield text-xl flex-shrink-0 dark:text-gray-100" aria-hidden="true"></i>
+                <span class="text-sm font-medium whitespace-nowrap" v-show="isSidebarOpen || isSidebarHovered">Roles &amp; Permissions</span>
             </Link>
 
             <!-- Employees Link -->
@@ -341,7 +388,7 @@ const handleSidebarHover = (hovered: boolean) => {
 
             <!-- System Section Divider -->
             <div
-                v-show="(isSidebarOpen || isSidebarHovered) && (canViewItem('activity-logs') || canViewItem('trash'))"
+                v-show="(isSidebarOpen || isSidebarHovered) && canViewAny('activity-logs', 'trash')"
                 class="text-xs font-bold uppercase tracking-widest text-emerald-600 dark:text-emerald-400 px-3 pt-4 pb-2 mt-2 border-b-2 border-emerald-200 dark:border-emerald-900 transition-opacity"
             >
                 System

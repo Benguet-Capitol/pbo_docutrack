@@ -17,6 +17,9 @@
                     @create="openCreateModal"
                     @update:search-query="handleSearchQuery"
                     @update:items-per-page="handleItemsPerPage"
+                    :selected-year="selectedYear"
+                    :available-years="availableYears"
+                    @update:selected-year="selectedYear = $event"
                     :view-mode="viewMode"
                     @update:view-mode="setViewMode"
                 />
@@ -38,7 +41,7 @@
                 <EmptyState 
                     v-else-if="filteredCertificates.length === 0"
                     title="No Certificates found"
-                    message="Try adjusting your search or create a new certificate"
+                    message="Try another year, adjust your search, or create a new certificate"
                 />
 
                 <!-- Data Table -->
@@ -162,6 +165,8 @@ const {
     formattedDate,
     fetchAllData,
     sortedEmployees,
+    selectedYear,
+    availableYears,
 } = useCoaData();
 
 const {
