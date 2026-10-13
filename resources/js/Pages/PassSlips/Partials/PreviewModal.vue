@@ -145,9 +145,9 @@
                         <div class="w-72 text-center mb-6">
                             <p class="text-xs text-left text-gray-900 mb-6">APPROVED:</p>
                             <p v-if="isProvincialBudgetOfficerRequesting() && getProvincialGovernor()" class="text-xs text-center text-gray-900 font-bold uppercase">{{ getProvincialGovernor().name }}</p>
-                            <p v-else class="text-xs text-center text-gray-900 font-bold uppercase">{{ getProvincialBudgetOfficer() }}</p>
+                            <p v-else class="text-xs text-center text-gray-900 font-bold uppercase">{{ getApprovedBy().name || 'Provincial Budget Officer' }}</p>
                             <p v-if="isProvincialBudgetOfficerRequesting() && getProvincialGovernor()" class="text-xs text-center text-gray-700 border-b border-gray-900">Provincial Governor</p>
-                            <p v-else class="text-xs text-center text-gray-700 border-b border-gray-900">Provincial Budget Officer</p>
+                            <p v-else class="text-xs text-center text-gray-700 border-b border-gray-900">{{ getApprovedBy().title }}</p>
                             <p class="text-xs text-center text-gray-700">Department Head</p>
                         </div>
                     </div>
@@ -269,9 +269,9 @@
                         <div class="w-72 text-center mb-6">
                             <p class="text-xs text-left text-gray-900 mb-6">APPROVED:</p>
                             <p v-if="isProvincialBudgetOfficerRequesting() && getProvincialGovernor()" class="text-xs text-center text-gray-900 font-bold uppercase">{{ getProvincialGovernor().name }}</p>
-                            <p v-else class="text-xs text-center text-gray-900 font-bold uppercase">{{ getProvincialBudgetOfficer() }}</p>
+                            <p v-else class="text-xs text-center text-gray-900 font-bold uppercase">{{ getApprovedBy().name || 'Provincial Budget Officer' }}</p>
                             <p v-if="isProvincialBudgetOfficerRequesting() && getProvincialGovernor()" class="text-xs text-center text-gray-700 border-b border-gray-900">Provincial Governor</p>
-                            <p v-else class="text-xs text-center text-gray-700 border-b border-gray-900">Provincial Budget Officer</p>
+                            <p v-else class="text-xs text-center text-gray-700 border-b border-gray-900">{{ getApprovedBy().title }}</p>
                             <p class="text-xs text-center text-gray-700">Department Head</p>
                         </div>
                     </div>
@@ -324,6 +324,7 @@
 import { ref } from 'vue';
 import type { Employee } from '../Composables/usePassSlipsData';
 import { printSafely } from '@/Composables/usePrint';
+import { resolveApprovedBy } from '@/Composables/useSignatory';
 
 const paperSize = ref<'short' | 'long'>('long');
 
@@ -367,6 +368,9 @@ const getProvincialBudgetOfficer = (): string => {
     const pbo = props.employees?.find((emp: Employee) => emp.designation?.toLowerCase().includes('budget officer'));
     return pbo?.name || 'Provincial Budget Officer';
 };
+
+// Signatory chosen on the form (OIC / Acting PBO), defaulting to the Provincial Budget Officer
+const getApprovedBy = () => resolveApprovedBy(props.employees, props.formData?.approved_by_employee_id, props.formData?.approved_by_title);
 
 const getProvincialGovernor = (): any => {
     const gov = props.employees?.find((emp: Employee) => emp.designation?.toLowerCase().includes('governor'));

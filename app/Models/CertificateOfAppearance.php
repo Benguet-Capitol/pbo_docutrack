@@ -23,6 +23,8 @@ class CertificateOfAppearance extends Model
         'purpose',
         'date',
         'remarks',
+        'approved_by_employee_id',
+        'approved_by_title',
     ];
 
     protected $casts = [

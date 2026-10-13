@@ -14,6 +14,8 @@ export function useTimeSlipsForm(employees: any, timeSlips: any) {
         time_out_pm: '',
         reason: '',
         certified_by_employee_id: null as number | null,
+        approved_by_employee_id: null as number | null,
+        approved_by_title: null as string | null,
     });
 
     const formErrors = ref<Record<string, string>>({});
@@ -100,6 +102,8 @@ export function useTimeSlipsForm(employees: any, timeSlips: any) {
             time_out_pm: '',
             reason: '',
             certified_by_employee_id: null,
+            approved_by_employee_id: null,
+            approved_by_title: null,
         };
         formErrors.value = {};
     };
@@ -145,6 +149,8 @@ export function useTimeSlipsForm(employees: any, timeSlips: any) {
             time_out_pm: '',
             reason: '',
             certified_by_employee_id: null,
+            approved_by_employee_id: null,
+            approved_by_title: null,
         };
         formErrors.value = {};
         showCreateModal.value = true;
@@ -168,6 +174,8 @@ export function useTimeSlipsForm(employees: any, timeSlips: any) {
             time_out_pm: timeSlip.time_out_pm || '',
             reason: timeSlip.reason,
             certified_by_employee_id: timeSlip.certified_by_employee_id,
+            approved_by_employee_id: timeSlip.approved_by_employee_id ?? null,
+            approved_by_title: timeSlip.approved_by_title ?? null,
         };
         formErrors.value = {};
         showEditModal.value = true;
@@ -202,6 +210,8 @@ export function useTimeSlipsForm(employees: any, timeSlips: any) {
                 time_out_pm: timeSlip.time_out_pm || '',
                 reason: timeSlip.reason,
                 certified_by_employee_id: timeSlip.certified_by_employee_id,
+                approved_by_employee_id: timeSlip.approved_by_employee_id ?? null,
+                approved_by_title: timeSlip.approved_by_title ?? null,
             };
         }
         showPreviewModal.value = true;

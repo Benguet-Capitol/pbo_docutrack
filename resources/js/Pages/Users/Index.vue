@@ -17,6 +17,8 @@
                     @update:search-query="searchQuery = $event"
                     @update:items-per-page="itemsPerPage = Number($event)"
                     @create-click="handleCreateClick"
+                    :view-mode="viewMode"
+                    @update:view-mode="setViewMode"
                 />
 
                 <!-- Loading State -->
@@ -36,7 +38,7 @@
 
                 <!-- User Table -->
                 <Table
-                    v-else
+                    v-else-if="viewMode === 'table'"
                     :users="paginatedUsers"
                     :can-manage-users="canManageUsers"
                     :sort-by="sortBy"
@@ -45,6 +47,14 @@
                     @edit="handleEditClick"
                     @delete="handleDeleteClick"
                 />
+                <div v-else class="p-4">
+                    <CardView
+                        :users="paginatedUsers"
+                        :can-manage-users="canManageUsers"
+                        @edit="handleEditClick"
+                        @delete="handleDeleteClick"
+                    />
+                </div>
 
                 <!-- Pagination -->
                 <Pagination
@@ -96,6 +106,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import Toast from '@/Components/Toast.vue';
 import Header from './Partials/Header.vue';
 import Table from './Partials/Table.vue';
+import CardView from './Partials/CardView.vue';
 import CreateModal from './Partials/CreateModal.vue';
 import EditModal from './Partials/EditModal.vue';
 import DeleteModal from './Partials/DeleteModal.vue';
@@ -103,6 +114,10 @@ import Pagination from './Partials/Pagination.vue';
 import LoadingState from './Partials/LoadingState.vue';
 import ErrorState from './Partials/ErrorState.vue';
 import EmptyState from './Partials/EmptyState.vue';
+import { useResponsiveView } from '@/Composables/useResponsiveView';
+
+// Table on desktop (user can switch to cards), always cards on small screens
+const { viewMode, setViewMode } = useResponsiveView('usersView');
 
 // ============== Toast Reference ==============
 const toastRef = ref<InstanceType<typeof Toast> | null>(null);

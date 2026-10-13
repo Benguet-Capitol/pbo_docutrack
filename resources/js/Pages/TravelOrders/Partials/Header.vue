@@ -18,6 +18,7 @@
                     placeholder="Search travel orders..."
                     class="border border-gray-300 rounded-lg px-4 py-2 text-xs flex-1 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white w-80"
                 />
+                <ViewToggle :model-value="viewMode" @update:model-value="$emit('update:viewMode', $event)" />
                 <select
                     :value="itemsPerPage"
                     @change="$emit('update:items-per-page', ($event.target as HTMLSelectElement).value)"
@@ -35,13 +36,17 @@
 </template>
 
 <script setup lang="ts">
+import ViewToggle from '@/Components/ViewToggle.vue';
+import type { ViewMode } from '@/Composables/useResponsiveView';
 defineProps<{
+    viewMode: ViewMode;
     searchQuery: string;
     itemsPerPage: number;
     canCreateTravelOrders: boolean;
 }>();
 
 defineEmits<{
+    'update:viewMode': [value: ViewMode];
     'create-click': [];
     'update:search-query': [value: string];
     'update:items-per-page': [value: string];

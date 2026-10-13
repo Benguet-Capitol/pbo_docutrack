@@ -15,6 +15,8 @@ export function useTardinessForm(employees: any, tardiness: any) {
         return_time: '',
         returnType: 'time' as 'time' | 'nwd',
         supervisor_employee_id: null as number | null,
+        approved_by_employee_id: null as number | null,
+        approved_by_title: null as string | null,
     });
 
     const formErrors = ref<Record<string, string>>({});
@@ -320,6 +322,8 @@ export function useTardinessForm(employees: any, tardiness: any) {
             return_time: '',
             returnType: 'time',
             supervisor_employee_id: null,
+            approved_by_employee_id: null,
+            approved_by_title: null,
         };
         // Generate control number based on date_filed
         formData.value.control_no = generateControlNo(today);
@@ -346,6 +350,8 @@ export function useTardinessForm(employees: any, tardiness: any) {
             return_time: record.return_time || '',
             returnType: (record.return_time === 'NWD' || record.return_time === '17:00:00') ? 'nwd' : 'time',
             supervisor_employee_id: record.supervisor_employee_id || null,
+            approved_by_employee_id: record.approved_by_employee_id ?? null,
+            approved_by_title: record.approved_by_title ?? null,
         };
         formErrors.value = {};
         showEditModal.value = true;
@@ -380,6 +386,8 @@ export function useTardinessForm(employees: any, tardiness: any) {
                 return_time: record.return_time || '',
                 returnType: (record.return_time === 'NWD' || record.return_time === '17:00:00') ? 'nwd' : 'time',
                 supervisor_employee_id: record.supervisor_employee_id || null,
+                approved_by_employee_id: record.approved_by_employee_id ?? null,
+                approved_by_title: record.approved_by_title ?? null,
             };
             recordToEdit.value = record;
         }

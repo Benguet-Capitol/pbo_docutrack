@@ -7,6 +7,7 @@ use App\Models\CertificateOfAppearance;
 use App\Models\Employee;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class CertificateOfAppearanceController extends Controller
 {
@@ -36,6 +37,8 @@ class CertificateOfAppearanceController extends Controller
                 'purpose' => 'required|string|max:500',
                 'date' => 'required|date',
                 'remarks' => 'nullable|string|max:1000',
+                'approved_by_employee_id' => 'nullable|integer|exists:employees,id',
+                'approved_by_title' => ['nullable', 'string', Rule::in(['Provincial Budget Officer', 'OIC, Provincial Budget Officer', 'Acting Provincial Budget Officer'])],
             ]);
 
             $certificate = CertificateOfAppearance::create($validated);
@@ -76,6 +79,8 @@ class CertificateOfAppearanceController extends Controller
                 'purpose' => 'required|string|max:500',
                 'date' => 'required|date',
                 'remarks' => 'nullable|string|max:1000',
+                'approved_by_employee_id' => 'nullable|integer|exists:employees,id',
+                'approved_by_title' => ['nullable', 'string', Rule::in(['Provincial Budget Officer', 'OIC, Provincial Budget Officer', 'Acting Provincial Budget Officer'])],
             ]);
 
             $certificateOfAppearance->update($validated);

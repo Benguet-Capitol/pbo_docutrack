@@ -18,6 +18,8 @@
                     @create-click="formComposable.openCreateModal()"
                     @update:search-query="handleSearchQuery"
                     @update:items-per-page="handleItemsPerPage"
+                    :view-mode="viewMode"
+                    @update:view-mode="setViewMode"
                 />
 
                 <!-- Loading State -->
@@ -40,8 +42,8 @@
                 />
 
                 <!-- Data Table -->
-                <Table 
-                    v-else
+                <Table
+                    v-else-if="viewMode === 'table'"
                     :records="paginatedTravelOrders"
                     :sort-by="sortBy"
                     :sort-order="sortOrder"
@@ -52,6 +54,16 @@
                     @preview="handlePreviewClick"
                     @sort="handleSort"
                 />
+                <div v-else class="p-4">
+                    <CardView
+                        :records="paginatedTravelOrders"
+                        :can-edit-travel-orders="canEditTravelOrders"
+                        :can-delete-travel-orders="canDeleteTravelOrders"
+                        @edit="handleEditClick"
+                        @delete="handleDeleteClick"
+                        @preview="handlePreviewClick"
+                    />
+                </div>
 
                 <!-- Pagination Controls -->
                 <Pagination 
@@ -120,6 +132,7 @@ import PageHead from '@/Components/PageHead.vue';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import Header from './Partials/Header.vue';
 import Table from './Partials/Table.vue';
+import CardView from './Partials/CardView.vue';
 import Pagination from './Partials/Pagination.vue';
 import LoadingState from './Partials/LoadingState.vue';
 import ErrorState from './Partials/ErrorState.vue';
@@ -130,6 +143,10 @@ import DeleteModal from './Partials/DeleteModal.vue';
 import PreviewModal from './Partials/PreviewModal.vue';
 import { useTravelOrdersData } from './Composables/useTravelOrdersData';
 import { useTravelOrdersForm } from './Composables/useTravelOrdersForm';
+import { useResponsiveView } from '@/Composables/useResponsiveView';
+
+// Table on desktop (user can switch to cards), always cards on small screens
+const { viewMode, setViewMode } = useResponsiveView('travelOrdersView');
 
 const toastRef = ref<InstanceType<typeof Toast> | null>(null);
 

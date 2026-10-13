@@ -17,6 +17,8 @@
                     @update:items-per-page="itemsPerPage = Number($event)"
                     @create-click="openCreateModal"
                     
+                    :view-mode="viewMode"
+                    @update:view-mode="setViewMode"
                 />
 
                 <!-- Loading State -->
@@ -40,8 +42,8 @@
                 />
 
                 <!-- Data Table -->
-                <Table 
-                    v-else
+                <Table
+                    v-else-if="viewMode === 'table'"
                     :records="paginatedLeaves"
                     :sort-by="sortBy"
                     :sort-order="sortOrder"
@@ -51,6 +53,15 @@
                     @delete="openDeleteModal"
                     @sort="toggleSort"
                 />
+                <div v-else class="p-4">
+                    <CardView
+                        :records="paginatedLeaves"
+                        :can-edit-leaves="canEditLeaves"
+                        :can-delete-leaves="canDeleteLeaves"
+                        @edit="openEditModal"
+                        @delete="openDeleteModal"
+                    />
+                </div>
 
                 <!-- Pagination Controls -->
                 <Pagination 
@@ -110,10 +121,15 @@ import ErrorState from './Partials/ErrorState.vue';
 import EmptyState from './Partials/EmptyState.vue';
 import Header from './Partials/Header.vue';
 import Table from './Partials/Table.vue';
+import CardView from './Partials/CardView.vue';
 import Pagination from './Partials/Pagination.vue';
 import CreateModal from './Partials/CreateModal.vue';
 import EditModal from './Partials/EditModal.vue';
 import DeleteModal from './Partials/DeleteModal.vue';
+import { useResponsiveView } from '@/Composables/useResponsiveView';
+
+// Table on desktop (user can switch to cards), always cards on small screens
+const { viewMode, setViewMode } = useResponsiveView('leavesView');
 
 // Data composable
 const {

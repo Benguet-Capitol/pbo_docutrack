@@ -22,6 +22,8 @@ class Tardiness extends Model
         'reason',
         'return_time',
         'supervisor_employee_id',
+        'approved_by_employee_id',
+        'approved_by_title',
     ];
 
     protected $casts = [

@@ -17,6 +17,8 @@ export interface TimeSlip {
     time_out_pm: string | null;
     reason: string;
     certified_by_employee_id: number | null;
+    approved_by_employee_id?: number | null;
+    approved_by_title?: string | null;
     requesting_employee?: Employee;
     certified_by_employee?: Employee | null;
     created_at: string;

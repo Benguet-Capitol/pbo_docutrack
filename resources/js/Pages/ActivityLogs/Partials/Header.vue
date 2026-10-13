@@ -62,6 +62,7 @@
                     <i class="fas fa-times"></i>
                     Clear filters
                 </button>
+                <ViewToggle :model-value="viewMode" @update:model-value="$emit('update:viewMode', $event)" />
                 <button
                     @click="$emit('refresh')"
                     class="inline-flex items-center gap-2 px-3 py-2 text-xs text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors"
@@ -75,11 +76,14 @@
 </template>
 
 <script setup lang="ts">
+import ViewToggle from '@/Components/ViewToggle.vue';
+import type { ViewMode } from '@/Composables/useResponsiveView';
 import { computed } from 'vue';
 import { actionMeta } from '../Composables/useActivityLogData';
 import type { ActivityLogFilters, FilterOptions } from '../Composables/useActivityLogData';
 
 const props = defineProps<{
+    viewMode: ViewMode;
     filters: ActivityLogFilters;
     options: FilterOptions;
     itemsPerPage: number;
@@ -87,6 +91,7 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{
+    'update:viewMode': [value: ViewMode];
     'update:filters': [value: ActivityLogFilters];
     'update:itemsPerPage': [value: number];
     'reset': [];

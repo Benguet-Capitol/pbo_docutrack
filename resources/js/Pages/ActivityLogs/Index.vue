@@ -19,6 +19,8 @@
                     @update:items-per-page="itemsPerPage = $event"
                     @reset="dataComposable.resetFilters()"
                     @refresh="dataComposable.refresh()"
+                    :view-mode="viewMode"
+                    @update:view-mode="setViewMode"
                 />
 
                 <!-- Loading State -->
@@ -32,11 +34,18 @@
 
                 <!-- Data Table -->
                 <Table
-                    v-else
+                    v-else-if="viewMode === 'table'"
                     :class="{ 'opacity-60 pointer-events-none': loading }"
                     :logs="logs"
                     @view="selectedLog = $event"
                 />
+                <div v-else class="p-4">
+                    <CardView
+                        :class="{ 'opacity-60 pointer-events-none': loading }"
+                        :logs="logs"
+                        @view="selectedLog = $event"
+                    />
+                </div>
 
                 <!-- Pagination -->
                 <Pagination
@@ -59,6 +68,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import PageHead from '@/Components/PageHead.vue';
 import Header from './Partials/Header.vue';
 import Table from './Partials/Table.vue';
+import CardView from './Partials/CardView.vue';
 import Pagination from './Partials/Pagination.vue';
 import LoadingState from './Partials/LoadingState.vue';
 import ErrorState from './Partials/ErrorState.vue';
@@ -67,6 +77,10 @@ import DetailsModal from './Partials/DetailsModal.vue';
 import { computed, ref } from 'vue';
 import { useActivityLogData } from './Composables/useActivityLogData';
 import type { ActivityLog } from './Composables/useActivityLogData';
+import { useResponsiveView } from '@/Composables/useResponsiveView';
+
+// Table on desktop (user can switch to cards), always cards on small screens
+const { viewMode, setViewMode } = useResponsiveView('activityLogsView');
 
 // ============== Composables ==============
 

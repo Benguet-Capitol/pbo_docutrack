@@ -173,6 +173,16 @@
                                 <span v-if="formErrors.recommending_approval_employee_id" class="text-red-500 text-xs">{{ formErrors.recommending_approval_employee_id }}</span>
                             </div>
 
+                            <!-- Approved By (Signatory) Field -->
+                            <SignatoryFields
+                                :employees="sortedEmployees"
+                                :employee-id="formData.approved_by_employee_id"
+                                :title="formData.approved_by_title"
+                                :errors="formErrors"
+                                :governor-approves="formData.employee_ids.some((id) => isProvincialBudgetOfficer(sortedEmployees.find((emp) => emp.id === id)))"
+                                @change="$emit('update:formData', { ...formData, ...$event })"
+                            />
+
                             <!-- Remarks Field -->
                             <div class="space-y-2">
                                 <label for="remarks" class="block text-xs font-medium text-gray-700 dark:text-gray-300">Remarks</label>
@@ -203,6 +213,8 @@
 </template>
 
 <script setup lang="ts">
+import SignatoryFields from '@/Components/SignatoryFields.vue';
+import { isProvincialBudgetOfficer } from '@/Composables/useSignatory';
 import type { Employee } from '../Composables/usePassSlipsData';
 
 const props = defineProps<{
@@ -220,6 +232,8 @@ const props = defineProps<{
         remarks: string;
         employee_ids: number[];
         recommending_approval_employee_id: number | null;
+        approved_by_employee_id?: number | null;
+        approved_by_title?: string | null;
         vehicle: 'RP Vehicle' | 'PUJ';
         returnType: 'time' | 'asap' | 'nwd' | 'time_slip' | 'nom' | 'memo';
     };

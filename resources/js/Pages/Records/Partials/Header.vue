@@ -22,6 +22,7 @@
                         class="border border-gray-300 rounded-lg pl-8 pr-4 py-2 text-xs w-full sm:w-80 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
                     />
                 </div>
+                <ViewToggle :model-value="viewMode" @update:model-value="$emit('update:viewMode', $event)" />
                 <select
                     :value="itemsPerPage"
                     @change="$emit('update:items-per-page', Number(($event.target as HTMLSelectElement).value))"
@@ -39,15 +40,19 @@
 </template>
 
 <script setup lang="ts">
+import ViewToggle from '@/Components/ViewToggle.vue';
+import type { ViewMode } from '@/Composables/useResponsiveView';
 import { computed } from 'vue';
 import { usePage } from '@inertiajs/vue3';
 
 defineProps<{
+    viewMode: ViewMode;
     searchQuery: string;
     itemsPerPage: number;
 }>();
 
 defineEmits<{
+    'update:viewMode': [value: ViewMode];
     'create-click': [];
     'update:search-query': [value: string];
     'update:items-per-page': [value: number];

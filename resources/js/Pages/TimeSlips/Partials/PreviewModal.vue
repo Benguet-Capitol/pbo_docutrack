@@ -274,6 +274,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { printSafely } from '@/Composables/usePrint';
+import { resolveApprovedBy } from '@/Composables/useSignatory';
 
 const paperSize = ref<'short' | 'long'>('long');
 
@@ -342,8 +343,14 @@ const getApprovedBySignatory = () => {
     if (isRequestingEmployeeProvincialBudgetOfficer()) {
         return getProvincialGovernor();
     }
-    // Otherwise, approver is Provincial Budget Officer
-    return getProvincialBudgetOfficer();
+    // Otherwise, the signatory chosen on the form (OIC / Acting PBO), defaulting to the Provincial Budget Officer
+    const approvedBy = resolveApprovedBy(
+        props.sortedEmployees,
+        props.formData.approved_by_employee_id,
+        props.formData.approved_by_title,
+        getProvincialBudgetOfficer()?.designation || 'Provincial Budget Officer',
+    );
+    return approvedBy.name ? { name: approvedBy.name, designation: approvedBy.title } : null;
 };
 
 const printPreview = () => {

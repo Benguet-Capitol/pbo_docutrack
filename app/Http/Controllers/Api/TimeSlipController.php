@@ -7,6 +7,7 @@ use App\Models\TimeSlip;
 use App\Models\Employee;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Log;
 
 class TimeSlipController extends Controller
@@ -43,6 +44,8 @@ class TimeSlipController extends Controller
                 'time_out_pm' => 'nullable|date_format:H:i',
                 'reason' => 'required|string|max:500',
                 'certified_by_employee_id' => 'nullable|integer|exists:employees,id',
+                'approved_by_employee_id' => 'nullable|integer|exists:employees,id',
+                'approved_by_title' => ['nullable', 'string', Rule::in(['Provincial Budget Officer', 'OIC, Provincial Budget Officer', 'Acting Provincial Budget Officer'])],
             ]);
 
             // Validate that at least one time field has a value
@@ -61,6 +64,8 @@ class TimeSlipController extends Controller
                 'time_out_pm' => $validated['time_out_pm'] ?? null,
                 'reason' => $validated['reason'],
                 'certified_by_employee_id' => $validated['certified_by_employee_id'] ?? null,
+                'approved_by_employee_id' => $validated['approved_by_employee_id'] ?? null,
+                'approved_by_title' => $validated['approved_by_title'] ?? null,
             ]);
 
             // Reload with relationships
@@ -93,6 +98,8 @@ class TimeSlipController extends Controller
                 'time_out_pm' => 'nullable|date_format:H:i',
                 'reason' => 'required|string|max:500',
                 'certified_by_employee_id' => 'nullable|integer|exists:employees,id',
+                'approved_by_employee_id' => 'nullable|integer|exists:employees,id',
+                'approved_by_title' => ['nullable', 'string', Rule::in(['Provincial Budget Officer', 'OIC, Provincial Budget Officer', 'Acting Provincial Budget Officer'])],
             ]);
 
             // Validate that at least one time field has a value
@@ -110,6 +117,8 @@ class TimeSlipController extends Controller
                 'time_out_pm' => $validated['time_out_pm'] ?: null,
                 'reason' => $validated['reason'],
                 'certified_by_employee_id' => $validated['certified_by_employee_id'] ?: null,
+                'approved_by_employee_id' => $validated['approved_by_employee_id'] ?? null,
+                'approved_by_title' => $validated['approved_by_title'] ?? null,
             ]);
 
             // Reload with relationships

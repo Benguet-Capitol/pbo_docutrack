@@ -130,11 +130,11 @@
                             <div class="w-96 text-center mb-6">
                                 <p class="text-xs text-left text-gray-900 mb-8">APPROVED:</p>
                                 <p v-if="isRequestingEmployeeProvincialBudgetOfficer() && getProvincialGovernor()" class="font-bold text-xs text-gray-900 uppercase w-72">{{ getProvincialGovernor()?.name }}</p>
-                                <p v-else-if="getProvincialBudgetOfficer()" class="font-bold text-xs text-gray-900 uppercase w-72">{{ getProvincialBudgetOfficer()?.name }}</p>
+                                <p v-else-if="approvedBy.name" class="font-bold text-xs text-gray-900 uppercase w-72">{{ approvedBy.name }}</p>
                                 <p v-else class="font-bold text-xs text-gray-900 uppercase w-72">-</p>
 
                                 <p v-if="isRequestingEmployeeProvincialBudgetOfficer() && getProvincialGovernor()" class="text-xs text-center text-gray-700 border-b border-gray-400 pb-1 w-72">Provincial Governor</p>
-                                <p v-else class="text-xs text-center text-gray-700 border-b border-gray-900 pb-1 w-72">Provincial Budget Officer</p>
+                                <p v-else class="text-xs text-center text-gray-700 border-b border-gray-900 pb-1 w-72">{{ approvedBy.title }}</p>
                                 <p class="text-xs text-center text-gray-700 w-72">Department Head</p>
                             </div>
                         </div>
@@ -227,11 +227,11 @@
                             <div class="w-96 text-center mb-6">
                                 <p class="text-xs text-left text-gray-900 mb-8">APPROVED:</p>
                                 <p v-if="isRequestingEmployeeProvincialBudgetOfficer() && getProvincialGovernor()" class="font-bold text-xs text-gray-900 uppercase w-72">{{ getProvincialGovernor()?.name }}</p>
-                                <p v-else-if="getProvincialBudgetOfficer()" class="font-bold text-xs text-gray-900 uppercase w-72">{{ getProvincialBudgetOfficer()?.name }}</p>
+                                <p v-else-if="approvedBy.name" class="font-bold text-xs text-gray-900 uppercase w-72">{{ approvedBy.name }}</p>
                                 <p v-else class="font-bold text-xs text-gray-900 uppercase w-72">-</p>
 
                                 <p v-if="isRequestingEmployeeProvincialBudgetOfficer() && getProvincialGovernor()" class="text-xs text-center text-gray-700 border-b border-gray-400 pb-1 w-72">Provincial Governor</p>
-                                <p v-else class="text-xs text-center text-gray-700 border-b border-gray-900 pb-1 w-72">Provincial Budget Officer</p>
+                                <p v-else class="text-xs text-center text-gray-700 border-b border-gray-900 pb-1 w-72">{{ approvedBy.title }}</p>
                                 <p class="text-xs text-center text-gray-700 w-72">Department Head</p>
                             </div>
                         </div>
@@ -271,6 +271,7 @@
 import { ref } from 'vue';
 import type { Employee } from '../Composables/useTardinessData';
 import { printSafely } from '@/Composables/usePrint';
+import type { ApprovedBy } from '@/Composables/useSignatory';
 
 const paperSize = ref<'short' | 'long'>('long');
 
@@ -285,11 +286,14 @@ const props = defineProps<{
         reason: string;
         employee_id: number;
         supervisor_employee_id: number | null;
+        approved_by_employee_id?: number | null;
+        approved_by_title?: string | null;
     };
     requestingEmployee: Employee | null;
     supervisor: Employee | null;
     provincialBudgetOfficer: Employee | null;
     provincialGovernor: Employee | null;
+    approvedBy: ApprovedBy;
     saving: boolean;
     isPreviewFromTable?: boolean;
 }>();

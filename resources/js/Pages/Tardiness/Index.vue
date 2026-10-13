@@ -18,6 +18,8 @@
                     @create-click="handleCreateClick"
                     @update:search-query="handleSearchQuery"
                     @update:items-per-page="handleItemsPerPage"
+                    :view-mode="viewMode"
+                    @update:view-mode="setViewMode"
                 />
 
                 <!-- Loading State -->
@@ -41,8 +43,8 @@
                 />
 
                 <!-- Data Table -->
-                <Table 
-                    v-else
+                <Table
+                    v-else-if="viewMode === 'table'"
                     :records="paginatedTardiness"
                     :sort-by="sortBy"
                     :sort-order="sortOrder"
@@ -53,6 +55,16 @@
                     @preview="handlePreviewClick"
                     @sort="dataComposable.toggleSort"
                 />
+                <div v-else class="p-4">
+                    <CardView
+                        :records="paginatedTardiness"
+                        :can-edit-tardiness="canEditTardiness"
+                        :can-delete-tardiness="canDeleteTardiness"
+                        @edit="handleEditClick"
+                        @delete="handleDeleteClick"
+                        @preview="handlePreviewClick"
+                    />
+                </div>
 
                 <!-- Pagination Controls -->
                 <Pagination 
@@ -107,6 +119,7 @@
             :supervisor="formComposable.getSupervisor()"
             :provincial-budget-officer="formComposable.getProvincialBudgetOfficer()"
             :provincial-governor="formComposable.getProvincialGovernor()"
+            :approved-by="resolveApprovedBy(sortedEmployees, formData.approved_by_employee_id, formData.approved_by_title)"
             :saving="creating || updating"
             :is-preview-from-table="formComposable.isPreviewFromTable.value"
             @close="formComposable.closePreviewModal()"
@@ -122,6 +135,7 @@ import PageHead from '@/Components/PageHead.vue';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import Header from './Partials/Header.vue';
 import Table from './Partials/Table.vue';
+import CardView from './Partials/CardView.vue';
 import Pagination from './Partials/Pagination.vue';
 import LoadingState from './Partials/LoadingState.vue';
 import ErrorState from './Partials/ErrorState.vue';
@@ -133,6 +147,11 @@ import PreviewModal from './Partials/PreviewModal.vue';
 import { useTardinessData } from './Composables/useTardinessData';
 import { useTardinessForm } from './Composables/useTardinessForm';
 import type { TardinessRecord } from './Composables/useTardinessData';
+import { useResponsiveView } from '@/Composables/useResponsiveView';
+import { resolveApprovedBy } from '@/Composables/useSignatory';
+
+// Table on desktop (user can switch to cards), always cards on small screens
+const { viewMode, setViewMode } = useResponsiveView('tardinessView');
 
 const toastRef = ref<InstanceType<typeof Toast> | null>(null);
 
@@ -284,6 +303,8 @@ const handleConfirmPreviewAndSubmit = async () => {
             reason: formComposable.formData.value.reason,
             return_time: returnTime,
             supervisor_employee_id: formComposable.formData.value.supervisor_employee_id,
+            approved_by_employee_id: formComposable.formData.value.approved_by_employee_id ?? null,
+            approved_by_title: formComposable.formData.value.approved_by_title ?? null,
         };
 
         const url = isUpdate ? `/api/tardiness/${formComposable.recordToEdit.value!.id}` : '/api/tardiness';

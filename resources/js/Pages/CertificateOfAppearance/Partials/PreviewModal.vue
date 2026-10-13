@@ -2,6 +2,7 @@
 import { ref } from 'vue';
 import type { CertificateOfAppearance } from '../Composables/useCoaData';
 import { printSafely } from '@/Composables/usePrint';
+import { resolveApprovedBy } from '@/Composables/useSignatory';
 
 interface Employee {
     id: number;
@@ -42,6 +43,14 @@ const getProvincialBudgetOfficer = () => {
         e.designation?.toLowerCase().includes('provincial budget officer')
     );
 };
+
+// Signatory chosen on the form (OIC / Acting PBO); defaults to the PBO and their full designation
+const getApprovedBy = () => resolveApprovedBy(
+    props.sortedEmployees,
+    props.formData?.approved_by_employee_id,
+    props.formData?.approved_by_title,
+    getProvincialBudgetOfficer()?.designation || 'Provincial Budget Officer',
+);
 </script>
 
 <template>
@@ -127,8 +136,8 @@ const getProvincialBudgetOfficer = () => {
                                 <div class="mt-8 flex justify-end pr-8">
                                     <div class="w-72 text-center">
                                         <p class="text-lg text-gray-700 mt-12"></p>
-                                        <p class="text-lg text-center text-gray-900 border-b border-gray-900 pb-1 font-bold uppercase">{{ getProvincialBudgetOfficer()?.name || 'PROVINCIAL BUDGET OFFICER' }}</p>
-                                        <p class="text-lg text-center text-gray-900 ">{{ getProvincialBudgetOfficer()?.designation || 'Provincial Budget Officer' }}</p>
+                                        <p class="text-lg text-center text-gray-900 border-b border-gray-900 pb-1 font-bold uppercase">{{ getApprovedBy().name || 'PROVINCIAL BUDGET OFFICER' }}</p>
+                                        <p class="text-lg text-center text-gray-900 ">{{ getApprovedBy().title }}</p>
                                     </div>
                                 </div>
                             </div>

@@ -28,6 +28,8 @@ class PassSlip extends Model
         'remarks',
         'vehicle',
         'recommending_approval_employee_id',
+        'approved_by_employee_id',
+        'approved_by_title',
     ];
 
     protected $casts = [

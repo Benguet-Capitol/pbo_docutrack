@@ -18,6 +18,8 @@
                     @update:search-query="searchQuery = $event"
                     @update:items-per-page="itemsPerPage = Number($event)"
                     @create-click="handleCreateClick"
+                    :view-mode="viewMode"
+                    @update:view-mode="setViewMode"
                 />
 
                 <!-- Loading State -->
@@ -31,7 +33,7 @@
 
                 <!-- Data Table -->
                 <Table
-                    v-else
+                    v-else-if="viewMode === 'table'"
                     :municipalities="paginatedMunicipalities"
                     :sort-by="sortBy"
                     :sort-order="sortOrder"
@@ -41,6 +43,15 @@
                     @edit="handleEditClick"
                     @delete="handleDeleteClick"
                 />
+                <div v-else class="p-4">
+                    <CardView
+                        :municipalities="paginatedMunicipalities"
+                        :can-edit-municipalities="canEditMunicipalities"
+                        :can-delete-municipalities="canDeleteMunicipalities"
+                        @edit="handleEditClick"
+                        @delete="handleDeleteClick"
+                    />
+                </div>
 
                 <!-- Pagination -->
                 <Pagination
@@ -86,6 +97,7 @@ import PageHead from '@/Components/PageHead.vue';
 import Toast from '@/Components/Toast.vue';
 import Header from './Partials/Header.vue';
 import Table from './Partials/Table.vue';
+import CardView from './Partials/CardView.vue';
 import Pagination from './Partials/Pagination.vue';
 import LoadingState from './Partials/LoadingState.vue';
 import ErrorState from './Partials/ErrorState.vue';
@@ -96,6 +108,10 @@ import DeleteModal from './Partials/DeleteModal.vue';
 import { ref } from 'vue';
 import { useMunicipalityData } from './Composables/useMunicipalityData';
 import { useMunicipalityForm } from './Composables/useMunicipalityForm';
+import { useResponsiveView } from '@/Composables/useResponsiveView';
+
+// Table on desktop (user can switch to cards), always cards on small screens
+const { viewMode, setViewMode } = useResponsiveView('municipalitiesView');
 
 // ============== Composables ==============
 

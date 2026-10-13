@@ -17,6 +17,8 @@
                     @create="openCreateModal"
                     @update:search-query="handleSearchQuery"
                     @update:items-per-page="handleItemsPerPage"
+                    :view-mode="viewMode"
+                    @update:view-mode="setViewMode"
                 />
 
                 <!-- Loading State -->
@@ -40,8 +42,8 @@
                 />
 
                 <!-- Data Table -->
-                <Table 
-                    v-else
+                <Table
+                    v-else-if="viewMode === 'table'"
                     :certificates="paginatedCertificates"
                     :sort-by="sortBy"
                     :sort-order="sortOrder"
@@ -50,6 +52,14 @@
                     @preview="handlePreview"
                     @sort="handleSort"
                 />
+                <div v-else class="p-4">
+                    <CardView
+                        :certificates="paginatedCertificates"
+                        @edit="openEditModal"
+                        @delete="openDeleteModal"
+                        @preview="handlePreview"
+                    />
+                </div>
 
                 <!-- Pagination Controls -->
                 <Pagination 
@@ -69,6 +79,7 @@
             :show="showCreateModal"
             :form-data="formData"
             :form-errors="formErrors"
+            :sorted-employees="sortedEmployees"
             :loading="creating"
             :today-date="todayDate"
             @update:formData="handleUpdateFormData"
@@ -81,6 +92,7 @@
             :show="showEditModal"
             :form-data="formData"
             :form-errors="formErrors"
+            :sorted-employees="sortedEmployees"
             :loading="updating"
             :today-date="todayDate"
             @update:formData="handleUpdateFormData"
@@ -118,6 +130,7 @@ import { useCoaForm } from './Composables/useCoaForm';
 import type { CertificateOfAppearance } from './Composables/useCoaData';
 import Header from './Partials/Header.vue';
 import Table from './Partials/Table.vue';
+import CardView from './Partials/CardView.vue';
 import Pagination from './Partials/Pagination.vue';
 import LoadingState from './Partials/LoadingState.vue';
 import ErrorState from './Partials/ErrorState.vue';
@@ -126,6 +139,10 @@ import CreateModal from './Partials/CreateModal.vue';
 import EditModal from './Partials/EditModal.vue';
 import DeleteModal from './Partials/DeleteModal.vue';
 import PreviewModal from './Partials/PreviewModal.vue';
+import { useResponsiveView } from '@/Composables/useResponsiveView';
+
+// Table on desktop (user can switch to cards), always cards on small screens
+const { viewMode, setViewMode } = useResponsiveView('certificatesView');
 
 const toastRef = ref<InstanceType<typeof Toast> | null>(null);
 
@@ -221,6 +238,8 @@ const handlePreview = (certificate: CertificateOfAppearance) => {
         purpose: certificate.purpose,
         date: certificate.date,
         remarks: certificate.remarks || '',
+        approved_by_employee_id: certificate.approved_by_employee_id ?? null,
+        approved_by_title: certificate.approved_by_title ?? null,
     };
     openPreviewModal();
 };
@@ -288,6 +307,8 @@ const submitConfirmCreate = async () => {
             purpose: formData.value.purpose,
             date: formData.value.date,
             remarks: formData.value.remarks || '',
+            approved_by_employee_id: formData.value.approved_by_employee_id ?? null,
+            approved_by_title: formData.value.approved_by_title ?? null,
         };
 
         const response = await fetch('/api/certificate-of-appearances', {
@@ -343,6 +364,8 @@ const submitConfirmEdit = async () => {
             purpose: formData.value.purpose,
             date: formData.value.date,
             remarks: formData.value.remarks || '',
+            approved_by_employee_id: formData.value.approved_by_employee_id ?? null,
+            approved_by_title: formData.value.approved_by_title ?? null,
         };
 
         const response = await fetch(`/api/certificate-of-appearances/${certificateToEdit.value.id}`, {

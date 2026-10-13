@@ -7,6 +7,7 @@ use App\Models\PassSlip;
 use App\Models\Employee;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class PassSlipController extends Controller
 {
@@ -45,6 +46,8 @@ class PassSlipController extends Controller
                 'employee_ids' => 'required|array|min:1',
                 'employee_ids.*' => 'integer|exists:employees,id',
                 'recommending_approval_employee_id' => 'nullable|integer|exists:employees,id',
+                'approved_by_employee_id' => 'nullable|integer|exists:employees,id',
+                'approved_by_title' => ['nullable', 'string', Rule::in(['Provincial Budget Officer', 'OIC, Provincial Budget Officer', 'Acting Provincial Budget Officer'])],
                 'vehicle' => 'required|in:RP Vehicle,PUJ',
             ]);
 
@@ -63,6 +66,8 @@ class PassSlipController extends Controller
                 'remarks' => $validated['remarks'] ?? null,
                 'vehicle' => $validated['vehicle'],
                 'recommending_approval_employee_id' => $validated['recommending_approval_employee_id'] ?? null,
+                'approved_by_employee_id' => $validated['approved_by_employee_id'] ?? null,
+                'approved_by_title' => $validated['approved_by_title'] ?? null,
             ]);
 
             // Attach employees
@@ -102,6 +107,8 @@ class PassSlipController extends Controller
                 'employee_ids' => 'required|array|min:1',
                 'employee_ids.*' => 'integer|exists:employees,id',
                 'recommending_approval_employee_id' => 'nullable|integer|exists:employees,id',
+                'approved_by_employee_id' => 'nullable|integer|exists:employees,id',
+                'approved_by_title' => ['nullable', 'string', Rule::in(['Provincial Budget Officer', 'OIC, Provincial Budget Officer', 'Acting Provincial Budget Officer'])],
                 'vehicle' => 'required|in:RP Vehicle,PUJ',
             ]);
 
@@ -117,6 +124,8 @@ class PassSlipController extends Controller
                 'remarks' => $validated['remarks'] ?? null,
                 'vehicle' => $validated['vehicle'],
                 'recommending_approval_employee_id' => $validated['recommending_approval_employee_id'] ?? null,
+                'approved_by_employee_id' => $validated['approved_by_employee_id'] ?? null,
+                'approved_by_title' => $validated['approved_by_title'] ?? null,
             ]);
 
             // Sync employees (update the relationship)

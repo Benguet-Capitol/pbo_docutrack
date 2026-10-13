@@ -63,6 +63,15 @@
                                 <span v-if="formErrors.purpose" class="text-red-500 text-xs">{{ formErrors.purpose }}</span>
                             </div>
 
+                            <!-- Approved By (Signatory) Field -->
+                            <SignatoryFields
+                                :employees="sortedEmployees"
+                                :employee-id="formData.approved_by_employee_id"
+                                :title="formData.approved_by_title"
+                                :errors="formErrors"
+                                @change="$emit('update:formData', { ...formData, ...$event })"
+                            />
+
                             <!-- Remarks Field -->
                             <div class="space-y-2">
                                 <label class="block text-xs font-medium text-gray-700 dark:text-gray-300">Remarks</label>
@@ -93,6 +102,8 @@
 </template>
 
 <script setup lang="ts">
+import SignatoryFields from '@/Components/SignatoryFields.vue';
+import type { SignatoryEmployee } from '@/Composables/useSignatory';
 defineProps<{
     show: boolean;
     formData: {
@@ -102,8 +113,11 @@ defineProps<{
         purpose: string;
         date: string;
         remarks: string;
+        approved_by_employee_id?: number | null;
+        approved_by_title?: string | null;
     };
     formErrors: Record<string, string>;
+    sortedEmployees: SignatoryEmployee[];
     loading: boolean;
     todayDate: string;
 }>();

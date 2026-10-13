@@ -126,6 +126,16 @@
                         </option>
                         </select>
                     </div>
+
+                <!-- Approved By (Signatory) Field -->
+                <SignatoryFields
+                    :employees="sortedEmployees"
+                    :employee-id="formData.approved_by_employee_id"
+                    :title="formData.approved_by_title"
+                    :errors="formErrors"
+                    :governor-approves="isProvincialBudgetOfficer(sortedEmployees.find((emp) => emp.id === formData.requesting_employee_id))"
+                    @change="Object.assign(formData, $event)"
+                />
                         </div>
                     </div>
 
@@ -148,6 +158,8 @@
 </template>
 
 <script setup lang="ts">
+import SignatoryFields from '@/Components/SignatoryFields.vue';
+import { isProvincialBudgetOfficer } from '@/Composables/useSignatory';
 defineProps<{
     show: boolean;
     formData: any;

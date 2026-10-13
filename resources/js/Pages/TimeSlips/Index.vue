@@ -18,6 +18,8 @@
                     @create-click="handleCreateClick"
                     @update:search-query="handleSearchQuery"
                     @update:items-per-page="handleItemsPerPage"
+                    :view-mode="viewMode"
+                    @update:view-mode="setViewMode"
                 />
 
                 <!-- Loading State -->
@@ -41,8 +43,8 @@
                 />
 
                 <!-- Data Table -->
-                <Table 
-                    v-else
+                <Table
+                    v-else-if="viewMode === 'table'"
                     :records="paginatedTimeSlips"
                     :sort-by="sortBy"
                     :sort-order="sortOrder"
@@ -53,6 +55,16 @@
                     @preview="handlePreviewClick"
                     @sort="toggleSort"
                 />
+                <div v-else class="p-4">
+                    <CardView
+                        :records="paginatedTimeSlips"
+                        :can-edit-time-slips="canEditTimeSlips"
+                        :can-delete-time-slips="canDeleteTimeSlips"
+                        @edit="handleEditClick"
+                        @delete="handleDeleteClick"
+                        @preview="handlePreviewClick"
+                    />
+                </div>
 
                 <!-- Pagination Controls -->
                 <Pagination 
@@ -118,6 +130,7 @@ import PageHead from '@/Components/PageHead.vue';
 // Partials
 import Header from './Partials/Header.vue';
 import Table from './Partials/Table.vue';
+import CardView from './Partials/CardView.vue';
 import LoadingState from './Partials/LoadingState.vue';
 import ErrorState from './Partials/ErrorState.vue';
 import EmptyState from './Partials/EmptyState.vue';
@@ -131,6 +144,10 @@ import PreviewModal from './Partials/PreviewModal.vue';
 import { useTimeSlipsData } from './Composables/useTimeSlipsData';
 import { useTimeSlipsForm } from './Composables/useTimeSlipsForm';
 import type { TimeSlip } from './Composables/useTimeSlipsData';
+import { useResponsiveView } from '@/Composables/useResponsiveView';
+
+// Table on desktop (user can switch to cards), always cards on small screens
+const { viewMode, setViewMode } = useResponsiveView('timeSlipsView');
 
 const dataComposable = useTimeSlipsData();
 const {
@@ -393,6 +410,8 @@ const handleConfirmPreviewAndSubmit = async () => {
             time_out_pm: formData.value.time_out_pm ? formatTimeForAPI(formData.value.time_out_pm) : null,
             reason: formData.value.reason,
             certified_by_employee_id: formData.value.certified_by_employee_id || null,
+            approved_by_employee_id: formData.value.approved_by_employee_id ?? null,
+            approved_by_title: formData.value.approved_by_title ?? null,
         };
 
         let result;

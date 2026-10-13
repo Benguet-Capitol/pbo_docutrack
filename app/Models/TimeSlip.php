@@ -27,6 +27,8 @@ class TimeSlip extends Model
         'time_out_pm',
         'reason',
         'certified_by_employee_id',
+        'approved_by_employee_id',
+        'approved_by_title',
     ];
 
     protected $casts = [

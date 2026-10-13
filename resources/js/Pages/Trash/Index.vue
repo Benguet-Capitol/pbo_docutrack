@@ -25,6 +25,8 @@
                     @delete-selected="openForceDelete(selectedItems)"
                     @clear-selection="dataComposable.clearSelection()"
                     @refresh="dataComposable.fetchItems()"
+                    :view-mode="viewMode"
+                    @update:view-mode="setViewMode"
                 />
 
                 <!-- Loading State -->
@@ -38,7 +40,7 @@
 
                 <!-- Data Table -->
                 <Table
-                    v-else
+                    v-else-if="viewMode === 'table'"
                     :items="paginatedItems"
                     :selected-keys="selectedKeys"
                     :all-page-selected="allPageSelected"
@@ -47,6 +49,17 @@
                     @restore="openRestore([$event])"
                     @delete="openForceDelete([$event])"
                 />
+                <div v-else class="p-4">
+                    <CardView
+                        :items="paginatedItems"
+                        :selected-keys="selectedKeys"
+                        :all-page-selected="allPageSelected"
+                        @toggle-select="dataComposable.toggleSelect($event)"
+                        @toggle-select-page="dataComposable.toggleSelectPage()"
+                        @restore="openRestore([$event])"
+                        @delete="openForceDelete([$event])"
+                    />
+                </div>
 
                 <!-- Pagination -->
                 <Pagination
@@ -86,6 +99,7 @@ import PageHead from '@/Components/PageHead.vue';
 import Toast from '@/Components/Toast.vue';
 import Header from './Partials/Header.vue';
 import Table from './Partials/Table.vue';
+import CardView from './Partials/CardView.vue';
 import Pagination from './Partials/Pagination.vue';
 import LoadingState from './Partials/LoadingState.vue';
 import ErrorState from './Partials/ErrorState.vue';
@@ -95,6 +109,10 @@ import ForceDeleteModal from './Partials/ForceDeleteModal.vue';
 import { ref } from 'vue';
 import { useTrashData } from './Composables/useTrashData';
 import type { TrashItem } from './Composables/useTrashData';
+import { useResponsiveView } from '@/Composables/useResponsiveView';
+
+// Table on desktop (user can switch to cards), always cards on small screens
+const { viewMode, setViewMode } = useResponsiveView('trashView');
 
 // ============== Composables ==============
 

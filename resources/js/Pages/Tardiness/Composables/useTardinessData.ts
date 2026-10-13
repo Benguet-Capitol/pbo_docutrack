@@ -24,6 +24,8 @@ export interface TardinessRecord {
     reason: string;
     return_time: string | null;
     supervisor_employee_id: number | null;
+    approved_by_employee_id?: number | null;
+    approved_by_title?: string | null;
     supervisor?: Employee;
     created_at: string;
     updated_at: string;

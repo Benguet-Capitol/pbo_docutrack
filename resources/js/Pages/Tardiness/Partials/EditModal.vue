@@ -142,6 +142,16 @@
                             </div>
                             <span v-if="formErrors.supervisor_employee_id" class="text-red-500 text-xs">{{ formErrors.supervisor_employee_id }}</span>
                         </div>
+
+                        <!-- Approved By (Signatory) Field -->
+                        <SignatoryFields
+                            :employees="sortedEmployees"
+                            :employee-id="formData.approved_by_employee_id"
+                            :title="formData.approved_by_title"
+                            :errors="formErrors"
+                            :governor-approves="isProvincialBudgetOfficer(sortedEmployees.find((emp) => emp.id === formData.employee_id))"
+                            @change="$emit('update:formData', { ...formData, ...$event })"
+                        />
                     </div>
                 </div>
 
@@ -164,6 +174,8 @@
 </template>
 
 <script setup lang="ts">
+import SignatoryFields from '@/Components/SignatoryFields.vue';
+import { isProvincialBudgetOfficer } from '@/Composables/useSignatory';
 import type { Employee, TardinessRecord } from '../Composables/useTardinessData';
 
 defineProps<{
@@ -180,6 +192,8 @@ defineProps<{
         return_time: string;
         returnType: 'time' | 'nwd';
         supervisor_employee_id: number | null;
+        approved_by_employee_id?: number | null;
+        approved_by_title?: string | null;
     };
     formErrors: Record<string, string>;
     sortedEmployees: Employee[];

@@ -17,6 +17,8 @@
                     @create-click="handleCreateClick"
                     @update:search-query="handleSearchQuery"
                     @update:items-per-page="handleItemsPerPage"
+                    :view-mode="viewMode"
+                    @update:view-mode="setViewMode"
                 />
 
                 <!-- Tab Navigation -->
@@ -127,8 +129,8 @@
                 />
 
                 <!-- Data Table -->
-                <Table 
-                    v-else
+                <Table
+                    v-else-if="viewMode === 'table'"
                     :records="paginatedRecords"
                     :sort-by="sortBy"
                     :sort-order="sortOrder"
@@ -138,6 +140,15 @@
                     @edit="handleEditClick"
                     @delete="handleDeleteClick"
                 />
+                <div v-else class="p-4">
+                    <CardView
+                        :records="paginatedRecords"
+                        @view="handleViewFile"
+                        @download="handleDownloadFile"
+                        @edit="handleEditClick"
+                        @delete="handleDeleteClick"
+                    />
+                </div>
 
                 <!-- Pagination Controls -->
                 <Pagination 
@@ -202,6 +213,7 @@ import PageHead from '@/Components/PageHead.vue';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import Header from './Partials/Header.vue';
 import Table from './Partials/Table.vue';
+import CardView from './Partials/CardView.vue';
 import Pagination from './Partials/Pagination.vue';
 import LoadingState from './Partials/LoadingState.vue';
 import ErrorState from './Partials/ErrorState.vue';
@@ -213,6 +225,10 @@ import PreviewModal from './Partials/PreviewModal.vue';
 import { useRecordsData } from './Composables/useRecordsData';
 import { useRecordsForm } from './Composables/useRecordsForm';
 import type { Record } from './Composables/useRecordsData';
+import { useResponsiveView } from '@/Composables/useResponsiveView';
+
+// Table on desktop (user can switch to cards), always cards on small screens
+const { viewMode, setViewMode } = useResponsiveView('recordsView');
 
 const toastRef = ref<InstanceType<typeof Toast> | null>(null);
 

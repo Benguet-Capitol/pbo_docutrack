@@ -24,6 +24,7 @@
                         class="border border-gray-300 rounded-lg pl-10 pr-4 py-2 text-xs dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white w-80 focus:outline-none focus:border-emerald-500 dark:focus:border-emerald-500"
                     />
                 </div>
+                <ViewToggle :model-value="viewMode" @update:model-value="$emit('update:viewMode', $event)" />
 
                 <!-- Items Per Page Selector: Controls number of items displayed per page -->
                 <select
@@ -43,7 +44,13 @@
 </template>
 
 <script setup lang="ts">
+import ViewToggle from '@/Components/ViewToggle.vue';
+import type { ViewMode } from '@/Composables/useResponsiveView';
 defineProps({
+    viewMode: {
+        type: String as () => ViewMode,
+        required: true,
+    },
     searchQuery: {
         type: String,
         required: true,
@@ -59,6 +66,7 @@ defineProps({
 });
 
 const emit = defineEmits<{
+    'update:viewMode': [value: ViewMode];
     'update:searchQuery': [value: string];
     'update:itemsPerPage': [value: string];
     'create-click': [];

@@ -18,6 +18,8 @@
                     @create-click="handleCreateClick"
                     @update:search-query="handleSearchQuery"
                     @update:items-per-page="handleItemsPerPage"
+                    :view-mode="viewMode"
+                    @update:view-mode="setViewMode"
                 />
 
                 <!-- Loading State -->
@@ -41,8 +43,8 @@
                 />
 
                 <!-- Data Table -->
-                <Table 
-                    v-else
+                <Table
+                    v-else-if="viewMode === 'table'"
                     :records="paginatedPassSlips"
                     :sort-by="sortBy"
                     :sort-order="sortOrder"
@@ -53,6 +55,16 @@
                     @preview="handlePreviewClick"
                     @sort="dataComposable.toggleSort"
                 />
+                <div v-else class="p-4">
+                    <CardView
+                        :records="paginatedPassSlips"
+                        :can-edit-pass-slips="canEditPassSlips"
+                        :can-delete-pass-slips="canDeletePassSlips"
+                        @edit="handleEditClick"
+                        @delete="handleDeleteClick"
+                        @preview="handlePreviewClick"
+                    />
+                </div>
 
                 <!-- Pagination Controls -->
                 <Pagination 
@@ -118,6 +130,7 @@ import PageHead from '@/Components/PageHead.vue';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import Header from './Partials/Header.vue';
 import Table from './Partials/Table.vue';
+import CardView from './Partials/CardView.vue';
 import Pagination from './Partials/Pagination.vue';
 import LoadingState from './Partials/LoadingState.vue';
 import ErrorState from './Partials/ErrorState.vue';
@@ -129,6 +142,10 @@ import PreviewModal from './Partials/PreviewModal.vue';
 import { usePassSlipsData } from './Composables/usePassSlipsData';
 import { usePassSlipsForm } from './Composables/usePassSlipsForm';
 import type { PassSlip } from './Composables/usePassSlipsData';
+import { useResponsiveView } from '@/Composables/useResponsiveView';
+
+// Table on desktop (user can switch to cards), always cards on small screens
+const { viewMode, setViewMode } = useResponsiveView('passSlipsView');
 
 const toastRef = ref<InstanceType<typeof Toast> | null>(null);
 
@@ -274,6 +291,8 @@ const handleConfirmPreviewAndSubmit = async () => {
             remarks: formComposable.formData.value.remarks,
             employee_ids: formComposable.formData.value.employee_ids,
             recommending_approval_employee_id: formComposable.formData.value.recommending_approval_employee_id,
+            approved_by_employee_id: formComposable.formData.value.approved_by_employee_id ?? null,
+            approved_by_title: formComposable.formData.value.approved_by_title ?? null,
             vehicle: formComposable.formData.value.vehicle,
             returnType: formComposable.formData.value.returnType,
         };

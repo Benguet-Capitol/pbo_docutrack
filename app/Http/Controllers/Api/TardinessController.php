@@ -7,6 +7,7 @@ use App\Models\Tardiness;
 use App\Models\Employee;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class TardinessController extends Controller
 {
@@ -44,6 +45,8 @@ class TardinessController extends Controller
                 'reason' => 'required|string|max:500',
                 'return_time' => 'nullable|string',
                 'supervisor_employee_id' => 'nullable|integer|exists:employees,id',
+                'approved_by_employee_id' => 'nullable|integer|exists:employees,id',
+                'approved_by_title' => ['nullable', 'string', Rule::in(['Provincial Budget Officer', 'OIC, Provincial Budget Officer', 'Acting Provincial Budget Officer'])],
             ]);
 
             $tardiness = Tardiness::create($validated);
@@ -99,6 +102,8 @@ class TardinessController extends Controller
                 'reason' => 'required|string|max:500',
                 'return_time' => 'nullable|string',
                 'supervisor_employee_id' => 'nullable|integer|exists:employees,id',
+                'approved_by_employee_id' => 'nullable|integer|exists:employees,id',
+                'approved_by_title' => ['nullable', 'string', Rule::in(['Provincial Budget Officer', 'OIC, Provincial Budget Officer', 'Acting Provincial Budget Officer'])],
             ]);
 
             $tardiness->update($validated);

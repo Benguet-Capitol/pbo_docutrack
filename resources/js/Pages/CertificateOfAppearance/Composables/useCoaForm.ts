@@ -10,6 +10,8 @@ export function useCoaForm(certificates: any) {
         purpose: '',
         date: '',
         remarks: '',
+        approved_by_employee_id: null as number | null,
+        approved_by_title: null as string | null,
     });
 
     const formErrors = ref<Record<string, string>>({});
@@ -77,6 +79,8 @@ export function useCoaForm(certificates: any) {
             purpose: '',
             date: '',
             remarks: '',
+            approved_by_employee_id: null as number | null,
+            approved_by_title: null as string | null,
         };
         formErrors.value = {};
     };
@@ -90,6 +94,8 @@ export function useCoaForm(certificates: any) {
             purpose: '',
             date: today,
             remarks: '',
+            approved_by_employee_id: null as number | null,
+            approved_by_title: null as string | null,
         };
         formErrors.value = {};
         certificateToEdit.value = null;
@@ -110,6 +116,8 @@ export function useCoaForm(certificates: any) {
             purpose: certificate.purpose,
             date: certificate.date,
             remarks: certificate.remarks || '',
+            approved_by_employee_id: certificate.approved_by_employee_id ?? null,
+            approved_by_title: certificate.approved_by_title ?? null,
         };
         showEditModal.value = true;
     };

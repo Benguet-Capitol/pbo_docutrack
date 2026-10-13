@@ -17,6 +17,8 @@ export function usePassSlipsForm(employees: any, passSlips: any) {
         remarks: '',
         employee_ids: [] as number[],
         recommending_approval_employee_id: null as number | null,
+        approved_by_employee_id: null as number | null,
+        approved_by_title: null as string | null,
         vehicle: 'RP Vehicle' as 'RP Vehicle' | 'PUJ',
         returnType: 'time' as 'time' | 'asap' | 'nwd' | 'time_slip' | 'nom' | 'memo',
     });
@@ -315,6 +317,8 @@ export function usePassSlipsForm(employees: any, passSlips: any) {
             employee_ids: [],
             returnType: 'time',
             recommending_approval_employee_id: null,
+            approved_by_employee_id: null,
+            approved_by_title: null,
             vehicle: 'RP Vehicle',
         };
         formErrors.value = {};
@@ -350,6 +354,8 @@ export function usePassSlipsForm(employees: any, passSlips: any) {
             employee_ids: slip.employees.map(emp => emp.id),
             returnType: returnType,
             recommending_approval_employee_id: slip.recommending_approval_employee_id || null,
+            approved_by_employee_id: slip.approved_by_employee_id ?? null,
+            approved_by_title: slip.approved_by_title ?? null,
             vehicle: (slip.vehicle || 'RP Vehicle') as 'RP Vehicle' | 'PUJ',
         };
         formErrors.value = {};
@@ -395,6 +401,8 @@ export function usePassSlipsForm(employees: any, passSlips: any) {
                 employee_ids: slip.employees.map(emp => emp.id),
                 returnType: returnType,
                 recommending_approval_employee_id: slip.recommending_approval_employee_id || null,
+                approved_by_employee_id: slip.approved_by_employee_id ?? null,
+                approved_by_title: slip.approved_by_title ?? null,
                 vehicle: (slip.vehicle || 'RP Vehicle') as 'RP Vehicle' | 'PUJ',
             };
             passSlipToEdit.value = slip;
@@ -421,6 +429,8 @@ export function usePassSlipsForm(employees: any, passSlips: any) {
             remarks: '',
             employee_ids: [],
             recommending_approval_employee_id: null,
+            approved_by_employee_id: null,
+            approved_by_title: null,
             vehicle: 'RP Vehicle',
             returnType: 'time',
         };
