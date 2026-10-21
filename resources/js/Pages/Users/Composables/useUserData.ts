@@ -1,4 +1,4 @@
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 
 /**
  * User interface defines the structure of user data
@@ -64,6 +64,11 @@ export function useUserData() {
 
     /** Number of items to display per page */
     const itemsPerPage = ref(10);
+
+    // Back to the first page when the search or page size changes
+    watch([searchQuery, itemsPerPage], () => {
+        currentPage.value = 1;
+    });
 
     /** The field to sort users by */
     const sortBy = ref<'id' | 'name' | 'username' | 'usertype'>('id');

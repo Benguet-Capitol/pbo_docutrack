@@ -321,6 +321,7 @@
 </template>
 
 <script setup lang="ts">
+import { isProvincialBudgetOfficer, isProvincialGovernor } from '@/Composables/useOfficials';
 import { ref } from 'vue';
 import type { Employee } from '../Composables/usePassSlipsData';
 import { printSafely } from '@/Composables/usePrint';
@@ -365,7 +366,7 @@ const getEmployeeDesignation = (empId: number): string => {
 };
 
 const getProvincialBudgetOfficer = (): string => {
-    const pbo = props.employees?.find((emp: Employee) => emp.designation?.toLowerCase().includes('budget officer'));
+    const pbo = props.employees?.find((emp: Employee) => isProvincialBudgetOfficer(emp));
     return pbo?.name || 'Provincial Budget Officer';
 };
 
@@ -373,7 +374,7 @@ const getProvincialBudgetOfficer = (): string => {
 const getApprovedBy = () => resolveApprovedBy(props.employees, props.formData?.approved_by_employee_id, props.formData?.approved_by_title);
 
 const getProvincialGovernor = (): any => {
-    const gov = props.employees?.find((emp: Employee) => emp.designation?.toLowerCase().includes('governor'));
+    const gov = props.employees?.find((emp: Employee) => isProvincialGovernor(emp));
     return gov || null;
 };
 
@@ -386,7 +387,7 @@ const isProvincialBudgetOfficerRequesting = (): boolean => {
     if (!props.formData?.employee_ids || !Array.isArray(props.formData.employee_ids)) return false;
     return props.formData.employee_ids.some((id: number) => {
         const emp = props.employees?.find((e: Employee) => e.id === id);
-        return emp?.designation?.toLowerCase().includes('provincial budget officer');
+        return isProvincialBudgetOfficer(emp);
     });
 };
 

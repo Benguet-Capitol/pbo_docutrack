@@ -26,15 +26,12 @@ export interface ApprovedBy {
 
 /** isPboEmployee: true for employees of the Provincial Budget Office */
 export const isPboEmployee = (employee: SignatoryEmployee): boolean =>
-    Number(employee.office_id) === PBO_OFFICE_ID
+    isPboStaff(employee)
     || employee.office?.office_abbreviation === PBO_OFFICE_ABBREVIATION;
 
-/** isProvincialBudgetOfficer: true for the employee holding the PBO designation */
-export const isProvincialBudgetOfficer = (employee: SignatoryEmployee | null | undefined): boolean =>
-    !!employee?.designation?.toLowerCase().includes('provincial budget officer');
-
-export const findProvincialBudgetOfficer = <T extends SignatoryEmployee>(employees: T[] | null | undefined): T | null =>
-    employees?.find((emp) => isProvincialBudgetOfficer(emp)) || null;
+/** The Provincial Budget Officer, by exact title (see useOfficials) */
+import { isProvincialBudgetOfficer, findProvincialBudgetOfficer, isPboStaff } from '@/Composables/useOfficials';
+export { isProvincialBudgetOfficer, findProvincialBudgetOfficer };
 
 /**
  * resolveApprovedBy: name and title printed under "APPROVED"

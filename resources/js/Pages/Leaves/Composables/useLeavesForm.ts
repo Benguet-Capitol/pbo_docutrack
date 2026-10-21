@@ -3,6 +3,8 @@ import { usePermissions } from '@/Composables/usePermissions';
 import { useTrashedControlNumbers } from '@/Composables/useTrashedControlNumbers';
 import { usePage } from '@inertiajs/vue3';
 import type { Leave } from './useLeavesData';
+import { leaveCredit, leaveDays, formatDays } from '@/Composables/useLeaveCredits';
+import { yearOf } from '@/Composables/useYearFilter';
 
 export interface LeaveFormData {
     control_no: string;
@@ -285,6 +287,47 @@ export function useLeavesForm(
         formData.value.off_days.splice(index, 1);
     };
 
+    /**
+     * Yearly limit status for the leave in the form (Mandatory/Forced, Special Privilege, Wellness),
+     * or null when the type has no limit or no employee is chosen yet. The server enforces the same rule.
+     */
+    const leaveCreditInfo = computed(() => {
+        const employeeId = Number(formData.value.employee_id);
+        const year = yearOf(formData.value.date_of_filing) ?? new Date().getFullYear();
+        if (!employeeId) return null;
+        const credit = leaveCredit(leavesRef.value || [], employeeId, formData.value.type_of_leave, year, leaveToEdit.value?.id ?? null);
+        if (!credit) return null;
+        const requested = leaveDays(formData.value);
+        return { ...credit, requested, exceeds: credit.used + requested > credit.limit };
+    });
+
+    /** Message when the leave would go over the yearly limit, or null */
+    const leaveLimitError = (): string | null => {
+        const info = leaveCreditInfo.value;
+        if (!info || !info.exceeds) return null;
+        return info.remaining <= 0
+            ? `${info.type} is already exhausted for ${info.year}: all ${info.limit} days have been used.`
+            : `${info.type} exceeds the yearly limit for ${info.year}: only ${formatDays(info.remaining)} of ${info.limit} days remaining, but ${formatDays(info.requested)} requested.`;
+    };
+
+    /** Required fields still empty: Create/Update stays disabled until this is empty */
+    const missingLeaveFields = computed(() => {
+        const missing: string[] = [];
+        if (!formData.value.employee_id) missing.push('Employee');
+        if (!formData.value.date_of_filing) missing.push('Date of Filing');
+        if (!formData.value.type_of_leave) missing.push('Type of Leave');
+        if (!formData.value.is_half_day && !(Number(formData.value.number_of_working_days_applied_for) > 0)) missing.push('Number of Working Days');
+        if (formData.value.inclusive_dates.length === 0) missing.push('Inclusive Dates');
+        return missing;
+    });
+
+    /** Yearly limit problem with the current form, shown next to the disabled button */
+    const leaveLimitMessage = computed(() => leaveLimitError());
+
+    /** First validation message from a failed API response */
+    const responseError = (data: any, fallback: string): string =>
+        (data?.errors ? (Object.values(data.errors)[0] as string[] | undefined)?.[0] : null) || data?.error || data?.message || fallback;
+
     const createLeave = async () => {
         try {
             creating.value = true;
@@ -302,6 +345,12 @@ export function useLeavesForm(
 
             if (formData.value.inclusive_dates.length === 0) {
                 formErrors.value['inclusive_dates'] = 'At least one inclusive date is required';
+                return;
+            }
+
+            const limitError = leaveLimitError();
+            if (limitError) {
+                formErrors.value['type_of_leave'] = limitError;
                 return;
             }
 
@@ -329,7 +378,7 @@ export function useLeavesForm(
 
             if (!response.ok) {
                 const errorData = await response.json();
-                throw new Error(errorData.error || errorData.message || 'Failed to create leave');
+                throw new Error(responseError(errorData, 'Failed to create leave'));
             }
 
             const newLeave = await response.json();
@@ -362,6 +411,12 @@ export function useLeavesForm(
                 return;
             }
 
+            const limitError = leaveLimitError();
+            if (limitError) {
+                formErrors.value['type_of_leave'] = limitError;
+                return;
+            }
+
             const response = await fetch(`/api/leaves/${leaveToEdit.value.id}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
@@ -386,7 +441,7 @@ export function useLeavesForm(
 
             if (!response.ok) {
                 const errorData = await response.json();
-                throw new Error(errorData.error || errorData.message || 'Failed to update leave');
+                throw new Error(responseError(errorData, 'Failed to update leave'));
             }
 
             const updatedLeave = await response.json();
@@ -441,6 +496,9 @@ export function useLeavesForm(
         formData,
         formErrors,
         leaveTypes,
+        leaveCreditInfo,
+        missingLeaveFields,
+        leaveLimitMessage,
 
         // Permissions
         canCreateLeaves,

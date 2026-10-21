@@ -143,6 +143,10 @@ class TrashController extends Controller
             $restored = DB::transaction(function () use ($validated) {
                 $count = 0;
                 foreach ($this->resolveItems($validated['items']) as $model) {
+                    // The Employee ID may have been given to someone else (or re-added) since
+                    if ($model instanceof Employee && Employee::where('employee_id', $model->employee_id)->exists()) {
+                        throw new \RuntimeException("{$model->name} can't be restored: employee ID {$model->employee_id} is already used by another employee.");
+                    }
                     $model->restore();
                     $count++;
                 }
@@ -173,6 +177,13 @@ class TrashController extends Controller
                 'message' => 'Incorrect password.',
                 'errors' => ['password' => ['The password is incorrect.']],
             ], 422);
+        }
+
+        // Employees' leaves, slips and travel orders cascade on delete: never remove an employee records still use
+        foreach ($this->resolveItems($validated['items']) as $model) {
+            if ($model instanceof Employee && ($error = \App\Support\EmployeeReferences::deleteBlocker($model))) {
+                return response()->json(['error' => $error], 409);
+            }
         }
 
         try {

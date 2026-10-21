@@ -539,6 +539,7 @@
 </template>
 
 <script setup lang="ts">
+import { isPboStaff } from '@/Composables/useOfficials';
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
 import Toast from '@/Components/Toast.vue';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
@@ -1685,9 +1686,10 @@ const printChart = () => {
  */
 const fetchEmployees = async () => {
     try {
-        const response = await fetch('/api/employees');
+        const response = await fetch('/api/employees?scope=pbo');
         if (response.ok) {
-            employees.value = await response.json();
+            // The board and notices of meeting are for the office's own staff
+            employees.value = (await response.json()).filter(isPboStaff);
         }
     } catch (e) {
         console.error('Error fetching employees:', e);

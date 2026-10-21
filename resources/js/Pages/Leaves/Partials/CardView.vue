@@ -43,11 +43,11 @@
             </div>
 
             <div class="flex-1"></div>
-            <div v-if="canEditLeaves || canDeleteLeaves" class="mt-3 flex justify-end gap-2 px-4 py-2 bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 rounded-b-lg">
+            <div class="mt-3 flex justify-end gap-2 px-4 py-2 bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 rounded-b-lg">
+                <RowIconButton color="purple" icon="fas fa-eye" tooltip="View / Print" @click.stop="$emit('preview', leave)" />
                 <RowIconButton v-if="canEditLeaves" color="blue" icon="fas fa-pencil-alt" tooltip="Edit" @click.stop="$emit('edit', leave)" />
                 <RowIconButton v-if="canDeleteLeaves" color="red" icon="fas fa-trash-alt" tooltip="Delete" @click.stop="$emit('delete', leave)" />
             </div>
-            <div v-else class="mt-3"></div>
         </div>
     </div>
 </template>
@@ -63,6 +63,7 @@ defineProps<{
 }>();
 
 defineEmits<{
+    preview: [leave: Leave];
     edit: [leave: Leave];
     delete: [leave: Leave];
 }>();

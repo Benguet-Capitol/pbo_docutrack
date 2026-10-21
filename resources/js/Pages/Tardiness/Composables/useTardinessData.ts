@@ -1,5 +1,6 @@
 import { ref, computed, watch } from 'vue';
 import { useYearFilter } from '@/Composables/useYearFilter';
+import { isProvincialBudgetOfficer, isProvincialGovernor } from '@/Composables/useOfficials';
 
 export interface Employee {
     id: number;
@@ -212,7 +213,7 @@ export function useTardinessData() {
 
     const fetchEmployees = async () => {
         try {
-            const response = await fetch('/api/employees');
+            const response = await fetch('/api/employees?scope=pbo');
             if (!response.ok) throw new Error('Failed to fetch employees');
             employees.value = await response.json();
         } catch (err: any) {
@@ -221,11 +222,11 @@ export function useTardinessData() {
     };
 
     const getProvincialBudgetOfficer = (): Employee | null => {
-        return employees.value.find((emp: Employee) => emp.designation === 'Provincial Budget Officer') || null;
+        return employees.value.find((emp: Employee) => isProvincialBudgetOfficer(emp)) || null;
     };
 
     const getProvincialGovernor = (): Employee | null => {
-        return employees.value.find((emp: Employee) => emp.designation === 'Provincial Governor') || null;
+        return employees.value.find((emp: Employee) => isProvincialGovernor(emp)) || null;
     };
 
     const getEmployeeById = (id: number): Employee | null => {

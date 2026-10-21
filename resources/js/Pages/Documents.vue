@@ -644,10 +644,11 @@
                     </div>
 
                     <!-- Modal Footer -->
-                    <div class="flex items-center justify-center gap-3 p-6 border-t-2 border-gray-200 rounded-b-lg dark:border-gray-600 bg-gray-50 dark:bg-gray-800">
+                    <div class="flex flex-wrap items-center justify-center gap-3 p-6 border-t-2 border-gray-200 rounded-b-lg dark:border-gray-600 bg-gray-50 dark:bg-gray-800">
                         <button
                             @click="handleCreateDocument"
-                            class="inline-flex items-center gap-2 px-5 py-3 text-xs font-medium text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95"
+                            :disabled="missingDocumentFields.length > 0"
+                            class="inline-flex items-center gap-2 px-5 py-3 text-xs font-medium text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             <i :class="documentTypeHasChecklist ? 'fas fa-list-check' : 'fas fa-save'"></i>
                             {{ documentTypeHasChecklist ? 'Continue to Checklisting' : 'Save' }}
@@ -660,6 +661,7 @@
                             <i class="fas fa-times"></i>
                             Cancel
                         </button>
+                        <MissingFieldsHint :fields="missingDocumentFields" />
                     </div>
                 </div>
             </div>
@@ -848,7 +850,7 @@
                     </div>
 
                     <!-- Modal Footer -->
-                    <div class="flex items-center justify-center gap-3 p-6 border-t-2 border-gray-200 rounded-b-lg dark:border-gray-600 bg-gray-50 dark:bg-gray-800">
+                    <div class="flex flex-wrap items-center justify-center gap-3 p-6 border-t-2 border-gray-200 rounded-b-lg dark:border-gray-600 bg-gray-50 dark:bg-gray-800">
                         <!-- Edit Checklist Button: Only shown for Annual Budget and Supplemental Budget documents -->
                         <button
                             v-if="(formData.document_type === 'Annual Budget' || formData.document_type === 'Supplemental Budget' || formData.document_type === 'Budget Proposals') && editingDocument"
@@ -860,7 +862,8 @@
                         </button>
                         <button
                             @click="handleUpdateDocument"
-                            class="inline-flex items-center gap-2 px-5 py-3 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95"
+                            :disabled="missingDocumentFields.length > 0"
+                            class="inline-flex items-center gap-2 px-5 py-3 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             <i class="fas fa-save"></i>
                             Update
@@ -872,6 +875,7 @@
                             <i class="fas fa-times"></i>
                             Cancel
                         </button>
+                        <MissingFieldsHint :fields="missingDocumentFields" />
                     </div>
                 </div>
             </div>
@@ -1062,10 +1066,11 @@
                     </div>
 
                     <!-- Modal Footer -->
-                    <div class="flex items-center justify-center gap-3 p-6 border-t-2 border-gray-200 rounded-b-lg dark:border-gray-600 bg-gray-50 dark:bg-gray-800">
+                    <div class="flex flex-wrap items-center justify-center gap-3 p-6 border-t-2 border-gray-200 rounded-b-lg dark:border-gray-600 bg-gray-50 dark:bg-gray-800">
                         <button
                             @click="handleSubmitForward"
-                            class="inline-flex items-center gap-2 px-5 py-3 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95"
+                            :disabled="!forwardData.forward_to_id"
+                            class="inline-flex items-center gap-2 px-5 py-3 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             <i class="fas fa-check"></i>
                             Forward
@@ -1077,6 +1082,7 @@
                             <i class="fas fa-times"></i>
                             Cancel
                         </button>
+                        <MissingFieldsHint :fields="forwardData.forward_to_id ? [] : ['Recipient']" />
                     </div>
                 </div>
             </div>
@@ -1615,6 +1621,8 @@ import ViewToggle from '@/Components/ViewToggle.vue';
 import RowIconButton from '@/Components/RowIconButton.vue';
 import { useResponsiveView } from '@/Composables/useResponsiveView';
 import YearFilter from '@/Components/YearFilter.vue';
+import MissingFieldsHint from '@/Components/MissingFieldsHint.vue';
+import { escapeHtml } from '@/utils/html';
 import { useYearFilter } from '@/Composables/useYearFilter';
 import { ref, onMounted, computed, watch, onUnmounted } from 'vue';
 
@@ -3531,9 +3539,20 @@ const validateForm = (): boolean => {
     if (!formData.value.particulars.trim()) {
         formErrors.value['particulars'] = 'Particulars is required';
     }
-    
+
     return Object.keys(formErrors.value).length === 0;
 };
+
+/** Required fields still empty (same rules as validateForm): Save/Update stays disabled until filled */
+const missingDocumentFields = computed(() => {
+    const missing: string[] = [];
+    if (!String(formData.value.tracking_no ?? '').trim()) missing.push('Tracking No');
+    if (!String(formData.value.date ?? '').trim()) missing.push('Date');
+    if (!String(formData.value.document_type ?? '').trim()) missing.push('Document Type');
+    if (!String(formData.value.source ?? '').trim()) missing.push('Source');
+    if (!String(formData.value.particulars ?? '').trim()) missing.push('Particulars');
+    return missing;
+});
 
 /**
  * viewDocumentTransactions: Opens the transactions view modal for a document
@@ -4092,7 +4111,7 @@ const printChecklist = async () => {
             let checklistHTML = `
             <html>
             <head>
-                <title>Documentary Checklist - ${formData.value.document_type}</title>
+                <title>Documentary Checklist - ${escapeHtml(formData.value.document_type)}</title>
                 <style>
                     body { font-family: Arial, sans-serif; margin: 20px; font-size: 12px; }
                     .header-top { margin-bottom: 20px; }
@@ -4126,7 +4145,7 @@ const printChecklist = async () => {
                 <div class="header-top">
                     ${formNumber ? `<div class="form-number">${formNumber}</div>` : ''}
                     
-                    <div class="title">CHECKLIST ON DOCUMENTARY REQUIREMENTS${!isBudgetProposals ? 'AND SIGNATURE ' : ''}<br/>FOR THE <span style="text-transform: uppercase;">${documentTypeTitle}</span></div>
+                    <div class="title">CHECKLIST ON DOCUMENTARY REQUIREMENTS${!isBudgetProposals ? 'AND SIGNATURE ' : ''}<br/>FOR THE <span style="text-transform: uppercase;">${escapeHtml(documentTypeTitle)}</span></div>
                     
                     <div class="detail-row">
                         <div class="detail-left">
@@ -4139,20 +4158,20 @@ const printChecklist = async () => {
                     
                     ${isBudgetProposals ? `
                     <div style="margin-bottom: 10px;">
-                        Office: <span class="underline"><strong>${formData.value.source || '-'}</strong></span>
+                        Office: <span class="underline"><strong>${escapeHtml(formData.value.source || '-')}</strong></span>
                     </div>
                     ` : `
                     <div style="position: relative; text-align: center; margin-bottom: 10px;">
-                        Municipality of <span class="underline"><strong>${formData.value.source || '-'}</strong></span>
+                        Municipality of <span class="underline"><strong>${escapeHtml(formData.value.source || '-')}</strong></span>
                         <span style="position: absolute; right: 0; top: 0;">
-                            ${cityClass ? `<strong>${cityClass}</strong>` : '<span class="underline"></span>'} Class Municipality
+                            ${cityClass ? `<strong>${escapeHtml(cityClass)}</strong>` : '<span class="underline"></span>'} Class Municipality
                         </span>
                     </div>
                     `}
                     
                     <div class="budget-info">
                         <div class="budget-left">
-                            ${formData.value.document_type === 'Supplemental Budget' && formData.value.sb_no ? `Supplemental Budget No. ${formData.value.sb_no}` : documentTypeTitle}
+                            ${formData.value.document_type === 'Supplemental Budget' && formData.value.sb_no ? `Supplemental Budget No. ${escapeHtml(formData.value.sb_no)}` : escapeHtml(documentTypeTitle)}
                         </div>
                         ${!isBudgetProposals ? `<div class="budget-right">
                             ${formData.value.document_type === 'Supplemental Budget' ? '___________ Fund' : 'General Fund'}
@@ -4198,7 +4217,7 @@ const printChecklist = async () => {
                 Object.entries(item?.remarks || {}).forEach(([key, value]: [string, any]) => {
                     if (value) {
                         const formattedValue = formatRemarksValue(value, key);
-                        remarksHTML += `${key}: <span style="border-bottom: 1px solid #000; white-space: pre-wrap; word-break: break-word;">${formattedValue}</span><br/>`;
+                        remarksHTML += `${escapeHtml(key)}: <span style="border-bottom: 1px solid #000; white-space: pre-wrap; word-break: break-word;">${escapeHtml(formattedValue)}</span><br/>`;
                     }
                 });
                 
@@ -4206,10 +4225,10 @@ const printChecklist = async () => {
                 let documentHTML = '';
                 if (item.is_subitem) {
                     // Sub-items are indented without letter
-                    documentHTML = `<div style="margin-left: 20px;">${isChecked} ${item.item_name}`;
+                    documentHTML = `<div style="margin-left: 20px;">${isChecked} ${escapeHtml(item.item_name)}`;
                 } else {
                     // Main items have letter prefix
-                    documentHTML = `${isChecked} ${item.group_letter}. ${item.item_name}`;
+                    documentHTML = `${isChecked} ${escapeHtml(item.group_letter)}. ${escapeHtml(item.item_name)}`;
                 }
                 
                 // Add annexes if they exist and this is not a merged subitem
@@ -4221,7 +4240,7 @@ const printChecklist = async () => {
                     documentHTML += '<div style="margin-left: 20px; margin-top: 5px;">';
                     item.annexes.forEach((annex: any) => {
                         const annexChecked = annex.is_checked ? '<span style="font-size: 16px;">☑</span>' : '<span style="font-size: 16px;">☐</span>';
-                        documentHTML += `<div>${annexChecked} ${annex.name}</div>`;
+                        documentHTML += `<div>${annexChecked} ${escapeHtml(annex.name)}</div>`;
                     });
                     documentHTML += '</div>';
                 }
@@ -4265,7 +4284,7 @@ const printChecklist = async () => {
                         const signatoryDisplay = signatory.acting_status 
                             ? `${signatory.name} (${signatory.acting_status})`
                             : signatory.name;
-                        signatoryHTML += `<div>${sigChecked} ${signatoryDisplay}</div>`;
+                        signatoryHTML += `<div>${sigChecked} ${escapeHtml(signatoryDisplay)}</div>`;
                     });
                 }
                 
@@ -4364,11 +4383,11 @@ const printChecklist = async () => {
                     
                     checklistHTML += `
                         <tr>
-                            <td>${transaction.user?.name || 'Unknown User'}</td>
+                            <td>${escapeHtml(transaction.user?.name || 'Unknown User')}</td>
                             <td>${dateTimeStr}</td>
                             <td>${durationStr}</td>
-                            <td>${transaction.action}</td>
-                            <td style="white-space: pre-wrap; word-break: break-word;">${remarksStr}</td>
+                            <td>${escapeHtml(transaction.action)}</td>
+                            <td style="white-space: pre-wrap; word-break: break-word;">${escapeHtml(remarksStr)}</td>
                         </tr>
                     `;
                 });
@@ -4480,7 +4499,7 @@ const validateChecklistRequirements = (): { valid: boolean; message: string } =>
     }
 
     if (missingItems.length > 0) {
-        const itemsList = missingItems.map(item => `<li>${item}</li>`).join('');
+        const itemsList = missingItems.map(item => `<li>${escapeHtml(item)}</li>`).join('');
         const message = `These checkboxes are required for the document to be saved:<ul class="list-disc list-inside mt-2">${itemsList}</ul>`;
         checklistValidationError.value = message;
         return {

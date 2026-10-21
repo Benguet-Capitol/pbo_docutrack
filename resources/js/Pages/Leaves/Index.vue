@@ -52,6 +52,7 @@
                     :sort-order="sortOrder"
                     :can-edit-leaves="canEditLeaves"
                     :can-delete-leaves="canDeleteLeaves"
+                    @preview="openRecordPreview"
                     @edit="openEditModal"
                     @delete="openDeleteModal"
                     @sort="toggleSort"
@@ -61,6 +62,7 @@
                         :records="paginatedLeaves"
                         :can-edit-leaves="canEditLeaves"
                         :can-delete-leaves="canDeleteLeaves"
+                        @preview="openRecordPreview"
                         @edit="openEditModal"
                         @delete="openDeleteModal"
                     />
@@ -87,8 +89,11 @@
             :employees="sortedEmployees"
             :loading="creating"
             :leave-types="leaveTypes"
+            :leave-credit="leaveCreditInfo"
+            :missing-fields="missingLeaveFields"
+            :limit-message="leaveLimitMessage"
             @close="closeCreateModal"
-            @confirm="createLeave"
+            @confirm="openCreatePreview"
         />
 
         <EditModal
@@ -98,6 +103,9 @@
             :employees="sortedEmployees"
             :loading="updating"
             :leave-types="leaveTypes"
+            :leave-credit="leaveCreditInfo"
+            :missing-fields="missingLeaveFields"
+            :limit-message="leaveLimitMessage"
             @close="closeEditModal"
             @confirm="updateLeave"
         />
@@ -108,6 +116,18 @@
             :deleting="deleting"
             @close="handleCloseDeleteModal"
             @confirm="deleteLeave"
+        />
+
+        <!-- CS Form No. 6 print preview (create step, or a saved leave) -->
+        <PreviewModal
+            :show="showPreviewModal"
+            :leave="previewLeave"
+            :employee="previewEmployee"
+            :mode="previewMode"
+            :leave-id="previewLeaveId"
+            :saving="creating"
+            @close="showPreviewModal = false"
+            @confirm="confirmCreateFromPreview"
         />
     </AuthenticatedLayout>
 </template>
@@ -129,6 +149,7 @@ import Pagination from './Partials/Pagination.vue';
 import CreateModal from './Partials/CreateModal.vue';
 import EditModal from './Partials/EditModal.vue';
 import DeleteModal from './Partials/DeleteModal.vue';
+import PreviewModal from './Partials/PreviewModal.vue';
 import { useResponsiveView } from '@/Composables/useResponsiveView';
 
 // Table on desktop (user can switch to cards), always cards on small screens
@@ -181,6 +202,9 @@ const {
     deleting,
     formData,
     formErrors,
+    leaveCreditInfo,
+    missingLeaveFields,
+    leaveLimitMessage,
     openCreateModal: _openCreateModal,
     closeCreateModal,
     openEditModal: _openEditModal,
@@ -231,6 +255,37 @@ const openDeleteModal = (leave: any) => {
 
 const createLeave = async () => {
     await _createLeave();
+};
+
+// ============== CS Form No. 6 Preview ==============
+const showPreviewModal = ref(false);
+const previewMode = ref<'create' | 'view'>('view');
+const previewLeave = ref<any>(null);
+const previewLeaveId = ref<number | null>(null);
+const previewEmployee = computed(() =>
+    employees.value.find((emp: any) => emp.id === Number(previewLeave.value?.employee_id)) || previewLeave.value?.employee || null
+);
+
+/** Create flow: form -> preview -> Confirm & Save */
+const openCreatePreview = () => {
+    previewMode.value = 'create';
+    previewLeave.value = formData.value;
+    previewLeaveId.value = null;
+    showPreviewModal.value = true;
+};
+
+const confirmCreateFromPreview = async () => {
+    await _createLeave();
+    // Closes on success; on failure the error shows in the form underneath
+    showPreviewModal.value = false;
+};
+
+/** A saved leave: print or download the filled Excel form */
+const openRecordPreview = (leave: any) => {
+    previewMode.value = 'view';
+    previewLeave.value = leave;
+    previewLeaveId.value = leave.id;
+    showPreviewModal.value = true;
 };
 
 const updateLeave = async () => {

@@ -20,19 +20,34 @@
                         <!-- Employee Selection -->
                         <div class="space-y-2">
                             <label for="employee_id" class="block text-xs font-medium text-gray-700 dark:text-gray-300">Employee</label>
-                            <div class="relative flex items-center">
-                                <i class="fas fa-id-card absolute left-3 text-gray-400 text-sm"></i>
-                                <select
-                                    v-model.number="formData.employee_id"
-                                    id="employee_id"
-                                    @change="onEmployeeChange"
-                                    class="block w-full pl-10 pr-4 py-2 text-xs border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:outline-none focus:border-emerald-500 appearance-none"
-                                >
-                                    <option value="">Select Employee</option>
-                                    <option v-for="emp in employees" :key="emp.id" :value="emp.id">
-                                        {{ emp.name }} ({{ emp.employee_id }})
-                                    </option>
-                                </select>
+                            <!-- Searchable: every HRIS employee can have an account -->
+                            <div class="relative">
+                                <div class="relative flex items-center">
+                                    <i class="fas fa-id-card absolute left-3 text-gray-400 text-sm"></i>
+                                    <input
+                                        v-model="employeeSearch"
+                                        id="employee_id"
+                                        type="text"
+                                        autocomplete="off"
+                                        :placeholder="selectedEmployee ? `${selectedEmployee.name} (${selectedEmployee.employee_id})` : 'Search name, employee ID or office'"
+                                        class="block w-full pl-10 pr-8 py-2 text-xs border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:outline-none focus:border-emerald-500"
+                                        :class="selectedEmployee && !employeeSearch ? 'placeholder-gray-900 dark:placeholder-white' : ''"
+                                    />
+                                    <i v-if="selectedEmployee" class="fas fa-check-circle absolute right-3 text-emerald-500 text-sm" title="Employee selected"></i>
+                                </div>
+                                <div v-if="employeeMatches.length > 0" class="absolute z-20 mt-1 w-full max-h-56 overflow-y-auto rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 shadow-lg">
+                                    <button
+                                        v-for="emp in employeeMatches"
+                                        :key="emp.id"
+                                        type="button"
+                                        @click="pickEmployee(emp)"
+                                        class="w-full text-left px-3 py-2 text-xs hover:bg-emerald-50 dark:hover:bg-gray-700"
+                                    >
+                                        <span class="font-medium text-gray-800 dark:text-gray-200">{{ emp.name }}</span>
+                                        <span class="text-gray-500 dark:text-gray-400"> · {{ emp.employee_id }}<template v-if="emp.office"> · {{ emp.office.office_abbreviation }}</template></span>
+                                    </button>
+                                </div>
+                                <p v-else-if="employeeSearch.trim().length >= 2" class="mt-1 text-[11px] text-gray-500 dark:text-gray-400">No employee matches "{{ employeeSearch }}".</p>
                             </div>
                             <span v-if="formErrors.employee_id" class="text-red-500 text-xs">{{ formErrors.employee_id }}</span>
                         </div>
@@ -147,10 +162,10 @@
                 </div>
 
                 <!-- Modal Footer -->
-                <div class="flex items-center justify-center gap-3 p-6 border-t-2 border-gray-200 rounded-b-lg dark:border-gray-600 bg-gray-50 dark:bg-gray-800">
-                    <button
+                <div class="flex flex-wrap items-center justify-center gap-3 p-6 border-t-2 border-gray-200 rounded-b-lg dark:border-gray-600 bg-gray-50 dark:bg-gray-800">
+                    <button :disabled="!canSubmit"
                         @click="onSave"
-                        class="inline-flex items-center gap-2 px-5 py-3 text-xs font-medium text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95"
+                        class="inline-flex items-center gap-2 px-5 py-3 text-xs font-medium text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         <i class="fas fa-save"></i>
                         Save
@@ -162,6 +177,7 @@
                         <i class="fas fa-times"></i>
                         Cancel
                     </button>
+                    <MissingFieldsHint :fields="missingFields" :message="submitMessage" />
                 </div>
             </div>
         </div>
@@ -169,10 +185,12 @@
 </template>
 
 <script setup lang="ts">
+import MissingFieldsHint from '@/Components/MissingFieldsHint.vue';
+import { computed, ref, watch } from 'vue';
 import type { FormData } from '../Composables/useUserForm';
 import type { Office, Employee } from '../Composables/useUserData';
 
-defineProps({
+const props = defineProps({
     showCreateModal: {
         type: Boolean,
         required: true,
@@ -199,6 +217,24 @@ defineProps({
     },
 });
 
+// ============== Required fields: Save/Create stays disabled until they're filled ==============
+const missingFields = computed(() => {
+    const f: any = props.formData || {};
+    const missing: string[] = [];
+    if (!f.employee_id) missing.push("Employee");
+    if (!String(f.username ?? '').trim()) missing.push("Username");
+    if (!String(f.usertype ?? '').trim()) missing.push("Role");
+    if (!f.office) missing.push("Office");
+    if (!String(f.password ?? '').trim()) missing.push("Password");
+    if (!String(f.password_confirmation ?? '').trim()) missing.push("Confirm Password");
+    return missing;
+});
+const submitMessage = computed<string | null>(() => {
+    const f: any = props.formData || {};
+    return f.password && f.password.length < 6 ? 'Password must be at least 6 characters' : (f.password && f.password_confirmation && f.password !== f.password_confirmation ? 'Passwords do not match' : null);
+});
+const canSubmit = computed(() => missingFields.value.length === 0 && !submitMessage.value);
+
 const emit = defineEmits<{
     'close': [];
     'save': [];
@@ -216,6 +252,34 @@ const onSave = () => {
 const onEmployeeChange = () => {
     emit('employee-change');
 };
+
+// ============== Employee search (all HRIS employees) ==============
+const employeeSearch = ref('');
+
+const selectedEmployee = computed(() =>
+    (props.employees as any[] || []).find((emp: any) => emp.id === Number(props.formData.employee_id)) || null
+);
+
+const employeeMatches = computed(() => {
+    const query = employeeSearch.value.trim().toLowerCase();
+    if (query.length < 2) return [];
+    return (props.employees as any[] || [])
+        .filter((emp: any) => emp.name?.toLowerCase().includes(query)
+            || String(emp.employee_id ?? '').toLowerCase().includes(query)
+            || emp.office?.office_abbreviation?.toLowerCase().includes(query))
+        .slice(0, 10);
+});
+
+const pickEmployee = (emp: any) => {
+    props.formData.employee_id = emp.id;
+    employeeSearch.value = '';
+    onEmployeeChange();
+};
+
+// Fresh search each time the modal opens
+watch(() => props.showCreateModal, () => {
+    employeeSearch.value = '';
+});
 </script>
 
 <style scoped>

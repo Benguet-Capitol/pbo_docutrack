@@ -18,6 +18,7 @@
                     @update:search-query="searchQuery = $event"
                     @update:items-per-page="itemsPerPage = Number($event)"
                     @create-click="handleCreateClick"
+                    @sync-click="showSyncModal = true"
                     :view-mode="viewMode"
                     @update:view-mode="setViewMode"
                 />
@@ -98,6 +99,13 @@
             @close="handleCloseDeleteModal"
             @confirm="handleConfirmDelete"
         />
+
+        <SyncHrisModal
+            :show="showSyncModal"
+            :syncing="syncing"
+            @close="showSyncModal = false"
+            @confirm="handleSyncHris"
+        />
     </AuthenticatedLayout>
 </template>
 
@@ -114,6 +122,7 @@ import CardView from './Partials/CardView.vue';
 import CreateModal from './Partials/CreateModal.vue';
 import EditModal from './Partials/EditModal.vue';
 import DeleteModal from './Partials/DeleteModal.vue';
+import SyncHrisModal from './Partials/SyncHrisModal.vue';
 import Pagination from './Partials/Pagination.vue';
 import LoadingState from './Partials/LoadingState.vue';
 import ErrorState from './Partials/ErrorState.vue';
@@ -299,6 +308,28 @@ const handleConfirmDelete = async () => {
     } catch (e) {
         const errorMsg = e instanceof Error ? e.message : 'An error occurred';
         toastRef.value?.add('error', 'Error', errorMsg, 4000);
+    }
+};
+
+// ============== Sync from HRIS ==============
+const showSyncModal = ref(false);
+const syncing = ref(false);
+
+/**
+ * handleSyncHris: adds/updates employees from HRIS, then reloads the list
+ */
+const handleSyncHris = async () => {
+    syncing.value = true;
+    try {
+        const message = await formComposable.syncHris();
+        showSyncModal.value = false;
+        toastRef.value?.add('success', 'Sync from HRIS', message, 6000);
+        await dataComposable.fetchEmployees();
+    } catch (e) {
+        const errorMsg = e instanceof Error ? e.message : 'Sync from HRIS failed';
+        toastRef.value?.add('error', 'Error', errorMsg, 6000);
+    } finally {
+        syncing.value = false;
     }
 };
 </script>

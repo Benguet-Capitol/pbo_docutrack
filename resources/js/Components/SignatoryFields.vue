@@ -63,7 +63,8 @@ const emit = defineEmits<{
     change: [value: { approved_by_employee_id: number | null; approved_by_title: string | null }];
 }>();
 
-const pboEmployees = computed(() => props.employees.filter(isPboEmployee));
+// PBO staff, plus the stored signatory if they have since left the office
+const pboEmployees = computed(() => props.employees.filter((emp) => isPboEmployee(emp) || emp.id === props.employeeId));
 
 // Nothing stored yet means the Provincial Budget Officer signs, so show them as selected
 const selectedEmployeeId = computed(() => props.employeeId ?? findProvincialBudgetOfficer(pboEmployees.value)?.id ?? null);

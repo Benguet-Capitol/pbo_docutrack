@@ -22,19 +22,21 @@
                 Prev
             </button>
             <div class="flex gap-0.5">
-                <button
-                    v-for="page in totalPages"
-                    :key="page"
-                    @click="$emit('page-change', page)"
-                    :class="[
-                        'px-2 py-1 text-xs rounded transition-colors',
-                        currentPage === page
-                            ? 'bg-emerald-600 text-white'
-                            : 'text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
-                    ]"
-                >
-                    {{ page }}
-                </button>
+                <template v-for="page in pageButtons" :key="page">
+                    <span v-if="page < 0" class="px-2 py-1 text-xs text-gray-400">…</span>
+                    <button
+                        v-else
+                        @click="$emit('page-change', page)"
+                        :class="[
+                            'px-2 py-1 text-xs rounded transition-colors',
+                            currentPage === page
+                                ? 'bg-emerald-600 text-white'
+                                : 'text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
+                        ]"
+                    >
+                        {{ page }}
+                    </button>
+                </template>
             </div>
             <button
                 @click="$emit('page-change', currentPage + 1)"
@@ -55,6 +57,7 @@
 </template>
 
 <script setup lang="ts">
+import { visiblePageNumbers } from '@/utils/pagination';
 import { computed } from 'vue';
 
 const props = defineProps({
@@ -87,4 +90,7 @@ const startItem = computed(() => {
 const endItem = computed(() => {
     return Math.min(props.currentPage * props.itemsPerPage, props.totalCount);
 });
+// Page numbers around the current page (negatives are ellipses)
+const pageButtons = computed(() => visiblePageNumbers(props.currentPage, props.totalPages));
+
 </script>

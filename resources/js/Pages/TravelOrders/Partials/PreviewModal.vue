@@ -241,6 +241,7 @@
 </template>
 
 <script setup lang="ts">
+import { isProvincialBudgetOfficer, isProvincialGovernor } from '@/Composables/useOfficials';
 import { ref } from 'vue';
 import type { Employee, TravelOrder } from '../Composables/useTravelOrdersData';
 import { printSafely } from '@/Composables/usePrint';
@@ -265,7 +266,7 @@ const isApproverProvincialGovernor = () => {
         return props.formData.acting_approver_designation.toLowerCase().includes('governor');
     }
     const approver = props.sortedEmployees.find((e: Employee) => e.id === props.formData.approver_employee_id);
-    return approver?.designation?.toLowerCase().includes('provincial governor');
+    return isProvincialGovernor(approver);
 };
 
 const getApproverName = () => {
@@ -286,7 +287,7 @@ const getApproverRole = () => {
 
 const getProvincialBudgetOfficer = () => {
     return props.sortedEmployees.find((e: Employee) => 
-        e.designation?.toLowerCase().includes('provincial budget officer')
+        isProvincialBudgetOfficer(e)
     );
 };
 

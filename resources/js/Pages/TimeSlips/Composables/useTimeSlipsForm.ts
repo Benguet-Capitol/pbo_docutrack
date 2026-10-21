@@ -3,6 +3,7 @@ import { usePermissions } from '@/Composables/usePermissions';
 import { useTrashedControlNumbers } from '@/Composables/useTrashedControlNumbers';
 import { usePage } from '@inertiajs/vue3';
 import type { TimeSlip, Employee } from './useTimeSlipsData';
+import { isProvincialBudgetOfficer, isProvincialGovernor } from '@/Composables/useOfficials';
 
 export function useTimeSlipsForm(employees: any, timeSlips: any) {
     const { can } = usePermissions();
@@ -259,11 +260,11 @@ export function useTimeSlipsForm(employees: any, timeSlips: any) {
     };
 
     const getProvincialGovernor = (): Employee | null => {
-        return employees.value.find((emp: Employee) => emp.designation === 'Provincial Governor') || null;
+        return employees.value.find((emp: Employee) => isProvincialGovernor(emp)) || null;
     };
 
     const getProvincialBudgetOfficer = (): Employee | null => {
-        return employees.value.find((emp: Employee) => emp.designation === 'Provincial Budget Officer') || null;
+        return employees.value.find((emp: Employee) => isProvincialBudgetOfficer(emp)) || null;
     };
 
     return {

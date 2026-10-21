@@ -11,6 +11,45 @@ use Illuminate\Http\Request;
 class LeaveController extends Controller
 {
     /**
+     * Download the leave as a filled CS Form No. 6 (Application for Leave) Excel file.
+     */
+    public function exportForm(Leave $leave, \App\Services\LeaveFormExporter $exporter)
+    {
+        $path = $exporter->export($leave);
+
+        return response()->download($path, $exporter->filename($leave), [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        ])->deleteFileAfterSend();
+    }
+
+    /**
+     * Error message when the leave would exceed the employee's yearly limit for its type, or null if within it.
+     */
+    private function yearlyLimitError(array $data, ?int $excludeLeaveId = null): ?string
+    {
+        $type = $data['type_of_leave'];
+        $limit = Leave::YEARLY_LIMITS[$type] ?? null;
+        if ($limit === null) {
+            return null;
+        }
+
+        $year = \Illuminate\Support\Carbon::parse($data['date_of_filing'])->year;
+        $used = Leave::usedDays((int) $data['employee_id'], $type, $year, $excludeLeaveId);
+        $requested = Leave::daysCounted((bool) ($data['is_half_day'] ?? false), $data['number_of_working_days_applied_for']);
+
+        if ($used + $requested <= $limit) {
+            return null;
+        }
+
+        $remaining = max(0, $limit - $used);
+        $format = fn (float $days) => rtrim(rtrim(number_format($days, 1), '0'), '.');
+
+        return $remaining <= 0
+            ? "{$type} is already exhausted for {$year}: all {$limit} days have been used."
+            : "{$type} exceeds the yearly limit for {$year}: only {$format($remaining)} of {$limit} days remaining, but {$format($requested)} requested.";
+    }
+
+    /**
      * Display a listing of leaves.
      */
     public function index(): JsonResponse
@@ -73,6 +112,10 @@ class LeaveController extends Controller
                 'other_type' => 'nullable|string',
             ]);
 
+            if ($error = $this->yearlyLimitError($validated)) {
+                return response()->json(['errors' => ['type_of_leave' => [$error]]], 422);
+            }
+
             // Control number is generated in the frontend modal
             $controlNo = $validated['control_no'];
 
@@ -133,6 +176,11 @@ class LeaveController extends Controller
                 'completion_type' => 'nullable|string',
                 'other_type' => 'nullable|string',
             ]);
+
+            // The leave being edited doesn't count against its own limit
+            if ($error = $this->yearlyLimitError($validated, $leave->id)) {
+                return response()->json(['errors' => ['type_of_leave' => [$error]]], 422);
+            }
 
             // Update leave
             $leave->update($validated);

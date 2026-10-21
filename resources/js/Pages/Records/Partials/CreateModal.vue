@@ -137,8 +137,8 @@
                 </div>
 
                 <!-- Modal Footer -->
-                <div class="flex items-center justify-center gap-3 p-6 border-t-2 border-gray-200 rounded-b-lg dark:border-gray-600 bg-gray-50 dark:bg-gray-800">
-                    <button type="submit" @click="$emit('submit')" :disabled="creating" class="inline-flex items-center gap-2 px-5 py-3 text-xs font-medium text-white bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-700 dark:hover:bg-emerald-800 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed">
+                <div class="flex flex-wrap items-center justify-center gap-3 p-6 border-t-2 border-gray-200 rounded-b-lg dark:border-gray-600 bg-gray-50 dark:bg-gray-800">
+                    <button type="submit" @click="$emit('submit')" :disabled="creating || !canSubmit" class="inline-flex items-center gap-2 px-5 py-3 text-xs font-medium text-white bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-700 dark:hover:bg-emerald-800 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed">
                         <i v-if="creating" class="fas fa-spinner fa-spin"></i>
                         <i v-else class="fas fa-save"></i>
                         {{ creating ? 'Saving...' : 'Create' }}
@@ -147,6 +147,7 @@
                         <i class="fas fa-times"></i>
                         Cancel
                     </button>
+                    <MissingFieldsHint :fields="missingFields" :message="submitMessage" />
                 </div>
             </div>
         </div>
@@ -154,9 +155,11 @@
 </template>
 
 <script setup lang="ts">
+import MissingFieldsHint from '@/Components/MissingFieldsHint.vue';
+import { computed } from 'vue';
 import type { FormData } from '../Composables/useRecordsForm';
 
-defineProps<{
+const props = defineProps<{
     show: boolean;
     formData: FormData;
     formErrors: Record<string, string>;
@@ -164,6 +167,21 @@ defineProps<{
     recordTypes: string[];
     recordTypesHierarchy: Record<string, string[]>;
 }>();
+
+// ============== Required fields: Save/Create stays disabled until they're filled ==============
+const missingFields = computed(() => {
+    const f: any = props.formData || {};
+    const missing: string[] = [];
+    if (!String(f.record_type ?? '').trim()) missing.push("Record Type");
+    if (!String(f.title ?? '').trim()) missing.push("Title");
+    if (!f.selectedFile) missing.push("Scanned Image / File");
+    return missing;
+});
+const submitMessage = computed<string | null>(() => {
+    const f: any = props.formData || {};
+    return null;
+});
+const canSubmit = computed(() => missingFields.value.length === 0 && !submitMessage.value);
 
 defineEmits<{
     'update:form-data': [data: FormData];

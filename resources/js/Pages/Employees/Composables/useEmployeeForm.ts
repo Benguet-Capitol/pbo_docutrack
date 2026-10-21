@@ -3,11 +3,18 @@ import { usePermissions } from '@/Composables/usePermissions';
 import { usePage } from '@inertiajs/vue3';
 import type { Employee } from './useEmployeeData';
 
+export const EMPLOYEE_STATUSES = ['Permanent', 'Casual', 'COS'] as const;
+
 export interface FormData {
     employee_id: string;
     name: string;
-    designation: string;
+    /** HRIS position title, e.g. "Administrative Aide IV" */
+    position_title: string;
+    /** e.g. "Clerk II"; a department head's printed title, e.g. "Provincial Budget Officer" */
+    parenthetical_title: string;
+    status: string;
     office: number | '';
+    detailed_to_pbo: boolean;
 }
 
 /**
@@ -38,8 +45,11 @@ export function useEmployeeForm() {
     const formData = ref<FormData>({
         employee_id: '',
         name: '',
-        designation: '',
-        office: ''
+        position_title: '',
+        parenthetical_title: '',
+        status: 'Permanent',
+        office: '',
+        detailed_to_pbo: false
     });
 
     /** Stores validation errors for form fields */
@@ -75,8 +85,11 @@ export function useEmployeeForm() {
         formData.value = {
             employee_id: '',
             name: '',
-            designation: '',
-            office: ''
+            position_title: '',
+            parenthetical_title: '',
+            status: 'Permanent',
+            office: '',
+            detailed_to_pbo: false
         };
         formErrors.value = {};
         showCreateModal.value = true;
@@ -109,8 +122,11 @@ export function useEmployeeForm() {
         formData.value = {
             employee_id: employee.employee_id,
             name: employee.name,
-            designation: employee.designation,
-            office: officeId
+            position_title: (employee as any).position_title || employee.designation || '',
+            parenthetical_title: (employee as any).parenthetical_title || '',
+            status: (employee as any).status || 'Permanent',
+            office: officeId,
+            detailed_to_pbo: !!(employee as any).detailed_to_pbo
         };
         formErrors.value = {};
         showEditModal.value = true;
@@ -158,8 +174,16 @@ export function useEmployeeForm() {
             formErrors.value['name'] = 'Name is required.';
         }
 
-        if (!formData.value.designation.trim()) {
-            formErrors.value['designation'] = 'Designation is required.';
+        if (!formData.value.position_title.trim()) {
+            formErrors.value['position_title'] = 'Position title is required.';
+        }
+
+        if (!formData.value.status) {
+            formErrors.value['status'] = 'Status is required.';
+        }
+
+        if (!formData.value.office) {
+            formErrors.value['office'] = 'Office is required.';
         }
 
         return Object.keys(formErrors.value).length === 0;
@@ -284,6 +308,23 @@ export function useEmployeeForm() {
         }
     };
 
+    /**
+     * syncHris: adds HRIS employees not yet here and updates the ones already here (EmployeeController::syncHris)
+     * Returns the server's summary message; throws with a readable message on failure
+     */
+    const syncHris = async (): Promise<string> => {
+        const csrfToken = (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content ?? '';
+        const response = await fetch('/api/employees/sync-hris', {
+            method: 'POST',
+            headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': csrfToken },
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) {
+            throw new Error(data.error || data.message || 'Sync from HRIS failed');
+        }
+        return data.message;
+    };
+
     return {
         // State
         showCreateModal,
@@ -314,5 +355,6 @@ export function useEmployeeForm() {
         createEmployee,
         updateEmployee,
         deleteEmployee,
+        syncHris,
     };
 }

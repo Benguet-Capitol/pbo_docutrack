@@ -4,115 +4,115 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Employee;
+use App\Services\HrisEmployeeSync;
+use App\Support\EmployeeReferences;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
+use RuntimeException;
 
+/**
+ * Employees, structured like pbo-registryV2 (position title, parenthetical title, status), with "Sync from HRIS".
+ */
 class EmployeeController extends Controller
 {
     /**
-     * Display a listing of employees.
+     * Employees with their office. ?scope=pbo returns the Provincial Budget Office staff plus the
+     * Provincial Governor (module dropdowns), plus anyone existing records still name (e.g. staff since moved to
+     * another office by the HRIS sync) so those records keep showing and printing them; the dropdowns offer only
+     * PBO staff. Without it, everyone (Employees page, Users, Travel Orders search).
      */
-    public function index(): JsonResponse
+    public function index(Request $request): JsonResponse
     {
-        try {
-            $employees = Employee::with('office')->get();
-            
-            // Ensure office_id is included in the response
-            $employees = $employees->map(function ($employee) {
-                return [
-                    'id' => $employee->id,
-                    'employee_id' => $employee->employee_id,
-                    'name' => $employee->name,
-                    'office_id' => $employee->office_id,
-                    'designation' => $employee->designation,
-                    'office' => $employee->office,
-                ];
-            });
-            
-            return response()->json($employees);
-        } catch (\Exception $e) {
-            return response()->json(['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()], 500);
+        $query = Employee::with('office')->orderBy('name');
+        if ($request->query('scope') === 'pbo') {
+            $referenced = EmployeeReferences::referencedIds();
+            $query->where(fn ($q) => $q->pboScope()->orWhereIn('id', $referenced));
         }
+
+        return response()->json($query->get()->map(fn (Employee $employee) => [
+            'id' => $employee->id,
+            'employee_id' => $employee->employee_id,
+            'name' => $employee->name,
+            'position_title' => $employee->position_title,
+            'parenthetical_title' => $employee->parenthetical_title,
+            'status' => $employee->status,
+            'designation' => $employee->designation,
+            'full_position' => $employee->full_position,
+            'office_id' => $employee->office_id,
+            'detailed_to_pbo' => $employee->detailed_to_pbo,
+            'office' => $employee->office,
+        ]));
     }
 
-    /**
-     * Store a newly created employee.
-     */
     public function store(Request $request): JsonResponse
     {
-        try {
-            $validated = $request->validate([
-                'employee_id' => 'required|string',
-                'name' => 'required|string',
-                'office' => 'required|integer',
-                'designation' => 'required|string',
-            ]);
+        $employee = Employee::create($this->validated($request));
 
-            // Map 'office' to 'office_id' for the model
-            $validated['office_id'] = $validated['office'];
-            unset($validated['office']);
-
-            $employee = Employee::create($validated);
-            return response()->json($employee->load('office'), 201);
-        } catch (\Exception $e) {
-            return response()->json(['error' => $e->getMessage()], 500);
-        }
+        return response()->json($employee->load('office'), 201);
     }
 
-    /**
-     * Update an employee.
-     */
     public function update(Request $request, $id): JsonResponse
     {
-        try {
-            $employee = Employee::findOrFail($id);
-            
-            $validated = $request->validate([
-                'employee_id' => 'sometimes|string',
-                'name' => 'sometimes|string',
-                'office' => 'sometimes|integer',
-                'designation' => 'sometimes|string',
-            ]);
+        $employee = Employee::findOrFail($id);
+        $employee->update($this->validated($request, $employee));
 
-            // Map 'office' to 'office_id' for the model
-            if (isset($validated['office'])) {
-                $validated['office_id'] = $validated['office'];
-                unset($validated['office']);
-            }
-
-            $employee->update($validated);
-            return response()->json($employee->load('office'));
-        } catch (\Exception $e) {
-            return response()->json(['error' => $e->getMessage()], 500);
-        }
+        return response()->json($employee->load('office'));
     }
 
     /**
-     * Delete an employee.
+     * Blocked while records (including ones in the Trash) still use the employee.
      */
     public function destroy($id): JsonResponse
     {
+        $employee = Employee::findOrFail($id);
+        if ($error = EmployeeReferences::deleteBlocker($employee)) {
+            return response()->json(['error' => $error], 422);
+        }
+
+        $employee->delete();
+
+        return response()->json(['message' => 'Employee deleted successfully']);
+    }
+
+    /**
+     * HRIS employee lookup for the Create/Edit Employee forms (server-side, so the HRIS key stays in .env).
+     */
+    public function hrisEmployees(HrisEmployeeSync $sync): JsonResponse
+    {
         try {
-            $employee = Employee::findOrFail($id);
-            $employee->delete();
-            return response()->json(['message' => 'Employee deleted successfully']);
-        } catch (\Exception $e) {
-            return response()->json(['error' => $e->getMessage()], 500);
+            return response()->json(['data' => $sync->lookup()]);
+        } catch (RuntimeException $e) {
+            return response()->json(['error' => $e->getMessage()], 503);
         }
     }
 
-    public function checkUnique(Request $request): JsonResponse
+    /**
+     * Sync from HRIS button (the same sync also runs monthly: employees:sync-hris)
+     */
+    public function syncHris(HrisEmployeeSync $sync): JsonResponse
     {
-        $query = Employee::where('employee_id', $request->employee_id);
-
-        // When editing, exclude the current record from the check
-        if ($request->filled('exclude_id')) {
-            $query->where('id', '!=', $request->exclude_id);
+        try {
+            return response()->json($sync->sync());
+        } catch (RuntimeException $e) {
+            return response()->json(['error' => $e->getMessage()], 503);
         }
+    }
 
-        return response()->json([
-            'is_unique' => !$query->exists(),
+    private function validated(Request $request, ?Employee $employee = null): array
+    {
+        $validated = $request->validate([
+            'employee_id' => ['required', 'string', 'max:255', Rule::unique('employees', 'employee_id')->whereNull('deleted_at')->ignore($employee?->id)],
+            'name' => 'required|string|max:255',
+            'position_title' => 'required|string|max:255',
+            'parenthetical_title' => 'nullable|string|max:255',
+            'status' => ['required', Rule::in(Employee::STATUSES)],
+            'office' => 'required|integer|exists:offices,id',
+            'detailed_to_pbo' => 'sometimes|boolean',
         ]);
+        $validated['office_id'] = $validated['office'];
+        unset($validated['office']);
+
+        return $validated;
     }
 }
-

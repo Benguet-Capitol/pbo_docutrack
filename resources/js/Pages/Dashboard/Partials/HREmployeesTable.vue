@@ -15,6 +15,7 @@
                         <th class="px-4 py-3 text-left font-semibold text-gray-700 dark:text-gray-200">Employee</th>
                         <th v-for="leaveType in uniqueLeaveTypes" :key="leaveType" class="px-4 py-3 text-center font-semibold text-gray-700 dark:text-gray-200 text-xs">
                             {{ leaveType }}
+                            <span v-if="isLimited(leaveType)" class="block font-normal text-[11px] text-gray-500 dark:text-gray-400">{{ LEAVE_LIMITS[leaveType] }} days/year</span>
                         </th>
                         <th class="px-4 py-3 text-center font-semibold text-gray-700 dark:text-gray-200">Total</th>
                     </tr>
@@ -25,10 +26,16 @@
                             {{ empSummary.employeeName }}
                         </td>
                         <td v-for="leaveType in uniqueLeaveTypes" :key="`${empSummary.employeeId}-${leaveType}`" class="px-4 py-3 text-center">
-                            <span v-if="empSummary.leaveTypes[leaveType]" class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 text-xs font-semibold">
-                                {{ empSummary.leaveTypes[leaveType] }}
+                            <span v-if="empSummary.leaveTypes[leaveType]" class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 text-xs font-semibold" title="Days used">
+                                {{ formatDays(empSummary.leaveTypes[leaveType]) }}
                             </span>
                             <span v-else class="text-gray-400 dark:text-gray-500">-</span>
+                            <!-- Remaining days of a limited leave type this year -->
+                            <span
+                                v-if="isLimited(leaveType)"
+                                class="block mt-1 text-[11px] font-medium whitespace-nowrap"
+                                :class="remainingDays(empSummary, leaveType) > 0 ? 'text-emerald-700 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'"
+                            >{{ remainingLabel(empSummary, leaveType) }}</span>
                         </td>
                         <td class="px-4 py-3 text-center font-semibold">
                             <div class="space-y-1">
@@ -63,9 +70,18 @@
                 </div>
                 <div class="mt-3 flex flex-wrap gap-1.5">
                     <template v-for="leaveType in uniqueLeaveTypes" :key="`card-${empSummary.employeeId}-${leaveType}`">
-                        <span v-if="empSummary.leaveTypes[leaveType]" class="inline-flex items-center gap-1 px-2 py-1 rounded bg-blue-50 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300">
+                        <!-- Limited types always show, with remaining days -->
+                        <span v-if="isLimited(leaveType)" class="inline-flex items-center gap-1 px-2 py-1 rounded bg-blue-50 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300">
                             {{ leaveType }}
-                            <span class="font-bold">{{ empSummary.leaveTypes[leaveType] }}</span>
+                            <span class="font-bold">{{ formatDays(empSummary.leaveTypes[leaveType] || 0) }}</span>
+                            <span
+                                class="font-semibold"
+                                :class="remainingDays(empSummary, leaveType) > 0 ? 'text-emerald-700 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'"
+                            >· {{ remainingLabel(empSummary, leaveType) }}</span>
+                        </span>
+                        <span v-else-if="empSummary.leaveTypes[leaveType]" class="inline-flex items-center gap-1 px-2 py-1 rounded bg-blue-50 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300">
+                            {{ leaveType }}
+                            <span class="font-bold">{{ formatDays(empSummary.leaveTypes[leaveType]) }}</span>
                         </span>
                     </template>
                     <span v-for="(count, leaveType) in getOtherLeaveTypesMap(empSummary)" :key="`card-other-${empSummary.employeeId}-${leaveType}`" class="inline-flex items-center gap-1 px-2 py-1 rounded bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300">
@@ -82,6 +98,16 @@
 import { computed } from 'vue';
 import ViewToggle from '@/Components/ViewToggle.vue';
 import { useResponsiveView } from '@/Composables/useResponsiveView';
+import { LEAVE_LIMITS, formatDays } from '@/Composables/useLeaveCredits';
+
+// Yearly limits for Mandatory/Forced, Special Privilege and Wellness Leave (days used = summed per year of filing)
+const isLimited = (leaveType: string) => LEAVE_LIMITS[leaveType] !== undefined;
+const remainingDays = (empSummary: any, leaveType: string) =>
+    Math.max(0, LEAVE_LIMITS[leaveType] - (empSummary.leaveTypes[leaveType] || 0));
+const remainingLabel = (empSummary: any, leaveType: string) => {
+    const remaining = remainingDays(empSummary, leaveType);
+    return remaining > 0 ? `${formatDays(remaining)} left` : 'Exhausted';
+};
 
 defineProps({
     employeeLeavesSummary: Array<any>,

@@ -3,6 +3,7 @@ import { usePermissions } from '@/Composables/usePermissions';
 import { useTrashedControlNumbers } from '@/Composables/useTrashedControlNumbers';
 import { usePage } from '@inertiajs/vue3';
 import type { PassSlip, Employee } from './usePassSlipsData';
+import { isProvincialBudgetOfficer, isProvincialGovernor } from '@/Composables/useOfficials';
 
 export function usePassSlipsForm(employees: any, passSlips: any) {
     const { can } = usePermissions();
@@ -221,17 +222,17 @@ export function usePassSlipsForm(employees: any, passSlips: any) {
     };
 
     const getProvincialGovernor = (): Employee | null => {
-        return employees.value.find((emp: Employee) => emp.designation === 'Provincial Governor') || null;
+        return employees.value.find((emp: Employee) => isProvincialGovernor(emp)) || null;
     };
 
     const getProvincialBudgetOfficer = (): Employee | null => {
-        return employees.value.find((emp: Employee) => emp.designation === 'Provincial Budget Officer') || null;
+        return employees.value.find((emp: Employee) => isProvincialBudgetOfficer(emp)) || null;
     };
 
     const isProvincialBudgetOfficerRequesting = (): boolean => {
         return formData.value.employee_ids.some((empId: number) => {
             const emp = employees.value.find((e: Employee) => e.id === empId);
-            return emp?.designation === 'Provincial Budget Officer';
+            return isProvincialBudgetOfficer(emp);
         });
     };
 

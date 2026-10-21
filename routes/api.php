@@ -80,6 +80,7 @@ Route::middleware(['web', 'auth'])->group(function () {
 // Leaves API
 Route::middleware(['web', 'auth'])->group(function () {
     Route::get('/leaves', [LeaveController::class, 'index']);
+    Route::get('/leaves/{leave}/form', [LeaveController::class, 'exportForm'])->middleware('permission:leaves.view');
     Route::post('/leaves', [LeaveController::class, 'store'])->middleware('permission:leaves.create');
     Route::put('/leaves/{leave}', [LeaveController::class, 'update'])->middleware('permission:leaves.edit');
     Route::delete('/leaves/{leave}', [LeaveController::class, 'destroy'])->middleware('permission:leaves.delete');

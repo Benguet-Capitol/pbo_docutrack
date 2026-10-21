@@ -272,6 +272,7 @@
 </template>
 
 <script setup lang="ts">
+import { isProvincialBudgetOfficer, isProvincialGovernor } from '@/Composables/useOfficials';
 import { ref } from 'vue';
 import { printSafely } from '@/Composables/usePrint';
 import { resolveApprovedBy } from '@/Composables/useSignatory';
@@ -327,15 +328,15 @@ const getCertifiedBySignatory = () => {
 
 const isRequestingEmployeeProvincialBudgetOfficer = (): boolean => {
     const requestingEmployee = props.sortedEmployees.find((e: any) => e.id === props.formData.requesting_employee_id);
-    return requestingEmployee?.designation?.toLowerCase().includes('provincial budget officer') || false;
+    return isProvincialBudgetOfficer(requestingEmployee);
 };
 
 const getProvincialGovernor = () => {
-    return props.sortedEmployees.find((e: any) => e.designation?.toLowerCase().includes('provincial governor'));
+    return props.sortedEmployees.find((e: any) => isProvincialGovernor(e));
 };
 
 const getProvincialBudgetOfficer = () => {
-    return props.sortedEmployees.find((e: any) => e.designation?.toLowerCase().includes('provincial budget officer'));
+    return props.sortedEmployees.find((e: any) => isProvincialBudgetOfficer(e));
 };
 
 const getApprovedBySignatory = () => {

@@ -6,10 +6,16 @@ export interface Employee {
     name: string;
     employee_id: string;
     designation?: string;
+    position_title?: string | null;
+    parenthetical_title?: string | null;
+    full_position?: string;
     office_id?: number;
+    detailed_to_pbo?: boolean;
     office?: {
         id: number;
-        name: string;
+        name?: string;
+        office_name?: string;
+        office_abbreviation?: string;
     };
 }
 

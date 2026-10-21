@@ -52,7 +52,7 @@ export function useTimeSlipsData() {
 
     const fetchEmployees = async () => {
         try {
-            const response = await fetch('/api/employees');
+            const response = await fetch('/api/employees?scope=pbo');
             if (!response.ok) throw new Error('Failed to fetch employees');
             employees.value = await response.json();
         } catch (e) {

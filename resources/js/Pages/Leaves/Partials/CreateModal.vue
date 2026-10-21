@@ -27,7 +27,7 @@
                                 <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Employee <span class="text-red-500">*</span></label>
                                 <select v-model.number="formData.employee_id" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-xs dark:bg-gray-700 dark:text-white focus:outline-none focus:border-emerald-500 dark:focus:border-emerald-500" :class="[formErrors.employee_id ? 'border-red-500 focus:border-red-500' : '']">
                                     <option value="0">Select Employee</option>
-                                    <option v-for="emp in employees" :key="emp.id" :value="emp.id">{{ emp.name }}</option>
+                                    <option v-for="emp in requestingOptions" :key="emp.id" :value="emp.id">{{ emp.name }}</option>
                                 </select>
                                 <p v-if="formErrors['employee_id']" class="mt-1 text-xs text-red-600 dark:text-red-400">{{ formErrors['employee_id'] }}</p>
                             </div>
@@ -45,6 +45,18 @@
                                 <select v-model="formData.type_of_leave" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-xs dark:bg-gray-700 dark:text-white focus:outline-none focus:border-emerald-500 dark:focus:border-emerald-500">
                                     <option v-for="type in leaveTypes" :key="type" :value="type">{{ type }}</option>
                                 </select>
+                                <!-- Yearly credit for limited leave types -->
+                                <p
+                                    v-if="leaveCredit"
+                                    class="mt-1 text-xs"
+                                    :class="leaveCredit.exceeds ? 'text-red-600 dark:text-red-400' : 'text-gray-600 dark:text-gray-400'"
+                                >
+                                    <i class="fas fa-calendar-check mr-1"></i>
+                                    {{ leaveCredit.year }}: {{ formatDays(leaveCredit.used) }} of {{ leaveCredit.limit }} days used,
+                                    <span class="font-semibold">{{ formatDays(leaveCredit.remaining) }} remaining</span>
+                                    <template v-if="leaveCredit.exceeds"> (this request needs {{ formatDays(leaveCredit.requested) }})</template>
+                                </p>
+                                <p v-if="formErrors['type_of_leave']" class="mt-1 text-xs text-red-600 dark:text-red-400">{{ formErrors['type_of_leave'] }}</p>
                             </div>
 
                             <!-- Number of Working Days Applied For -->
@@ -206,15 +218,15 @@
                     </div>
 
                     <!-- Modal Footer -->
-                    <div class="flex items-center justify-center gap-3 p-6 border-t-2 border-gray-200 rounded-b-lg dark:border-gray-600 bg-gray-50 dark:bg-gray-800">
+                    <div class="flex flex-wrap items-center justify-center gap-3 p-6 border-t-2 border-gray-200 rounded-b-lg dark:border-gray-600 bg-gray-50 dark:bg-gray-800">
                         <button
                             @click="$emit('confirm')"
-                            :disabled="loading"
+                            :disabled="loading || !canSubmit"
                             class="inline-flex items-center gap-2 px-5 py-3 text-xs font-medium text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             <i v-if="loading" class="fas fa-spinner fa-spin"></i>
-                            <i v-else class="fas fa-check"></i>
-                            {{ loading ? 'Creating...' : 'Create' }}
+                            <i v-else class="fas fa-eye"></i>
+                            {{ loading ? 'Creating...' : 'Preview & Continue' }}
                         </button>
                         <button
                             @click="$emit('close')"
@@ -224,6 +236,7 @@
                             <i class="fas fa-times"></i>
                             Cancel
                         </button>
+                        <MissingFieldsHint :fields="missingFields" :message="limitMessage" />
                     </div>
                 </div>
             </div>
@@ -232,6 +245,10 @@
 </template>
 
 <script setup lang="ts">
+import { isPboStaff } from '@/Composables/useOfficials';
+import { computed } from 'vue';
+import { formatDays } from '@/Composables/useLeaveCredits';
+import MissingFieldsHint from '@/Components/MissingFieldsHint.vue';
 interface LeaveFormData {
     employee_id: number;
     date_of_filing: string;
@@ -269,7 +286,20 @@ const props = defineProps<{
     employees: Employee[];
     loading: boolean;
     leaveTypes: string[];
+    leaveCredit?: { year: number; limit: number; used: number; remaining: number; requested: number; exceeds: boolean } | null;
+    /** Required fields still empty */
+    missingFields?: string[];
+    /** Yearly leave limit problem, if any */
+    limitMessage?: string | null;
 }>();
+
+/** Requesting employee: the office's staff (HRIS brings in every employee), plus whoever this record already has */
+const requestingOptions = computed(() => {
+    const selected: number[] = ([props.formData.employee_id]).map(Number);
+    return ((props.employees || []) as any[]).filter((emp: any) => isPboStaff(emp) || selected.includes(Number(emp.id)));
+});
+
+const canSubmit = computed(() => !(props.missingFields?.length) && !props.limitMessage);
 
 defineEmits<{
     close: [];

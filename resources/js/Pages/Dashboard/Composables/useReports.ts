@@ -1,4 +1,7 @@
-import { ref, Ref } from 'vue';
+import { ref, Ref, watch } from 'vue';
+import { useYearFilter, yearOf } from '@/Composables/useYearFilter';
+import { escapeHtml as esc } from '@/utils/html';
+import { isProvincialBudgetOfficer } from '@/Composables/useOfficials';
 
 /**
  * Composable for report generation
@@ -15,13 +18,29 @@ export const useReports = (
     timeSlips?: Ref<any[]>
 ) => {
     const showReportModal = ref(false);
+
+    /** Today as YYYY-MM-DD in local time */
+    const todayLocal = (): string => {
+        const now = new Date();
+        return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    };
+
     const reportData = ref({
-        asOfDate: new Date().toISOString().split('T')[0],
+        year: new Date().getFullYear() as number,
+        asOfDate: todayLocal(),
         documentType: '' as string,
         reviewedBy: null as number | null,
         certifiedCorrect: null as number | null,
     });
     const reportErrors = ref<Record<string, string>>({});
+
+    /** Years that have documents (plus the current year), newest first, for the report's year dropdown */
+    const { availableYears: reportYears } = useYearFilter(documents, (doc: any) => doc.date);
+
+    // The report covers one year: keep "As of Date" inside it (today for the current year, Dec 31 for past years)
+    watch(() => reportData.value.year, (year) => {
+        reportData.value.asOfDate = year === new Date().getFullYear() ? todayLocal() : `${year}-12-31`;
+    });
 
     const showSummaryModal = ref(false);
     const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
@@ -82,16 +101,21 @@ export const useReports = (
                 return;
             }
 
-            const asOfDate = new Date(reportData.value.asOfDate);
-            // Set to end of day to include documents created on this date
-            asOfDate.setHours(23, 59, 59, 999);
+            const year = reportData.value.year;
+            if (yearOf(reportData.value.asOfDate) !== year) {
+                reportErrors.value.submit = `As of Date must be within ${year}`;
+                return;
+            }
 
-            // Filter documents by document type and as of date
+            // Plain YYYY-MM-DD strings compare correctly as text, without timezone shifts
+            const asOfDate = reportData.value.asOfDate;
+
+            // Filter documents by document type, report year, and as of date
             const budgetProposals = documents.value.filter(doc => {
                 // Filter by exact document type match (required field)
                 if (doc.document_type !== reportData.value.documentType) return false;
-                const docDate = new Date(doc.date);
-                return docDate <= asOfDate;
+                if (yearOf(doc.date) !== year) return false;
+                return String(doc.date).slice(0, 10) <= asOfDate;
             });
 
             const reportData_items: Array<{
@@ -156,7 +180,7 @@ export const useReports = (
         </div>
     </div>
 
-    <p style="text-align: center; font-size: 14px; margin-bottom: 0; margin-top: 10px; font-weight: bold;">${reportData.value.documentType.toUpperCase()}</p>
+    <p style="text-align: center; font-size: 14px; margin-bottom: 0; margin-top: 10px; font-weight: bold;">${esc(reportData.value.documentType.toUpperCase())}</p>
     <p style="text-align: center; margin-top:0; margin-bottom: 20px;">As of ${new Date(reportData.value.asOfDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
 
     <table>
@@ -171,10 +195,10 @@ export const useReports = (
         <tbody>
             ${reportData_items.length > 0 ? reportData_items.map(item => `
             <tr>
-                <td>${item.dateReceived}</td>
-                <td>${item.trackingNo}</td>
-                <td>${item.source}</td>
-                <td>${item.particulars}</td>
+                <td>${esc(item.dateReceived)}</td>
+                <td>${esc(item.trackingNo)}</td>
+                <td>${esc(item.source)}</td>
+                <td>${esc(item.particulars)}</td>
             </tr>
             `).join('') : '<tr><td colspan="4" style="text-align: center;">No data available</td></tr>'}
         </tbody>
@@ -186,8 +210,8 @@ export const useReports = (
         <div class="signature-box">
             <div class="signature-title">Reviewed By:</div>
             <div class="signature-line"></div>
-            <div class="signature-name">${capitalizeWords(reviewedByUser?.name || 'N/A')}</div>
-            <div class="signature-designation">${reviewedByDesignation}</div>
+            <div class="signature-name">${esc(capitalizeWords(reviewedByUser?.name || 'N/A'))}</div>
+            <div class="signature-designation">${esc(reviewedByDesignation)}</div>
         </div>
         ` : ''}
 
@@ -195,8 +219,8 @@ export const useReports = (
         <div class="signature-box">
             <div class="signature-title">Certified Correct:</div>
             <div class="signature-line"></div>
-            <div class="signature-name">${capitalizeWords(certifiedByUser?.name || 'N/A')}</div>
-            <div class="signature-designation">${certifiedCorrectDesignation}</div>
+            <div class="signature-name">${esc(capitalizeWords(certifiedByUser?.name || 'N/A'))}</div>
+            <div class="signature-designation">${esc(certifiedCorrectDesignation)}</div>
         </div>
         ` : ''}
     </div>
@@ -379,11 +403,11 @@ export const useReports = (
                        date.getFullYear() === currentYear;
             };
 
-            // Helper function to get employment type based on designation
+            // Employment type from the employee's status (Permanent / Casual / COS); COS reports with casuals
             const getEmploymentType = (emp: any) => {
-                if (!emp || !emp.designation) return 'permanent';
-                const designation = emp.designation.toLowerCase();
-                return designation.includes('casual') ? 'casual' : 'permanent';
+                const status = String(emp?.status || '').toLowerCase();
+                if (status) return status === 'permanent' ? 'permanent' : 'casual';
+                return String(emp?.designation || '').toLowerCase().includes('casual') ? 'casual' : 'permanent';
             };
 
             // Helper function to check if a date falls within the casual period
@@ -943,8 +967,8 @@ export const useReports = (
         <tbody>
             ${(() => {
                 const sortedEntries = Array.from(employeeData.entries()).sort((a, b) => {
-                const aIsProvincialBudgetOfficer = a[1].designation?.toLowerCase().includes('provincial budget officer') || false;
-                const bIsProvincialBudgetOfficer = b[1].designation?.toLowerCase().includes('provincial budget officer') || false;
+                const aIsProvincialBudgetOfficer = isProvincialBudgetOfficer(a[1]);
+                const bIsProvincialBudgetOfficer = isProvincialBudgetOfficer(b[1]);
 
                 if (aIsProvincialBudgetOfficer && !bIsProvincialBudgetOfficer) return -1;
                 if (!aIsProvincialBudgetOfficer && bIsProvincialBudgetOfficer) return 1;
@@ -1031,16 +1055,16 @@ export const useReports = (
                         let html = '<tr>';
                         
                         if (rowIdx === 0) {
-                            html += '<td rowspan="' + maxRows + '" style="text-align: center; font-weight: bold; vertical-align: top; padding: 4px 3px; width: 8%;">' + emp.employee_id + '</td>';
-                            html += '<td rowspan="' + maxRows + '" style="vertical-align: top; padding: 4px 3px; width: 12%;">' + emp.name + '</td>';
+                            html += '<td rowspan="' + maxRows + '" style="text-align: center; font-weight: bold; vertical-align: top; padding: 4px 3px; width: 8%;">' + esc(emp.employee_id) + '</td>';
+                            html += '<td rowspan="' + maxRows + '" style="vertical-align: top; padding: 4px 3px; width: 12%;">' + esc(emp.name) + '</td>';
                         }
                         
-                        html += '<td style="text-align: center; padding: 4px 3px; width: 10%; font-size: 11px;">' + (leave ? leave.type_of_leave : '') + '</td>';
+                        html += '<td style="text-align: center; padding: 4px 3px; width: 10%; font-size: 11px;">' + esc(leave ? leave.type_of_leave : '') + '</td>';
                         let inclusiveDates = leave && leave.inclusive_dates ? formatInclusiveDatesToString(leave.inclusive_dates) : '';
                         if (leave && leave.is_half_day && leave.half_day_period) {
                             inclusiveDates += ' (' + leave.half_day_period + ')';
                         }
-                        html += '<td style="text-align: center; padding: 4px 3px; width: 8%; font-size: 11px;">' + inclusiveDates + '</td>';
+                        html += '<td style="text-align: center; padding: 4px 3px; width: 8%; font-size: 11px;">' + esc(inclusiveDates) + '</td>';
                         
                         let toDates = '';
                         if (to) {
@@ -1063,7 +1087,7 @@ export const useReports = (
                                 toDates = fromDate === toDate ? fromDate : fromDate + ' - ' + toDate;
                             }
                         }
-                        html += '<td style="text-align: center; padding: 4px 3px; width: 8%; font-size: 11px;">' + toDates + '</td>';
+                        html += '<td style="text-align: center; padding: 4px 3px; width: 8%; font-size: 11px;">' + esc(toDates) + '</td>';
                         
                         let psDate = '';
                         if (ps && ps.date) {
@@ -1077,7 +1101,7 @@ export const useReports = (
                                 psDate = new Date(ps.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
                             }
                         }
-                        html += '<td style="text-align: center; padding: 4px 3px; width: 6%; font-size: 11px;">' + psDate + '</td>';
+                        html += '<td style="text-align: center; padding: 4px 3px; width: 6%; font-size: 11px;">' + esc(psDate) + '</td>';
                         
                         // Time of Departure - show all available times for time slips (comma-separated), or requested_time for pass slips
                         let departureTime = '';
@@ -1095,7 +1119,7 @@ export const useReports = (
                                 departureTime = formatTime(ps.requested_time || '');
                             }
                         }
-                        html += '<td style="text-align: center; padding: 4px 3px; width: 6%; font-size: 11px;">' + departureTime + '</td>';
+                        html += '<td style="text-align: center; padding: 4px 3px; width: 6%; font-size: 11px;">' + esc(departureTime) + '</td>';
                         
                         let returnTimeDisplay = '';
                         if (ps) {
@@ -1112,13 +1136,13 @@ export const useReports = (
                                 }
                             }
                         }
-                        html += '<td style="text-align: center; padding: 4px 3px; width: 6%; font-size: 11px;">' + returnTimeDisplay + '</td>';
+                        html += '<td style="text-align: center; padding: 4px 3px; width: 6%; font-size: 11px;">' + esc(returnTimeDisplay) + '</td>';
                         
                         if (rowIdx === 0) {
-                            html += '<td style="text-align: center; padding: 4px 3px; width: 5%; font-size: 11px;">' + tardinessDates.join(', ') + '</td>';
+                            html += '<td style="text-align: center; padding: 4px 3px; width: 5%; font-size: 11px;">' + esc(tardinessDates.join(', ')) + '</td>';
                             html += '<td style="text-align: center; padding: 4px 3px; width: 5%; font-size: 11px;">' + tardinessDisplay + '</td>';
                             html += '<td style="text-align: center; padding: 4px 3px; width: 4%; font-size: 11px;">' + (tardinessRecords.length > 0 ? tardinessRecords.length : '') + '</td>';
-                            html += '<td style="text-align: center; padding: 4px 3px; width: 5%; font-size: 11px;">' + undertimeDates.join(', ') + '</td>';
+                            html += '<td style="text-align: center; padding: 4px 3px; width: 5%; font-size: 11px;">' + esc(undertimeDates.join(', ')) + '</td>';
                             html += '<td style="text-align: center; padding: 4px 3px; width: 5%; font-size: 11px;">' + undertimeDisplay + '</td>';
                             html += '<td style="text-align: center; padding: 4px 3px; width: 4%; font-size: 11px;">' + (undertimeRecords.length > 0 ? undertimeRecords.length : '') + '</td>';
                             html += '<td style="text-align: center; padding: 4px 3px; width: 5%; font-size: 11px;">' + totalDisplay + '</td>';
@@ -1149,21 +1173,21 @@ export const useReports = (
     </table>
     `}
     
-    ${summaryData.value.remarks ? `<p style="margin: 0; font-weight: bold; font-size: 11px;"><strong>*</strong> <em>${summaryData.value.remarks.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</em></p>` : ''}
+    ${summaryData.value.remarks ? `<p style="margin: 0; font-weight: bold; font-size: 11px;"><strong>*</strong> <em>${esc(summaryData.value.remarks)}</em></p>` : ''}
     
     <div class="signature-section">
         <div class="signature-box">
             <div class="signature-title">Prepared By:</div>
             <div class="signature-line"></div>
-            <div class="signature-name">${capitalizeWords(preparedByEmployee?.name || 'N/A')}</div>
-            <div class="signature-designation">${preparedByEmployee?.designation || ''}</div>
+            <div class="signature-name">${esc(capitalizeWords(preparedByEmployee?.name || 'N/A'))}</div>
+            <div class="signature-designation">${esc(preparedByEmployee?.designation || '')}</div>
         </div>
         
         <div class="signature-box">
             <div class="signature-title">Reviewed/Certified Correct:</div>
             <div class="signature-line"></div>
-            <div class="signature-name">${capitalizeWords(certifiedByUser?.name || 'N/A')}</div>
-            <div class="signature-designation">${certifiedByEmployee?.designation || ''}</div>
+            <div class="signature-name">${esc(capitalizeWords(certifiedByUser?.name || 'N/A'))}</div>
+            <div class="signature-designation">${esc(certifiedByEmployee?.designation || '')}</div>
         </div>
     </div>
 
@@ -1202,6 +1226,7 @@ export const useReports = (
     return {
         showReportModal,
         reportData,
+        reportYears,
         reportErrors,
         showSummaryModal,
         summaryData,

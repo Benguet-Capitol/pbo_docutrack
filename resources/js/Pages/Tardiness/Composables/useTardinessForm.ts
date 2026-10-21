@@ -3,6 +3,7 @@ import { usePermissions } from '@/Composables/usePermissions';
 import { useTrashedControlNumbers } from '@/Composables/useTrashedControlNumbers';
 import { usePage } from '@inertiajs/vue3';
 import type { TardinessRecord, Employee } from './useTardinessData';
+import { isProvincialBudgetOfficer, isProvincialGovernor } from '@/Composables/useOfficials';
 
 export function useTardinessForm(employees: any, tardiness: any) {
     const { can } = usePermissions();
@@ -68,7 +69,7 @@ export function useTardinessForm(employees: any, tardiness: any) {
         (newEmployeeId) => {
             if (newEmployeeId) {
                 const emp = employees.value.find((e: Employee) => e.id === newEmployeeId);
-                if (emp?.designation === 'Provincial Budget Officer') {
+                if (isProvincialBudgetOfficer(emp)) {
                     // If requesting employee is PBO, auto-set approver to Provincial Governor
                     const pgov = getProvincialGovernor();
                     if (pgov) {
@@ -185,16 +186,16 @@ export function useTardinessForm(employees: any, tardiness: any) {
     };
 
     const getProvincialBudgetOfficer = (): Employee | null => {
-        return employees.value.find((emp: Employee) => emp.designation === 'Provincial Budget Officer') || null;
+        return employees.value.find((emp: Employee) => isProvincialBudgetOfficer(emp)) || null;
     };
 
     const getProvincialGovernor = (): Employee | null => {
-        return employees.value.find((emp: Employee) => emp.designation === 'Provincial Governor') || null;
+        return employees.value.find((emp: Employee) => isProvincialGovernor(emp)) || null;
     };
 
     const isRequestingEmployeeProvincialBudgetOfficer = (): boolean => {
         const emp = getRequestingEmployee();
-        return emp?.designation === 'Provincial Budget Officer';
+        return isProvincialBudgetOfficer(emp);
     };
 
     const getEmployeeOffice = (): string => {

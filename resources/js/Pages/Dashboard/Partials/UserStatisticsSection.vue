@@ -7,6 +7,7 @@
                 <h3 class="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
                     <i class="fas fa-users text-blue-600 dark:text-blue-400 shrink-0"></i>
                     <span class="min-w-0">Summary of Users Average Time per Transaction</span>
+                    <span v-if="periodLabel" class="shrink-0 px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300" title="Period from the Document Tracking Summary filters">{{ periodLabel }}</span>
                 </h3>
                 <ViewToggle v-model="viewMode" />
             </div>
@@ -193,6 +194,8 @@ const { viewMode: currentViewMode, setViewMode } = useResponsiveView('dashboardU
 const viewMode = computed({ get: () => currentViewMode.value, set: setViewMode });
 
 const props = defineProps({
+    // Year/semester these figures cover, from the Document Tracking Summary filters
+    periodLabel: String,
     filteredUserStatistics: Array<any>,
     expandedUserId: Number,
     selectedUserDetails: Array<any>,

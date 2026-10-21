@@ -22,7 +22,9 @@ class NoticeOfMeetingController extends Controller
                 ->orderByDesc('date')
                 ->orderBy('time')
                 ->get(),
+            // PBO staff only (HRIS sync brings in every provincial employee)
             'employees' => Employee::select('id', 'name', 'designation')
+                ->pboStaff()
                 ->orderBy('name')
                 ->get(),
         ]);

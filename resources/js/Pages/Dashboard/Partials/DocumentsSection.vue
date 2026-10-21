@@ -336,19 +336,21 @@
                 </button>
                 <!-- Page Number Buttons -->
                 <div class="flex gap-0.5">
-                    <button
-                        v-for="page in totalPages"
-                        :key="page"
-                        @click="changePage(page)"
-                        :class="[
-                            'px-2 py-1 text-xs rounded transition-colors',
-                            currentPageLocal === page
-                                ? 'bg-emerald-600 text-white'
-                                : 'text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
-                        ]"
-                    >
-                        {{ page }}
-                    </button>
+                    <template v-for="page in pageButtons" :key="page">
+                        <span v-if="page < 0" class="px-2 py-1 text-xs text-gray-400">…</span>
+                        <button
+                            v-else
+                            @click="changePage(page)"
+                            :class="[
+                                'px-2 py-1 text-xs rounded transition-colors',
+                                currentPageLocal === page
+                                    ? 'bg-emerald-600 text-white'
+                                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
+                            ]"
+                        >
+                            {{ page }}
+                        </button>
+                    </template>
                 </div>
                 <!-- Next Page Button -->
                 <button
@@ -372,6 +374,7 @@
 </template>
 
 <script setup lang="ts">
+import { visiblePageNumbers } from '@/utils/pagination';
 import { computed } from 'vue';
 import ViewToggle from '@/Components/ViewToggle.vue';
 import TransactionTimeline from './TransactionTimeline.vue';
@@ -466,6 +469,9 @@ const currentPageLocal = computed({
     get: () => props.currentPage,
     set: (val) => emit('update:currentPage', val),
 });
+
+// Page numbers around the current page (negatives are ellipses)
+const pageButtons = computed(() => visiblePageNumbers(Number(currentPageLocal.value) || 1, Number(props.totalPages) || 0));
 
 const selectedYearLocal = computed({
     get: () => props.selectedYear,

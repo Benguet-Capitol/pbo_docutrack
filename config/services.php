@@ -35,4 +35,12 @@ return [
         ],
     ],
 
+    // HRIS API (App\Services\HrisClient): called from the server so the key stays out of the built JavaScript
+    'hris' => [
+        'url' => env('HRIS_URL', 'http://192.168.2.26/api/v1'),
+        'key' => env('HRIS_KEY'),
+        'timeout' => (int) env('HRIS_TIMEOUT', 15),
+        'employees_endpoint' => env('HRIS_EMPLOYEES_ENDPOINT', 'getEmployees'),
+    ],
+
 ];

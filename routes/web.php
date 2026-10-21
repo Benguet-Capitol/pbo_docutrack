@@ -87,6 +87,9 @@ Route::middleware('auth')
     });
 
     Route::get('/api/employees', [EmployeeController::class, 'index']);
+    // HRIS (server-side, so the API key stays in .env)
+    Route::get('/api/employees/hris', [EmployeeController::class, 'hrisEmployees'])->middleware('permission:employees.create,employees.edit');
+    Route::post('/api/employees/sync-hris', [EmployeeController::class, 'syncHris'])->middleware('permission:employees.create');
     Route::post('/api/employees', [EmployeeController::class, 'store'])->middleware('permission:employees.create');
     Route::put('/api/employees/{id}', [EmployeeController::class, 'update'])->middleware('permission:employees.edit');
     Route::delete('/api/employees/{id}', [EmployeeController::class, 'destroy'])->middleware('permission:employees.delete');

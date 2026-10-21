@@ -2,15 +2,24 @@
     <!-- Header Section: Contains Create button, search bar, and items-per-page selector -->
     <div class="px-6 py-5 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <!-- Create Employee Button -->
-            <button 
-                v-if="canCreateEditEmployees" 
-                @click="onCreateClick" 
-                class="inline-flex items-center gap-2 px-5 py-2.5 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-700 dark:hover:bg-emerald-800 rounded-lg transition-colors duration-200"
-            >
-                <i class="fas fa-plus"></i>
-                Create Employee
-            </button>
+            <div v-if="canCreateEditEmployees" class="flex flex-wrap items-center gap-2">
+                <!-- Create Employee Button -->
+                <button
+                    @click="onCreateClick"
+                    class="inline-flex items-center gap-2 px-5 py-2.5 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-700 dark:hover:bg-emerald-800 rounded-lg transition-colors duration-200"
+                >
+                    <i class="fas fa-plus"></i>
+                    Create Employee
+                </button>
+                <!-- Sync from HRIS: adds new HRIS employees and updates existing ones -->
+                <button
+                    @click="emit('sync-click')"
+                    class="inline-flex items-center gap-2 px-4 py-2.5 text-xs font-semibold text-teal-700 border border-teal-700 rounded-lg hover:bg-teal-50 dark:text-teal-300 dark:border-teal-400 dark:hover:bg-gray-700 transition-colors duration-200"
+                >
+                    <i class="fas fa-rotate"></i>
+                    Sync from HRIS
+                </button>
+            </div>
 
             <div :class="['flex items-center gap-3', !canCreateEditEmployees && 'sm:ml-auto']">
                 <!-- Search Input -->
@@ -70,6 +79,7 @@ const emit = defineEmits<{
     'update:searchQuery': [value: string];
     'update:itemsPerPage': [value: string];
     'create-click': [];
+    'sync-click': [];
 }>();
 
 const onCreateClick = () => {

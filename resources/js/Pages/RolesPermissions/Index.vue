@@ -152,9 +152,6 @@ const { permissionGroups, loading, error, searchQuery, totalPermissions, filtere
 const page = usePage();
 const currentRole = computed(() => (page.props.auth?.user as any)?.usertype || '');
 
-/** Toast messages render as HTML, so names typed by users are escaped */
-const escapeHtml = (text: string) => text.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c] as string));
-
 /** Module groups where the role has at least one permission */
 const groupsWithAccess = (role: Role) =>
     permissionGroups.value
@@ -186,7 +183,7 @@ const handleSave = async (payload: RolePayload) => {
     try {
         const message = await saveRole(payload, editingRole.value?.id);
         showRoleModal.value = false;
-        toastRef.value?.add(editingRole.value ? 'info' : 'success', 'Success', escapeHtml(message), 3000);
+        toastRef.value?.add(editingRole.value ? 'info' : 'success', 'Success', message, 3000);
         // The signed-in user's own permissions changed: refresh the shared props (menu, buttons)
         if (affectsCurrentUser) router.reload();
     } catch (e) {
@@ -212,9 +209,9 @@ const handleDelete = async () => {
     try {
         const message = await deleteRole(roleToDelete.value.id);
         showDeleteModal.value = false;
-        toastRef.value?.add('error', 'Deleted', escapeHtml(message), 3000);
+        toastRef.value?.add('error', 'Deleted', message, 3000);
     } catch (e) {
-        toastRef.value?.add('error', 'Error', escapeHtml(e instanceof Error ? e.message : 'An error occurred'), 4000);
+        toastRef.value?.add('error', 'Error', e instanceof Error ? e.message : 'An error occurred', 4000);
     } finally {
         deleting.value = false;
     }

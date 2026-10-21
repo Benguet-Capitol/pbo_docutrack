@@ -1,4 +1,5 @@
 import { computed, ref } from 'vue';
+import { LIMITED_LEAVE_TYPES } from '@/Composables/useLeaveCredits';
 
 /**
  * Composable for HR data management
@@ -509,7 +510,8 @@ export const useHRData = () => {
             'Wellness Leave'
         ];
 
-        const typesSet = new Set<string>();
+        // Limited types (Mandatory/Forced, Special Privilege, Wellness) always get a column so their remaining days show
+        const typesSet = new Set<string>(LIMITED_LEAVE_TYPES);
         leaves.value.forEach(leave => {
             const leaveYear = new Date(leave.date_of_filing).getFullYear();
             if (leaveYear === selectedHRYear.value && allowedTypes.includes(leave.type_of_leave)) {

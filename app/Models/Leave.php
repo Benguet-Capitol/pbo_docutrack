@@ -36,9 +36,41 @@ class Leave extends Model
         'is_half_day' => 'boolean',
     ];
 
+    /**
+     * Days an employee may use per year (by year of filing) for these leave types.
+     * Keep in sync with LEAVE_LIMITS in resources/js/Composables/useLeaveCredits.ts.
+     */
+    public const YEARLY_LIMITS = [
+        'Mandatory/Forced Leave' => 5,
+        'Special Privilege Leave' => 3,
+        'Wellness Leave' => 5,
+    ];
+
     public function employee(): BelongsTo
     {
         return $this->belongsTo(Employee::class)->withTrashed();
+    }
+
+    /**
+     * Days a leave counts against the yearly limit: a half day is 0.5, otherwise the working days applied for.
+     */
+    public static function daysCounted(bool $isHalfDay, $workingDays): float
+    {
+        return $isHalfDay ? 0.5 : (float) $workingDays;
+    }
+
+    /**
+     * Days of a leave type an employee has already filed in a year (trashed leaves don't count).
+     */
+    public static function usedDays(int $employeeId, string $type, int $year, ?int $excludeLeaveId = null): float
+    {
+        return (float) static::query()
+            ->where('employee_id', $employeeId)
+            ->where('type_of_leave', $type)
+            ->whereYear('date_of_filing', $year)
+            ->when($excludeLeaveId, fn ($query) => $query->whereKeyNot($excludeLeaveId))
+            ->get(['is_half_day', 'number_of_working_days_applied_for'])
+            ->sum(fn (Leave $leave) => static::daysCounted((bool) $leave->is_half_day, $leave->number_of_working_days_applied_for));
     }
 
     protected function serializeDate($date)

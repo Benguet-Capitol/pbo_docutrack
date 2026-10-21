@@ -1,4 +1,4 @@
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 
 /**
  * Employee interface defines the structure of employee data
@@ -8,7 +8,15 @@ export interface Employee {
     id: number;
     employee_id: string;
     name: string;
+    /** Printed title, derived from the position (a department head's parenthetical title) */
     designation: string;
+    position_title?: string | null;
+    parenthetical_title?: string | null;
+    status?: string | null;
+    full_position?: string;
+    office_id?: number | null;
+    /** Another office's employee working at the PBO: counts as PBO staff in every module */
+    detailed_to_pbo?: boolean;
     office?: number | {
         id: number;
         office_name: string;
@@ -52,6 +60,11 @@ export function useEmployeeData() {
     /** Number of items to display per page */
     const itemsPerPage = ref(10);
 
+    // Back to the first page when the search or page size changes
+    watch([searchQuery, itemsPerPage], () => {
+        currentPage.value = 1;
+    });
+
     /** The field to sort employees by */
     const sortBy = ref<'id' | 'employee_id' | 'name' | 'designation'>('id');
 
@@ -70,9 +83,13 @@ export function useEmployeeData() {
         let filtered = employees.value.filter(employee => {
             const query = searchQuery.value.toLowerCase();
             return (
-                employee.employee_id.toLowerCase().includes(query) ||
+                String(employee.employee_id ?? '').toLowerCase().includes(query) ||
                 employee.name.toLowerCase().includes(query) ||
-                employee.designation.toLowerCase().includes(query)
+                String(employee.full_position ?? employee.designation ?? '').toLowerCase().includes(query) ||
+                String(employee.status ?? '').toLowerCase().includes(query) ||
+                (typeof employee.office === 'object' && employee.office
+                    ? `${employee.office.office_abbreviation ?? ''} ${employee.office.office_name}`.toLowerCase().includes(query)
+                    : false)
             );
         });
         

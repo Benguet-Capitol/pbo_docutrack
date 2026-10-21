@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { isProvincialBudgetOfficer } from '@/Composables/useOfficials';
 import { ref } from 'vue';
 import type { CertificateOfAppearance } from '../Composables/useCoaData';
 import { printSafely } from '@/Composables/usePrint';
@@ -40,7 +41,7 @@ const printGeneratedAtDisplay = (): string => {
 const getProvincialBudgetOfficer = () => {
     if (!props.sortedEmployees) return null;
     return props.sortedEmployees.find((e: Employee) => 
-        e.designation?.toLowerCase().includes('provincial budget officer')
+        isProvincialBudgetOfficer(e)
     );
 };
 

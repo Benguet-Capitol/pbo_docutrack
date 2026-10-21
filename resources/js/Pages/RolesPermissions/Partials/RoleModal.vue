@@ -118,11 +118,11 @@
                 </div>
 
                 <!-- Modal Footer -->
-                <div class="flex items-center justify-center gap-3 p-6 border-t-2 border-gray-200 rounded-b-lg dark:border-gray-600 bg-gray-50 dark:bg-gray-800">
+                <div class="flex flex-wrap items-center justify-center gap-3 p-6 border-t-2 border-gray-200 rounded-b-lg dark:border-gray-600 bg-gray-50 dark:bg-gray-800">
                     <button
                         v-if="!readOnly"
                         @click="submit"
-                        :disabled="saving"
+                        :disabled="saving || !form.name.trim()"
                         class="inline-flex items-center gap-2 px-5 py-3 text-xs font-medium text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-all duration-200 disabled:opacity-60"
                     >
                         <i :class="saving ? 'fas fa-spinner fa-spin' : 'fas fa-save'"></i>
@@ -135,6 +135,7 @@
                         <i class="fas fa-times"></i>
                         {{ readOnly ? 'Close' : 'Cancel' }}
                     </button>
+                    <MissingFieldsHint v-if="!readOnly" :fields="form.name.trim() ? [] : ['Role Name']" />
                 </div>
             </div>
         </div>
@@ -143,6 +144,7 @@
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue';
+import MissingFieldsHint from '@/Components/MissingFieldsHint.vue';
 import type { Role, PermissionGroup, RolePayload } from '../Composables/useRolesData';
 
 const props = defineProps<{

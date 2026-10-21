@@ -35,10 +35,10 @@
                                 <label for="employees" class="block text-xs font-medium text-gray-700 dark:text-gray-300">Requesting Employee(s) <span class="text-red-600">*</span></label>
                                 <div class="space-y-2">
                                     <div class="border border-gray-300 dark:border-gray-600 rounded-lg p-3 max-h-32 overflow-y-auto">
-                                        <div v-if="sortedEmployees.length === 0" class="text-xs text-gray-500 dark:text-gray-400 py-2">
+                                        <div v-if="requestingOptions.length === 0" class="text-xs text-gray-500 dark:text-gray-400 py-2">
                                             No employees available
                                         </div>
-                                        <label v-for="emp in sortedEmployees" :key="emp.id" class="flex items-center gap-2 py-1 cursor-pointer">
+                                        <label v-for="emp in requestingOptions" :key="emp.id" class="flex items-center gap-2 py-1 cursor-pointer">
                                             <input type="checkbox" :value="emp.id" :checked="formData.employee_ids.includes(emp.id)" @change="$emit('update:formData', { ...formData, employee_ids: ($event.target as HTMLInputElement).checked ? [...formData.employee_ids, emp.id] : formData.employee_ids.filter((id: number) => id !== emp.id) })" class="rounded border-gray-300 dark:border-gray-600 accent-emerald-600" />
                                             <span class="text-xs text-gray-700 dark:text-gray-300">{{ emp.name }}</span>
                                         </label>
@@ -167,7 +167,7 @@
                                     <i class="fas fa-user-check absolute left-3 text-gray-400 text-sm pointer-events-none"></i>
                                     <select :value="formData.recommending_approval_employee_id || ''" @change="$emit('update:formData', { ...formData, recommending_approval_employee_id: ($event.target as HTMLSelectElement).value ? Number(($event.target as HTMLSelectElement).value) : null })" id="recommending_approval_employee_id" class="block w-full pl-10 pr-4 py-2 text-xs border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:outline-none transition-colors appearance-none" :class="[formErrors.recommending_approval_employee_id ? 'border-red-500 focus:border-red-500' : 'border-gray-300 focus:border-emerald-500']">
                                         <option :value="null">Select a supervisor</option>
-                                        <option v-for="emp in sortedEmployees" :key="emp.id" :value="emp.id">{{ emp.name }}</option>
+                                        <option v-for="emp in sortedEmployees.filter((e) => inPboScope(e) || e.id === formData.recommending_approval_employee_id)" :key="emp.id" :value="emp.id">{{ emp.name }}</option>
                                     </select>
                                 </div>
                                 <span v-if="formErrors.recommending_approval_employee_id" class="text-red-500 text-xs">{{ formErrors.recommending_approval_employee_id }}</span>
@@ -195,8 +195,8 @@
                     </div>
 
                     <!-- Modal Footer -->
-                    <div class="flex items-center justify-center gap-3 p-6 border-t-2 border-gray-200 rounded-b-lg dark:border-gray-600 bg-gray-50 dark:bg-gray-800">
-                        <button @click="$emit('submit')" :disabled="creating" class="inline-flex items-center gap-2 px-5 py-3 text-xs font-medium text-white bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-700 dark:hover:bg-emerald-800 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed">
+                    <div class="flex flex-wrap items-center justify-center gap-3 p-6 border-t-2 border-gray-200 rounded-b-lg dark:border-gray-600 bg-gray-50 dark:bg-gray-800">
+                        <button @click="$emit('submit')" :disabled="creating || !canSubmit" class="inline-flex items-center gap-2 px-5 py-3 text-xs font-medium text-white bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-700 dark:hover:bg-emerald-800 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed">
                             <i v-if="creating" class="fas fa-spinner fa-spin"></i>
                             <i v-else class="fas fa-eye"></i>
                             {{ creating ? 'Loading...' : 'Preview & Continue' }}
@@ -205,6 +205,7 @@
                             <i class="fas fa-times"></i>
                             Cancel
                         </button>
+                        <MissingFieldsHint :fields="missingFields" :message="submitMessage" />
                     </div>
                 </div>
             </div>
@@ -213,6 +214,9 @@
 </template>
 
 <script setup lang="ts">
+import { isPboStaff, inPboScope } from '@/Composables/useOfficials';
+import MissingFieldsHint from '@/Components/MissingFieldsHint.vue';
+import { computed } from 'vue';
 import SignatoryFields from '@/Components/SignatoryFields.vue';
 import { isProvincialBudgetOfficer } from '@/Composables/useSignatory';
 import type { Employee } from '../Composables/usePassSlipsData';
@@ -241,6 +245,29 @@ const props = defineProps<{
     sortedEmployees: Employee[];
     creating: boolean;
 }>();
+
+/** Requesting employee: the office's staff (HRIS brings in every employee), plus whoever this record already has */
+const requestingOptions = computed(() => {
+    const selected: number[] = (props.formData.employee_ids || []).map(Number);
+    return ((props.sortedEmployees || []) as any[]).filter((emp: any) => isPboStaff(emp) || selected.includes(Number(emp.id)));
+});
+
+// ============== Required fields: Save/Create stays disabled until they're filled ==============
+const missingFields = computed(() => {
+    const f: any = props.formData || {};
+    const missing: string[] = [];
+    if (!String(f.date ?? '').trim()) missing.push("Date");
+    if (!String(f.requested_time ?? '').trim()) missing.push("Requested Time");
+    if (!String(f.purpose ?? '').trim()) missing.push("Purpose");
+    if (!(f.employee_ids?.length)) missing.push("Employees");
+    if (f.returnType === 'time' && !String(f.expected_return_time ?? '').trim()) missing.push("Expected Time of Return");
+    return missing;
+});
+const submitMessage = computed<string | null>(() => {
+    const f: any = props.formData || {};
+    return f.returnType === 'time' && f.expected_return_time && f.requested_time && f.expected_return_time <= f.requested_time ? 'Return time must be after the requested leave time' : null;
+});
+const canSubmit = computed(() => missingFields.value.length === 0 && !submitMessage.value);
 
 const emit = defineEmits<{
     'update:formData': [data: any];

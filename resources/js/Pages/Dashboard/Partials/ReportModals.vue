@@ -16,13 +16,27 @@
 
                 <!-- Modal Body -->
                 <div class="px-6 py-6 space-y-4">
-                    <!-- As of Date -->
+                    <!-- Year: the report only includes documents dated in this year -->
+                    <div class="space-y-2">
+                        <label for="report_year" class="block text-xs font-medium text-gray-700 dark:text-gray-300">Year</label>
+                        <select
+                            v-model.number="reportYearLocal"
+                            id="report_year"
+                            class="w-full px-4 py-2 text-xs border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:outline-none focus:border-blue-500"
+                        >
+                            <option v-for="year in reportYears" :key="year" :value="year">{{ year }}</option>
+                        </select>
+                    </div>
+
+                    <!-- As of Date (within the selected year) -->
                     <div class="space-y-2">
                         <label for="report_as_of_date" class="block text-xs font-medium text-gray-700 dark:text-gray-300">As of Date</label>
                         <input
                             v-model="reportAsOfDateLocal"
                             id="report_as_of_date"
                             type="date"
+                            :min="`${reportYearValue}-01-01`"
+                            :max="`${reportYearValue}-12-31`"
                             class="w-full px-4 py-2 text-xs border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:outline-none focus:border-blue-500"
                         />
                     </div>
@@ -78,10 +92,11 @@
                 </div>
 
                 <!-- Modal Footer -->
-                <div class="flex items-center justify-center gap-3 p-6 border-t-2 border-gray-200 rounded-b-lg dark:border-gray-600 bg-gray-50 dark:bg-gray-800">
+                <div class="flex flex-wrap items-center justify-center gap-3 p-6 border-t-2 border-gray-200 rounded-b-lg dark:border-gray-600 bg-gray-50 dark:bg-gray-800">
                     <button
                         @click="$emit('generateReport')"
-                        class="inline-flex items-center gap-2 px-5 py-3 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95"
+                        :disabled="missingReportFields.length > 0"
+                        class="inline-flex items-center gap-2 px-5 py-3 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         <i class="fas fa-check"></i>
                         Generate
@@ -93,6 +108,7 @@
                         <i class="fas fa-times"></i>
                         Cancel
                     </button>
+                    <MissingFieldsHint :fields="missingReportFields" />
                 </div>
             </div>
         </div>
@@ -203,10 +219,11 @@
                 </div>
 
                 <!-- Modal Footer -->
-                <div class="flex items-center justify-center gap-3 p-6 border-t-2 border-gray-200 rounded-b-lg dark:border-gray-600 bg-gray-50 dark:bg-gray-800">
+                <div class="flex flex-wrap items-center justify-center gap-3 p-6 border-t-2 border-gray-200 rounded-b-lg dark:border-gray-600 bg-gray-50 dark:bg-gray-800">
                     <button
                         @click="$emit('generateSummaryReport')"
-                        class="inline-flex items-center gap-2 px-5 py-3 text-xs font-medium text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95"
+                        :disabled="missingSummaryFields.length > 0"
+                        class="inline-flex items-center gap-2 px-5 py-3 text-xs font-medium text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         <i class="fas fa-check"></i>
                         Generate
@@ -218,6 +235,7 @@
                         <i class="fas fa-times"></i>
                         Cancel
                     </button>
+                    <MissingFieldsHint :fields="missingSummaryFields" />
                 </div>
             </div>
         </div>
@@ -226,11 +244,14 @@
 
 <script setup lang="ts">
 import { computed, watch, nextTick } from 'vue';
+import MissingFieldsHint from '@/Components/MissingFieldsHint.vue';
 
 const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
 const props = defineProps({
     showReportModal: Boolean,
+    reportYearValue: Number,
+    reportYears: Array<number>,
     reportAsOfDateValue: String,
     reportDocumentTypeValue: String,
     reportReviewedByValue: [Number, String],
@@ -253,6 +274,7 @@ const props = defineProps({
 
 const emit = defineEmits([
     'update:show-report-modal',
+    'update:report-year',
     'update:report-as-of-date',
     'update:report-document-type',
     'update:report-reviewed-by',
@@ -331,6 +353,11 @@ const showReportModalLocal = computed({
     set: (val) => emit('update:show-report-modal', val),
 });
 
+const reportYearLocal = computed({
+    get: () => props.reportYearValue,
+    set: (val) => emit('update:report-year', val),
+});
+
 const reportAsOfDateLocal = computed({
     get: () => props.reportAsOfDateValue,
     set: (val) => emit('update:report-as-of-date', val),
@@ -384,6 +411,24 @@ const summaryCertifiedCorrectLocal = computed({
 const summaryRemarksLocal = computed({
     get: () => props.summaryRemarksValue,
     set: (val) => emit('update:summary-remarks', val),
+});
+
+/** Required fields still empty: Generate stays disabled until filled */
+const missingReportFields = computed(() => {
+    const missing: string[] = [];
+    if (!props.reportYearValue) missing.push('Year');
+    if (!props.reportAsOfDateValue) missing.push('As of Date');
+    if (!props.reportDocumentTypeValue) missing.push('Document Type');
+    return missing;
+});
+const missingSummaryFields = computed(() => {
+    const missing: string[] = [];
+    if (!props.summaryMonthValue) missing.push('Month');
+    if (!props.summaryEmploymentTypeValue) missing.push('Employment Type');
+    if (props.summaryEmploymentTypeValue === 'casual' && !props.summaryCasualPeriodValue) missing.push('Report Period');
+    if (!props.summaryPreparedByValue) missing.push('Prepared By');
+    if (!props.summaryCertifiedCorrectValue) missing.push('Certified Correct');
+    return missing;
 });
 
 const lastDayOfSelectedMonth = computed(() => {

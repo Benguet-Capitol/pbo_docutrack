@@ -65,7 +65,7 @@ export const useDocuments = () => {
                 users.value = await usersResponse.json();
             }
 
-            const employeesResponse = await fetch('/api/employees');
+            const employeesResponse = await fetch('/api/employees?scope=pbo');
             if (employeesResponse.ok) {
                 employees.value = await employeesResponse.json();
             }

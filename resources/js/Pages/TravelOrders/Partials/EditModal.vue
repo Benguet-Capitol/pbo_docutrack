@@ -43,8 +43,33 @@
                                     <div class="border border-gray-300 dark:border-gray-600 rounded-lg p-3 max-h-32 overflow-y-auto">
                                         <label v-for="emp in requestingEmployees" :key="emp.id" class="flex items-center gap-2 py-1 cursor-pointer">
                                             <input type="checkbox" :value="emp.id" :checked="formData.employee_ids.includes(emp.id)" @change="$emit('update:form-data', { ...formData, employee_ids: ($event.target as HTMLInputElement).checked ? [...formData.employee_ids, emp.id] : formData.employee_ids.filter((id: number) => id !== emp.id) })" class="rounded border-gray-300 dark:border-gray-600 accent-emerald-600" />
-                                            <span class="text-xs text-gray-700 dark:text-gray-300">{{ emp.name }}</span>
+                                            <span class="text-xs text-gray-700 dark:text-gray-300">{{ emp.name }}<span v-if="!isPboStaff(emp) && emp.office" class="ml-1 text-gray-500 dark:text-gray-400">({{ emp.office.office_abbreviation }})</span></span>
                                         </label>
+                                    </div>
+                                    <!-- Add an employee from another office (the checklist lists the office's staff) -->
+                                    <div class="relative">
+                                        <div class="relative flex items-center">
+                                            <i class="fas fa-user-plus absolute left-3 text-gray-400 text-xs"></i>
+                                            <input
+                                                v-model="otherSearch"
+                                                type="text"
+                                                placeholder="Add an employee from another office (type a name or office)"
+                                                class="block w-full pl-9 pr-3 py-2 text-xs border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:outline-none focus:border-emerald-500"
+                                            />
+                                        </div>
+                                        <div v-if="otherMatches.length > 0" class="absolute z-20 mt-1 w-full max-h-48 overflow-y-auto rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 shadow-lg">
+                                            <button
+                                                v-for="emp in otherMatches"
+                                                :key="emp.id"
+                                                type="button"
+                                                @click="addOtherEmployee(emp.id)"
+                                                class="w-full text-left px-3 py-2 text-xs hover:bg-emerald-50 dark:hover:bg-gray-700 flex items-center justify-between gap-2"
+                                            >
+                                                <span class="text-gray-800 dark:text-gray-200">{{ emp.name }}</span>
+                                                <span class="text-gray-500 dark:text-gray-400 truncate">{{ emp.office?.office_abbreviation || '' }}</span>
+                                            </button>
+                                        </div>
+                                        <p v-else-if="otherSearch.trim().length >= 2" class="mt-1 text-[11px] text-gray-500 dark:text-gray-400">No employee from another office matches "{{ otherSearch }}".</p>
                                     </div>
                                     <p v-if="formData.employee_ids.length > 0" class="text-xs text-gray-500 dark:text-gray-400">
                                         {{ formData.employee_ids.length }} employee(s) selected
@@ -172,15 +197,7 @@
                                 <div v-if="formData.is_acting_approver" class="grid gap-3 mt-2 pl-1">
                                     <div class="space-y-2">
                                         <label for="edit_acting_approver_name" class="block text-xs font-medium text-gray-700 dark:text-gray-300">Acting Name <span class="text-red-600">*</span></label>
-                                        <input
-                                            :value="formData.acting_approver_name"
-                                            @input="$emit('update:form-data', { ...formData, acting_approver_name: ($event.target as HTMLInputElement).value })"
-                                            id="edit_acting_approver_name"
-                                            type="text"
-                                            placeholder="e.g. Juan B. Dela Cruz"
-                                            class="block w-full px-4 py-2 text-xs border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:outline-none transition-colors"
-                                            :class="[formErrors.acting_approver_name ? 'border-red-500 focus:border-red-500' : 'border-gray-300 focus:border-blue-500']"
-                                        />
+                                        <NamePicker input-id="edit_acting_approver_name" placeholder="Search an employee or type a name" focus-class="focus:border-blue-500" :limit="50" :invalid="!!formErrors.acting_approver_name" :model-value="formData.acting_approver_name || ''" :options="actingApproverOptions" @update:model-value="$emit('update:form-data', { ...formData, acting_approver_name: $event })" />
                                         <span v-if="formErrors.acting_approver_name" class="text-red-500 text-xs">{{ formErrors.acting_approver_name }}</span>
                                     </div>
                                     <div class="space-y-2">
@@ -202,13 +219,7 @@
                             <!-- Driver Field -->
                             <div class="space-y-2">
                                 <label for="edit_driver" class="block text-xs font-medium text-gray-700 dark:text-gray-300">Driver</label>
-                                <div class="relative flex items-center">
-                                    <i class="fas fa-user absolute left-3 text-gray-400 text-sm pointer-events-none"></i>
-                                    <input :value="formData.driver" @input="$emit('update:form-data', { ...formData, driver: ($event.target as HTMLInputElement).value })" id="edit_driver" type="text" list="edit_driver_options" placeholder="Enter or select driver name" class="block w-full pl-10 pr-4 py-2 text-xs border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:outline-none transition-colors border-gray-300 focus:border-blue-500" />
-                                    <datalist id="edit_driver_options">
-                                        <option v-for="driver in driverOptions" :key="driver" :value="driver" />
-                                    </datalist>
-                                </div>
+                                <NamePicker input-id="edit_driver" icon="fas fa-user" placeholder="Select a driver or type a name" focus-class="focus:border-blue-500" :model-value="formData.driver || ''" :options="driverOptions" @update:model-value="$emit('update:form-data', { ...formData, driver: $event })" />
                             </div>
 
                             <!-- Vehicle Field -->
@@ -236,8 +247,8 @@
                     </div>
 
                     <!-- Modal Footer -->
-                    <div class="flex items-center justify-center gap-3 p-6 border-t-2 border-gray-200 rounded-b-lg dark:border-gray-600 bg-gray-50 dark:bg-gray-800">
-                        <button @click="$emit('submit')" class="inline-flex items-center gap-2 px-5 py-3 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95">
+                    <div class="flex flex-wrap items-center justify-center gap-3 p-6 border-t-2 border-gray-200 rounded-b-lg dark:border-gray-600 bg-gray-50 dark:bg-gray-800">
+                        <button :disabled="!canSubmit" @click="$emit('submit')" class="inline-flex items-center gap-2 px-5 py-3 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed">
                             <i class="fas fa-eye"></i>
                             Preview & Continue
                         </button>
@@ -245,6 +256,7 @@
                             <i class="fas fa-times"></i>
                             Cancel
                         </button>
+                        <MissingFieldsHint :fields="missingFields" :message="submitMessage" />
                     </div>
                 </div>
             </div>
@@ -253,20 +265,65 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import MissingFieldsHint from '@/Components/MissingFieldsHint.vue';
+import { isPboStaff } from '@/Composables/useOfficials';
+import NamePicker, { type NameOption } from './NamePicker.vue';
+import { ref, computed } from 'vue';
 import type { Employee } from '../Composables/useTravelOrdersData';
 
 const props = defineProps<{
     show: boolean;
     formData: any;
     formErrors: Record<string, string>;
+    /** Employees of other offices, searchable to add to the travel order */
+    otherEmployees?: any[];
     requestingEmployees: any[];
     supervisorOptions: any[];
     approverOptions: any[];
-    driverOptions: string[];
+    driverOptions: NameOption[];
+    actingApproverOptions: NameOption[];
 }>();
 
-defineEmits<{
+// ============== Requesting employees from other offices ==============
+const otherSearch = ref('');
+const otherMatches = computed(() => {
+    const query = otherSearch.value.trim().toLowerCase();
+    if (query.length < 2) return [];
+    const selected = props.formData.employee_ids || [];
+    return (props.otherEmployees || [])
+        .filter((emp: any) => !selected.includes(emp.id)
+            && (emp.name?.toLowerCase().includes(query)
+                || emp.office?.office_abbreviation?.toLowerCase().includes(query)
+                || emp.office?.office_name?.toLowerCase().includes(query)))
+        .slice(0, 8);
+});
+const addOtherEmployee = (id: number) => {
+    emit('update:form-data', { ...props.formData, employee_ids: [...(props.formData.employee_ids || []), id] });
+    otherSearch.value = '';
+};
+
+// ============== Required fields: Save/Create stays disabled until they're filled ==============
+const missingFields = computed(() => {
+    const f: any = props.formData || {};
+    const missing: string[] = [];
+    if (!String(f.date ?? '').trim()) missing.push("Date");
+    if (!String(f.going_to ?? '').trim()) missing.push("Going To");
+    if (!(f.inclusive_dates?.length)) missing.push("Inclusive Dates");
+    if (!(f.purpose?.length)) missing.push("Purpose");
+    if (!String(f.vehicle ?? '').trim()) missing.push("Vehicle");
+    if (!(f.employee_ids?.length)) missing.push("Employees");
+    if (!f.is_acting_approver && !f.approver_employee_id) missing.push("Approver");
+    if (f.is_acting_approver && !String(f.acting_approver_name ?? '').trim()) missing.push("Acting Approver Name");
+    if (f.is_acting_approver && !String(f.acting_approver_designation ?? '').trim()) missing.push("Acting Approver Designation");
+    return missing;
+});
+const submitMessage = computed<string | null>(() => {
+    const f: any = props.formData || {};
+    return null;
+});
+const canSubmit = computed(() => missingFields.value.length === 0 && !submitMessage.value);
+
+const emit = defineEmits<{
     close: [];
     'update:form-data': [data: any];
     submit: [];

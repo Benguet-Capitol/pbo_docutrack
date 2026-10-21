@@ -83,6 +83,7 @@
             <div class="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-8">
                 <!-- User Statistics Component -->
                 <UserStatisticsSection
+                    :periodLabel="statisticsPeriodLabel"
                     :filteredUserStatistics="filteredUserStatistics"
                     :expandedUserId="expandedUserId"
                     :selectedUserDetails="selectedUserDetails"
@@ -92,6 +93,7 @@
 
                 <!-- Document Statistics Component -->
                 <DocumentStatisticsSection
+                    :periodLabel="statisticsPeriodLabel"
                     :documentProcessingStatistics="documentProcessingStatistics"
                     :expandedDocumentType="expandedDocumentType"
                     :filteredDocuments="filteredDocuments"
@@ -109,6 +111,8 @@
             <!-- Report Modals Component -->
             <ReportModals
                 :showReportModal="showReportModal"
+                :reportYearValue="reportData.year"
+                :reportYears="reportYears"
                 :reportAsOfDateValue="reportData.asOfDate"
                 :reportDocumentTypeValue="reportData.documentType"
                 :reportReviewedByValue="reportData.reviewedBy"
@@ -127,6 +131,7 @@
                 :administrativeStaffEmployees="administrativeStaffEmployees"
                 :summaryError="summaryErrors.submit || summaryErrors.general || ''"
                 :lastDayOfMonth="lastDayOfSelectedMonth"
+                @update:report-year="(val) => reportData.year = val"
                 @update:report-as-of-date="(val) => reportData.asOfDate = val"
                 @update:report-document-type="(val) => reportData.documentType = val"
                 @update:report-reviewed-by="(val) => reportData.reviewedBy = val"
@@ -245,6 +250,13 @@ const {
     matchesYearAndSemester
 } = documentsComposable;
 
+/** Period shown on the statistics panels: they follow the Document Tracking Summary's year and semester */
+const statisticsPeriodLabel = computed(() => {
+    const semester = selectedSemester.value === 1 ? '1st Semester' : selectedSemester.value === 2 ? '2nd Semester' : '';
+    const year = selectedYear.value ? String(selectedYear.value) : 'All Years';
+    return semester ? `${year} · ${semester}` : year;
+});
+
 const {
     leaves,
     travelOrders,
@@ -291,6 +303,7 @@ const {
 const {
     showReportModal,
     reportData,
+    reportYears,
     reportErrors,
     showSummaryModal,
     summaryData,

@@ -268,6 +268,7 @@
 </template>
 
 <script setup lang="ts">
+import { isProvincialBudgetOfficer } from '@/Composables/useOfficials';
 import { ref } from 'vue';
 import type { Employee } from '../Composables/useTardinessData';
 import { printSafely } from '@/Composables/usePrint';
@@ -309,7 +310,7 @@ const getProvincialBudgetOfficer = () => props.provincialBudgetOfficer;
 const getProvincialGovernor = () => props.provincialGovernor;
 
 const isRequestingEmployeeProvincialBudgetOfficer = (): boolean => {
-    return props.requestingEmployee?.designation === 'Provincial Budget Officer';
+    return isProvincialBudgetOfficer(props.requestingEmployee);
 };
 
 const getEmployeeOffice = (): string => {

@@ -87,9 +87,11 @@
             :form-data="formData"
             :form-errors="formErrors"
             :requesting-employees="requestingEmployees"
+            :other-employees="otherOfficeEmployees"
             :supervisor-options="supervisorOptions"
             :approver-options="approverOptions"
             :driver-options="driverOptions"
+            :acting-approver-options="actingApproverOptions"
             @close="formComposable.closeCreateModal()"
             @update:form-data="formData = $event"
             @submit="submitCreateTravelOrder"
@@ -100,9 +102,11 @@
             :form-data="formData"
             :form-errors="formErrors"
             :requesting-employees="requestingEmployees"
+            :other-employees="otherOfficeEmployees"
             :supervisor-options="supervisorOptions"
             :approver-options="approverOptions"
             :driver-options="driverOptions"
+            :acting-approver-options="actingApproverOptions"
             @close="formComposable.closeEditModal()"
             @update:form-data="formData = $event"
             @submit="submitEditTravelOrder"
@@ -189,9 +193,11 @@ const deleting = formComposable.deleting;
 const travelOrderToEdit = formComposable.travelOrderToEdit;
 const travelOrderToDelete = formComposable.travelOrderToDelete;
 const requestingEmployees = formComposable.requestingEmployees;
+const otherOfficeEmployees = formComposable.otherOfficeEmployees;
 const supervisorOptions = formComposable.supervisorOptions;
 const approverOptions = formComposable.approverOptions;
 const driverOptions = formComposable.driverOptions;
+const actingApproverOptions = formComposable.actingApproverOptions;
 const canCreateTravelOrders = formComposable.canCreateTravelOrders;
 const canEditTravelOrders = formComposable.canEditTravelOrders;
 const canDeleteTravelOrders = formComposable.canDeleteTravelOrders;

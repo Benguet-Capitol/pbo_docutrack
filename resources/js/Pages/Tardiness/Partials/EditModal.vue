@@ -73,7 +73,7 @@
                                 :class="[formErrors.employee_id ? 'border-red-500 focus:border-red-500' : 'border-gray-300 focus:border-blue-500']"
                             >
                                 <option value="0">Select an employee</option>
-                                <option v-for="emp in sortedEmployees" :key="emp.id" :value="emp.id">
+                                <option v-for="emp in requestingOptions" :key="emp.id" :value="emp.id">
                                     {{ emp.name }}
                                 </option>
                             </select>
@@ -135,7 +135,7 @@
                                     :class="[formErrors.supervisor_employee_id ? 'border-red-500 focus:border-red-500' : 'border-gray-300 focus:border-blue-500']"
                                 >
                                     <option value="">Select a supervisor</option>
-                                    <option v-for="emp in sortedEmployees" :key="emp.id" :value="emp.id">
+                                    <option v-for="emp in sortedEmployees.filter((e) => inPboScope(e) || e.id === formData.supervisor_employee_id)" :key="emp.id" :value="emp.id">
                                         {{ emp.name }}
                                     </option>
                                 </select>
@@ -156,8 +156,8 @@
                 </div>
 
                 <!-- Modal Footer -->
-                <div class="flex items-center justify-center gap-3 p-6 border-t-2 border-gray-200 rounded-b-lg dark:border-gray-600 bg-gray-50 dark:bg-gray-800">
-                    <button @click="$emit('submit')" :disabled="updating" class="inline-flex items-center gap-2 px-5 py-3 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed">
+                <div class="flex flex-wrap items-center justify-center gap-3 p-6 border-t-2 border-gray-200 rounded-b-lg dark:border-gray-600 bg-gray-50 dark:bg-gray-800">
+                    <button @click="$emit('submit')" :disabled="updating || !canSubmit" class="inline-flex items-center gap-2 px-5 py-3 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed">
                         <i v-if="updating" class="fas fa-spinner fa-spin"></i>
                         <i v-else class="fas fa-eye"></i>
                         {{ updating ? 'Updating...' : 'Preview & Continue' }}
@@ -166,6 +166,7 @@
                         <i class="fas fa-times"></i>
                         Cancel
                     </button>
+                    <MissingFieldsHint :fields="missingFields" :message="submitMessage" />
                 </div>
             </div>
             </div>
@@ -174,11 +175,14 @@
 </template>
 
 <script setup lang="ts">
+import { isPboStaff, inPboScope } from '@/Composables/useOfficials';
+import MissingFieldsHint from '@/Components/MissingFieldsHint.vue';
+import { computed } from 'vue';
 import SignatoryFields from '@/Components/SignatoryFields.vue';
 import { isProvincialBudgetOfficer } from '@/Composables/useSignatory';
 import type { Employee, TardinessRecord } from '../Composables/useTardinessData';
 
-defineProps<{
+const props = defineProps<{
     show: boolean;
     recordToEdit: TardinessRecord | null;
     formData: {
@@ -199,6 +203,30 @@ defineProps<{
     sortedEmployees: Employee[];
     updating: boolean;
 }>();
+
+/** Requesting employee: the office's staff (HRIS brings in every employee), plus whoever this record already has */
+const requestingOptions = computed(() => {
+    const selected: number[] = ([props.formData.employee_id]).map(Number);
+    return ((props.sortedEmployees || []) as any[]).filter((emp: any) => isPboStaff(emp) || selected.includes(Number(emp.id)));
+});
+
+// ============== Required fields: Save/Create stays disabled until they're filled ==============
+const missingFields = computed(() => {
+    const f: any = props.formData || {};
+    const missing: string[] = [];
+    if (!String(f.date_filed ?? '').trim()) missing.push("Date Filed");
+    if (!String(f.type ?? '').trim()) missing.push("Type");
+    if (!String(f.requested_date ?? '').trim()) missing.push("Requested Date");
+    if (!f.employee_id) missing.push("Employee");
+    if (!String(f.requested_time ?? '').trim()) missing.push("Requested Time");
+    if (!String(f.reason ?? '').trim()) missing.push("Reason");
+    return missing;
+});
+const submitMessage = computed<string | null>(() => {
+    const f: any = props.formData || {};
+    return null;
+});
+const canSubmit = computed(() => missingFields.value.length === 0 && !submitMessage.value);
 
 defineEmits<{
     'update:formData': [data: any];

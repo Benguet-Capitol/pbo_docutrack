@@ -144,10 +144,10 @@
                 </div>
 
                 <!-- Modal Footer -->
-                <div class="flex items-center justify-center gap-3 p-6 border-t-2 border-gray-200 rounded-b-lg dark:border-gray-600 bg-gray-50 dark:bg-gray-800">
-                    <button
+                <div class="flex flex-wrap items-center justify-center gap-3 p-6 border-t-2 border-gray-200 rounded-b-lg dark:border-gray-600 bg-gray-50 dark:bg-gray-800">
+                    <button :disabled="!canSubmit"
                         @click="onSave"
-                        class="inline-flex items-center gap-2 px-5 py-3 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95"
+                        class="inline-flex items-center gap-2 px-5 py-3 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         <i class="fas fa-save"></i>
                         Update
@@ -159,6 +159,7 @@
                         <i class="fas fa-times"></i>
                         Cancel
                     </button>
+                    <MissingFieldsHint :fields="missingFields" :message="submitMessage" />
                 </div>
             </div>
         </div>
@@ -166,7 +167,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue';
+import MissingFieldsHint from '@/Components/MissingFieldsHint.vue';
+import { ref, watch, computed } from 'vue';
 import type { FormData } from '../Composables/useUserForm';
 import type { Office } from '../Composables/useUserData';
 
@@ -192,6 +194,22 @@ const props = defineProps({
         required: true,
     },
 });
+
+// ============== Required fields: Save/Create stays disabled until they're filled ==============
+const missingFields = computed(() => {
+    const f: any = props.formData || {};
+    const missing: string[] = [];
+    if (!String(f.name ?? '').trim()) missing.push("Name");
+    if (!String(f.username ?? '').trim()) missing.push("Username");
+    if (!String(f.usertype ?? '').trim()) missing.push("Role");
+    if (!f.office) missing.push("Office");
+    return missing;
+});
+const submitMessage = computed<string | null>(() => {
+    const f: any = props.formData || {};
+    return (f.password || f.password_confirmation) ? (String(f.password ?? '').length < 6 ? 'New password must be at least 6 characters' : (f.password !== f.password_confirmation ? 'Passwords do not match' : null)) : null;
+});
+const canSubmit = computed(() => missingFields.value.length === 0 && !submitMessage.value);
 
 const emit = defineEmits<{
     'close': [];

@@ -3,6 +3,7 @@ import { usePermissions } from '@/Composables/usePermissions';
 import { useTrashedControlNumbers } from '@/Composables/useTrashedControlNumbers';
 import { usePage } from '@inertiajs/vue3';
 import type { TravelOrder, Employee } from './useTravelOrdersData';
+import { isProvincialBudgetOfficer, isProvincialGovernor, isPboStaff } from '@/Composables/useOfficials';
 
 export function useTravelOrdersForm(employees: any, travelOrders: any) {
     const { can } = usePermissions();
@@ -59,16 +60,16 @@ export function useTravelOrdersForm(employees: any, travelOrders: any) {
     });
 
     const pboEmployee = computed(() => {
-        return employees.value.find((emp: Employee) => emp.designation?.includes('Provincial Budget Officer'));
+        return employees.value.find((emp: Employee) => isProvincialBudgetOfficer(emp));
     });
 
     const provincialGovernorEmployee = computed(() => {
-        return employees.value.find((emp: Employee) => emp.designation?.includes('Provincial Governor'));
+        return employees.value.find((emp: Employee) => isProvincialGovernor(emp));
     });
 
     const pboOfficeEmployees = computed(() => {
         return employees.value
-            .filter((emp: Employee) => emp.office_id === 12)
+            .filter((emp: Employee) => isPboStaff(emp))
             .sort((a: Employee, b: Employee) => {
                 const lastNameA = a.name.split(' ').pop()?.toLowerCase() || '';
                 const lastNameB = b.name.split(' ').pop()?.toLowerCase() || '';
@@ -76,7 +77,11 @@ export function useTravelOrdersForm(employees: any, travelOrders: any) {
             });
     });
 
-    const requestingEmployees = computed(() => sortedEmployees.value);
+    // Requesting checklist: the office's staff, plus anyone already added (other offices are added through a search)
+    const requestingEmployees = computed(() =>
+        sortedEmployees.value.filter((emp: Employee) => isPboStaff(emp) || formData.value.employee_ids.includes(emp.id))
+    );
+    const otherOfficeEmployees = computed(() => sortedEmployees.value.filter((emp: Employee) => !isPboStaff(emp)));
 
     const supervisorOptions = computed(() => pboOfficeEmployees.value);
 
@@ -87,10 +92,40 @@ export function useTravelOrdersForm(employees: any, travelOrders: any) {
         return options;
     });
 
+    // Driver suggestions: employees (any office) whose position is a driver — in HRIS usually the
+    // parenthetical title, e.g. "Administrative Aide III (Driver I)" — then PBO staff, some of whom may drive
+    const isDriver = (emp: Employee) =>
+        [emp.position_title, emp.parenthetical_title, emp.designation].some((title) => /\bdriver\b/i.test(title || ''));
     const driverOptions = computed(() => {
-        return pboOfficeEmployees.value
-            .map((emp: Employee) => emp.name)
-            .sort();
+        const byName = (a: Employee, b: Employee) => a.name.localeCompare(b.name);
+        const drivers = employees.value.filter(isDriver).sort(byName);
+        const pboStaff = employees.value.filter((emp: Employee) => isPboStaff(emp) && !isDriver(emp)).sort(byName);
+        return [
+            ...drivers.map((emp: Employee) => ({
+                name: emp.name,
+                label: [emp.parenthetical_title || emp.position_title || emp.designation, emp.office?.office_abbreviation].filter(Boolean).join(' · '),
+                group: 'Drivers',
+            })),
+            ...pboStaff.map((emp: Employee) => ({
+                name: emp.name,
+                label: emp.designation || emp.position_title || '',
+                group: 'PBO staff',
+            })),
+        ];
+    });
+
+    // Acting signatory suggestions: any employee, PBO staff first
+    const actingApproverOptions = computed(() => {
+        const byName = (a: Employee, b: Employee) => a.name.localeCompare(b.name);
+        const option = (group: string) => (emp: Employee) => ({
+            name: emp.name,
+            label: [emp.full_position || emp.designation, emp.office?.office_abbreviation].filter(Boolean).join(' · '),
+            group,
+        });
+        return [
+            ...employees.value.filter((emp: Employee) => isPboStaff(emp)).sort(byName).map(option('PBO staff')),
+            ...employees.value.filter((emp: Employee) => !isPboStaff(emp)).sort(byName).map(option('Other offices')),
+        ];
     });
 
     // Control numbers of trashed records stay reserved until permanently deleted
@@ -198,7 +233,7 @@ export function useTravelOrdersForm(employees: any, travelOrders: any) {
         (newApproverId) => {
             if (!newApproverId) return;
             const approver = employees.value.find((emp: Employee) => emp.id === newApproverId);
-            if (approver?.designation?.includes('Provincial Governor')) {
+            if (isProvincialGovernor(approver)) {
                 // If PBO is approver, set PBO as supervisor
                 formData.value.supervisor_employee_id = pboEmployee.value?.id || null;
             }
@@ -212,7 +247,7 @@ export function useTravelOrdersForm(employees: any, travelOrders: any) {
             if (!newEmployeeIds || newEmployeeIds.length === 0) return;
             const isPBORequesting = newEmployeeIds.some((id: number) => {
                 const emp = employees.value.find((e: Employee) => e.id === id);
-                return emp?.designation?.includes('Provincial Budget Officer');
+                return isProvincialBudgetOfficer(emp);
             });
             if (isPBORequesting) {
                 // If PBO is requesting, approver must be PG and no supervisor
@@ -441,14 +476,14 @@ export function useTravelOrdersForm(employees: any, travelOrders: any) {
         }
         if (!formData.value.approver_employee_id) return false;
         const approver = employees.value.find((emp: Employee) => emp.id === formData.value.approver_employee_id);
-        return approver?.designation?.toLowerCase().includes('governor') || false;
+        return isProvincialGovernor(approver);
     };
 
     const isProvincialBudgetOfficerRequestingEmployee = (): boolean => {
         if (!formData.value.employee_ids || formData.value.employee_ids.length === 0) return false;
         return formData.value.employee_ids.some((id: number) => {
             const emp = employees.value.find((e: Employee) => e.id === id);
-            return emp?.designation?.toLowerCase().includes('budget officer');
+            return isProvincialBudgetOfficer(emp);
         });
     };
 
@@ -492,9 +527,11 @@ export function useTravelOrdersForm(employees: any, travelOrders: any) {
         todayDate,
         sortedEmployees,
         requestingEmployees,
+        otherOfficeEmployees,
         supervisorOptions,
         approverOptions,
         driverOptions,
+        actingApproverOptions,
 
         // Permissions
         canCreateTravelOrders,

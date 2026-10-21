@@ -12,14 +12,17 @@
                 </div>
                 <div class="min-w-0">
                     <h4 class="text-sm font-bold text-gray-900 dark:text-gray-100 leading-tight break-words">{{ employee.name }}</h4>
-                    <p class="text-gray-600 dark:text-gray-300 break-words">{{ employee.designation || '—' }}</p>
-                    <p class="mt-0.5 font-mono text-gray-500 dark:text-gray-400">{{ employee.employee_id }}</p>
+                    <p class="text-gray-600 dark:text-gray-300 break-words">{{ employee.full_position || employee.designation || '—' }}</p>
+                    <p class="mt-0.5 flex flex-wrap items-center gap-1.5">
+                        <span class="font-mono text-gray-500 dark:text-gray-400">{{ employee.employee_id }}</span>
+                        <span v-if="employee.status" :class="['px-1.5 py-0.5 rounded-full text-[10px] font-semibold', STATUS_CLASS[employee.status] || 'bg-gray-100 text-gray-700']">{{ employee.status }}</span>
+                    </p>
                 </div>
             </div>
 
             <div class="mx-4 mt-3 rounded-lg border border-gray-100 dark:border-gray-700 px-2 py-1.5 min-w-0">
                 <div class="text-[10px] uppercase tracking-wide text-gray-500 dark:text-gray-400">Office</div>
-                <div v-if="employee.office" class="text-gray-800 dark:text-gray-200 break-words">{{ getOfficeName(employee.office, employee) }}</div>
+                <div v-if="employee.office" class="text-gray-800 dark:text-gray-200 break-words">{{ officeName(employee) }}<span v-if="employee.detailed_to_pbo" class="ml-1 px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-200" title="Works at the PBO; counts as PBO staff">Detailed to PBO</span></div>
                 <div v-else class="text-gray-400 dark:text-gray-500">—</div>
             </div>
 
@@ -35,13 +38,14 @@
 
 <script setup lang="ts">
 import RowIconButton from '@/Components/RowIconButton.vue';
+import { STATUS_CLASS, officeName } from '../Composables/employeeDisplay';
 import type { Employee } from '../Composables/useEmployeeData';
 
 defineProps<{
     employees: Employee[];
     canEditEmployees: boolean;
     canDeleteEmployees: boolean;
-    getOfficeName: (office: any, employee: Employee) => string;
+    getOfficeName?: (office: any, employee: Employee) => string;
 }>();
 
 defineEmits<{

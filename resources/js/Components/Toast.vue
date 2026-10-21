@@ -44,7 +44,7 @@
                             : notification.severity === 'info'
                             ? 'text-blue-700 dark:text-blue-200'
                             : 'text-red-700 dark:text-red-200'
-                    ]" v-html="notification.detail">
+                    ]" v-html="sanitizeBasicHtml(notification.detail)">
                     </p>
                 </div>
                 <button
@@ -67,6 +67,8 @@
 
 <script setup lang="ts">
 import { ref } from 'vue';
+// Messages may use <strong>/<br> for emphasis, but record names inside them are user-entered: only basic tags render
+import { sanitizeBasicHtml } from '@/utils/html';
 
 interface Notification {
     id: number;
