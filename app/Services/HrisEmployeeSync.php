@@ -118,7 +118,8 @@ class HrisEmployeeSync
             } elseif (!$office) {
                 $skipped['office']++;
             } else {
-                $rows[] = ['employee_id' => $id] + $values + ['office_id' => $office, 'created_at' => $now, 'updated_at' => $now];
+                // Every inserted row needs the same columns (a bulk insert), so a missing salary is an explicit null
+                $rows[] = ['employee_id' => $id] + $values + ['monthly_salary' => null, 'office_id' => $office, 'created_at' => $now, 'updated_at' => $now];
                 $existing[$id] = new Employee();
                 $added[$status]++;
             }
