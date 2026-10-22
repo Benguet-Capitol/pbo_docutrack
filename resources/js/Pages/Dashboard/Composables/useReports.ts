@@ -1,3 +1,4 @@
+import { employeeOfUser } from '@/Composables/useUserEmployee';
 import { ref, Ref, watch } from 'vue';
 import { useYearFilter, yearOf } from '@/Composables/useYearFilter';
 import { escapeHtml as esc } from '@/utils/html';
@@ -62,7 +63,7 @@ export const useReports = (
         if (!userId) return 'N/A';
         const user = users.value.find(u => u.id === userId);
         if (!user) return 'N/A';
-        const employee = employees.value.find(e => e.name === user.name);
+        const employee = employeeOfUser(employees.value, user);
         return employee?.designation || 'N/A';
     };
 
@@ -890,7 +891,7 @@ export const useReports = (
             const preparedByData = administrativeStaffEmployees?.value?.find(e => e.id === summaryData.value.preparedBy);
             const preparedByEmployee = preparedByData || employees.value.find(e => e.id === summaryData.value.preparedBy);
             const certifiedByUser = users.value.find(u => u.id === summaryData.value.certifiedCorrect);
-            const certifiedByEmployee = certifiedByUser ? employees.value.find(e => e.name === certifiedByUser.name) : null;
+            const certifiedByEmployee = certifiedByUser ? employeeOfUser(employees.value, certifiedByUser) : null;
 
             // Generate HTML report
             const htmlContent = `

@@ -103,7 +103,7 @@ import { LEAVE_LIMITS, formatDays } from '@/Composables/useLeaveCredits';
 // Yearly limits for Mandatory/Forced, Special Privilege and Wellness Leave (days used = summed per year of filing)
 const isLimited = (leaveType: string) => LEAVE_LIMITS[leaveType] !== undefined;
 const remainingDays = (empSummary: any, leaveType: string) =>
-    Math.max(0, LEAVE_LIMITS[leaveType] - (empSummary.leaveTypes[leaveType] || 0));
+    Math.max(0, LEAVE_LIMITS[leaveType] - (empSummary.limitUsed?.[leaveType] ?? empSummary.leaveTypes[leaveType] ?? 0));
 const remainingLabel = (empSummary: any, leaveType: string) => {
     const remaining = remainingDays(empSummary, leaveType);
     return remaining > 0 ? `${formatDays(remaining)} left` : 'Exhausted';

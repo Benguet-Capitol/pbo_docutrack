@@ -1,3 +1,4 @@
+import { employeeOfUser } from '@/Composables/useUserEmployee';
 import { ref, computed } from 'vue';
 import { usePermissions } from '@/Composables/usePermissions';
 import { usePage } from '@inertiajs/vue3';
@@ -103,8 +104,8 @@ export function useUserForm(employees: any) {
             password_confirmation: ''
         };
 
-        // Auto-select employee with the same name
-        const matchingEmployee = employees.value.find((emp: any) => emp.name === user.name);
+        // The linked employee (older accounts: the employee with the same name)
+        const matchingEmployee = employeeOfUser(employees.value as any[], user);
         if (matchingEmployee) {
             formData.value.employee_id = matchingEmployee.id;
             formData.value.office = matchingEmployee.office_id || '';
@@ -278,6 +279,7 @@ export function useUserForm(employees: any) {
                     username: formData.value.username,
                     usertype: formData.value.usertype,
                     office: formData.value.office,
+                    employee_id: formData.value.employee_id || null,
                     // Only sent when resetting; omitted keeps the current password
                     ...(formData.value.password ? { password: formData.value.password } : {}),
                 })

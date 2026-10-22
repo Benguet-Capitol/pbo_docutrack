@@ -23,7 +23,7 @@
                     class="bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-150"
                 >
                     <td class="px-4 py-2 text-xs font-mono text-gray-900 dark:text-gray-100">{{ employee.employee_id }}</td>
-                    <td class="px-4 py-2 text-xs font-medium text-gray-900 dark:text-gray-100">{{ employee.name }}</td>
+                    <td class="px-4 py-2 text-xs font-medium text-gray-900 dark:text-gray-100">{{ employee.name }}<span v-if="employee.separated" class="ml-1 px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-200" :title="`No longer in HRIS since ${employee.separated_at}; hidden from pickers`">Separated</span></td>
                     <td class="px-4 py-2 text-xs text-gray-700 dark:text-gray-300">{{ employee.position_title || employee.designation }}</td>
                     <td class="px-4 py-2 text-xs text-gray-600 dark:text-gray-400">
                         <span v-if="employee.parenthetical_title">{{ employee.parenthetical_title }}</span>

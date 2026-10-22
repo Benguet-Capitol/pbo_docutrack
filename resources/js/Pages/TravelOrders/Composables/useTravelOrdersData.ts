@@ -11,6 +11,7 @@ export interface Employee {
     full_position?: string;
     office_id?: number;
     detailed_to_pbo?: boolean;
+    separated?: boolean;
     office?: {
         id: number;
         name?: string;

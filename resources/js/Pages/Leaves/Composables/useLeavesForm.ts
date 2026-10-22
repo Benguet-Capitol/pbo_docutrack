@@ -1,15 +1,18 @@
 import { ref, watch, computed } from 'vue';
 import { usePermissions } from '@/Composables/usePermissions';
 import { useTrashedControlNumbers } from '@/Composables/useTrashedControlNumbers';
-import { usePage } from '@inertiajs/vue3';
 import type { Leave } from './useLeavesData';
 import { leaveCredit, leaveDays, formatDays } from '@/Composables/useLeaveCredits';
 import { yearOf } from '@/Composables/useYearFilter';
+import { leaveWorkingDates, longDate } from './useLeaveFormPrint';
 
-export interface LeaveFormData {
-    control_no: string;
-    employee_id: number;
-    date_of_filing: string;
+/** Leave types whose 6.B location details (within the Philippines / abroad, purpose) apply */
+export const LOCATION_TYPES = ['Vacation Leave', 'Special Privilege Leave', 'Wellness Leave'];
+
+/** One leave type in an application, with its own dates and details */
+export interface LeaveEntry {
+    /** Saved row id (edit) */
+    id?: number | null;
     type_of_leave: string;
     number_of_working_days_applied_for: number;
     is_half_day: boolean;
@@ -26,6 +29,89 @@ export interface LeaveFormData {
     newInclusiveDateRange?: string;
     newOffDay?: string;
 }
+
+/** A leave application: shared fields plus one entry per leave type */
+export interface LeaveFormData {
+    control_no: string;
+    employee_id: number;
+    date_of_filing: string;
+    /** Monthly salary as of filing (5. SALARY), filled from HRIS; "" when unknown */
+    salary: string | number;
+    entries: LeaveEntry[];
+    certified_by_employee_id: number | null;
+    certified_by_title: string | null;
+    recommended_by_employee_id: number | null;
+    recommended_by_title: string | null;
+    approved_by_employee_id: number | null;
+    approved_by_title: string | null;
+    /** 7.B Recommendation: "" (pending), "approval" or "disapproval" */
+    recommendation: '' | 'approval' | 'disapproval';
+    disapproval_reason: string;
+}
+
+export const newLeaveEntry = (type = 'Vacation Leave'): LeaveEntry => ({
+    id: null,
+    type_of_leave: type,
+    number_of_working_days_applied_for: 1,
+    is_half_day: false,
+    half_day_period: '',
+    inclusive_dates: [],
+    off_days: [],
+    within_philippines: true,
+    purpose: '',
+    in_hospital: false,
+    illness: '',
+    completion_type: '',
+    other_type: '',
+    newInclusiveDate: '',
+    newInclusiveDateRange: '',
+    newOffDay: '',
+});
+
+/** Saved rows send flags as 1/0/"1"/true */
+const isTrue = (value: unknown): boolean => value === true || value === 1 || value === '1';
+
+const entryFromRow = (row: Leave): LeaveEntry => ({
+    id: row.id,
+    type_of_leave: row.type_of_leave,
+    number_of_working_days_applied_for: row.number_of_working_days_applied_for,
+    is_half_day: !!row.is_half_day,
+    half_day_period: row.half_day_period || '',
+    inclusive_dates: [...(row.inclusive_dates || [])],
+    off_days: [...(row.off_days || [])],
+    within_philippines: row.within_philippines === null ? true : isTrue(row.within_philippines),
+    purpose: row.purpose || '',
+    in_hospital: isTrue(row.in_hospital),
+    illness: row.illness || '',
+    completion_type: row.completion_type || '',
+    other_type: row.other_type || '',
+    newInclusiveDate: '',
+    newInclusiveDateRange: '',
+    newOffDay: '',
+});
+
+/** Request body for one entry: only the details that apply to its type */
+const entryPayload = (entry: LeaveEntry) => {
+    const type = entry.type_of_leave;
+    const location = LOCATION_TYPES.includes(type);
+    return {
+        id: entry.id || null,
+        type_of_leave: type,
+        number_of_working_days_applied_for: entry.number_of_working_days_applied_for,
+        is_half_day: entry.is_half_day,
+        half_day_period: entry.is_half_day ? entry.half_day_period : null,
+        inclusive_dates: entry.inclusive_dates,
+        off_days: entry.off_days.length > 0 ? entry.off_days : null,
+        within_philippines: location ? entry.within_philippines : null,
+        purpose: location ? entry.purpose : null,
+        in_hospital: type === 'Sick Leave' ? entry.in_hospital : null,
+        illness: ['Sick Leave', 'Special Leave Benefits for Women'].includes(type) ? entry.illness : null,
+        completion_type: type === 'Study Leave' ? entry.completion_type : null,
+        other_type: type === 'Others' ? entry.other_type : null,
+    };
+};
+
+const SIGNATORY_KEYS = ['certified_by', 'recommended_by', 'approved_by'] as const;
 
 export function useLeavesForm(
     leavesRef: any,
@@ -44,50 +130,28 @@ export function useLeavesForm(
     const updating = ref(false);
     const deleting = ref(false);
 
-    // Selection state
+    // Selection state: the application being edited / deleted
     const leaveToEdit = ref<Leave | null>(null);
     const leaveToDelete = ref<Leave | null>(null);
 
-    // Form state
-    const formData = ref<LeaveFormData>({
+    const blankForm = (): LeaveFormData => ({
         control_no: '',
         employee_id: 0,
         date_of_filing: '',
-        type_of_leave: 'Vacation Leave',
-        number_of_working_days_applied_for: 1,
-        is_half_day: false,
-        half_day_period: '',
-        inclusive_dates: [],
-        off_days: [],
-        within_philippines: true,
-        purpose: '',
-        in_hospital: false,
-        illness: '',
-        completion_type: '',
-        other_type: '',
-        newInclusiveDate: '',
-        newInclusiveDateRange: '',
-        newOffDay: '',
+        salary: '',
+        entries: [newLeaveEntry()],
+        certified_by_employee_id: null,
+        certified_by_title: null,
+        recommended_by_employee_id: null,
+        recommended_by_title: null,
+        approved_by_employee_id: null,
+        approved_by_title: null,
+        recommendation: '',
+        disapproval_reason: '',
     });
 
+    const formData = ref<LeaveFormData>(blankForm());
     const formErrors = ref<Record<string, string>>({});
-
-    const leaveTypes = [
-        'Vacation Leave',
-        'Mandatory/Forced Leave',
-        'Sick Leave',
-        'Maternity Leave',
-        'Paternity Leave',
-        'Special Privilege Leave',
-        'Study Leave',
-        '10-Day VAWC Leave',
-        'Rehabilitation Leave',
-        'Special Leave Benefits for Women',
-        'Special Emergency (Calamity) Leave',
-        'Adoption Leave',
-        'Wellness Leave',
-        'Others'
-    ];
 
     // Control numbers of trashed records stay reserved until permanently deleted
     const { maxTrashedSeries } = useTrashedControlNumbers('leaves');
@@ -121,67 +185,15 @@ export function useLeavesForm(
         return `${year}-${month}-${day}`;
     };
 
-    const formatDateForDisplay = (dateStr: string): string => {
-        if (!dateStr) return '';
-        const date = new Date(dateStr);
-        return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
-    };
-
-    const formatInclusiveDate = (entry: string): string => {
-        if (!entry) return '';
-        if (entry.includes(' - ')) {
-            const [startDate, endDate] = entry.split(' - ');
-            return `${formatDateForDisplay(startDate.trim())} - ${formatDateForDisplay(endDate.trim())}`;
-        } else {
-            return formatDateForDisplay(entry);
-        }
-    };
-
     // ============== User Permissions ==============
-    
-    const page = usePage();
-    const usertype = computed(() => page.props.auth.user?.usertype || '');
-
-    /**
-     * Check if current user can create offices
-     * Only Developer and Administrator can create offices
-     */
     const canCreateLeaves = computed(() => can('leaves.create'));
-
-    /**
-     * Check if current user can edit offices
-     * All authenticated users can edit offices (they all have offices.edit permission)
-     */
     const canEditLeaves = computed(() => can('leaves.edit'));
-
-    /**
-     * Check if current user can delete offices
-     * Only Developer and Administrator can delete offices
-     */
     const canDeleteLeaves = computed(() => can('leaves.delete'));
 
     const openCreateModal = () => {
         const today = new Date().toISOString().split('T')[0];
-        formData.value = {
-            control_no: generateControlNo(today),
-            employee_id: 0,
-            date_of_filing: today,
-            type_of_leave: 'Vacation Leave',
-            number_of_working_days_applied_for: 1,
-            is_half_day: false,
-            half_day_period: '',
-            inclusive_dates: [],
-            off_days: [],
-            within_philippines: true,
-            purpose: '',
-            in_hospital: false,
-            illness: '',
-            completion_type: '',
-            other_type: '',
-            newInclusiveDate: '',
-            newInclusiveDateRange: '',
-            newOffDay: '',
-        };
+        formData.value = { ...blankForm(), control_no: generateControlNo(today), date_of_filing: today };
+        leaveToEdit.value = null;
         formErrors.value = {};
         showCreateModal.value = true;
     };
@@ -191,28 +203,25 @@ export function useLeavesForm(
         formErrors.value = {};
     };
 
+    /** Edit an application (a grouped leave, see groupApplications) */
     const openEditModal = (leave: Leave) => {
         leaveToEdit.value = leave;
-        formData.value = {
+        const rows = leave.entries?.length ? leave.entries : [leave];
+        const form: LeaveFormData = {
+            ...blankForm(),
             control_no: leave.control_no,
             employee_id: leave.employee_id,
             date_of_filing: formatDateForInput(leave.date_of_filing),
-            type_of_leave: leave.type_of_leave,
-            number_of_working_days_applied_for: leave.number_of_working_days_applied_for,
-            is_half_day: leave.is_half_day || false,
-            half_day_period: leave.half_day_period || '',
-            inclusive_dates: [...leave.inclusive_dates],
-            off_days: [...(leave.off_days || [])],
-            within_philippines: leave.within_philippines === true || (typeof leave.within_philippines === 'number' && leave.within_philippines === 1) || (typeof leave.within_philippines === 'string' && leave.within_philippines === "1"),
-            purpose: leave.purpose || '',
-            in_hospital: leave.in_hospital === true || (typeof leave.in_hospital === 'number' && leave.in_hospital === 1) || (typeof leave.in_hospital === 'string' && leave.in_hospital === "1"),
-            illness: leave.illness || '',
-            completion_type: leave.completion_type || '',
-            other_type: leave.other_type || '',
-            newInclusiveDate: '',
-            newInclusiveDateRange: '',
-            newOffDay: '',
+            salary: leave.salary ?? '',
+            entries: rows.map(entryFromRow),
+            recommendation: (leave.recommendation as LeaveFormData['recommendation']) || '',
+            disapproval_reason: leave.disapproval_reason || '',
         };
+        for (const key of SIGNATORY_KEYS) {
+            (form as any)[`${key}_employee_id`] = (leave as any)[`${key}_employee_id`] ?? null;
+            (form as any)[`${key}_title`] = (leave as any)[`${key}_title`] ?? null;
+        }
+        formData.value = form;
         formErrors.value = {};
         showEditModal.value = true;
     };
@@ -240,71 +249,33 @@ export function useLeavesForm(
         }
     });
 
-    const addInclusiveDate = () => {
-        if (formData.value.newInclusiveDate) {
-            if (formData.value.newInclusiveDateRange) {
-                const rangeString = `${formData.value.newInclusiveDate} - ${formData.value.newInclusiveDateRange}`;
-                if (!formData.value.inclusive_dates.includes(rangeString)) {
-                    formData.value.inclusive_dates.push(rangeString);
-                }
-            } else {
-                if (!formData.value.inclusive_dates.includes(formData.value.newInclusiveDate)) {
-                    formData.value.inclusive_dates.push(formData.value.newInclusiveDate);
-                }
-            }
-            formData.value.newInclusiveDate = '';
-            formData.value.newInclusiveDateRange = '';
-        }
-    };
-
-    const removeInclusiveDate = (index: number) => {
-        formData.value.inclusive_dates.splice(index, 1);
-    };
-
-    const editInclusiveDate = (index: number) => {
-        const entry = formData.value.inclusive_dates[index];
-
-        if (entry.includes(' - ')) {
-            const [startDate, endDate] = entry.split(' - ');
-            formData.value.newInclusiveDate = startDate.trim();
-            formData.value.newInclusiveDateRange = endDate.trim();
-        } else {
-            formData.value.newInclusiveDate = entry;
-            formData.value.newInclusiveDateRange = '';
-        }
-
-        formData.value.inclusive_dates.splice(index, 1);
-    };
-
-    const addOffDay = () => {
-        if (formData.value.newOffDay && !formData.value.off_days.includes(formData.value.newOffDay)) {
-            formData.value.off_days.push(formData.value.newOffDay);
-            formData.value.newOffDay = '';
-        }
-    };
-
-    const removeOffDay = (index: number) => {
-        formData.value.off_days.splice(index, 1);
-    };
+    /** Rows of the application being edited: not counted twice against the yearly limits */
+    const editedRowIds = computed(() => {
+        const leave = leaveToEdit.value;
+        return new Set((leave?.entries?.length ? leave.entries : leave ? [leave] : []).map((row) => row.id));
+    });
 
     /**
-     * Yearly limit status for the leave in the form (Mandatory/Forced, Special Privilege, Wellness),
-     * or null when the type has no limit or no employee is chosen yet. The server enforces the same rule.
+     * Yearly limit status per entry (Mandatory/Forced, Special Privilege, Wellness), or null when the type has no
+     * limit or no employee is chosen yet. The server enforces the same rule.
      */
     const leaveCreditInfo = computed(() => {
         const employeeId = Number(formData.value.employee_id);
         const year = yearOf(formData.value.date_of_filing) ?? new Date().getFullYear();
-        if (!employeeId) return null;
-        const credit = leaveCredit(leavesRef.value || [], employeeId, formData.value.type_of_leave, year, leaveToEdit.value?.id ?? null);
-        if (!credit) return null;
-        const requested = leaveDays(formData.value);
-        return { ...credit, requested, exceeds: credit.used + requested > credit.limit };
+        const others = (leavesRef.value || []).filter((leave: Leave) => !editedRowIds.value.has(leave.id));
+        return formData.value.entries.map((entry) => {
+            if (!employeeId) return null;
+            const credit = leaveCredit(others, employeeId, entry.type_of_leave, year, null);
+            if (!credit) return null;
+            const requested = leaveDays(entry);
+            return { ...credit, requested, exceeds: credit.used + requested > credit.limit };
+        });
     });
 
-    /** Message when the leave would go over the yearly limit, or null */
+    /** Message when an entry would go over its yearly limit, or null */
     const leaveLimitError = (): string | null => {
-        const info = leaveCreditInfo.value;
-        if (!info || !info.exceeds) return null;
+        const info = leaveCreditInfo.value.find((credit) => credit?.exceeds);
+        if (!info) return null;
         return info.remaining <= 0
             ? `${info.type} is already exhausted for ${info.year}: all ${info.limit} days have been used.`
             : `${info.type} exceeds the yearly limit for ${info.year}: only ${formatDays(info.remaining)} of ${info.limit} days remaining, but ${formatDays(info.requested)} requested.`;
@@ -313,67 +284,108 @@ export function useLeavesForm(
     /** Required fields still empty: Create/Update stays disabled until this is empty */
     const missingLeaveFields = computed(() => {
         const missing: string[] = [];
+        const entries = formData.value.entries;
+        const several = entries.length > 1;
         if (!formData.value.employee_id) missing.push('Employee');
         if (!formData.value.date_of_filing) missing.push('Date of Filing');
-        if (!formData.value.type_of_leave) missing.push('Type of Leave');
-        if (!formData.value.is_half_day && !(Number(formData.value.number_of_working_days_applied_for) > 0)) missing.push('Number of Working Days');
-        if (formData.value.inclusive_dates.length === 0) missing.push('Inclusive Dates');
+        if (entries.length === 0) missing.push('Type of Leave');
+        entries.forEach((entry) => {
+            const label = several ? ` (${entry.type_of_leave || 'leave type'})` : '';
+            if (!entry.type_of_leave) missing.push('Type of Leave');
+            if (!entry.is_half_day && !(Number(entry.number_of_working_days_applied_for) > 0)) missing.push(`Number of Working Days${label}`);
+            if (entry.inclusive_dates.length === 0) missing.push(`Inclusive Dates${label}`);
+            if (entry.is_half_day && !entry.half_day_period) missing.push(`Half Day Period (AM/PM)${label}`);
+            if (entry.type_of_leave === 'Others' && !entry.other_type) missing.push('Others type (Monetization / Terminal Leave)');
+        });
+        if (formData.value.recommendation === 'disapproval' && !formData.value.disapproval_reason.trim()) missing.push('Reason for Disapproval');
+        const types = entries.map((entry) => entry.type_of_leave);
+        if (new Set(types).size !== types.length) missing.push('a different type for each entry');
         return missing;
     });
 
-    /** Yearly limit problem with the current form, shown next to the disabled button */
-    const leaveLimitMessage = computed(() => leaveLimitError());
+    /**
+     * A day filed twice: by two entries of this application, or by another leave of the employee (disapproved ones
+     * aside). Half days on different halves (AM / PM) of the same day are fine. The server checks the same.
+     */
+    const overlapError = computed((): string | null => {
+        const employeeId = Number(formData.value.employee_id);
+        if (!employeeId) return null;
+        const taken = new Map<string, Array<{ where: string; half: string | null }>>();
+        const halfOf = (leave: { is_half_day?: boolean; half_day_period?: string | null }) => (leave.is_half_day ? leave.half_day_period || null : null);
+        const clash = (a: string | null, b: string | null) => !(a && b && a !== b);
+        for (const leave of (leavesRef.value || []) as Leave[]) {
+            if (leave.employee_id !== employeeId || editedRowIds.value.has(leave.id) || leave.recommendation === 'disapproval') continue;
+            for (const date of leaveWorkingDates(leave.inclusive_dates, leave.off_days)) {
+                taken.set(date, [...(taken.get(date) || []), { where: `${leave.type_of_leave} (${leave.control_no})`, half: halfOf(leave) }]);
+            }
+        }
+        for (const entry of formData.value.entries) {
+            const half = halfOf(entry);
+            for (const date of leaveWorkingDates(entry.inclusive_dates, entry.off_days)) {
+                const other = (taken.get(date) || []).find((item) => clash(half, item.half));
+                if (other) return `${entry.type_of_leave}: already on leave on ${longDate(date)}, filed as ${other.where}.`;
+                taken.set(date, [...(taken.get(date) || []), { where: `${entry.type_of_leave} in this application`, half }]);
+            }
+        }
+        return null;
+    });
+
+    /** Yearly limit or overlapping dates problem with the current form, shown next to the disabled button */
+    const leaveLimitMessage = computed(() => overlapError.value || leaveLimitError());
 
     /** First validation message from a failed API response */
     const responseError = (data: any, fallback: string): string =>
         (data?.errors ? (Object.values(data.errors)[0] as string[] | undefined)?.[0] : null) || data?.error || data?.message || fallback;
 
+    const requestBody = () => {
+        const body: Record<string, unknown> = {
+            control_no: formData.value.control_no,
+            employee_id: formData.value.employee_id,
+            date_of_filing: formData.value.date_of_filing,
+            salary: formData.value.salary === '' || formData.value.salary === null ? null : Number(formData.value.salary),
+            entries: formData.value.entries.map(entryPayload),
+            recommendation: formData.value.recommendation || null,
+            disapproval_reason: formData.value.recommendation === 'disapproval' ? formData.value.disapproval_reason : null,
+        };
+        for (const key of SIGNATORY_KEYS) {
+            body[`${key}_employee_id`] = (formData.value as any)[`${key}_employee_id`] || null;
+            body[`${key}_title`] = (formData.value as any)[`${key}_title`] || null;
+        }
+        return JSON.stringify(body);
+    };
+
+    /** Client-side checks before saving; false (with formErrors set) when something is missing */
+    const readyToSave = (): boolean => {
+        if (!formData.value.employee_id) {
+            formErrors.value['employee_id'] = 'Employee is required';
+            return false;
+        }
+        if (!formData.value.date_of_filing) {
+            formErrors.value['date_of_filing'] = 'Date of filing is required';
+            return false;
+        }
+        if (formData.value.entries.some((entry) => entry.inclusive_dates.length === 0)) {
+            formErrors.value['inclusive_dates'] = 'Each leave type needs at least one inclusive date';
+            return false;
+        }
+        const limitError = overlapError.value || leaveLimitError();
+        if (limitError) {
+            formErrors.value['type_of_leave'] = limitError;
+            return false;
+        }
+        return true;
+    };
+
     const createLeave = async () => {
         try {
             creating.value = true;
             formErrors.value = {};
-
-            if (!formData.value.employee_id) {
-                formErrors.value['employee_id'] = 'Employee is required';
-                return;
-            }
-
-            if (!formData.value.date_of_filing) {
-                formErrors.value['date_of_filing'] = 'Date of filing is required';
-                return;
-            }
-
-            if (formData.value.inclusive_dates.length === 0) {
-                formErrors.value['inclusive_dates'] = 'At least one inclusive date is required';
-                return;
-            }
-
-            const limitError = leaveLimitError();
-            if (limitError) {
-                formErrors.value['type_of_leave'] = limitError;
-                return;
-            }
+            if (!readyToSave()) return;
 
             const response = await fetch('/api/leaves', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    control_no: formData.value.control_no,
-                    employee_id: formData.value.employee_id,
-                    date_of_filing: formData.value.date_of_filing,
-                    type_of_leave: formData.value.type_of_leave,
-                    number_of_working_days_applied_for: formData.value.number_of_working_days_applied_for,
-                    is_half_day: formData.value.is_half_day,
-                    half_day_period: formData.value.is_half_day ? formData.value.half_day_period : null,
-                    inclusive_dates: formData.value.inclusive_dates,
-                    off_days: formData.value.off_days.length > 0 ? formData.value.off_days : null,
-                    within_philippines: ['Vacation Leave', 'Special Privilege Leave', 'Wellness Leave'].includes(formData.value.type_of_leave) ? formData.value.within_philippines : null,
-                    purpose: ['Vacation Leave', 'Special Privilege Leave', 'Wellness Leave'].includes(formData.value.type_of_leave) ? formData.value.purpose : null,
-                    in_hospital: formData.value.type_of_leave === 'Sick Leave' ? formData.value.in_hospital : null,
-                    illness: ['Sick Leave', 'Special Leave Benefits for Women'].includes(formData.value.type_of_leave) ? formData.value.illness : null,
-                    completion_type: formData.value.type_of_leave === 'Study Leave' ? formData.value.completion_type : null,
-                    other_type: formData.value.type_of_leave === 'Others' ? formData.value.other_type : null,
-                }),
+                body: requestBody(),
             });
 
             if (!response.ok) {
@@ -398,45 +410,12 @@ export function useLeavesForm(
         try {
             updating.value = true;
             formErrors.value = {};
-
-            if (!leaveToEdit.value) return;
-
-            if (!formData.value.employee_id) {
-                formErrors.value['employee_id'] = 'Employee is required';
-                return;
-            }
-
-            if (formData.value.inclusive_dates.length === 0) {
-                formErrors.value['inclusive_dates'] = 'At least one inclusive date is required';
-                return;
-            }
-
-            const limitError = leaveLimitError();
-            if (limitError) {
-                formErrors.value['type_of_leave'] = limitError;
-                return;
-            }
+            if (!leaveToEdit.value || !readyToSave()) return;
 
             const response = await fetch(`/api/leaves/${leaveToEdit.value.id}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    control_no: formData.value.control_no,
-                    employee_id: formData.value.employee_id,
-                    date_of_filing: formData.value.date_of_filing,
-                    type_of_leave: formData.value.type_of_leave,
-                    number_of_working_days_applied_for: formData.value.number_of_working_days_applied_for,
-                    is_half_day: formData.value.is_half_day,
-                    half_day_period: formData.value.is_half_day ? formData.value.half_day_period : null,
-                    inclusive_dates: formData.value.inclusive_dates,
-                    off_days: formData.value.off_days.length > 0 ? formData.value.off_days : null,
-                    within_philippines: ['Vacation Leave', 'Special Privilege Leave', 'Wellness Leave'].includes(formData.value.type_of_leave) ? formData.value.within_philippines : null,
-                    purpose: ['Vacation Leave', 'Special Privilege Leave', 'Wellness Leave'].includes(formData.value.type_of_leave) ? formData.value.purpose : null,
-                    in_hospital: formData.value.type_of_leave === 'Sick Leave' ? formData.value.in_hospital : null,
-                    illness: ['Sick Leave', 'Special Leave Benefits for Women'].includes(formData.value.type_of_leave) ? formData.value.illness : null,
-                    completion_type: formData.value.type_of_leave === 'Study Leave' ? formData.value.completion_type : null,
-                    other_type: formData.value.type_of_leave === 'Others' ? formData.value.other_type : null,
-                }),
+                body: requestBody(),
             });
 
             if (!response.ok) {
@@ -457,6 +436,7 @@ export function useLeavesForm(
         }
     };
 
+    /** Deletes the whole application (every leave type in it) */
     const deleteLeave = async () => {
         try {
             deleting.value = true;
@@ -495,7 +475,6 @@ export function useLeavesForm(
         leaveToDelete,
         formData,
         formErrors,
-        leaveTypes,
         leaveCreditInfo,
         missingLeaveFields,
         leaveLimitMessage,
@@ -508,19 +487,12 @@ export function useLeavesForm(
         // Methods
         generateControlNo,
         formatDateForInput,
-        formatDateForDisplay,
-        formatInclusiveDate,
         openCreateModal,
         closeCreateModal,
         openEditModal,
         closeEditModal,
         openDeleteModal,
         closeDeleteModal,
-        addInclusiveDate,
-        removeInclusiveDate,
-        editInclusiveDate,
-        addOffDay,
-        removeOffDay,
         createLeave,
         updateLeave,
         deleteLeave,

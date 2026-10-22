@@ -39,180 +39,72 @@
                                 <p v-if="formErrors['date_of_filing']" class="mt-1 text-xs text-red-600 dark:text-red-400">{{ formErrors['date_of_filing'] }}</p>
                             </div>
 
-                            <!-- Type of Leave -->
+                            <!-- 5. Salary: the employee's monthly salary from HRIS, saved with the leave -->
                             <div>
-                                <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Type of Leave <span class="text-red-500">*</span></label>
-                                <select v-model="formData.type_of_leave" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-xs dark:bg-gray-700 dark:text-white focus:outline-none focus:border-emerald-500 dark:focus:border-emerald-500">
-                                    <option v-for="type in leaveTypes" :key="type" :value="type">{{ type }}</option>
-                                </select>
-                                <!-- Yearly credit for limited leave types -->
-                                <p
-                                    v-if="leaveCredit"
-                                    class="mt-1 text-xs"
-                                    :class="leaveCredit.exceeds ? 'text-red-600 dark:text-red-400' : 'text-gray-600 dark:text-gray-400'"
-                                >
-                                    <i class="fas fa-calendar-check mr-1"></i>
-                                    {{ leaveCredit.year }}: {{ formatDays(leaveCredit.used) }} of {{ leaveCredit.limit }} days used,
-                                    <span class="font-semibold">{{ formatDays(leaveCredit.remaining) }} remaining</span>
-                                    <template v-if="leaveCredit.exceeds"> (this request needs {{ formatDays(leaveCredit.requested) }})</template>
-                                </p>
-                                <p v-if="formErrors['type_of_leave']" class="mt-1 text-xs text-red-600 dark:text-red-400">{{ formErrors['type_of_leave'] }}</p>
+                                <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Salary (monthly)</label>
+                                <input v-model="formData.salary" type="number" min="0" step="0.01" placeholder="Filled from HRIS when the employee is chosen" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-xs dark:bg-gray-700 dark:text-white focus:outline-none focus:border-emerald-500 dark:focus:border-emerald-500" />
+                                <p class="mt-1 text-[11px] text-gray-500 dark:text-gray-400">Printed in 5. SALARY as of filing; edit it if HRIS is wrong.</p>
                             </div>
 
-                            <!-- Number of Working Days Applied For -->
-                            <div>
-                                <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Number of Working Days Applied For <span class="text-red-500">*</span></label>
-                                <input v-model.number="formData.number_of_working_days_applied_for" type="number" min="1" step="0.5" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-xs dark:bg-gray-700 dark:text-white focus:outline-none focus:border-emerald-500 dark:focus:border-emerald-500" />
-                            </div>
-
-                            <!-- Type of Leave Duration -->
-                            <div>
-                                <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">Type of Leave Duration</label>
-                                <div class="flex gap-4">
-                                    <label class="flex items-center gap-2">
-                                        <input v-model="formData.is_half_day" type="radio" :value="false" class="cursor-pointer" />
-                                        <span class="text-xs text-gray-700 dark:text-gray-300">Full Day</span>
-                                    </label>
-                                    <label class="flex items-center gap-2">
-                                        <input v-model="formData.is_half_day" type="radio" :value="true" class="cursor-pointer" />
-                                        <span class="text-xs text-gray-700 dark:text-gray-300">Half Day</span>
-                                    </label>
-                                </div>
-                            </div>
-
-                            <!-- Half Day Period (AM/PM) - Conditional -->
-                            <div v-if="formData.is_half_day">
-                                <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">Half Day Period <span class="text-red-500">*</span></label>
-                                <div class="flex gap-4">
-                                    <label class="flex items-center gap-2">
-                                        <input v-model="formData.half_day_period" type="radio" value="AM" class="cursor-pointer" />
-                                        <span class="text-xs text-gray-700 dark:text-gray-300">Morning (AM)</span>
-                                    </label>
-                                    <label class="flex items-center gap-2">
-                                        <input v-model="formData.half_day_period" type="radio" value="PM" class="cursor-pointer" />
-                                        <span class="text-xs text-gray-700 dark:text-gray-300">Afternoon (PM)</span>
-                                    </label>
-                                </div>
-                            </div>
-
-                            <!-- Inclusive Dates -->
-                            <div>
-                                <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Inclusive Dates <span class="text-red-500">*</span></label>
-                                <div class="space-y-2">
-                                    <div class="flex gap-2 items-end">
-                                        <div class="flex-1">
-                                            <label class="block text-xs text-gray-600 dark:text-gray-400 mb-1">Date</label>
-                                            <input v-model="formData.newInclusiveDate" type="date" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-xs dark:bg-gray-700 dark:text-white focus:outline-none focus:border-emerald-500 dark:focus:border-emerald-500" />
-                                        </div>
-                                        <div class="flex-1">
-                                            <label class="block text-xs text-gray-600 dark:text-gray-400 mb-1">To Date (optional)</label>
-                                            <input v-model="formData.newInclusiveDateRange" type="date" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-xs dark:bg-gray-700 dark:text-white focus:outline-none focus:border-emerald-500 dark:focus:border-emerald-500" />
-                                        </div>
-                                        <button @click.prevent="addInclusiveDate" class="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors text-xs font-medium">
-                                            <i class="fas fa-plus"></i>
-                                        </button>
-                                    </div>
-                                    <div class="flex flex-wrap gap-2">
-                                        <span v-for="(entry, idx) in formData.inclusive_dates" :key="idx" @click="editInclusiveDate(idx)" class="inline-flex items-center gap-2 px-3 py-1.5 bg-emerald-100 dark:bg-emerald-900 text-emerald-800 dark:text-emerald-200 rounded text-xs cursor-pointer hover:bg-emerald-200 dark:hover:bg-emerald-800 transition-colors">
-                                            <i class="fas fa-edit text-emerald-600 dark:text-emerald-400"></i>
-                                            {{ formatInclusiveDate(entry) }}
-                                            <button @click.stop="removeInclusiveDate(idx)" class="text-emerald-600 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-200 font-bold">×</button>
-                                        </span>
-                                    </div>
-                                </div>
-                                <p v-if="formErrors['inclusive_dates']" class="mt-1 text-xs text-red-600 dark:text-red-400">{{ formErrors['inclusive_dates'] }}</p>
-                            </div>
-
-                            <!-- Off Days -->
-                            <div>
-                                <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Off Days</label>
-                                <div class="flex gap-2 mb-2">
-                                    <input v-model="formData.newOffDay" type="text" placeholder="e.g., Monday, Tuesday" class="flex-1 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-xs dark:bg-gray-700 dark:text-white focus:outline-none focus:border-emerald-500 dark:focus:border-emerald-500" />
-                                    <button @click="addOffDay" type="button" class="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs rounded-lg font-medium transition-colors">
-                                        Add
+                            <!-- Leave types: one entry per type, each with its own dates -->
+                            <div class="space-y-3">
+                                <div class="flex items-center justify-between">
+                                    <h3 class="text-xs font-medium text-gray-700 dark:text-gray-300">Leave Types <span class="text-red-500">*</span></h3>
+                                    <button
+                                        type="button"
+                                        @click="addEntry"
+                                        :disabled="formData.entries.length >= leaveTypes.length"
+                                        class="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-emerald-700 dark:text-emerald-300 border border-emerald-600 rounded-lg hover:bg-emerald-50 dark:hover:bg-gray-700 disabled:opacity-50"
+                                    >
+                                        <i class="fas fa-plus"></i> Add another leave type
                                     </button>
                                 </div>
-                                <div v-if="formData.off_days.length > 0" class="flex flex-wrap gap-2">
-                                    <div v-for="(day, index) in formData.off_days" :key="index" class="flex items-center gap-2 bg-emerald-100 dark:bg-emerald-900 px-3 py-1 rounded-lg">
-                                        <span class="text-xs text-emerald-800 dark:text-emerald-200">{{ day }}</span>
-                                        <button @click="removeOffDay(index)" type="button" class="text-emerald-600 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300">
-                                            <i class="fas fa-times text-xs"></i>
-                                        </button>
-                                    </div>
-                                </div>
+                                <LeaveEntryFields
+                                    v-for="(entry, index) in formData.entries"
+                                    :key="index"
+                                    :entry="entry"
+                                    :index="index"
+                                    :total="formData.entries.length"
+                                    :leave-types="leaveTypes"
+                                    :taken-types="formData.entries.filter((_, other) => other !== index).map((other) => other.type_of_leave)"
+                                    :credit="leaveCredits?.[index] ?? null"
+                                    :removable="formData.entries.length > 1"
+                                    :uid="`create-${index}`"
+                                    @remove="formData.entries.splice(index, 1)"
+                                />
+                                <p v-if="formErrors['type_of_leave']" class="text-xs text-red-600 dark:text-red-400">{{ formErrors['type_of_leave'] }}</p>
+                                <p v-if="formErrors['inclusive_dates']" class="text-xs text-red-600 dark:text-red-400">{{ formErrors['inclusive_dates'] }}</p>
                             </div>
 
-                            <!-- Location Details - Vacation/Special Privilege/Wellness Leave -->
-                            <div v-if="['Vacation Leave', 'Special Privilege Leave', 'Wellness Leave'].includes(formData.type_of_leave)" class="space-y-4 border-t border-gray-200 dark:border-gray-700 pt-4">
-                                <h3 class="font-medium text-gray-700 dark:text-gray-300">Location Details</h3>
-                                <div class="flex gap-4">
-                                    <label class="flex items-center gap-2">
-                                        <input v-model="formData.within_philippines" type="radio" name="location_create" :value="true" class="cursor-pointer" />
-                                        <span class="text-xs text-gray-700 dark:text-gray-300">Within Philippines</span>
-                                    </label>
-                                    <label class="flex items-center gap-2">
-                                        <input v-model="formData.within_philippines" type="radio" name="location_create" :value="false" class="cursor-pointer" />
-                                        <span class="text-xs text-gray-700 dark:text-gray-300">Abroad</span>
-                                    </label>
-                                </div>
-                                <div>
-                                    <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Purpose</label>
-                                    <textarea v-model="formData.purpose" rows="2" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-xs dark:bg-gray-700 dark:text-white focus:outline-none focus:border-emerald-500 dark:focus:border-emerald-500"></textarea>
-                                </div>
-                            </div>
-
-                            <!-- Medical Details - Sick Leave -->
-                            <div v-if="formData.type_of_leave === 'Sick Leave'" class="space-y-4 border-t border-gray-200 dark:border-gray-700 pt-4">
-                                <h3 class="font-medium text-gray-700 dark:text-gray-300">Medical Details</h3>
-                                <div class="flex gap-4">
-                                    <label class="flex items-center gap-2">
-                                        <input v-model="formData.in_hospital" type="radio" name="hospital_create" :value="true" class="cursor-pointer" />
-                                        <span class="text-xs text-gray-700 dark:text-gray-300">In Hospital</span>
-                                    </label>
-                                    <label class="flex items-center gap-2">
-                                        <input v-model="formData.in_hospital" type="radio" name="hospital_create" :value="false" class="cursor-pointer" />
-                                        <span class="text-xs text-gray-700 dark:text-gray-300">Out Patient</span>
+                            <!-- 7.B Recommendation -->
+                            <div class="space-y-2 border-t border-gray-200 dark:border-gray-700 pt-4">
+                                <h3 class="font-medium text-gray-700 dark:text-gray-300">7.B Recommendation</h3>
+                                <div class="flex flex-wrap gap-4">
+                                    <label v-for="option in RECOMMENDATIONS" :key="option.value" class="flex items-center gap-2">
+                                        <input v-model="formData.recommendation" type="radio" name="recommendation_create" :value="option.value" class="cursor-pointer" />
+                                        <span class="text-xs text-gray-700 dark:text-gray-300">{{ option.label }}</span>
                                     </label>
                                 </div>
-                                <div>
-                                    <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Illness</label>
-                                    <textarea v-model="formData.illness" rows="2" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-xs dark:bg-gray-700 dark:text-white focus:outline-none focus:border-emerald-500 dark:focus:border-emerald-500"></textarea>
+                                <div v-if="formData.recommendation === 'disapproval'">
+                                    <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">For disapproval due to <span class="text-red-500">*</span></label>
+                                    <textarea v-model="formData.disapproval_reason" rows="2" maxlength="500" placeholder="Reason for disapproval" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-xs dark:bg-gray-700 dark:text-white focus:outline-none focus:border-emerald-500 dark:focus:border-emerald-500"></textarea>
+                                    <p v-if="formErrors['disapproval_reason']" class="mt-1 text-xs text-red-600 dark:text-red-400">{{ formErrors['disapproval_reason'] }}</p>
                                 </div>
                             </div>
 
-                            <!-- Health Details - Special Leave Benefits for Women -->
-                            <div v-if="formData.type_of_leave === 'Special Leave Benefits for Women'" class="space-y-4 border-t border-gray-200 dark:border-gray-700 pt-4">
-                                <h3 class="font-medium text-gray-700 dark:text-gray-300">Health Details</h3>
-                                <div>
-                                    <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Illness</label>
-                                    <textarea v-model="formData.illness" rows="2" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-xs dark:bg-gray-700 dark:text-white focus:outline-none focus:border-emerald-500 dark:focus:border-emerald-500"></textarea>
-                                </div>
-                            </div>
-
-                            <!-- Study Details - Study Leave -->
-                            <div v-if="formData.type_of_leave === 'Study Leave'" class="space-y-4 border-t border-gray-200 dark:border-gray-700 pt-4">
-                                <h3 class="font-medium text-gray-700 dark:text-gray-300">Study Details</h3>
-                                <div>
-                                    <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Completion Type</label>
-                                    <select v-model="formData.completion_type" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-xs dark:bg-gray-700 dark:text-white focus:outline-none focus:border-emerald-500 dark:focus:border-emerald-500">
-                                        <option value="">Select Type</option>
-                                        <option value="Completion of Master's Degree">Completion of Master's Degree</option>
-                                        <option value="BAR/Board Examination Review">BAR/Board Examination Review</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            <!-- Leave Type Details - Others -->
-                            <div v-if="formData.type_of_leave === 'Others'" class="space-y-4 border-t border-gray-200 dark:border-gray-700 pt-4">
-                                <h3 class="font-medium text-gray-700 dark:text-gray-300">Leave Type Details</h3>
-                                <div>
-                                    <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Type</label>
-                                    <select v-model="formData.other_type" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-xs dark:bg-gray-700 dark:text-white focus:outline-none focus:border-emerald-500 dark:focus:border-emerald-500">
-                                        <option value="">Select Type</option>
-                                        <option value="Monetization of Leave Credits">Monetization of Leave Credits</option>
-                                        <option value="Terminal Leave">Terminal Leave</option>
-                                    </select>
-                                </div>
+                            <!-- Signatories printed on the form (7.A, 7.B, authorized official) -->
+                            <div class="space-y-3 border-t border-gray-200 dark:border-gray-700 pt-4">
+                                <h3 class="font-medium text-gray-700 dark:text-gray-300">Signatories</h3>
+                                <LeaveSignatoryField
+                                    v-for="signatory in LEAVE_SIGNATORIES"
+                                    :key="signatory.key"
+                                    :signatory="signatory.key"
+                                    :employees="employees"
+                                    :applicant="applicant"
+                                    :employee-id="(formData as any)[`${signatory.key}_employee_id`]"
+                                    :title="(formData as any)[`${signatory.key}_title`]"
+                                    @change="(value) => { (formData as any)[`${signatory.key}_employee_id`] = value.employeeId; (formData as any)[`${signatory.key}_title`] = value.title; }"
+                                />
                             </div>
                         </div>
                     </div>
@@ -247,28 +139,11 @@
 <script setup lang="ts">
 import { isPboStaff } from '@/Composables/useOfficials';
 import { computed } from 'vue';
-import { formatDays } from '@/Composables/useLeaveCredits';
+import LeaveEntryFields from './LeaveEntryFields.vue';
+import { newLeaveEntry, type LeaveFormData } from '../Composables/useLeavesForm';
 import MissingFieldsHint from '@/Components/MissingFieldsHint.vue';
-interface LeaveFormData {
-    employee_id: number;
-    date_of_filing: string;
-    type_of_leave: string;
-    number_of_working_days_applied_for: number;
-    is_half_day: boolean;
-    half_day_period: string;
-    inclusive_dates: string[];
-    off_days: string[];
-    within_philippines: boolean;
-    purpose: string;
-    in_hospital: boolean;
-    illness: string;
-    completion_type: string;
-    other_type: string;
-    newInclusiveDate: string;
-    newInclusiveDateRange: string;
-    newOffDay: string;
-}
-
+import LeaveSignatoryField from './LeaveSignatoryField.vue';
+import { LEAVE_SIGNATORIES } from '../Composables/useLeaveSignatories';
 interface Employee {
     id: number;
     name: string;
@@ -286,7 +161,8 @@ const props = defineProps<{
     employees: Employee[];
     loading: boolean;
     leaveTypes: string[];
-    leaveCredit?: { year: number; limit: number; used: number; remaining: number; requested: number; exceeds: boolean } | null;
+    /** Yearly credit per entry (limited leave types), aligned with formData.entries */
+    leaveCredits?: Array<{ year: number; limit: number; used: number; remaining: number; requested: number; exceeds: boolean } | null>;
     /** Required fields still empty */
     missingFields?: string[];
     /** Yearly leave limit problem, if any */
@@ -299,6 +175,16 @@ const requestingOptions = computed(() => {
     return ((props.employees || []) as any[]).filter((emp: any) => isPboStaff(emp) || selected.includes(Number(emp.id)));
 });
 
+/** The applicant: the authorized official is the Governor for a department head, else the Provincial Administrator */
+const applicant = computed(() => ((props.employees || []) as any[]).find((emp: any) => emp.id === Number(props.formData.employee_id)) || null);
+
+/** 7.B Recommendation choices ("" = not yet decided) */
+const RECOMMENDATIONS = [
+    { value: '', label: 'Not yet' },
+    { value: 'approval', label: 'For approval' },
+    { value: 'disapproval', label: 'For disapproval' },
+];
+
 const canSubmit = computed(() => !(props.missingFields?.length) && !props.limitMessage);
 
 defineEmits<{
@@ -306,68 +192,11 @@ defineEmits<{
     confirm: [];
 }>();
 
-const formatDateForDisplay = (dateStr: string): string => {
-    if (!dateStr) return '';
-    const date = new Date(dateStr);
-    return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
-};
-
-const formatInclusiveDate = (entry: string): string => {
-    if (!entry) return '';
-    
-    if (entry.includes(' - ')) {
-        // This is a date range
-        const [startDate, endDate] = entry.split(' - ');
-        return `${formatDateForDisplay(startDate.trim())} - ${formatDateForDisplay(endDate.trim())}`;
-    } else {
-        // This is a single date
-        return formatDateForDisplay(entry);
-    }
-};
-
-const addInclusiveDate = () => {
-    if (props.formData.newInclusiveDate) {
-        if (props.formData.newInclusiveDateRange) {
-            const rangeString = `${props.formData.newInclusiveDate} - ${props.formData.newInclusiveDateRange}`;
-            if (!props.formData.inclusive_dates.includes(rangeString)) {
-                props.formData.inclusive_dates.push(rangeString);
-            }
-        } else {
-            if (!props.formData.inclusive_dates.includes(props.formData.newInclusiveDate)) {
-                props.formData.inclusive_dates.push(props.formData.newInclusiveDate);
-            }
-        }
-        props.formData.newInclusiveDate = '';
-        props.formData.newInclusiveDateRange = '';
-    }
-};
-
-const removeInclusiveDate = (index: number) => {
-    props.formData.inclusive_dates.splice(index, 1);
-};
-
-const editInclusiveDate = (index: number) => {
-    const entry = props.formData.inclusive_dates[index];
-    if (entry.includes(' - ')) {
-        const [startDate, endDate] = entry.split(' - ');
-        props.formData.newInclusiveDate = startDate.trim();
-        props.formData.newInclusiveDateRange = endDate.trim();
-    } else {
-        props.formData.newInclusiveDate = entry;
-        props.formData.newInclusiveDateRange = '';
-    }
-    props.formData.inclusive_dates.splice(index, 1);
-};
-
-const addOffDay = () => {
-    if (props.formData.newOffDay && !props.formData.off_days.includes(props.formData.newOffDay)) {
-        props.formData.off_days.push(props.formData.newOffDay);
-        props.formData.newOffDay = '';
-    }
-};
-
-const removeOffDay = (index: number) => {
-    props.formData.off_days.splice(index, 1);
+/** Adds an entry with the first leave type not used yet */
+const addEntry = () => {
+    const taken = props.formData.entries.map((entry) => entry.type_of_leave);
+    const type = props.leaveTypes.find((option) => !taken.includes(option));
+    if (type) props.formData.entries.push(newLeaveEntry(type));
 };
 </script>
 

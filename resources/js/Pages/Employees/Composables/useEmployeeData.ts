@@ -17,6 +17,9 @@ export interface Employee {
     office_id?: number | null;
     /** Another office's employee working at the PBO: counts as PBO staff in every module */
     detailed_to_pbo?: boolean;
+    /** No longer in HRIS (set by the sync) */
+    separated?: boolean;
+    separated_at?: string | null;
     office?: number | {
         id: number;
         office_name: string;
@@ -157,7 +160,7 @@ export function useEmployeeData() {
         loading.value = true;
         error.value = null;
         try {
-            const response = await fetch('/api/employees', {
+            const response = await fetch('/api/employees?with_separated=1', {
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('token')}`,
                 },

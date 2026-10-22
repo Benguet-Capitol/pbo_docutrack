@@ -540,6 +540,7 @@
 
 <script setup lang="ts">
 import { isPboStaff } from '@/Composables/useOfficials';
+import { isDisapproved } from '@/Composables/useLeaveCredits';
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
 import Toast from '@/Components/Toast.vue';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
@@ -1703,7 +1704,8 @@ const fetchLeaves = async () => {
     try {
         const response = await fetch('/api/leaves');
         if (response.ok) {
-            leaves.value = await response.json();
+            // Disapproved leaves didn't proceed: the employee was not on leave
+            leaves.value = (await response.json()).filter((leave: any) => !isDisapproved(leave));
         }
     } catch (e) {
         console.error('Error fetching leaves:', e);

@@ -25,10 +25,17 @@ class EmployeeController extends Controller
     public function index(Request $request): JsonResponse
     {
         $query = Employee::with('office')->orderBy('name');
+        $withSeparated = $request->boolean('with_separated');
+        $referenced = $request->query('scope') === 'pbo' || !$withSeparated ? EmployeeReferences::referencedIds() : [];
         if ($request->query('scope') === 'pbo') {
-            $referenced = EmployeeReferences::referencedIds();
-            $query->where(fn ($q) => $q->pboScope()->orWhereIn('id', $referenced));
+            $query->where(fn ($q) => $q->where(fn ($pbo) => $pbo->pboScope()->active())->orWhereIn('id', $referenced));
+        } elseif (!$withSeparated) {
+            // Employees who left (separated in HRIS) only where existing records still name them
+            $query->where(fn ($q) => $q->active()->orWhereIn('id', $referenced));
         }
+
+        // Employees detailed to the PBO work there: forms print that office
+        $pboOffice = \App\Models\Office::withTrashed()->find(Employee::PBO_OFFICE_ID);
 
         return response()->json($query->get()->map(fn (Employee $employee) => [
             'id' => $employee->id,
@@ -41,7 +48,11 @@ class EmployeeController extends Controller
             'full_position' => $employee->full_position,
             'office_id' => $employee->office_id,
             'detailed_to_pbo' => $employee->detailed_to_pbo,
+            /** No longer in HRIS: kept for old records, never offered in pickers */
+            'separated' => $employee->separated_at !== null,
+            'separated_at' => $employee->separated_at?->format('Y-m-d'),
             'office' => $employee->office,
+            'work_office' => $employee->detailed_to_pbo && (int) $employee->office_id !== Employee::PBO_OFFICE_ID ? $pboOffice : $employee->office,
         ]));
     }
 

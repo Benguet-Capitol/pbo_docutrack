@@ -862,7 +862,7 @@
                         </button>
                         <button
                             @click="handleUpdateDocument"
-                            :disabled="missingDocumentFields.length > 0"
+                            :disabled="missingDocumentFields.length > 0 || !documentHasChanges"
                             class="inline-flex items-center gap-2 px-5 py-3 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             <i class="fas fa-save"></i>
@@ -875,7 +875,7 @@
                             <i class="fas fa-times"></i>
                             Cancel
                         </button>
-                        <MissingFieldsHint :fields="missingDocumentFields" />
+                        <MissingFieldsHint :fields="missingDocumentFields" :message="documentHasChanges ? null : NO_CHANGES_MESSAGE" />
                     </div>
                 </div>
             </div>
@@ -1622,6 +1622,7 @@ import RowIconButton from '@/Components/RowIconButton.vue';
 import { useResponsiveView } from '@/Composables/useResponsiveView';
 import YearFilter from '@/Components/YearFilter.vue';
 import MissingFieldsHint from '@/Components/MissingFieldsHint.vue';
+import { useFormChanges, NO_CHANGES_MESSAGE } from '@/Composables/useFormChanges';
 import { escapeHtml } from '@/utils/html';
 import { useYearFilter } from '@/Composables/useYearFilter';
 import { ref, onMounted, computed, watch, onUnmounted } from 'vue';
@@ -3544,6 +3545,9 @@ const validateForm = (): boolean => {
 };
 
 /** Required fields still empty (same rules as validateForm): Save/Update stays disabled until filled */
+// Edit: Update stays disabled until something is changed
+const { hasChanges: documentHasChanges } = useFormChanges(() => formData.value, () => showEditModal.value);
+
 const missingDocumentFields = computed(() => {
     const missing: string[] = [];
     if (!String(formData.value.tracking_no ?? '').trim()) missing.push('Tracking No');

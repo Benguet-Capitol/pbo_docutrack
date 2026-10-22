@@ -15,7 +15,7 @@ class EmployeeReferences
 {
     /** table => [columns, one row, several rows] */
     private const REFERENCES = [
-        'leaves' => [['employee_id'], 'leave', 'leaves'],
+        'leaves' => [['employee_id', 'certified_by_employee_id', 'recommended_by_employee_id', 'approved_by_employee_id'], 'leave', 'leaves'],
         'pass_slip_employee' => [['employee_id'], 'pass slip', 'pass slips'],
         'pass_slips' => [['recommending_approval_employee_id', 'approved_by_employee_id'], 'pass slip signature', 'pass slip signatures'],
         'time_slips' => [['requesting_employee_id', 'certified_by_employee_id', 'approved_by_employee_id'], 'time slip', 'time slips'],
@@ -25,6 +25,7 @@ class EmployeeReferences
         'certificate_of_appearances' => [['approved_by_employee_id'], 'certificate of appearance signature', 'certificate of appearance signatures'],
         'notice_of_meetings' => [['employee_id'], 'notice of meeting', 'notices of meeting'],
         'plantillas' => [['employee_id'], 'plantilla record', 'plantilla records'],
+        'users' => [['employee_id'], 'user account', 'user accounts'],
     ];
 
     /** Pivot tables: their parent column, so a merge doesn't create a duplicate (parent, employee) row */

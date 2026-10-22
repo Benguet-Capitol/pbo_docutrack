@@ -21,8 +21,41 @@ class Employee extends Model
     /** Provincial Budget Office */
     public const PBO_OFFICE_ID = 12;
 
+    /** Provincial Human Resource Management and Development Office */
+    public const PHRMDO_OFFICE_ID = 14;
+
     public const TITLE_PBO = 'Provincial Budget Officer';
     public const TITLE_GOVERNOR = 'Provincial Governor';
+    public const TITLE_PHRMDO = 'Provincial Human Resource Management and Development Officer';
+    public const TITLE_PA = 'Provincial Administrator';
+    public const TITLE_APA = 'Assistant Provincial Administrator';
+
+    /** A department head (not an assistant department head), e.g. "Provincial Government Department Head" */
+    public function isDepartmentHead(): bool
+    {
+        $position = (string) $this->position_title;
+
+        return stripos($position, 'Department Head') !== false && stripos($position, 'Assistant') === false;
+    }
+
+    /** The office the employee works in: the Provincial Budget Office when detailed to it, else their own */
+    public function workOffice(): ?Office
+    {
+        return $this->detailed_to_pbo && (int) $this->office_id !== self::PBO_OFFICE_ID
+            ? Office::withTrashed()->find(self::PBO_OFFICE_ID)
+            : $this->office;
+    }
+
+    /** The current holder of an official title (exact printed title), e.g. the Provincial Governor */
+    public static function official(string $title): ?self
+    {
+        $office = [self::TITLE_PBO => self::PBO_OFFICE_ID, self::TITLE_PHRMDO => self::PHRMDO_OFFICE_ID][$title] ?? null;
+
+        return static::active()->where('designation', $title)
+            ->when($office, fn ($query) => $query->where('office_id', $office))
+            ->orderBy('id')
+            ->first();
+    }
 
     protected $table = 'employees';
     public $timestamps = true;
@@ -35,12 +68,19 @@ class Employee extends Model
         'status',
         'office_id',
         'detailed_to_pbo',
+        'separated_at',
+        'monthly_salary',
         'designation',
     ];
 
     protected $casts = [
         'detailed_to_pbo' => 'boolean',
+        'separated_at' => 'datetime',
+        'monthly_salary' => 'decimal:2',
     ];
+
+    /** Salary is only sent where a form needs it (the leave form), never with the employee lists */
+    protected $hidden = ['monthly_salary'];
 
     protected $appends = ['full_position'];
 
@@ -71,6 +111,14 @@ class Employee extends Model
         $title = trim(preg_replace('/\s+/', ' ', (string) $title));
 
         return preg_match('/^(.*?)\s*\(([^()]+)\)\s*$/', $title, $m) && trim($m[1]) !== '' ? [trim($m[1]), trim($m[2])] : [$title, null];
+    }
+
+    /** HRIS salary text "₱17,506.00" → "17506.00"; null when missing or zero */
+    public static function salaryFromHris(mixed $salary): ?string
+    {
+        $amount = (float) preg_replace('/[^\d.]/', '', (string) $salary);
+
+        return $amount > 0 ? number_format($amount, 2, '.', '') : null;
     }
 
     /** HRIS employee type → status; null for any other type */
@@ -105,6 +153,12 @@ class Employee extends Model
     }
 
     /** Provincial Budget Office staff: its employees and those of other offices detailed to it */
+    /** Employees still with the Province (the HRIS sync marks those who left: separated_at) */
+    public function scopeActive(Builder $query): Builder
+    {
+        return $query->whereNull('separated_at');
+    }
+
     public function scopePboStaff(Builder $query): Builder
     {
         return $query->where(fn ($q) => $q->where('office_id', self::PBO_OFFICE_ID)->orWhere('detailed_to_pbo', true));

@@ -26,7 +26,7 @@
                 <!-- Modal Footer -->
                 <div class="flex flex-wrap items-center justify-center gap-3 p-6 border-t-2 border-gray-200 rounded-b-lg dark:border-gray-600 bg-gray-50 dark:bg-gray-800">
                     <button
-                        :disabled="missingFields.length > 0"
+                        :disabled="missingFields.length > 0 || !hasChanges"
                         @click="onSave"
                         class="inline-flex items-center gap-2 px-5 py-3 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
@@ -40,7 +40,7 @@
                         <i class="fas fa-times"></i>
                         Cancel
                     </button>
-                    <MissingFieldsHint :fields="missingFields" />
+                    <MissingFieldsHint :fields="missingFields" :message="hasChanges ? null : NO_CHANGES_MESSAGE" />
                 </div>
             </div>
         </div>
@@ -50,6 +50,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import MissingFieldsHint from '@/Components/MissingFieldsHint.vue';
+import { useFormChanges, NO_CHANGES_MESSAGE } from '@/Composables/useFormChanges';
 import EmployeeFields from './EmployeeFields.vue';
 import { employeeMissingFields } from '../Composables/employeeRequiredFields';
 import type { FormData } from '../Composables/useEmployeeForm';
@@ -69,6 +70,8 @@ const emit = defineEmits<{
 
 // Update stays disabled until the required fields are filled
 const missingFields = computed(() => employeeMissingFields(props.formData));
+// Update stays disabled until something is changed
+const { hasChanges } = useFormChanges(() => props.formData, () => props.showEditModal);
 
 const onClose = () => emit('close');
 const onSave = () => emit('save');

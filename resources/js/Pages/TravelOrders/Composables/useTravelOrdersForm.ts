@@ -81,7 +81,7 @@ export function useTravelOrdersForm(employees: any, travelOrders: any) {
     const requestingEmployees = computed(() =>
         sortedEmployees.value.filter((emp: Employee) => isPboStaff(emp) || formData.value.employee_ids.includes(emp.id))
     );
-    const otherOfficeEmployees = computed(() => sortedEmployees.value.filter((emp: Employee) => !isPboStaff(emp)));
+    const otherOfficeEmployees = computed(() => sortedEmployees.value.filter((emp: Employee) => !isPboStaff(emp) && !emp.separated));
 
     const supervisorOptions = computed(() => pboOfficeEmployees.value);
 
@@ -98,7 +98,7 @@ export function useTravelOrdersForm(employees: any, travelOrders: any) {
         [emp.position_title, emp.parenthetical_title, emp.designation].some((title) => /\bdriver\b/i.test(title || ''));
     const driverOptions = computed(() => {
         const byName = (a: Employee, b: Employee) => a.name.localeCompare(b.name);
-        const drivers = employees.value.filter(isDriver).sort(byName);
+        const drivers = employees.value.filter((emp: Employee) => isDriver(emp) && !emp.separated).sort(byName);
         const pboStaff = employees.value.filter((emp: Employee) => isPboStaff(emp) && !isDriver(emp)).sort(byName);
         return [
             ...drivers.map((emp: Employee) => ({
@@ -124,7 +124,7 @@ export function useTravelOrdersForm(employees: any, travelOrders: any) {
         });
         return [
             ...employees.value.filter((emp: Employee) => isPboStaff(emp)).sort(byName).map(option('PBO staff')),
-            ...employees.value.filter((emp: Employee) => !isPboStaff(emp)).sort(byName).map(option('Other offices')),
+            ...employees.value.filter((emp: Employee) => !isPboStaff(emp) && !emp.separated).sort(byName).map(option('Other offices')),
         ];
     });
 

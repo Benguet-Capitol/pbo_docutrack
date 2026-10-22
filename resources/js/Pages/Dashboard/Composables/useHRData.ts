@@ -1,11 +1,13 @@
 import { computed, ref } from 'vue';
-import { LIMITED_LEAVE_TYPES } from '@/Composables/useLeaveCredits';
+import { LIMITED_LEAVE_TYPES, isDisapproved } from '@/Composables/useLeaveCredits';
 
 /**
  * Composable for HR data management
  */
 export const useHRData = () => {
     const leaves = ref<any[]>([]);
+    /** Every leave, disapproved ones included (yearly limits) */
+    const allLeaves = ref<any[]>([]);
     const travelOrders = ref<any[]>([]);
     const passSlips = ref<any[]>([]);
     const tardiness = ref<any[]>([]);
@@ -46,7 +48,9 @@ export const useHRData = () => {
         try {
             const response = await fetch('/api/leaves');
             if (response.ok) {
-                leaves.value = withoutTrashedEmployee(await response.json(), 'employee');
+                // Disapproved leaves didn't proceed: left out of the summaries, but they still use the yearly limits
+                allLeaves.value = withoutTrashedEmployee(await response.json(), 'employee');
+                leaves.value = allLeaves.value.filter((leave: any) => !isDisapproved(leave));
             }
         } catch (e) {
             console.error('Error fetching leaves:', e);
@@ -557,6 +561,8 @@ export const useHRData = () => {
             employeeId: number;
             employeeName: string;
             leaveTypes: Record<string, number>;
+            /** Days used against the yearly limits, disapproved leaves included */
+            limitUsed: Record<string, number>;
             totalLeaves: number
         }>();
 
@@ -574,6 +580,7 @@ export const useHRData = () => {
                     employeeId: empId,
                     employeeName: empName,
                     leaveTypes: {},
+                    limitUsed: {},
                     totalLeaves: 0
                 });
             }
@@ -581,6 +588,16 @@ export const useHRData = () => {
             const empData = empMap.get(empId)!;
             empData.leaveTypes[leaveType] = (empData.leaveTypes[leaveType] || 0) + businessDays;
             empData.totalLeaves += businessDays;
+        });
+
+        // Remaining days: every filed leave counts against the limit, disapproved ones too
+        allLeaves.value.forEach(leave => {
+            if (new Date(leave.date_of_filing).getFullYear() !== selectedHRYear.value) return;
+            if (!empMap.has(leave.employee_id)) {
+                empMap.set(leave.employee_id, { employeeId: leave.employee_id, employeeName: leave.employee?.name || 'Unknown Employee', leaveTypes: {}, limitUsed: {}, totalLeaves: 0 });
+            }
+            const empData = empMap.get(leave.employee_id)!;
+            empData.limitUsed[leave.type_of_leave] = (empData.limitUsed[leave.type_of_leave] || 0) + getLeaveBusinessDays(leave);
         });
 
         return Array.from(empMap.values()).sort((a, b) => {

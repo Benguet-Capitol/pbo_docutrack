@@ -84,6 +84,10 @@ class HrisEmployeeSync
                 'status' => $status,
                 'designation' => Employee::titleOf($position, $parenthetical),
             ];
+            // Monthly salary (HRIS sends e.g. "₱17,506.00"); a record without one keeps the employee's
+            if (($salary = Employee::salaryFromHris($e['salary'] ?? null)) !== null) {
+                $values['monthly_salary'] = $salary;
+            }
 
             if (!$status) {
                 $skipped['type']++;
@@ -132,18 +136,34 @@ class HrisEmployeeSync
             }
         });
 
+        // Employees no longer in HRIS (resigned, retired...) are marked separated; those back in HRIS are restored.
+        // Only HRIS-numbered employees (all digits) are considered, so records added by hand are left alone, and a
+        // feed that came back nearly empty marks no one.
+        $ids = $feedIds->keys()->map(fn ($id) => (string) $id)->all();
+        $returned = Employee::whereNotNull('separated_at')->whereIn('employee_id', $ids)->update(['separated_at' => null]);
+        $separated = 0;
+        if (count($ids) >= 100) {
+            $separated = Employee::active()
+                ->whereNotIn('employee_id', $ids)
+                ->get(['id', 'employee_id'])
+                ->filter(fn ($e) => preg_match('/^\d{6,}$/', trim((string) $e->employee_id)))
+                ->pipe(fn ($gone) => $gone->isEmpty() ? 0 : Employee::whereIn('id', $gone->pluck('id'))->update(['separated_at' => $now]));
+        }
+
         $summary = count($rows) . ' added (' . collect($added)->map(fn ($n, $s) => "{$n} {$s}")->implode(', ') . '), '
             . count($changes) . ' updated' . ($reassigned ? " ({$reassigned} under a new HRIS ID)" : '') . ", {$unchanged} already up to date"
             . ($merges ? ', ' . count($merges) . ' duplicate(s) merged' : '')
             . ($skipped['deleted'] ? ", {$skipped['deleted']} deleted employee(s) left as they are" : '')
             . ($skipped['type'] ? ", {$skipped['type']} of another employment type left out" : '')
             . ($skipped['incomplete'] ? ", {$skipped['incomplete']} with no position title or name in HRIS left out" : '')
-            . ($skipped['office'] ? ", {$skipped['office']} in HRIS offices with no office mapping left out" : '');
+            . ($skipped['office'] ? ", {$skipped['office']} in HRIS offices with no office mapping left out" : '')
+            . ($separated ? ", {$separated} no longer in HRIS marked separated" : '')
+            . ($returned ? ", {$returned} back in HRIS" : '');
 
         ActivityLogService::log('updated', 'Employees', ($scheduled ? 'Monthly sync' : 'Synced employees') . " from HRIS: {$summary}", properties: [
             'added' => $added,
             'skipped' => $skipped,
-            'updated' => collect($changes)->map(fn ($c) => ['employee' => $c[0]->name] + collect($c[1])->map(fn ($v, $k) => ['from' => $c[0]->{$k}, 'to' => $v])->all())->values()->all(),
+            'updated' => collect($changes)->map(fn ($c) => ['employee' => $c[0]->name] + collect($c[1])->map(fn ($v, $k) => $k === 'monthly_salary' ? 'updated' : ['from' => $c[0]->{$k}, 'to' => $v])->all())->values()->all(),
             'merged' => collect($merges)->map(fn ($m) => ['employee' => $m[0]->name, 'kept' => "#{$m[0]->id} ({$m[0]->employee_id})", 'removed' => "#{$m[1]->id} ({$m[1]->employee_id})"])->all(),
         ]);
 
@@ -153,6 +173,8 @@ class HrisEmployeeSync
             'updated' => count($changes),
             'unchanged' => $unchanged,
             'merged' => count($merges),
+            'separated' => $separated,
+            'returned' => $returned,
             'skipped' => $skipped,
         ];
     }

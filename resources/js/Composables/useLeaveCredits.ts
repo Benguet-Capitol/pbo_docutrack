@@ -19,6 +19,7 @@ export interface LeaveLike {
     date_of_filing: string;
     is_half_day?: boolean;
     number_of_working_days_applied_for?: number | string | null;
+    recommendation?: string | null;
 }
 
 export interface LeaveCredit {
@@ -32,6 +33,9 @@ export interface LeaveCredit {
 /** leaveDays: days a leave counts against its limit (half day = 0.5) */
 export const leaveDays = (leave: Pick<LeaveLike, 'is_half_day' | 'number_of_working_days_applied_for'>): number =>
     leave.is_half_day ? 0.5 : Number(leave.number_of_working_days_applied_for) || 0;
+
+/** A leave recommended for disapproval didn't proceed: left out of the Dashboard summaries and the Locator Chart, but it still uses the yearly limit (it was filed) */
+export const isDisapproved = (leave: { recommendation?: string | null }): boolean => leave?.recommendation === 'disapproval';
 
 /** formatDays: 2 -> "2", 2.5 -> "2.5" */
 export const formatDays = (days: number): string => String(Math.round(days * 10) / 10);

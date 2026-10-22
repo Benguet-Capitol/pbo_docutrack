@@ -10,6 +10,8 @@ export interface User {
     usertype: string;
     office?: number | null;
     fk_office_id?: number | null;
+    /** The user's employee record */
+    employee_id?: number | null;
 }
 
 /**

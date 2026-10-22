@@ -122,7 +122,7 @@
                     <button
                         v-if="!readOnly"
                         @click="submit"
-                        :disabled="saving || !form.name.trim()"
+                        :disabled="saving || !form.name.trim() || (!!role && !hasChanges)"
                         class="inline-flex items-center gap-2 px-5 py-3 text-xs font-medium text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-all duration-200 disabled:opacity-60"
                     >
                         <i :class="saving ? 'fas fa-spinner fa-spin' : 'fas fa-save'"></i>
@@ -143,6 +143,7 @@
 </template>
 
 <script setup lang="ts">
+import { useFormChanges } from '@/Composables/useFormChanges';
 import { ref, computed, watch } from 'vue';
 import MissingFieldsHint from '@/Components/MissingFieldsHint.vue';
 import type { Role, PermissionGroup, RolePayload } from '../Composables/useRolesData';
@@ -166,6 +167,9 @@ const selected = ref(new Set<string>());
 const permissionSearch = ref('');
 
 const readOnly = computed(() => !!props.role?.is_system);
+
+// Update stays disabled until the name, description or permissions change
+const { hasChanges } = useFormChanges(() => ({ form: form.value, selected: selected.value }), () => props.show);
 
 // Reset the form each time the modal opens
 watch(() => props.show, (show) => {

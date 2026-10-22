@@ -154,6 +154,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref } from 'vue';
+import { employeeOfUser } from '@/Composables/useUserEmployee';
 import { usePage } from '@inertiajs/vue3';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import PageHead from '@/Components/PageHead.vue';
@@ -190,7 +191,7 @@ const administratorUsers = computed(() => {
 const administrativeStaffEmployees = computed(() => {
     const adminUsers = documentsComposable.users.value.filter(user => user.usertype === 'Administrative');
     return adminUsers.map(user => {
-        const emp = documentsComposable.employees.value.find(e => e.name === user.name);
+        const emp = employeeOfUser(documentsComposable.employees.value, user);
         return emp || { id: user.id, name: user.name, designation: '' };
     });
 });

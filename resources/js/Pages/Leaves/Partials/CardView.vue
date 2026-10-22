@@ -17,8 +17,12 @@
                     <span class="inline-block px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 rounded-full text-xs font-semibold">
                         {{ leave.employee.name }}
                     </span>
-                    <span class="inline-block px-2 py-1 bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 rounded text-xs font-semibold">
-                        {{ leave.type_of_leave }}
+                    <span
+                        v-for="entry in (leave.entries?.length ? leave.entries : [leave])"
+                        :key="entry.id"
+                        class="inline-block px-2 py-1 bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 rounded text-xs font-semibold"
+                    >
+                        {{ entry.type_of_leave }}
                     </span>
                 </div>
             </div>

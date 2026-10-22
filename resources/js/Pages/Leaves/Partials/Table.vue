@@ -53,9 +53,16 @@
                         </span>
                     </td>
                     <td class="px-4 py-2 text-xs">
-                        <span class="inline-block px-2 py-1 bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 rounded text-xs font-semibold">
-                            {{ leave.type_of_leave }}
-                        </span>
+                        <div class="flex flex-wrap gap-1">
+                            <span
+                                v-for="entry in (leave.entries?.length ? leave.entries : [leave])"
+                                :key="entry.id"
+                                class="inline-block px-2 py-1 bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 rounded text-xs font-semibold"
+                                :title="(leave.entries?.length ?? 0) > 1 ? `${entry.number_of_working_days_applied_for} day(s)` : undefined"
+                            >
+                                {{ entry.type_of_leave }}
+                            </span>
+                        </div>
                     </td>
                     <td class="px-4 py-2 text-xs text-gray-700 dark:text-gray-300">
                         <div class="flex flex-col gap-1">

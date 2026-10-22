@@ -89,7 +89,7 @@
             :employees="sortedEmployees"
             :loading="creating"
             :leave-types="leaveTypes"
-            :leave-credit="leaveCreditInfo"
+            :leave-credits="leaveCreditInfo"
             :missing-fields="missingLeaveFields"
             :limit-message="leaveLimitMessage"
             @close="closeCreateModal"
@@ -103,7 +103,7 @@
             :employees="sortedEmployees"
             :loading="updating"
             :leave-types="leaveTypes"
-            :leave-credit="leaveCreditInfo"
+            :leave-credits="leaveCreditInfo"
             :missing-fields="missingLeaveFields"
             :limit-message="leaveLimitMessage"
             @close="closeEditModal"
@@ -123,6 +123,7 @@
             :show="showPreviewModal"
             :leave="previewLeave"
             :employee="previewEmployee"
+            :signatories="previewSignatories"
             :mode="previewMode"
             :leave-id="previewLeaveId"
             :saving="creating"
@@ -133,7 +134,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, computed, watch } from 'vue';
 import Toast from '@/Components/Toast.vue';
 import PageHead from '@/Components/PageHead.vue';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
@@ -150,6 +151,7 @@ import CreateModal from './Partials/CreateModal.vue';
 import EditModal from './Partials/EditModal.vue';
 import DeleteModal from './Partials/DeleteModal.vue';
 import PreviewModal from './Partials/PreviewModal.vue';
+import { applyDefaultSignatories, resolveLeaveSignatory, followApplicantSignatory } from './Composables/useLeaveSignatories';
 import { useResponsiveView } from '@/Composables/useResponsiveView';
 
 // Table on desktop (user can switch to cards), always cards on small screens
@@ -240,12 +242,44 @@ const leaveTypes = [
 const currentDeleteRecord = ref<any>(null);
 
 // Wrapper methods to handle modal opening and data refresh
+// Signatories default to the current PHRMDO, Provincial Budget Officer and Provincial Governor
 const openCreateModal = () => {
     _openCreateModal();
+    applyDefaultSignatories(formData.value as any, employees.value);
 };
 
 const openEditModal = (leave: any) => {
     _openEditModal(leave);
+    applyDefaultSignatories(formData.value as any, employees.value);
+    // Leaves saved before salaries were kept get the current one
+    if (formData.value.salary === '' || formData.value.salary === null) loadSalary();
+};
+
+// The authorized official follows the applicant (Governor for a department head, else the Provincial Administrator)
+// (only when the employee is changed in the open form, not when another leave is opened)
+watch(() => [formData.value.employee_id, formData.value.control_no] as const, ([, controlNo], [previousId, previousControlNo]) => {
+    if (controlNo === previousControlNo && (showCreateModal.value || showEditModal.value)) {
+        followApplicantSignatory(formData.value as any, employees.value, previousId);
+        loadSalary();
+    }
+});
+
+/** 5. SALARY: the chosen employee's current monthly salary (from HRIS) */
+const loadSalary = async () => {
+    const employeeId = Number(formData.value.employee_id);
+    if (!employeeId) {
+        formData.value.salary = '';
+        return;
+    }
+    try {
+        const response = await fetch(`/api/leaves/employee-salary/${employeeId}`);
+        if (!response.ok) return;
+        const { salary } = await response.json();
+        // The employee may have been changed again while loading
+        if (Number(formData.value.employee_id) === employeeId) formData.value.salary = salary ?? '';
+    } catch {
+        // Leave the field for manual entry
+    }
 };
 
 const openDeleteModal = (leave: any) => {
@@ -265,6 +299,11 @@ const previewLeaveId = ref<number | null>(null);
 const previewEmployee = computed(() =>
     employees.value.find((emp: any) => emp.id === Number(previewLeave.value?.employee_id)) || previewLeave.value?.employee || null
 );
+const previewSignatories = computed(() => ({
+    certified_by: resolveLeaveSignatory(employees.value, previewLeave.value, 'certified_by'),
+    recommended_by: resolveLeaveSignatory(employees.value, previewLeave.value, 'recommended_by'),
+    approved_by: resolveLeaveSignatory(employees.value, previewLeave.value, 'approved_by'),
+}));
 
 /** Create flow: form -> preview -> Confirm & Save */
 const openCreatePreview = () => {

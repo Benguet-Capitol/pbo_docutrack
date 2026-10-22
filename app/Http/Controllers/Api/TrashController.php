@@ -84,6 +84,15 @@ class TrashController extends Controller
                 if ($trashed->isEmpty()) {
                     continue;
                 }
+                // A leave application (several leave types under one control number) is one item; restoring or
+                // deleting it acts on all its types (resolveItems)
+                if ($key === 'leaves') {
+                    $trashed = $trashed->groupBy('control_no')->map(function ($rows) {
+                        $first = $rows->sortBy('id')->first();
+                        $first->application_types = $rows->sortBy('id')->pluck('type_of_leave')->implode(', ');
+                        return $first;
+                    })->values();
+                }
 
                 $deletedBy = $this->deletedByLookup($class, $trashed->pluck('id')->all());
 
@@ -245,9 +254,16 @@ class TrashController extends Controller
         $models = [];
         foreach ($items as $item) {
             $class = self::MODULES[$item['module']][1];
-            $models[] = $class::onlyTrashed()->findOrFail($item['id']);
+            $model = $class::onlyTrashed()->findOrFail($item['id']);
+            // A leave application's types (rows sharing the control number) are restored or removed together
+            $group = $model instanceof Leave
+                ? Leave::onlyTrashed()->where('control_no', $model->control_no)->get()->all()
+                : [$model];
+            foreach ($group as $member) {
+                $models[$class . ':' . $member->getKey()] = $member;
+            }
         }
-        return $models;
+        return array_values($models);
     }
 
     /**
@@ -275,7 +291,7 @@ class TrashController extends Controller
         $parts = match ($module) {
             'documents' => [$model->document_type, $model->particulars, $model->source ? "from {$model->source}" : null],
             'records' => [$model->record_type, $model->title],
-            'leaves' => [$model->employee?->name, $model->type_of_leave, $model->date_of_filing?->format('Y-m-d')],
+            'leaves' => [$model->employee?->name, $model->application_types ?? $model->type_of_leave, $model->date_of_filing?->format('Y-m-d')],
             'travel_orders' => [$employeeNames($model->employees), $model->going_to],
             'pass_slips' => [$employeeNames($model->employees), $model->location, $model->date?->format('Y-m-d')],
             'time_slips' => [$model->requestingEmployee?->name, $model->date?->format('Y-m-d')],

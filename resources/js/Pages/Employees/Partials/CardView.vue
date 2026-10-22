@@ -11,7 +11,7 @@
                     {{ initials(employee.name) }}
                 </div>
                 <div class="min-w-0">
-                    <h4 class="text-sm font-bold text-gray-900 dark:text-gray-100 leading-tight break-words">{{ employee.name }}</h4>
+                    <h4 class="text-sm font-bold text-gray-900 dark:text-gray-100 leading-tight break-words">{{ employee.name }}<span v-if="employee.separated" class="ml-1 px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-200" :title="`No longer in HRIS since ${employee.separated_at}; hidden from pickers`">Separated</span></h4>
                     <p class="text-gray-600 dark:text-gray-300 break-words">{{ employee.full_position || employee.designation || '—' }}</p>
                     <p class="mt-0.5 flex flex-wrap items-center gap-1.5">
                         <span class="font-mono text-gray-500 dark:text-gray-400">{{ employee.employee_id }}</span>

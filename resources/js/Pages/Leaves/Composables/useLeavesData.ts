@@ -15,6 +15,8 @@ export interface Leave {
     employee_id: number;
     employee: Employee;
     date_of_filing: string;
+    /** Monthly salary as of filing (5. SALARY) */
+    salary?: string | number | null;
     type_of_leave: string;
     number_of_working_days_applied_for: number;
     is_half_day: boolean;
@@ -27,9 +29,50 @@ export interface Leave {
     illness: string | null;
     completion_type: string | null;
     other_type: string | null;
+    certified_by_employee_id?: number | null;
+    certified_by_title?: string | null;
+    recommended_by_employee_id?: number | null;
+    recommended_by_title?: string | null;
+    approved_by_employee_id?: number | null;
+    approved_by_title?: string | null;
+    /** 7.B: "approval", "disapproval" or null (pending) */
+    recommendation?: string | null;
+    disapproval_reason?: string | null;
     created_at: string;
     updated_at: string;
+    /** Application only: every leave type in it (rows sharing the control number), oldest first */
+    entries?: Leave[];
 }
+
+/**
+ * Rows with the same control number are one application (several leave types filed together). The application
+ * keeps the first row's fields (id, employee, filing date, signatories) and sums or joins the per-type ones,
+ * so lists, search and sorting treat it like a single leave.
+ */
+export const groupApplications = (rows: Leave[]): Leave[] => {
+    const groups = new Map<string, Leave[]>();
+    for (const row of rows) {
+        const group = groups.get(row.control_no);
+        group ? group.push(row) : groups.set(row.control_no, [row]);
+    }
+    return [...groups.values()].map((group) => {
+        const entries = group.slice().sort((a, b) => a.id - b.id);
+        if (entries.length === 1) return { ...entries[0], entries };
+        const join = (pick: (row: Leave) => string | null | undefined) => entries.map(pick).filter(Boolean).join(', ') || null;
+        return {
+            ...entries[0],
+            entries,
+            type_of_leave: entries.map((row) => row.type_of_leave).join(', '),
+            number_of_working_days_applied_for: entries.reduce((sum, row) => sum + (row.is_half_day ? 0.5 : Number(row.number_of_working_days_applied_for) || 0), 0),
+            is_half_day: false,
+            half_day_period: null,
+            inclusive_dates: entries.flatMap((row) => row.inclusive_dates || []),
+            purpose: join((row) => row.purpose),
+            illness: join((row) => row.illness),
+            other_type: join((row) => row.other_type),
+        };
+    });
+};
 
 export function useLeavesData() {
     const leaves = ref<Leave[]>([]);
@@ -65,7 +108,7 @@ export function useLeavesData() {
 
     const fetchEmployees = async () => {
         try {
-            const response = await fetch('/api/employees?scope=pbo');
+            const response = await fetch('/api/employees');
             if (!response.ok) throw new Error('Failed to fetch employees');
             employees.value = await response.json();
         } catch (err: any) {
@@ -95,8 +138,11 @@ export function useLeavesData() {
         }
     };
 
+    /** One entry per application */
+    const applications = computed(() => groupApplications(leaves.value));
+
     const filteredLeaves = computed(() => {
-        let filtered = filterByYear(leaves.value);
+        let filtered = filterByYear(applications.value);
 
         if (searchQuery.value) {
             const query = searchQuery.value.toLowerCase();
@@ -254,6 +300,7 @@ export function useLeavesData() {
         availableYears,
         // State
         leaves,
+        applications,
         employees,
         searchQuery,
         currentPage,

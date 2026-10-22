@@ -205,7 +205,7 @@
                             <i class="fas fa-times"></i>
                             Cancel
                         </button>
-                        <MissingFieldsHint :fields="missingFields" :message="submitMessage" />
+                        <MissingFieldsHint :fields="missingFields" :message="submitMessage || (hasChanges ? null : NO_CHANGES_MESSAGE)" />
                     </div>
                 </div>
             </div>
@@ -216,6 +216,7 @@
 <script setup lang="ts">
 import { isPboStaff, inPboScope } from '@/Composables/useOfficials';
 import MissingFieldsHint from '@/Components/MissingFieldsHint.vue';
+import { useFormChanges, NO_CHANGES_MESSAGE } from '@/Composables/useFormChanges';
 import { computed } from 'vue';
 import SignatoryFields from '@/Components/SignatoryFields.vue';
 import { isProvincialBudgetOfficer } from '@/Composables/useSignatory';
@@ -268,7 +269,9 @@ const submitMessage = computed<string | null>(() => {
     const f: any = props.formData || {};
     return f.returnType === 'time' && f.expected_return_time && f.requested_time && f.expected_return_time <= f.requested_time ? 'Return time must be after the requested leave time' : null;
 });
-const canSubmit = computed(() => missingFields.value.length === 0 && !submitMessage.value);
+// Update stays disabled until something is changed
+const { hasChanges } = useFormChanges(() => props.formData, () => !!props.show);
+const canSubmit = computed(() => missingFields.value.length === 0 && !submitMessage.value && hasChanges.value);
 
 const emit = defineEmits<{
     'update:formData': [data: any];

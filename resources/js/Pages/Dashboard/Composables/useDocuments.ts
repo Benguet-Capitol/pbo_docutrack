@@ -1,3 +1,4 @@
+import { employeeOfUser } from '@/Composables/useUserEmployee';
 import { computed, ref, Ref } from 'vue';
 
 interface Document {
@@ -34,7 +35,7 @@ export const useDocuments = () => {
     // Reference data
     const offices = ref<Array<{ id: number; office_name: string }>>([]);
     const municipalities = ref<Array<{ id: number; name: string }>>([]);
-    const users = ref<Array<{ id: number; name: string; usertype?: string }>>([]);
+    const users = ref<Array<{ id: number; name: string; usertype?: string; employee_id?: number | null }>>([]);
     const employees = ref<Array<{ id: number; employee_id: string; name: string; office_id: number; designation: string }>>([]);
 
     /**
@@ -276,7 +277,7 @@ export const useDocuments = () => {
         if (!userId) return 'N/A';
         const user = users.value.find(u => u.id === userId);
         if (!user) return 'N/A';
-        const employee = employees.value.find(e => e.name === user.name);
+        const employee = employeeOfUser(employees.value, user);
         return employee?.designation || 'N/A';
     };
 

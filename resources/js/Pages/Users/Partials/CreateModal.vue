@@ -264,6 +264,7 @@ const employeeMatches = computed(() => {
     const query = employeeSearch.value.trim().toLowerCase();
     if (query.length < 2) return [];
     return (props.employees as any[] || [])
+        .filter((emp: any) => !emp.separated)
         .filter((emp: any) => emp.name?.toLowerCase().includes(query)
             || String(emp.employee_id ?? '').toLowerCase().includes(query)
             || emp.office?.office_abbreviation?.toLowerCase().includes(query))

@@ -159,7 +159,7 @@
                         <i class="fas fa-times"></i>
                         Cancel
                     </button>
-                    <MissingFieldsHint :fields="missingFields" :message="submitMessage" />
+                    <MissingFieldsHint :fields="missingFields" :message="submitMessage || (hasChanges ? null : NO_CHANGES_MESSAGE)" />
                 </div>
             </div>
         </div>
@@ -168,6 +168,7 @@
 
 <script setup lang="ts">
 import MissingFieldsHint from '@/Components/MissingFieldsHint.vue';
+import { useFormChanges, NO_CHANGES_MESSAGE } from '@/Composables/useFormChanges';
 import { ref, watch, computed } from 'vue';
 import type { FormData } from '../Composables/useUserForm';
 import type { Office } from '../Composables/useUserData';
@@ -209,7 +210,9 @@ const submitMessage = computed<string | null>(() => {
     const f: any = props.formData || {};
     return (f.password || f.password_confirmation) ? (String(f.password ?? '').length < 6 ? 'New password must be at least 6 characters' : (f.password !== f.password_confirmation ? 'Passwords do not match' : null)) : null;
 });
-const canSubmit = computed(() => missingFields.value.length === 0 && !submitMessage.value);
+// Update stays disabled until something is changed
+const { hasChanges } = useFormChanges(() => props.formData, () => !!props.showEditModal);
+const canSubmit = computed(() => missingFields.value.length === 0 && !submitMessage.value && hasChanges.value);
 
 const emit = defineEmits<{
     'close': [];

@@ -18,7 +18,7 @@ class UserController extends Controller
     public function index(): JsonResponse
     {
         try {
-            $users = User::select('id', 'name', 'username', 'usertype', 'fk_office_id')->get();
+            $users = User::select('id', 'name', 'username', 'usertype', 'fk_office_id', 'employee_id')->get();
             return response()->json($users);
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], 500);
@@ -37,6 +37,7 @@ class UserController extends Controller
                 'password' => 'required|string|min:6',
                 'usertype' => 'required|string|exists:roles,name',
                 'office' => 'required|integer',
+                'employee_id' => 'nullable|integer|exists:employees,id',
             ]);
 
             // Map 'office' to 'fk_office_id' for the model
@@ -72,6 +73,7 @@ class UserController extends Controller
                 'password' => 'sometimes|string|min:6',
                 'usertype' => 'sometimes|string|exists:roles,name',
                 'office' => 'sometimes|integer',
+                'employee_id' => 'sometimes|nullable|integer|exists:employees,id',
             ]);
 
             // Map 'office' to 'fk_office_id' for the model

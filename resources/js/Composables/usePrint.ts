@@ -126,12 +126,19 @@ export const printSafely = async (): Promise<void> => {
         })
         .join('\n');
 
-    const clone = root.cloneNode(true) as HTMLElement;
+    // A page marked data-print-page-only prints just itself on its own paper size (no modal frame or backdrop)
+    const page = root.querySelector<HTMLElement>('#preview-content[data-print-page-only]');
+    const clone = (page ?? root).cloneNode(true) as HTMLElement;
+    const pageCss = page
+        ? `@page { size: ${page.dataset.pageWidthIn}in ${page.dataset.pageHeightIn}in; margin: ${page.dataset.pageMarginIn || 0}in; }` +
+          ` @media print { html, body { width: ${page.dataset.pageWidthIn}in; height: ${page.dataset.pageHeightIn}in; overflow: hidden !important; } }` +
+          ` #preview-content { margin: 0 !important; box-shadow: none !important; }`
+        : '';
 
     doc.open();
     doc.write(
         `<!DOCTYPE html><html><head><meta charset="utf-8"><base href="${document.baseURI}">${headMarkup}` +
-            `<style>${IFRAME_OVERRIDES}</style></head><body></body></html>`
+            `<style>${IFRAME_OVERRIDES}${pageCss}</style></head><body></body></html>`
     );
     doc.close();
     doc.body.appendChild(doc.importNode(clone, true));
