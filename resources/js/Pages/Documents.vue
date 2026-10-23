@@ -121,205 +121,115 @@
                     <p class="text-sm text-gray-500 dark:text-gray-500 mt-1">Get started by creating a new document</p>
                 </div>
 
-                <!-- Data Table: shown in table view once documents data is loaded -->
+                <!-- Data Table: shown in table view once documents data is loaded (list style shared with pbo-registryV2:
+                     the document pinned on the left, related details grouped, shaded rows, actions pinned on the right) -->
                 <div v-else-if="viewMode === 'table'" class="overflow-x-auto">
-                    <table class="w-full text-left table-fixed">
-                        <colgroup>
-                            <col class="w-16">
-                            <col class="w-16">
-                            <col class="w-20">
-                            <col class="w-20">
-                            <col class="w-32">
-                            <col class="w-20">
-                            <col class="w-20">
-                            <col class="w-20">
-                            <col class="w-28">
-                            <col class="w-20">
-                        </colgroup>
-                        <!-- Table Header: Contains sortable column headers -->
-                        <thead class="bg-gray-100 dark:bg-gray-900 border-b-2 border-gray-300 dark:border-gray-700">
+                    <table class="w-full min-w-[1000px] text-left text-xs border-separate border-spacing-0">
+                        <thead>
                             <tr>
-                                <!-- Tracking No Header: Sortable -->
-                                <th class="px-6 py-3 text-xs font-bold text-gray-700 dark:text-gray-200">
-                                    <button @click="toggleSort('tracking_no')" class="flex items-center gap-2 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
-                                        Tracking No
-                                        <span v-if="sortBy === 'tracking_no'" class="text-xs">{{ sortOrder === 'asc' ? '▲' : '▼' }}</span>
+                                <th class="sticky left-0 z-[2] min-w-[16rem]" :class="LIST_HEAD">
+                                    <div class="flex items-center gap-1.5">
+                                        <template v-for="(field, i) in DOCUMENT_SORTS" :key="field.key">
+                                            <span v-if="i > 0" class="text-gray-400 dark:text-gray-500">/</span>
+                                            <button @click="toggleSort(field.key as any)" class="flex items-center gap-1 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
+                                                {{ field.label }}
+                                                <span v-if="sortBy === field.key">{{ sortOrder === 'asc' ? '▲' : '▼' }}</span>
+                                            </button>
+                                        </template>
+                                    </div>
+                                </th>
+                                <th :class="LIST_HEAD">
+                                    <button @click="toggleSort('particulars')" class="flex items-center gap-1 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
+                                        Particulars &amp; Remarks
+                                        <span v-if="sortBy === 'particulars'">{{ sortOrder === 'asc' ? '▲' : '▼' }}</span>
                                     </button>
                                 </th>
-                                <!-- Date Header: Sortable -->
-                                <th class="px-6 py-3 text-xs font-bold text-gray-700 dark:text-gray-200">
-                                    <button @click="toggleSort('date')" class="flex items-center gap-2 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
-                                        Date
-                                        <span v-if="sortBy === 'date'" class="text-xs">{{ sortOrder === 'asc' ? '▲' : '▼' }}</span>
+                                <th :class="LIST_HEAD">
+                                    <button @click="toggleSort('source')" class="flex items-center gap-1 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
+                                        Source &amp; Custodian
+                                        <span v-if="sortBy === 'source'">{{ sortOrder === 'asc' ? '▲' : '▼' }}</span>
                                     </button>
                                 </th>
-                                <!-- Document Type Header: Sortable -->
-                                <th class="px-6 py-3 text-xs font-bold text-gray-700 dark:text-gray-200">
-                                    <button @click="toggleSort('document_type')" class="flex items-center gap-2 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
-                                        Type
-                                        <span v-if="sortBy === 'document_type'" class="text-xs">{{ sortOrder === 'asc' ? '▲' : '▼' }}</span>
-                                    </button>
-                                </th>
-                                <!-- Source Header: Sortable -->
-                                <th class="px-6 py-3 text-xs font-bold text-gray-700 dark:text-gray-200">
-                                    <button @click="toggleSort('source')" class="flex items-center gap-2 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
-                                        Source
-                                        <span v-if="sortBy === 'source'" class="text-xs">{{ sortOrder === 'asc' ? '▲' : '▼' }}</span>
-                                    </button>
-                                </th>
-                                <!-- Particulars Header: Sortable -->
-                                <th class="px-6 py-3 text-xs font-bold text-gray-700 dark:text-gray-200">
-                                    <button @click="toggleSort('particulars')" class="flex items-center gap-2 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
-                                        Particulars
-                                        <span v-if="sortBy === 'particulars'" class="text-xs">{{ sortOrder === 'asc' ? '▲' : '▼' }}</span>
-                                    </button>
-                                </th>
-                                <!-- Remarks Header: Sortable -->
-                                <th class="px-6 py-3 text-xs font-bold text-gray-700 dark:text-gray-200">
-                                    <button @click="toggleSort('remarks')" class="flex items-center gap-2 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
-                                        Remarks
-                                        <span v-if="sortBy === 'remarks'" class="text-xs">{{ sortOrder === 'asc' ? '▲' : '▼' }}</span>
-                                    </button>
-                                </th>
-                                <!-- Custodian Header: Sortable -->
-                                <th class="px-6 py-3 text-xs font-bold text-gray-700 dark:text-gray-200">
-                                    <button @click="toggleSort('user_id')" class="flex items-center gap-2 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
-                                        Custodian
-                                        <span v-if="sortBy === 'user_id'" class="text-xs">{{ sortOrder === 'asc' ? '▲' : '▼' }}</span>
-                                    </button>
-                                </th>
-                                <!-- Status Header: Sortable -->
-                                <th class="px-6 py-3 text-xs font-bold text-gray-700 dark:text-gray-200">
-                                    <button @click="toggleSort('status')" class="flex items-center gap-2 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
+                                <th :class="LIST_HEAD" class="min-w-[8rem]">
+                                    <button @click="toggleSort('status')" class="flex items-center gap-1 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
                                         Status
-                                        <span v-if="sortBy === 'status'" class="text-xs">{{ sortOrder === 'asc' ? '▲' : '▼' }}</span>
+                                        <span v-if="sortBy === 'status'">{{ sortOrder === 'asc' ? '▲' : '▼' }}</span>
                                     </button>
                                 </th>
-                                <th class="px-6 py-3 text-xs font-bold text-gray-700 dark:text-gray-200 text-center">
-                                    Remaining Duration
-                                </th>
-                                <th class="px-6 py-3 text-xs font-bold text-gray-700 dark:text-gray-200 text-center">Actions</th>
+                                <th :class="LIST_HEAD" class="min-w-[9rem]">Remaining Duration</th>
+                                <th class="sticky right-0 z-[2] text-center shadow-[inset_1px_0_0_theme(colors.gray.300)] dark:shadow-[inset_1px_0_0_theme(colors.gray.700)]" :class="LIST_HEAD">Actions</th>
                             </tr>
                         </thead>
-                        <!-- Table Body: Renders rows for each document in paginatedDocuments -->
-                        <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
-                            <!-- v-for loops through paginatedDocuments (filtered, sorted, and paginated data) -->
-                            <!-- :key uses document.id for efficient Vue rendering -->
+                        <tbody>
                             <tr
-                                v-for="document in paginatedDocuments"
+                                v-for="(document, index) in paginatedDocuments"
                                 :key="document.id"
                                 @click="viewDocumentTransactions(document)"
-                                :class="[
-                                    'transition-colors duration-150 cursor-pointer',
-                                    showTransactionsModal && documentViewingTransactions?.id === document.id 
-                                        ? 'bg-indigo-50 dark:bg-indigo-900/20 border-l-4 border-indigo-500' 
-                                        : 'bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700'
-                                ]"
+                                class="cursor-pointer transition-colors [&>td]:border-t [&>td]:border-t-gray-200 dark:[&>td]:border-t-gray-700"
+                                :class="documentRowClass(document, index)"
                             >
-                                <!-- Tracking No Column -->
-                                <td class="px-4 py-2 text-xs font-medium text-gray-900 dark:text-gray-100">
-                                    {{ document.tracking_no }}
-                                </td>
-                                <!-- Date Column -->
-                                <td class="px-4 py-2 text-xs text-gray-700 dark:text-gray-300">
-                                    {{ new Date(document.date).toLocaleDateString() }}
-                                </td>
-                                <!-- Document Type Column -->
-                                <td class="px-4 py-2 text-xs text-gray-600 dark:text-gray-400">
-                                    <span v-if="document.document_type">{{ document.document_type }}</span>
-                                    <span v-else class="text-gray-400 dark:text-gray-600 italic">-</span>
-                                </td>
-                                <!-- Source Column -->
-                                <td class="px-4 py-2 text-xs text-gray-600 dark:text-gray-400">
-                                    <span v-if="document.source">{{ document.source }}</span>
-                                    <span v-else class="text-gray-400 dark:text-gray-600 italic">-</span>
-                                </td>
-                                <!-- Particulars Column: Truncate if too long -->
-                                <td class="px-4 py-2 text-xs text-gray-600 dark:text-gray-400">
-                                    <span v-if="document.particulars" :title="document.particulars">{{ document.particulars }}</span>
-                                    <span v-else class="text-gray-400 dark:text-gray-600 italic">-</span>
-                                </td>
-                                <!-- Remarks Column: Truncate if too long -->
-                                <td class="px-4 py-2 text-xs text-gray-600 dark:text-gray-400">
-                                    <span v-if="document.remarks" :title="document.remarks" style="white-space: pre-wrap; word-break: break-word;">{{ document.remarks }}</span>
-                                    <span v-else class="text-gray-400 dark:text-gray-600 italic">-</span>
-                                </td>
-                                <!-- Custodian Column: Shows office/municipality if forwarded, otherwise current user -->
-                                <td class="px-4 py-2 text-xs text-gray-600 dark:text-gray-400">
-                                    {{ getCustodianDisplay(document) }}
-                                </td>
-                                <!-- Status Column -->
-                                <td class="px-4 py-2 text-xs text-center">
-                                    <span v-if="getDisplayStatus(document) === 'created'" class="px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 rounded-full text-xs font-medium">Created</span>
-                                    <span v-else-if="getDisplayStatus(document) === 'forwarded'" class="px-2 py-1 bg-cyan-100 dark:bg-cyan-900/30 text-cyan-800 dark:text-cyan-300 rounded-full text-xs font-medium">Forwarded</span>
-                                    <span v-else-if="getDisplayStatus(document) === 'to be received'" class="px-2 py-1 bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-300 rounded-full text-xs font-medium">To Be Received</span>
-                                    <span v-else-if="getDisplayStatus(document) === 'pending'" class="px-2 py-1 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300 rounded-full text-xs font-medium">Pending</span>
-                                    <span v-else-if="getDisplayStatus(document) === 'finalized'" class="px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 rounded-full text-xs font-medium">Transaction Ended</span>
-                                    <span v-else class="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300 rounded-full text-xs font-medium">{{ getDisplayStatus(document) }}</span>
-                                </td>
-                                <!-- Remaining Duration Column -->
-                                <td class="px-4 py-2 text-xs text-center font-medium">
-                                    <div :class="getTimeLeftStyles(document)">
-                                        {{ getTimeLeftText(document) }}
+                                <!-- Document: tracking no., type and date -->
+                                <td class="sticky left-0 z-[1] bg-inherit px-3 py-2.5 align-top">
+                                    <div class="text-[13px] font-semibold text-gray-900 dark:text-gray-100 break-all">{{ document.tracking_no }}</div>
+                                    <div class="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
+                                        <span v-if="document.document_type" class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-semibold" :class="documentTypeStyle(document.document_type).classes">
+                                            <i :class="[documentTypeStyle(document.document_type).icon, 'text-[10px]']"></i>{{ document.document_type }}
+                                        </span>
+                                        <span class="text-[11px] text-gray-500 dark:text-gray-400 whitespace-nowrap">
+                                            <i class="far fa-calendar text-[10px] mr-0.5"></i>{{ new Date(document.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) }}
+                                        </span>
                                     </div>
                                 </td>
-                                <!-- Actions Column: Contains edit/delete dropdown menu -->
-                                <td class="px-4 py-2 text-xs text-center">
-                                    <div class="flex items-center justify-center gap-2">
-                                        <!-- Forward Button: Visible if created or pending and user has permission -->
-                                        <button 
+
+                                <!-- Particulars and remarks -->
+                                <td class="px-3 py-2.5 align-top max-w-md">
+                                    <p v-if="document.particulars" class="text-gray-800 dark:text-gray-200 break-words line-clamp-2" :title="document.particulars">{{ document.particulars }}</p>
+                                    <p v-if="document.remarks" class="mt-1 text-[11px] text-gray-500 dark:text-gray-400 break-words" style="white-space: pre-wrap;">
+                                        <i class="fas fa-comment-dots text-[10px] mr-0.5"></i>{{ document.remarks }}
+                                    </p>
+                                    <span v-if="!document.particulars && !document.remarks" class="text-gray-400">-</span>
+                                </td>
+
+                                <!-- Source and custodian -->
+                                <td class="px-3 py-2.5 align-top min-w-[12rem]">
+                                    <div class="flex items-start gap-1.5 text-gray-700 dark:text-gray-300">
+                                        <i class="fas fa-building text-[10px] text-gray-400 mt-0.5" title="Source"></i>
+                                        <span class="break-words">{{ document.source || '—' }}</span>
+                                    </div>
+                                    <div class="mt-1 flex items-start gap-1.5 text-[11px] text-gray-500 dark:text-gray-400">
+                                        <i class="fas fa-user-tag text-[10px] mt-0.5" title="Custodian"></i>
+                                        <span class="break-words">{{ getCustodianDisplay(document) }}</span>
+                                    </div>
+                                </td>
+
+                                <!-- Status -->
+                                <td class="px-3 py-2.5 align-top">
+                                    <span :class="['inline-block px-2 py-0.5 rounded-full text-[11px] font-semibold whitespace-nowrap', statusBadge(document).classes]">{{ statusBadge(document).label }}</span>
+                                </td>
+
+                                <!-- Remaining duration -->
+                                <td class="px-3 py-2.5 align-top">
+                                    <span class="font-medium" :class="getTimeLeftStyles(document)">{{ getTimeLeftText(document) }}</span>
+                                </td>
+
+                                <!-- Actions -->
+                                <td class="sticky right-0 z-[1] hover:z-[3] focus-within:z-[3] bg-inherit px-3 py-2.5 align-top text-center shadow-[inset_1px_0_0_theme(colors.gray.200)] dark:shadow-[inset_1px_0_0_theme(colors.gray.700)]">
+                                    <div class="flex flex-wrap items-center justify-center gap-1.5">
+                                        <RowIconButton
                                             v-if="(document.status === 'created' || document.status === 'pending') && document.user_id === currentUser?.id && hasPermission('documents.forward')"
-                                            @click.stop="handleForwardDocument(document)" 
-                                            class="relative p-2 text-cyan-600 dark:text-cyan-400 bg-cyan-100 dark:bg-cyan-900/30 hover:text-cyan-700 dark:hover:text-cyan-300 hover:bg-cyan-200 dark:hover:bg-cyan-900/50 rounded-lg transition-all duration-200 group"
-                                        >
-                                            <i class="fas fa-share"></i>
-                                            <span class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-1 text-xs font-medium text-white bg-gray-900 dark:bg-gray-950 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-20">Forward</span>
-                                        </button>
-                                        <!-- Receive Button: Visible if user can receive the document -->
-                                        <button 
-                                            v-if="canReceiveDocument(document)"
-                                            @click.stop="handleReceiveDocument(document)" 
-                                            class="relative p-2 text-purple-600 dark:text-purple-400 bg-purple-100 dark:bg-purple-900/30 hover:text-purple-700 dark:hover:text-purple-300 hover:bg-purple-200 dark:hover:bg-purple-900/50 rounded-lg transition-all duration-200 group"
-                                        >
-                                            <i class="fas fa-folder-open"></i>
-                                            <span class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-1 text-xs font-medium text-white bg-gray-900 dark:bg-gray-950 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-20">Receive</span>
-                                        </button>
-                                        <!-- End Transaction Button: Visible if pending and user has permission -->
-                                        <button 
+                                            color="cyan" icon="fas fa-share" tooltip="Forward" @click.stop="handleForwardDocument(document)"
+                                        />
+                                        <RowIconButton v-if="canReceiveDocument(document)" color="purple" icon="fas fa-folder-open" tooltip="Receive" @click.stop="handleReceiveDocument(document)" />
+                                        <RowIconButton
                                             v-if="document.status === 'pending' && hasPermission('documents.finalize')"
-                                            @click.stop="handleFinalizeDocument(document)" 
-                                            class="relative p-2 text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-900/30 hover:text-green-700 dark:hover:text-green-300 hover:bg-green-200 dark:hover:bg-green-900/50 rounded-lg transition-all duration-200 group"
-                                        >
-                                            <i class="fas fa-calendar-xmark"></i>
-                                            <span class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-1 text-xs font-medium text-white bg-gray-900 dark:bg-gray-950 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-20">End Transaction</span>
-                                        </button>
-                                        <!-- View Checklist Button: Visible for Annual Budget, Supplemental Budget, and Budget Proposal documents -->
-                                        <button 
+                                            color="green" icon="fas fa-calendar-xmark" tooltip="End Transaction" @click.stop="handleFinalizeDocument(document)"
+                                        />
+                                        <RowIconButton
                                             v-if="document.document_type === 'Annual Budget' || document.document_type === 'Supplemental Budget' || document.document_type === 'Budget Proposals'"
-                                            @click.stop="viewDocumentChecklist(document)" 
-                                            class="relative p-2 text-purple-600 dark:text-purple-400 bg-purple-100 dark:bg-purple-900/30 hover:text-purple-700 dark:hover:text-purple-300 hover:bg-purple-200 dark:hover:bg-purple-900/50 rounded-lg transition-all duration-200 group"
-                                        >
-                                            <i class="fas fa-list-check"></i>
-                                            <span class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-1 text-xs font-medium text-white bg-gray-900 dark:bg-gray-950 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-20">View Checklist</span>
-                                        </button>
-                                        <!-- Edit Button: Visible if user has permission -->
-                                        <button 
-                                            v-if="hasPermission('documents.edit')"
-                                            @click.stop="handleEditDocument(document)" 
-                                            class="relative p-2 text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/30 hover:text-blue-700 dark:hover:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-900/50 rounded-lg transition-all duration-200 group"
-                                        >
-                                            <i class="fas fa-pencil-alt"></i>
-                                            <span class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-1 text-xs font-medium text-white bg-gray-900 dark:bg-gray-950 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-20">Edit</span>
-                                        </button>
-                                        <!-- Delete Button: Visible only for Developer and Administrator roles -->
-                                        <button 
-                                            v-if="hasPermission('documents.delete')"
-                                            @click.stop="handleDeleteDocument(document)" 
-                                            class="relative p-2 text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-900/30 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-200 dark:hover:bg-red-900/50 rounded-lg transition-all duration-200 group"
-                                        >
-                                            <i class="fas fa-trash-alt"></i>
-                                            <span class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-1 text-xs font-medium text-white bg-gray-900 dark:bg-gray-950 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-20">Delete</span>
-                                        </button>
+                                            color="purple" icon="fas fa-list-check" tooltip="View Checklist" @click.stop="viewDocumentChecklist(document)"
+                                        />
+                                        <RowIconButton v-if="hasPermission('documents.edit')" color="blue" icon="fas fa-pencil-alt" tooltip="Edit" @click.stop="handleEditDocument(document)" />
+                                        <RowIconButton v-if="hasPermission('documents.delete')" color="red" icon="fas fa-trash-alt" tooltip="Delete" @click.stop="handleDeleteDocument(document)" />
                                     </div>
                                 </td>
                             </tr>
@@ -351,7 +261,7 @@
                                 </div>
                                 <div class="mt-2 flex flex-wrap items-center gap-1.5">
                                     <span :class="['px-2 py-1 rounded-full text-xs font-medium', statusBadge(document).classes]">{{ statusBadge(document).label }}</span>
-                                    <span v-if="document.document_type" class="px-2 py-1 rounded bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-medium">{{ document.document_type }}</span>
+                                    <span v-if="document.document_type" class="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium" :class="documentTypeStyle(document.document_type).classes"><i :class="[documentTypeStyle(document.document_type).icon, 'text-[10px]']"></i>{{ document.document_type }}</span>
                                 </div>
                                 <p class="mt-2 text-gray-800 dark:text-gray-200 break-words line-clamp-3" :title="document.particulars">{{ document.particulars || '—' }}</p>
                             </div>
@@ -367,7 +277,7 @@
                                 </div>
                                 <div v-if="document.remarks" class="col-span-2 rounded-lg border border-gray-100 dark:border-gray-700 px-2 py-1.5 min-w-0">
                                     <div class="text-[10px] uppercase tracking-wide text-gray-500 dark:text-gray-400">Remarks</div>
-                                    <div class="text-gray-800 dark:text-gray-200 break-words line-clamp-3" style="white-space: pre-wrap;" :title="document.remarks">{{ document.remarks }}</div>
+                                    <div class="text-gray-800 dark:text-gray-200 break-words" style="white-space: pre-wrap;">{{ document.remarks }}</div>
                                 </div>
                             </div>
 
@@ -2251,6 +2161,32 @@ const STATUS_BADGES: Record<string, { label: string; classes: string; accent: st
     'to be received': { label: 'To Be Received', classes: 'bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-300', accent: 'border-t-orange-500' },
     'pending': { label: 'Pending', classes: 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300', accent: 'border-t-yellow-500' },
     'finalized': { label: 'Transaction Ended', classes: 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300', accent: 'border-t-green-500' },
+};
+
+// List view (same look as pbo-registryV2 lists): header cells, the Document column's sort buttons, row shading
+const LIST_HEAD = 'px-3 py-2 text-xs font-bold text-gray-700 dark:text-gray-200 bg-gray-100 dark:bg-gray-900 border-b-2 border-b-gray-300 dark:border-b-gray-700';
+const DOCUMENT_SORTS = [
+    { key: 'tracking_no', label: 'No.' },
+    { key: 'date', label: 'Date' },
+    { key: 'document_type', label: 'Type' },
+] as const;
+/** Colour and icon per document type, so types can be told apart at a glance */
+const DOCUMENT_TYPE_STYLES: Record<string, { classes: string; icon: string }> = {
+    // Soft tints that sit with the page's green and gray: budgets in greens/blues, referrals from slate to amber/rose by complexity
+    'Annual Budget': { classes: 'bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-300 dark:ring-emerald-800', icon: 'fas fa-book' },
+    'Supplemental Budget': { classes: 'bg-teal-50 text-teal-700 ring-1 ring-inset ring-teal-200 dark:bg-teal-900/20 dark:text-teal-300 dark:ring-teal-800', icon: 'fas fa-book-medical' },
+    'Budget Proposals': { classes: 'bg-sky-50 text-sky-700 ring-1 ring-inset ring-sky-200 dark:bg-sky-900/20 dark:text-sky-300 dark:ring-sky-800', icon: 'fas fa-file-invoice-dollar' },
+    'Referral - Simple': { classes: 'bg-slate-50 text-slate-700 ring-1 ring-inset ring-slate-200 dark:bg-slate-900/20 dark:text-slate-300 dark:ring-slate-800', icon: 'fas fa-share-square' },
+    'Referral - Complex': { classes: 'bg-amber-50 text-amber-700 ring-1 ring-inset ring-amber-200 dark:bg-amber-900/20 dark:text-amber-300 dark:ring-amber-800', icon: 'fas fa-share-square' },
+    'Referral - Highly Technical': { classes: 'bg-rose-50 text-rose-700 ring-1 ring-inset ring-rose-200 dark:bg-rose-900/20 dark:text-rose-300 dark:ring-rose-800', icon: 'fas fa-share-square' },
+};
+const documentTypeStyle = (type: string) =>
+    DOCUMENT_TYPE_STYLES[type] ?? { classes: 'bg-gray-50 text-gray-700 ring-1 ring-inset ring-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:ring-gray-700', icon: 'fas fa-file-alt' };
+
+/** Opaque rows (the pinned columns sit over the others while scrolling): shaded every other row, highlighted while its transactions are open */
+const documentRowClass = (document: Document, index: number): string => {
+    if (showTransactionsModal.value && documentViewingTransactions.value?.id === document.id) return 'bg-blue-100 dark:bg-[#1f305a]';
+    return (index % 2 === 1 ? 'bg-gray-50 dark:bg-[#192231]' : 'bg-white dark:bg-gray-800') + ' hover:bg-blue-50 dark:hover:bg-gray-700';
 };
 
 const statusBadge = (document: Document) => {

@@ -10,9 +10,9 @@
         </template>
 
         <div class="py-6 px-4 sm:px-6 lg:px-8 space-y-8">
-            <!-- HR Summary Panel Component -->
+            <!-- HR Summary Panel Component: every employee's records (only with "View all employees' leaves") -->
             <HRSummaryPanel
-                v-if="canViewHRSummary"
+                v-if="canViewHRSummary && canViewAllLeaves"
                 :canViewHRSummary="canViewHRSummary"
                 :hrLoading="hrLoading"
                 :selectedHRYear="selectedHRYear"
@@ -40,6 +40,21 @@
                 @update:selectedHRYear="handleUpdateHRYear"
                 @update:selectedHRMonth="handleUpdateHRMonth"
                 @showSummaryModal="handleShowSummaryModal"
+            />
+
+            <!-- Everyone else: their own leaves, travel orders, pass slips and tardiness/undertime -->
+            <MyHRSummary
+                v-else-if="canViewHRSummary"
+                :employee-id="ownEmployeeId"
+                :year="selectedHRYear"
+                :years="availableHRYears"
+                :leaves="leaves"
+                :all-leaves="allLeaves"
+                :travel-orders="travelOrders"
+                :pass-slips="passSlips"
+                :tardiness="tardiness"
+                :loading="hrLoading"
+                @update:year="handleUpdateHRYear"
             />
 
             <!-- Documents Section Component -->
@@ -165,6 +180,7 @@ import { usePage } from '@inertiajs/vue3';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import PageHead from '@/Components/PageHead.vue';
 import HRSummaryPanel from './Partials/HRSummaryPanel.vue';
+import MyHRSummary from './Partials/MyHRSummary.vue';
 import DocumentsSection from './Partials/DocumentsSection.vue';
 import UserStatisticsSection from './Partials/UserStatisticsSection.vue';
 import DocumentStatisticsSection from './Partials/DocumentStatisticsSection.vue';
@@ -184,6 +200,10 @@ const utilitiesComposable = useUtilities();
 
 // ============== Computed Properties (before reportsComposable initialization) ==============
 const page = usePage();
+/** Every employee's leaves (and the full HR summary); without it, the Dashboard shows the user's own summary */
+const canViewAllLeaves = computed(() => ((page.props.auth as any)?.permissions || []).includes('leaves.view_all'));
+/** The signed-in user's employee */
+const ownEmployeeId = computed<number | null>(() => Number((page.props.auth as any)?.user?.employee_id) || null);
 const canViewHRSummary = computed(() => ((page.props.auth as any)?.permissions || []).includes('hr_summary.view'));
 
 const supervisorUsers = computed(() => {
@@ -278,6 +298,7 @@ const statisticsPeriodLabel = computed(() => {
 
 const {
     leaves,
+    allLeaves,
     travelOrders,
     passSlips,
     tardiness,

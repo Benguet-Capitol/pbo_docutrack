@@ -43,8 +43,9 @@
                     </div>
                 </div>
 
-                <!-- Right side: Generate Report Button -->
+                <!-- Right side: Generate Report Button (the report covers every employee's leaves, so only with "View all employees' leaves") -->
                 <button
+                    v-if="canViewAllLeaves"
                     @click="$emit('showSummaryModal')"
                     class="inline-flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 transition-colors text-xs font-medium w-full sm:w-auto text-center"
                 >
@@ -154,6 +155,7 @@
             :format-inclusive-dates="formatInclusiveDates"
         />
 
+
         <!-- Employee Leaves by Type Summary (Yearly) (moved to HREmployeesTable) -->
         <HREmployeesTable 
             v-if="employeeLeavesSummary.length > 0"
@@ -168,8 +170,13 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
+import { usePermissions } from '@/Composables/usePermissions';
 import HRDetailsPanel from './HRDetailsPanel.vue';
 import HREmployeesTable from './HREmployeesTable.vue';
+
+// Leaves are personal data: without "leaves.view_all" the leave figures cover only the user's own leaves
+const { can } = usePermissions();
+const canViewAllLeaves = computed(() => can('leaves.view_all'));
 
 const props = defineProps({
     canViewHRSummary: Boolean,

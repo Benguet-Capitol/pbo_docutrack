@@ -167,11 +167,14 @@ const props = defineProps<{
     missingFields?: string[];
     /** Yearly leave limit problem, if any */
     limitMessage?: string | null;
+    /** Set when the user can only file leaves for their own employee */
+    onlyEmployeeId?: number | null;
 }>();
 
 /** Requesting employee: the office's staff (HRIS brings in every employee), plus whoever this record already has */
 const requestingOptions = computed(() => {
     const selected: number[] = ([props.formData.employee_id]).map(Number);
+    if (props.onlyEmployeeId) return ((props.employees || []) as any[]).filter((emp: any) => emp.id === props.onlyEmployeeId);
     return ((props.employees || []) as any[]).filter((emp: any) => isPboStaff(emp) || selected.includes(Number(emp.id)));
 });
 

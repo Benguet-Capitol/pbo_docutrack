@@ -643,6 +643,7 @@ export const useHRData = () => {
     return {
         // State
         leaves,
+        allLeaves,
         travelOrders,
         passSlips,
         tardiness,

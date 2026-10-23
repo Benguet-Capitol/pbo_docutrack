@@ -1702,7 +1702,7 @@ const fetchEmployees = async () => {
  */
 const fetchLeaves = async () => {
     try {
-        const response = await fetch('/api/leaves');
+        const response = await fetch('/api/leaves?scope=locator');
         if (response.ok) {
             // Disapproved leaves didn't proceed: the employee was not on leave
             leaves.value = (await response.json()).filter((leave: any) => !isDisapproved(leave));

@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Leave;
+use App\Models\User;
+use App\Services\RoleService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -16,6 +18,9 @@ use Illuminate\Validation\ValidationException;
  * Leave applications (CS Form No. 6). An application has one control number and can cover several leave types,
  * each with its own dates: every type is its own row (so yearly limits, the Dashboard and reports count per type),
  * and the rows share the control number, employee, filing date and signatories.
+ *
+ * Leaves are personal data (Data Privacy Act): only users with "leaves.view_all" see everyone's (the HR summary included).
+ * Others see and handle only the leaves of the employee linked to their account (users.employee_id).
  */
 class LeaveController extends Controller
 {
@@ -28,8 +33,11 @@ class LeaveController extends Controller
     /**
      * Download the application as a filled CS Form No. 6 (Application for Leave) Excel file.
      */
-    public function exportForm(Leave $leave, \App\Services\LeaveFormExporter $exporter)
+    public function exportForm(Request $request, Leave $leave, \App\Services\LeaveFormExporter $exporter)
     {
+        if (!$this->mayHandle($request->user(), $leave->employee_id)) {
+            return response()->json(['error' => 'You can only open your own leaves.'], 403);
+        }
         $path = $exporter->export($leave);
 
         return response()->download($path, $exporter->filename($leave), [
@@ -38,15 +46,35 @@ class LeaveController extends Controller
     }
 
     /**
-     * Every leave row; rows with the same control number are one application.
+     * Leave rows; rows with the same control number are one application.
+     * - "leaves.view_all" / HR summary: every employee's leaves;
+     * - ?scope=locator with the Locator Chart: who is on leave when (employee and dates only; the type shows as "Leave");
+     * - anyone else: only their own employee's leaves.
      */
     public function index(Request $request): JsonResponse
     {
         try {
-            // The Dashboard and Locator Chart read this list too: salaries only go to those who can open Leaves
-            $withSalary = $request->user() && \App\Services\RoleService::hasPermission($request->user(), 'leaves.view');
+            $user = $request->user();
+            $viewsAll = $this->viewsAll($user);
+
+            if (!$viewsAll && $request->query('scope') === 'locator' && $user && RoleService::hasPermission($user, 'locator_chart.view')) {
+                return response()->json(Leave::latest('id')->get()->map(fn (Leave $leave) => [
+                    'id' => $leave->id,
+                    'employee_id' => $leave->employee_id,
+                    'type_of_leave' => 'Leave',
+                    'inclusive_dates' => $leave->inclusive_dates,
+                    'off_days' => $leave->off_days,
+                    'is_half_day' => $leave->is_half_day,
+                    'half_day_period' => $leave->half_day_period,
+                    'recommendation' => $leave->recommendation === 'disapproval' ? 'disapproval' : null,
+                ]));
+            }
+
+            // Salaries only go to those who can open Leaves
+            $withSalary = $user && RoleService::hasPermission($user, 'leaves.view');
 
             $leaves = Leave::with('employee')
+                ->when(!$viewsAll, fn ($query) => $query->where('employee_id', $this->ownEmployeeId($user) ?? 0))
                 ->latest('id')
                 ->get()
                 ->map(fn (Leave $leave) => [
@@ -74,6 +102,7 @@ class LeaveController extends Controller
     {
         try {
             $validated = $this->validated($request);
+            $this->ensureMayFileFor($request->user(), (int) $validated['employee_id']);
             $this->ensureControlNoFree($validated['control_no']);
             $this->ensureCompleteEntries($validated);
             $this->ensureNoOverlaps($validated);
@@ -100,8 +129,12 @@ class LeaveController extends Controller
     public function update(Request $request, Leave $leave): JsonResponse
     {
         try {
+            if (!$this->mayHandle($request->user(), $leave->employee_id)) {
+                return response()->json(['error' => 'You can only edit your own leaves.'], 403);
+            }
             $current = $this->application($leave);
             $validated = $this->validated($request);
+            $this->ensureMayFileFor($request->user(), (int) $validated['employee_id']);
             if ($validated['control_no'] !== $leave->control_no) {
                 $this->ensureControlNoFree($validated['control_no']);
             }
@@ -138,9 +171,12 @@ class LeaveController extends Controller
     /**
      * Move the whole application (every leave type in it) to the Trash.
      */
-    public function destroy(Leave $leave): JsonResponse
+    public function destroy(Request $request, Leave $leave): JsonResponse
     {
         try {
+            if (!$this->mayHandle($request->user(), $leave->employee_id)) {
+                return response()->json(['error' => 'You can only delete your own leaves.'], 403);
+            }
             $controlNo = $leave->control_no;
             DB::transaction(fn () => $this->application($leave)->each->delete());
 
@@ -155,9 +191,48 @@ class LeaveController extends Controller
     /**
      * The employee's current monthly salary (from HRIS), to fill "5. SALARY" on a new leave.
      */
-    public function employeeSalary(\App\Models\Employee $employee): JsonResponse
+    public function employeeSalary(Request $request, \App\Models\Employee $employee): JsonResponse
     {
+        if (!$this->mayHandle($request->user(), $employee->id)) {
+            return response()->json(['error' => 'You can only see your own salary.'], 403);
+        }
+
         return response()->json(['salary' => $employee->monthly_salary]);
+    }
+
+    /**
+     * Control numbers in use (live and trashed), so a user who sees only their own leaves still gets the next free
+     * number. Numbers only, no personal data.
+     */
+    public function controlNumbers(): JsonResponse
+    {
+        return response()->json(Leave::withTrashed()->distinct()->pluck('control_no')->filter()->values());
+    }
+
+    /** Sees every employee's leaves ("leaves.view_all"); the HR summary shows others only their own leaves */
+    private function viewsAll(?User $user): bool
+    {
+        return $user && RoleService::hasPermission($user, 'leaves.view_all');
+    }
+
+    private function ownEmployeeId(?User $user): ?int
+    {
+        return $user?->employee_id ? (int) $user->employee_id : null;
+    }
+
+    /** May see / change this employee's leaves: everyone's with "view all", else only their own */
+    private function mayHandle(?User $user, ?int $employeeId): bool
+    {
+        return $this->viewsAll($user) || ($employeeId && $employeeId === $this->ownEmployeeId($user));
+    }
+
+    private function ensureMayFileFor(?User $user, int $employeeId): void
+    {
+        if (!$this->mayHandle($user, $employeeId)) {
+            throw ValidationException::withMessages(['employee_id' => $this->ownEmployeeId($user)
+                ? 'You can only file leaves for yourself.'
+                : 'Your account is not linked to an employee yet; ask an administrator to link it (Users).']);
+        }
     }
 
     /** The leave's application: every live row with its control number */

@@ -1,5 +1,6 @@
 import { ref, watch, computed } from 'vue';
 import { usePermissions } from '@/Composables/usePermissions';
+import { usePage } from '@inertiajs/vue3';
 import { useTrashedControlNumbers } from '@/Composables/useTrashedControlNumbers';
 import type { Leave } from './useLeavesData';
 import { leaveCredit, leaveDays, formatDays } from '@/Composables/useLeaveCredits';
@@ -120,6 +121,23 @@ export function useLeavesForm(
 ) {
     const { can } = usePermissions();
 
+    /** Sees and files leaves for every employee; otherwise only for the employee linked to the account */
+    const canViewAllLeaves = computed(() => can('leaves.view_all'));
+    const page = usePage();
+    const ownEmployeeId = computed<number | null>(() => Number((page.props.auth as any)?.user?.employee_id) || null);
+
+    // Control numbers already used (live and trashed), so the next number is free even when only own leaves are listed
+    const usedControlNumbers = ref<string[]>([]);
+    const loadUsedControlNumbers = async () => {
+        try {
+            const response = await fetch('/api/leaves/control-numbers', { headers: { Accept: 'application/json' } });
+            if (response.ok) usedControlNumbers.value = await response.json();
+        } catch {
+            // Not critical: the server still rejects a used control number
+        }
+    };
+    if (can('leaves.create') || can('leaves.edit')) loadUsedControlNumbers();
+
     // Modal visibility state
     const showCreateModal = ref(false);
     const showEditModal = ref(false);
@@ -163,10 +181,10 @@ export function useLeavesForm(
         const prefix = 'L';
 
         const maxSeries = Math.max(
-            ...leavesRef.value
-                .filter((leave: Leave) => leave.control_no.startsWith(`${prefix}-${year}`))
-                .map((leave: Leave) => {
-                    const parts = leave.control_no.split('-');
+            ...[...leavesRef.value.map((leave: Leave) => leave.control_no), ...usedControlNumbers.value]
+                .filter((controlNo: string) => controlNo?.startsWith(`${prefix}-${year}`))
+                .map((controlNo: string) => {
+                    const parts = controlNo.split('-');
                     return parseInt(parts[parts.length - 1], 10) || 0;
                 }),
             0
@@ -192,7 +210,17 @@ export function useLeavesForm(
 
     const openCreateModal = () => {
         const today = new Date().toISOString().split('T')[0];
-        formData.value = { ...blankForm(), control_no: generateControlNo(today), date_of_filing: today };
+        formData.value = {
+            ...blankForm(),
+            control_no: generateControlNo(today),
+            date_of_filing: today,
+            // Users who see only their own leaves file only for themselves
+            employee_id: canViewAllLeaves.value ? 0 : ownEmployeeId.value || 0,
+        };
+        // Refresh the used numbers, then the proposed number (unless the date was changed meanwhile)
+        loadUsedControlNumbers().then(() => {
+            if (showCreateModal.value && formData.value.date_of_filing === today) formData.value.control_no = generateControlNo(today);
+        });
         leaveToEdit.value = null;
         formErrors.value = {};
         showCreateModal.value = true;
@@ -481,6 +509,8 @@ export function useLeavesForm(
 
         // Permissions
         canCreateLeaves,
+        canViewAllLeaves,
+        ownEmployeeId,
         canEditLeaves,
         canDeleteLeaves,
 

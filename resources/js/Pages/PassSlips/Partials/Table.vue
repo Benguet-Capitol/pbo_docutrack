@@ -1,6 +1,7 @@
 <template>
+    <!-- Same list style as Documents: gray header, shaded rows, actions pinned on the right -->
     <div class="overflow-x-auto">
-        <table class="w-full text-left table-fixed">
+        <table :class="[LIST_TABLE, 'table-fixed']">
             <colgroup>
                 <col class="w-20">
                 <col class="w-16">
@@ -12,105 +13,42 @@
                 <col class="w-20">
                 <col class="w-20">
             </colgroup>
-            <!-- Table Header -->
-            <thead class="bg-gray-100 dark:bg-gray-900 border-b-2 border-gray-300 dark:border-gray-700">
+            <thead>
                 <tr>
-                    <th class="px-6 py-3 text-xs font-bold text-gray-700 dark:text-gray-200">
-                        <button @click="$emit('sort', 'control_no')" class="flex items-center gap-2 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
-                            Control No
-                            <span v-if="sortBy === 'control_no'" class="text-xs">{{ sortOrder === 'asc' ? '▲' : '▼' }}</span>
+                    <th v-for="column in COLUMNS" :key="column.label" :class="[LIST_HEAD, column.class]">
+                        <button v-if="column.sort" @click="$emit('sort', column.sort)" :class="LIST_SORT">
+                            {{ column.label }}
+                            <span v-if="sortBy === column.sort">{{ sortOrder === 'asc' ? '▲' : '▼' }}</span>
                         </button>
+                        <template v-else>{{ column.label }}</template>
                     </th>
-                    <th class="px-6 py-3 text-xs font-bold text-gray-700 dark:text-gray-200">
-                        <button @click="$emit('sort', 'date')" class="flex items-center gap-2 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
-                            Date
-                            <span v-if="sortBy === 'date'" class="text-xs">{{ sortOrder === 'asc' ? '▲' : '▼' }}</span>
-                        </button>
-                    </th>
-                    <th class="px-6 py-3 text-xs font-bold text-gray-700 dark:text-gray-200">Employees</th>
-                    <th class="px-6 py-3 text-xs font-bold text-gray-700 dark:text-gray-200">Inclusive Dates</th>
-                    <th class="px-6 py-3 text-xs font-bold text-gray-700 dark:text-gray-200">
-                        <button @click="$emit('sort', 'requested_time')" class="flex items-center gap-2 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
-                            Leave Time
-                            <span v-if="sortBy === 'requested_time'" class="text-xs">{{ sortOrder === 'asc' ? '▲' : '▼' }}</span>
-                        </button>
-                    </th>
-                    <th class="px-6 py-3 text-xs font-bold text-gray-700 dark:text-gray-200">
-                        <button @click="$emit('sort', 'purpose')" class="flex items-center gap-2 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
-                            Purpose
-                            <span v-if="sortBy === 'purpose'" class="text-xs">{{ sortOrder === 'asc' ? '▲' : '▼' }}</span>
-                        </button>
-                    </th>
-                    <th class="px-6 py-3 text-xs font-bold text-gray-700 dark:text-gray-200">
-                        <button @click="$emit('sort', 'location')" class="flex items-center gap-2 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
-                            Location
-                            <span v-if="sortBy === 'location'" class="text-xs">{{ sortOrder === 'asc' ? '▲' : '▼' }}</span>
-                        </button>
-                    </th>
-                    <th class="px-6 py-3 text-xs font-bold text-gray-700 dark:text-gray-200">Return Time</th>
-                    <th class="px-6 py-3 text-xs font-bold text-gray-700 dark:text-gray-200">Actions</th>
+                    <th :class="[LIST_HEAD, ACTIONS_HEAD]">Actions</th>
                 </tr>
             </thead>
-            <!-- Table Body -->
             <tbody>
-                <tr v-for="slip in records" :key="slip.id" class="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
-                    <td class="px-4 py-2 text-xs text-gray-900 dark:text-gray-100 font-semibold">
-                        {{ slip.control_no }}
-                    </td>
-                    <td class="px-4 py-2 text-xs text-gray-600 dark:text-gray-400">
-                        {{ formatDate(slip.date) }}
-                    </td>
-                    <td class="px-4 py-2 text-xs">
-                        <div class="flex gap-1 flex-wrap">
-                            <span v-for="emp in slip.employees" :key="emp.id" class="inline-block px-2 py-1 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-300 rounded-full text-xs font-semibold">
-                                {{ emp.name }}
-                            </span>
+                <tr v-for="(slip, index) in records" :key="slip.id" :class="listRowClass(index)">
+                    <td :class="LIST_CELL"><span :class="LIST_TITLE">{{ slip.control_no }}</span></td>
+                    <td :class="[LIST_CELL, 'text-gray-600 dark:text-gray-400']">{{ listDate(slip.date) }}</td>
+                    <td :class="LIST_CELL">
+                        <div class="flex flex-wrap gap-1">
+                            <span v-for="emp in slip.employees" :key="emp.id" :class="[LIST_TAG, 'rounded bg-emerald-100 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-300']">{{ emp.name }}</span>
                         </div>
                     </td>
-                    <td class="px-4 py-2 text-xs">
+                    <td :class="LIST_CELL">
                         <div v-if="slip.inclusive_dates && slip.inclusive_dates.length > 0" class="flex flex-wrap gap-1">
-                            <span v-for="(date, idx) in slip.inclusive_dates" :key="idx" class="inline-block px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded text-xs font-semibold">
-                                {{ formatInclusiveDate(date) }}
-                            </span>
+                            <span v-for="(date, idx) in slip.inclusive_dates" :key="idx" :class="[LIST_TAG, DATE_TAG]">{{ formatInclusiveDate(date) }}</span>
                         </div>
+                        <span v-else class="text-gray-400">—</span>
                     </td>
-                    <td class="px-4 py-2 text-xs text-gray-600 dark:text-gray-400">
-                        {{ formatTime(slip.requested_time) }}
-                    </td>
-                    <td class="px-4 py-2 text-xs text-gray-600 dark:text-gray-400">
-                        {{ slip.purpose }}
-                    </td>
-                    <td class="px-4 py-2 text-xs text-gray-600 dark:text-gray-400">
-                        {{ slip.location }}
-                    </td>
-                    <td class="px-4 py-2 text-xs text-gray-600 dark:text-gray-400">
-                        {{ formatTime(slip.expected_return_time) }}
-                    </td>
-                    <td class="px-4 py-2 text-xs">
-                        <div class="flex items-center justify-center gap-2">
-                            <button
-                                @click.stop="$emit('preview', slip)"
-                                class="relative p-2 text-purple-600 dark:text-purple-400 bg-purple-100 dark:bg-purple-900/30 hover:text-purple-700 dark:hover:text-purple-300 hover:bg-purple-200 dark:hover:bg-purple-900/50 rounded-lg transition-all duration-200 group"
-                            >
-                                <i class="fas fa-eye"></i>
-                                <span class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-1 text-xs font-medium text-white bg-gray-900 dark:bg-gray-950 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-20">View</span>
-                            </button>
-                            <button
-                                v-if="canEditPassSlips"
-                                @click.stop="$emit('edit', slip)"
-                                class="relative p-2 text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/30 hover:text-blue-700 dark:hover:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-900/50 rounded-lg transition-all duration-200 group"
-                            >
-                                <i class="fas fa-pencil-alt"></i>
-                                <span class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-1 text-xs font-medium text-white bg-gray-900 dark:bg-gray-950 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-20">Edit</span>
-                            </button>
-                            <button
-                                v-if="canDeletePassSlips"
-                                @click.stop="$emit('delete', slip)"
-                                class="relative p-2 text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-900/30 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-200 dark:hover:bg-red-900/50 rounded-lg transition-all duration-200 group"
-                            >
-                                <i class="fas fa-trash-alt"></i>
-                                <span class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-1 text-xs font-medium text-white bg-gray-900 dark:bg-gray-950 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-20">Delete</span>
-                            </button>
+                    <td :class="[LIST_CELL, 'whitespace-nowrap font-medium text-gray-800 dark:text-gray-200']">{{ formatTime(slip.requested_time) }}</td>
+                    <td :class="[LIST_CELL, 'text-gray-800 dark:text-gray-200 break-words']" style="white-space: pre-wrap;">{{ slip.purpose || '—' }}</td>
+                    <td :class="[LIST_CELL, 'text-gray-700 dark:text-gray-300 break-words']">{{ slip.location || '—' }}</td>
+                    <td :class="[LIST_CELL, 'whitespace-nowrap font-medium text-gray-800 dark:text-gray-200']">{{ formatTime(slip.expected_return_time) }}</td>
+                    <td :class="[LIST_CELL, ACTIONS_CELL]">
+                        <div class="flex items-center justify-center gap-1.5">
+                            <RowIconButton color="purple" icon="fas fa-eye" tooltip="View" @click.stop="$emit('preview', slip)" />
+                            <RowIconButton v-if="canEditPassSlips" color="blue" icon="fas fa-pencil-alt" tooltip="Edit" @click.stop="$emit('edit', slip)" />
+                            <RowIconButton v-if="canDeletePassSlips" color="red" icon="fas fa-trash-alt" tooltip="Delete" @click.stop="$emit('delete', slip)" />
                         </div>
                     </td>
                 </tr>
@@ -120,6 +58,11 @@
 </template>
 
 <script setup lang="ts">
+import RowIconButton from '@/Components/RowIconButton.vue';
+import {
+    ACTIONS_CELL, ACTIONS_HEAD, DATE_TAG, EMPLOYEE_TAG, LIST_CELL, LIST_HEAD, LIST_SORT, LIST_TABLE, LIST_TAG, LIST_TITLE,
+    listDate, listRowClass, type ListColumn,
+} from '@/utils/listTable';
 import type { PassSlip } from '../Composables/usePassSlipsData';
 
 defineProps<{
@@ -137,20 +80,25 @@ defineEmits<{
     sort: [field: string];
 }>();
 
-const formatDate = (dateStr: string): string => {
-    if (!dateStr) return '';
-    const date = new Date(dateStr);
-    return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
-};
+const COLUMNS: ListColumn[] = [
+    { label: 'Control No', sort: 'control_no' },
+    { label: 'Date', sort: 'date' },
+    { label: 'Employees' },
+    { label: 'Inclusive Dates' },
+    { label: 'Leave Time', sort: 'requested_time' },
+    { label: 'Purpose', sort: 'purpose' },
+    { label: 'Location', sort: 'location' },
+    { label: 'Return Time' },
+];
 
-const formatTime = (timeStr: string): string => {
-    if (!timeStr) return '';
-    
+const formatTime = (timeStr: string | null | undefined): string => {
+    if (!timeStr) return '—';
+
     // If it doesn't contain a colon, it's not a time value (could be ASAP, NWD, NOM, Memo, etc.)
     if (!timeStr.includes(':')) {
         return timeStr;
     }
-    
+
     try {
         const [hours, minutes] = timeStr.split(':');
         const hour = parseInt(hours);

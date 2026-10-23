@@ -91,6 +91,7 @@ Route::middleware(['web', 'auth'])->group(function () {
 Route::middleware(['web', 'auth'])->group(function () {
     Route::get('/leaves', [LeaveController::class, 'index'])->middleware('permission:leaves.view,hr_summary.view,locator_chart.view');
     Route::get('/leaves/{leave}/form', [LeaveController::class, 'exportForm'])->middleware('permission:leaves.view');
+    Route::get('/leaves/control-numbers', [LeaveController::class, 'controlNumbers'])->middleware('permission:leaves.create,leaves.edit');
     Route::get('/leaves/employee-salary/{employee}', [LeaveController::class, 'employeeSalary'])->middleware('permission:leaves.create,leaves.edit');
     Route::post('/leaves', [LeaveController::class, 'store'])->middleware('permission:leaves.create');
     Route::put('/leaves/{leave}', [LeaveController::class, 'update'])->middleware('permission:leaves.edit');

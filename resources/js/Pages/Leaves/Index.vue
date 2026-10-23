@@ -12,7 +12,7 @@
                 <Header 
                     :search-query="searchQuery"
                     :items-per-page="itemsPerPage"
-                    :can-create-leaves="canCreateLeaves"
+                    :can-create-leaves="canCreateLeaves && (canViewAllLeaves || !!ownEmployeeId)"
                     @update:search-query="searchQuery = $event"
                     @update:items-per-page="itemsPerPage = Number($event)"
                     @create-click="openCreateModal"
@@ -23,6 +23,34 @@
                     :view-mode="viewMode"
                     @update:view-mode="setViewMode"
                 />
+
+                <!-- Leaves are personal data: without "view all", only the user's own leaves are listed -->
+                <div
+                    v-if="!canViewAllLeaves"
+                    class="mx-4 sm:mx-6 mt-4 mb-4 flex items-center gap-4 rounded-xl border-l-4 px-4 sm:px-5 py-4 shadow-sm"
+                    :class="ownEmployeeId
+                        ? 'border-emerald-500 bg-gradient-to-r from-emerald-50 to-white dark:from-emerald-900/30 dark:to-gray-800'
+                        : 'border-amber-500 bg-gradient-to-r from-amber-50 to-white dark:from-amber-900/30 dark:to-gray-800'"
+                >
+                    <div
+                        class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-lg"
+                        :class="ownEmployeeId ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-800/60 dark:text-emerald-200' : 'bg-amber-100 text-amber-700 dark:bg-amber-800/60 dark:text-amber-200'"
+                    >
+                        <i :class="ownEmployeeId ? 'fas fa-user-shield' : 'fas fa-user-lock'"></i>
+                    </div>
+                    <div class="min-w-0">
+                        <template v-if="ownEmployeeId">
+                            <p class="text-sm font-semibold text-gray-900 dark:text-white">
+                                My Leaves<span v-if="ownEmployeeName" class="font-normal text-gray-600 dark:text-gray-300"> · {{ ownEmployeeName }}</span>
+                            </p>
+                            <p class="text-xs text-gray-600 dark:text-gray-400">You're seeing only your own leave applications.</p>
+                        </template>
+                        <template v-else>
+                            <p class="text-sm font-semibold text-gray-900 dark:text-white">Your account isn't linked to an employee</p>
+                            <p class="text-xs text-gray-600 dark:text-gray-400">No leaves can be shown yet. Ask an administrator to link your account to your employee record in Users.</p>
+                        </template>
+                    </div>
+                </div>
 
                 <!-- Loading State -->
                 <LoadingState v-if="loading" />
@@ -92,6 +120,7 @@
             :leave-credits="leaveCreditInfo"
             :missing-fields="missingLeaveFields"
             :limit-message="leaveLimitMessage"
+            :only-employee-id="canViewAllLeaves ? null : ownEmployeeId"
             @close="closeCreateModal"
             @confirm="openCreatePreview"
         />
@@ -106,6 +135,7 @@
             :leave-credits="leaveCreditInfo"
             :missing-fields="missingLeaveFields"
             :limit-message="leaveLimitMessage"
+            :only-employee-id="canViewAllLeaves ? null : ownEmployeeId"
             @close="closeEditModal"
             @confirm="updateLeave"
         />
@@ -217,9 +247,14 @@ const {
     updateLeave: _updateLeave,
     deleteLeave: _deleteLeave,
     canCreateLeaves,
+    canViewAllLeaves,
+    ownEmployeeId,
     canEditLeaves,
     canDeleteLeaves,
 } = useLeavesForm(leaves, fetchLeaves, showToast);
+
+/** The signed-in user's employee name (My Leaves banner) */
+const ownEmployeeName = computed(() => (employees.value as any[]).find((emp: any) => emp.id === ownEmployeeId.value)?.name || '');
 
 const leaveTypes = [
     'Vacation Leave',
