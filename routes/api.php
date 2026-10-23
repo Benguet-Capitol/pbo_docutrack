@@ -21,12 +21,18 @@ Route::middleware(['web', 'auth'])->get('/user/current', [UserController::class,
 
 // Shared Records API (read-only) for other PBO systems, e.g. pbo-registryV2's Archives: no session, an API key instead
 // (X-API-Key, keys in RECORDS_API_KEYS). Only the shared record categories; see docs/records-api.md.
-Route::prefix('v1/records')->middleware(['records.api', 'throttle:120,1'])->group(function () {
+Route::prefix('v1/records')->middleware(['api.key:records', 'throttle:120,1'])->group(function () {
     Route::get('/categories', [\App\Http\Controllers\Api\V1\SharedRecordController::class, 'categories']);
     Route::get('/deleted', [\App\Http\Controllers\Api\V1\SharedRecordController::class, 'deleted']);
     Route::get('/', [\App\Http\Controllers\Api\V1\SharedRecordController::class, 'index']);
     Route::get('/{id}', [\App\Http\Controllers\Api\V1\SharedRecordController::class, 'show'])->whereNumber('id');
     Route::get('/{id}/file', [\App\Http\Controllers\Api\V1\SharedRecordController::class, 'file'])->whereNumber('id');
+});
+
+// Shared Leaves API (read-only): one employee's leave summary for a year, e.g. on their pbo-registryV2 profile.
+// Its own keys (LEAVES_API_KEYS); the employee by HRIS employee ID. See docs/leaves-api.md.
+Route::prefix('v1/leaves')->middleware(['api.key:leaves', 'throttle:120,1'])->group(function () {
+    Route::get('/employees/{employeeId}', [\App\Http\Controllers\Api\V1\SharedLeaveController::class, 'summary']);
 });
 
 // Documents API

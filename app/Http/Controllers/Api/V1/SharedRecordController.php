@@ -17,7 +17,7 @@ use Symfony\Component\HttpFoundation\Response;
  *
  * Only the shared categories in config/records.php are exposed (Provincial Budget, Municipal Budget, Issuances /
  * Circulars / Other References and Documents); Administrative and trashed records never are. Requests carry an
- * API key (EnsureRecordsApiKey). See docs/records-api.md.
+ * API key (EnsureApiKey, api.key:records). See docs/records-api.md.
  */
 class SharedRecordController extends Controller
 {

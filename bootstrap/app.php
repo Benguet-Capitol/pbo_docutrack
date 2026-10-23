@@ -25,7 +25,8 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->alias([
             'permission' => \App\Http\Middleware\EnsurePermission::class,
-            'records.api' => \App\Http\Middleware\EnsureRecordsApiKey::class,
+            // Shared APIs for other PBO systems: api.key:records, api.key:leaves (keys in config/services.php)
+            'api.key' => \App\Http\Middleware\EnsureApiKey::class,
         ]);
 
         // Exclude API routes from CSRF verification

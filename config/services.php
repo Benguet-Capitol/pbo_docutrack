@@ -49,4 +49,10 @@ return [
         'keys' => array_values(array_filter(array_map('trim', explode(',', (string) env('RECORDS_API_KEYS', ''))))),
     ],
 
+    // Shared Leaves API (/api/v1/leaves, read-only): an employee's own leave summary, e.g. for their pbo-registryV2 profile.
+    // LEAVES_API_KEYS: separate from the Records keys (leaves are personal data under the Data Privacy Act).
+    'leaves_api' => [
+        'keys' => array_values(array_filter(array_map('trim', explode(',', (string) env('LEAVES_API_KEYS', ''))))),
+    ],
+
 ];
