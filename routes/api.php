@@ -57,7 +57,7 @@ Route::middleware(['web', 'auth'])->group(function () {
 
 // Pass Slips API
 Route::middleware(['web', 'auth'])->group(function () {
-    Route::get('/pass-slips', [PassSlipController::class, 'index']);
+    Route::get('/pass-slips', [PassSlipController::class, 'index'])->middleware('permission:pass_slips.view,hr_summary.view,locator_chart.view');
     Route::post('/pass-slips', [PassSlipController::class, 'store'])->middleware('permission:pass_slips.create');
     Route::put('/pass-slips/{passSlip}', [PassSlipController::class, 'update'])->middleware('permission:pass_slips.edit');
     Route::delete('/pass-slips/{passSlip}', [PassSlipController::class, 'destroy'])->middleware('permission:pass_slips.delete');
@@ -65,7 +65,7 @@ Route::middleware(['web', 'auth'])->group(function () {
 
 // Time Slips API
 Route::middleware(['web', 'auth'])->group(function () {
-    Route::get('/time-slips', [TimeSlipController::class, 'index']);
+    Route::get('/time-slips', [TimeSlipController::class, 'index'])->middleware('permission:time_slips.view,hr_summary.view');
     Route::post('/time-slips', [TimeSlipController::class, 'store'])->middleware('permission:time_slips.create');
     Route::put('/time-slips/{timeSlip}', [TimeSlipController::class, 'update'])->middleware('permission:time_slips.edit');
     Route::delete('/time-slips/{timeSlip}', [TimeSlipController::class, 'destroy'])->middleware('permission:time_slips.delete');
@@ -81,7 +81,7 @@ Route::middleware(['web', 'auth'])->group(function () {
 
 // Travel Orders API
 Route::middleware(['web', 'auth'])->group(function () {
-    Route::get('/travel-orders', [TravelOrderController::class, 'index']);
+    Route::get('/travel-orders', [TravelOrderController::class, 'index'])->middleware('permission:travel_orders.view,hr_summary.view,locator_chart.view');
     Route::post('/travel-orders', [TravelOrderController::class, 'store'])->middleware('permission:travel_orders.create');
     Route::put('/travel-orders/{travelOrder}', [TravelOrderController::class, 'update'])->middleware('permission:travel_orders.edit');
     Route::delete('/travel-orders/{travelOrder}', [TravelOrderController::class, 'destroy'])->middleware('permission:travel_orders.delete');
@@ -89,7 +89,7 @@ Route::middleware(['web', 'auth'])->group(function () {
 
 // Leaves API
 Route::middleware(['web', 'auth'])->group(function () {
-    Route::get('/leaves', [LeaveController::class, 'index']);
+    Route::get('/leaves', [LeaveController::class, 'index'])->middleware('permission:leaves.view,hr_summary.view,locator_chart.view');
     Route::get('/leaves/{leave}/form', [LeaveController::class, 'exportForm'])->middleware('permission:leaves.view');
     Route::get('/leaves/employee-salary/{employee}', [LeaveController::class, 'employeeSalary'])->middleware('permission:leaves.create,leaves.edit');
     Route::post('/leaves', [LeaveController::class, 'store'])->middleware('permission:leaves.create');
@@ -99,7 +99,7 @@ Route::middleware(['web', 'auth'])->group(function () {
 
 // Tardiness/Undertime API
 Route::middleware(['web', 'auth'])->group(function () {
-    Route::get('/tardiness', [TardinessController::class, 'index']);
+    Route::get('/tardiness', [TardinessController::class, 'index'])->middleware('permission:tardiness.view,hr_summary.view,locator_chart.view');
     Route::post('/tardiness', [TardinessController::class, 'store'])->middleware('permission:tardiness.create');
     Route::put('/tardiness/{tardiness}', [TardinessController::class, 'update'])->middleware('permission:tardiness.edit');
     Route::delete('/tardiness/{tardiness}', [TardinessController::class, 'destroy'])->middleware('permission:tardiness.delete');

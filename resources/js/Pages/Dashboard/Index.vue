@@ -474,9 +474,10 @@ const toggleDocumentTypeExpanded = (documentType: string) => {
 onMounted(async () => {
     try {
         // Fetch all data
+        // HR data (leaves, slips, travel orders) is personal data: only loaded for roles allowed to see the HR summary
         await Promise.all([
             fetchDocuments(),
-            fetchAllHRData()
+            canViewHRSummary.value ? fetchAllHRData() : Promise.resolve(),
         ]);
     } catch (e) {
         console.error('Error fetching dashboard data:', e);
