@@ -180,8 +180,8 @@
                             class="w-full px-4 py-2 text-xs border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:outline-none focus:border-emerald-500"
                         >
                             <option :value="null">Select Prepared By</option>
-                            <option v-for="emp in administrativeStaffEmployees" :key="emp.id" :value="emp.id">
-                                {{ emp.name }}
+                            <option v-for="emp in pboStaffEmployees" :key="emp.id" :value="emp.id">
+                                {{ emp.name }}<template v-if="emp.designation"> ({{ emp.designation }})</template>
                             </option>
                         </select>
                     </div>
@@ -189,16 +189,26 @@
                     <!-- Certified Correct -->
                     <div class="space-y-2">
                         <label for="summary_certified_correct" class="block text-xs font-medium text-gray-700 dark:text-gray-300">Certified Correct</label>
-                        <select
-                            v-model.number="summaryCertifiedCorrectLocal"
-                            id="summary_certified_correct"
-                            class="w-full px-4 py-2 text-xs border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:outline-none focus:border-emerald-500"
-                        >
-                            <option :value="null">Select Certified Correct</option>
-                            <option v-for="user in administratorUsers" :key="user.id" :value="user.id">
-                                {{ user.name }}
-                            </option>
-                        </select>
+                        <!-- The Provincial Budget Officer, or an OIC / Acting PBO from the PBO staff -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            <select
+                                v-model="summaryCertifiedCorrectTitleLocal"
+                                aria-label="Certified Correct title"
+                                class="w-full px-4 py-2 text-xs border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:outline-none focus:border-emerald-500"
+                            >
+                                <option v-for="title in SIGNATORY_TITLES" :key="title" :value="title">{{ title }}</option>
+                            </select>
+                            <select
+                                v-model.number="summaryCertifiedCorrectLocal"
+                                id="summary_certified_correct"
+                                class="w-full px-4 py-2 text-xs border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:outline-none focus:border-emerald-500"
+                            >
+                                <option :value="null">Select Certified Correct</option>
+                                <option v-for="emp in pboStaffEmployees" :key="emp.id" :value="emp.id">
+                                    {{ emp.name }}
+                                </option>
+                            </select>
+                        </div>
                     </div>
 
                     <!-- Remarks -->
@@ -245,6 +255,7 @@
 <script setup lang="ts">
 import { computed, watch, nextTick } from 'vue';
 import MissingFieldsHint from '@/Components/MissingFieldsHint.vue';
+import { SIGNATORY_TITLES, DEFAULT_SIGNATORY_TITLE } from '@/Composables/useSignatory';
 
 const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
@@ -266,9 +277,16 @@ const props = defineProps({
     summaryCasualPeriodValue: String,
     summaryPreparedByValue: [Number, String],
     summaryCertifiedCorrectValue: [Number, String],
+    /** Certified Correct title: Provincial Budget Officer, OIC or Acting */
+    summaryCertifiedCorrectTitleValue: String,
     summaryRemarksValue: String,
     summaryError: String,
     administrativeStaffEmployees: Array<any>,
+    /** PBO staff (Prepared By and Certified Correct) */
+    pboStaffEmployees: { type: Array as () => any[], default: () => [] },
+    /** Defaults: the signed-in user's employee, and the Provincial Budget Officer */
+    defaultPreparedById: { type: Number, default: null },
+    defaultCertifiedCorrectId: { type: Number, default: null },
     lastDayOfMonth: Number,
 });
 
@@ -285,6 +303,7 @@ const emit = defineEmits([
     'update:summary-casual-period',
     'update:summary-prepared-by',
     'update:summary-certified-correct',
+    'update:summary-certified-correct-title',
     'update:summary-remarks',
     'close-report-modal',
     'close-summary-modal',
@@ -329,16 +348,26 @@ watch(() => props.showSummaryModal, async (newVal) => {
             emit('update:summary-casual-period', '1-15');
         }
         
-        // Auto-select first prepared by
-        if (!props.summaryPreparedByValue && props.administrativeStaffEmployees && props.administrativeStaffEmployees.length > 0) {
-            emit('update:summary-prepared-by', (props.administrativeStaffEmployees[0] as any).id);
+        // Prepared By: the signed-in user (when PBO staff)
+        if (!props.summaryPreparedByValue && props.defaultPreparedById) {
+            emit('update:summary-prepared-by', props.defaultPreparedById);
         }
-        
-        // Auto-select first certified correct
-        if (!props.summaryCertifiedCorrectValue && props.administratorUsers && props.administratorUsers.length > 0) {
-            emit('update:summary-certified-correct', (props.administratorUsers[0] as any).id);
+
+        // Certified Correct: the Provincial Budget Officer
+        if (!props.summaryCertifiedCorrectValue && props.defaultCertifiedCorrectId) {
+            emit('update:summary-certified-correct', props.defaultCertifiedCorrectId);
+        }
+        if (!props.summaryCertifiedCorrectTitleValue) {
+            emit('update:summary-certified-correct-title', DEFAULT_SIGNATORY_TITLE);
         }
     }
+});
+
+// The employees may still be loading when the modal opens: fill the defaults once they arrive
+watch(() => [props.defaultPreparedById, props.defaultCertifiedCorrectId], ([preparedBy, certifiedCorrect]) => {
+    if (!props.showSummaryModal) return;
+    if (!props.summaryPreparedByValue && preparedBy) emit('update:summary-prepared-by', preparedBy);
+    if (!props.summaryCertifiedCorrectValue && certifiedCorrect) emit('update:summary-certified-correct', certifiedCorrect);
 });
 
 // Auto-select first report period when employment type changes to casual
@@ -406,6 +435,11 @@ const summaryPreparedByLocal = computed({
 const summaryCertifiedCorrectLocal = computed({
     get: () => props.summaryCertifiedCorrectValue,
     set: (val) => emit('update:summary-certified-correct', val),
+});
+
+const summaryCertifiedCorrectTitleLocal = computed({
+    get: () => props.summaryCertifiedCorrectTitleValue || DEFAULT_SIGNATORY_TITLE,
+    set: (val) => emit('update:summary-certified-correct-title', val),
 });
 
 const summaryRemarksLocal = computed({

@@ -51,7 +51,8 @@ class Employee extends Model
     {
         $office = [self::TITLE_PBO => self::PBO_OFFICE_ID, self::TITLE_PHRMDO => self::PHRMDO_OFFICE_ID][$title] ?? null;
 
-        return static::active()->where('designation', $title)
+        // The printed title, or the parenthetical title of a department head (e.g. "Provincial Budget Officer")
+        return static::active()->where(fn ($query) => $query->where('designation', $title)->orWhere('parenthetical_title', $title))
             ->when($office, fn ($query) => $query->where('office_id', $office))
             ->orderBy('id')
             ->first();

@@ -51,7 +51,10 @@ export const useReports = (
         employmentType: '',
         casualPeriod: '' as string,
         preparedBy: null as number | null,
+        /** Employee id (PBO staff) */
         certifiedCorrect: null as number | null,
+        /** Provincial Budget Officer, OIC or Acting */
+        certifiedCorrectTitle: 'Provincial Budget Officer' as string,
         remarks: '' as string,
     });
     const summaryErrors = ref<Record<string, string>>({});
@@ -890,8 +893,8 @@ export const useReports = (
             // Get signatory names
             const preparedByData = administrativeStaffEmployees?.value?.find(e => e.id === summaryData.value.preparedBy);
             const preparedByEmployee = preparedByData || employees.value.find(e => e.id === summaryData.value.preparedBy);
-            const certifiedByUser = users.value.find(u => u.id === summaryData.value.certifiedCorrect);
-            const certifiedByEmployee = certifiedByUser ? employeeOfUser(employees.value, certifiedByUser) : null;
+            const certifiedByEmployee = employees.value.find(e => e.id === summaryData.value.certifiedCorrect) || null;
+            const certifiedByTitle = summaryData.value.certifiedCorrectTitle || certifiedByEmployee?.designation || '';
 
             // Generate HTML report
             const htmlContent = `
@@ -1187,8 +1190,8 @@ export const useReports = (
         <div class="signature-box">
             <div class="signature-title">Reviewed/Certified Correct:</div>
             <div class="signature-line"></div>
-            <div class="signature-name">${esc(capitalizeWords(certifiedByUser?.name || 'N/A'))}</div>
-            <div class="signature-designation">${esc(certifiedByEmployee?.designation || '')}</div>
+            <div class="signature-name">${esc(capitalizeWords(certifiedByEmployee?.name || 'N/A'))}</div>
+            <div class="signature-designation">${esc(certifiedByTitle)}</div>
         </div>
     </div>
 
@@ -1217,6 +1220,7 @@ export const useReports = (
                 casualPeriod: '',
                 preparedBy: null,
                 certifiedCorrect: null,
+                certifiedCorrectTitle: 'Provincial Budget Officer',
                 remarks: '',
             };
         } catch (e) {

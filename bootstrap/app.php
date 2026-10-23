@@ -25,6 +25,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->alias([
             'permission' => \App\Http\Middleware\EnsurePermission::class,
+            'records.api' => \App\Http\Middleware\EnsureRecordsApiKey::class,
         ]);
 
         // Exclude API routes from CSRF verification

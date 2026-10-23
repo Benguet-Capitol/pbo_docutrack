@@ -24,6 +24,7 @@ export const hasTitle = (title: string) => (employee: OfficialLike | null | unde
 
 interface OfficialLike {
     designation?: string | null;
+    parenthetical_title?: string | null;
     office_id?: number | string | null;
     /** Another office's employee working at the PBO (set on the employee; the HRIS sync keeps it) */
     detailed_to_pbo?: boolean | number | null;
@@ -38,7 +39,8 @@ export const isPboStaff = (employee: OfficialLike | null | undefined): boolean =
 /** The Provincial Budget Officer: that exact title, in the Provincial Budget Office (when the office is known) */
 export const isProvincialBudgetOfficer = (employee: OfficialLike | null | undefined): boolean =>
     !!employee
-    && String(employee.designation ?? '').trim() === TITLE_PBO
+    // The department head whose parenthetical title is "Provincial Budget Officer" (also printed as their title)
+    && (String(employee.parenthetical_title ?? '').trim() === TITLE_PBO || String(employee.designation ?? '').trim() === TITLE_PBO)
     && (employee.office_id === undefined || employee.office_id === null || isPboStaff(employee));
 
 /** The Provincial Governor: that exact title */

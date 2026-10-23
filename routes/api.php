@@ -19,6 +19,16 @@ use App\Http\Controllers\Api\ActivityLogController;
 
 Route::middleware(['web', 'auth'])->get('/user/current', [UserController::class, 'getCurrentUser']);
 
+// Shared Records API (read-only) for other PBO systems, e.g. pbo-registryV2's Archives: no session, an API key instead
+// (X-API-Key, keys in RECORDS_API_KEYS). Only the shared record categories; see docs/records-api.md.
+Route::prefix('v1/records')->middleware(['records.api', 'throttle:120,1'])->group(function () {
+    Route::get('/categories', [\App\Http\Controllers\Api\V1\SharedRecordController::class, 'categories']);
+    Route::get('/deleted', [\App\Http\Controllers\Api\V1\SharedRecordController::class, 'deleted']);
+    Route::get('/', [\App\Http\Controllers\Api\V1\SharedRecordController::class, 'index']);
+    Route::get('/{id}', [\App\Http\Controllers\Api\V1\SharedRecordController::class, 'show'])->whereNumber('id');
+    Route::get('/{id}/file', [\App\Http\Controllers\Api\V1\SharedRecordController::class, 'file'])->whereNumber('id');
+});
+
 // Documents API
 Route::middleware(['web', 'auth'])->group(function () {
     // More specific routes first

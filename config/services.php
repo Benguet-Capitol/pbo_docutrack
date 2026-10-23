@@ -43,4 +43,10 @@ return [
         'employees_endpoint' => env('HRIS_EMPLOYEES_ENDPOINT', 'getEmployees'),
     ],
 
+    // Shared Records API (/api/v1/records, read-only) for other PBO systems such as pbo-registryV2.
+    // RECORDS_API_KEYS: comma-separated keys, one per client app, sent as the X-API-Key header.
+    'records_api' => [
+        'keys' => array_values(array_filter(array_map('trim', explode(',', (string) env('RECORDS_API_KEYS', ''))))),
+    ],
+
 ];

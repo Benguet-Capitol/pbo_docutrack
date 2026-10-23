@@ -127,6 +127,10 @@
                 :summaryCasualPeriodValue="summaryData.casualPeriod"
                 :summaryPreparedByValue="summaryData.preparedBy"
                 :summaryCertifiedCorrectValue="summaryData.certifiedCorrect"
+                :summaryCertifiedCorrectTitleValue="summaryData.certifiedCorrectTitle"
+                :pboStaffEmployees="pboStaffEmployees"
+                :defaultPreparedById="currentUserEmployeeId"
+                :defaultCertifiedCorrectId="provincialBudgetOfficerId"
                 :summaryRemarksValue="summaryData.remarks"
                 :administrativeStaffEmployees="administrativeStaffEmployees"
                 :summaryError="summaryErrors.submit || summaryErrors.general || ''"
@@ -141,6 +145,7 @@
                 @update:summary-casual-period="(val) => summaryData.casualPeriod = val"
                 @update:summary-prepared-by="(val) => summaryData.preparedBy = val"
                 @update:summary-certified-correct="(val) => summaryData.certifiedCorrect = val"
+                @update:summary-certified-correct-title="(val) => summaryData.certifiedCorrectTitle = val"
                 @update:summary-remarks="(val) => summaryData.remarks = val"
                 @close-report-modal="showReportModal = false"
                 @close-summary-modal="showSummaryModal = false"
@@ -155,6 +160,7 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { employeeOfUser } from '@/Composables/useUserEmployee';
+import { isPboStaff, findProvincialBudgetOfficer } from '@/Composables/useOfficials';
 import { usePage } from '@inertiajs/vue3';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import PageHead from '@/Components/PageHead.vue';
@@ -188,6 +194,18 @@ const administratorUsers = computed(() => {
     return documentsComposable.users.value.filter(user => user.usertype === 'Administrator');
 });
 
+// Summary of Leaves, TOs, PS and Tardiness/Undertime: signatories from the PBO staff
+const pboStaffEmployees = computed(() =>
+    (documentsComposable.employees.value as any[]).filter((emp) => isPboStaff(emp)).sort((a, b) => a.name.localeCompare(b.name))
+);
+/** Prepared By default: the signed-in user's employee, when PBO staff */
+const currentUserEmployeeId = computed(() => {
+    const emp = employeeOfUser(pboStaffEmployees.value, (page.props.auth as any)?.user);
+    return emp ? emp.id : null;
+});
+/** Certified Correct default: the Provincial Budget Officer */
+const provincialBudgetOfficerId = computed(() => findProvincialBudgetOfficer(pboStaffEmployees.value)?.id ?? null);
+
 const administrativeStaffEmployees = computed(() => {
     const adminUsers = documentsComposable.users.value.filter(user => user.usertype === 'Administrative');
     return adminUsers.map(user => {
@@ -216,7 +234,7 @@ const reportsComposable = useReports(
     hrComposable.travelOrders,
     hrComposable.passSlips,
     hrComposable.tardiness,
-    administrativeStaffEmployees as any,
+    pboStaffEmployees as any,
     hrComposable.timeSlips
 );
 
