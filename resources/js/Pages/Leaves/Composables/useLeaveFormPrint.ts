@@ -65,18 +65,46 @@ export const longDate = (value: string | null | undefined): string => {
     return y && m && d ? `${MONTHS[m - 1]} ${d}, ${y}` : String(value);
 };
 
-/** "January 5-9, 2026; February 2, 2026" from entries like "2026-01-05 - 2026-01-09" or "2026-02-02" */
-export const inclusiveDatesText = (entries: string[] | null | undefined): string =>
-    (entries || []).filter(Boolean).map((entry) => {
-        if (!entry.includes(' - ')) return longDate(entry);
-        const [fromStr, toStr] = entry.split(' - ');
+/**
+ * "January 5-9, 2026; February 2, 2026" from entries like "2026-01-05 - 2026-01-09" or "2026-02-02".
+ * Dates and ranges next to each other in the same month share the month and year: "November 13, 16, 27, 2026".
+ * Keep in sync with LeaveFormExporter::inclusiveDatesText().
+ */
+export const inclusiveDatesText = (entries: string[] | null | undefined): string => {
+    const parts: string[] = [];
+    // The month being written: its year, month and days ("13", "3-5")
+    let group: { y: number; m: number; days: string[] } | null = null;
+    const flush = () => {
+        if (group) parts.push(`${MONTHS[group.m - 1]} ${group.days.join(', ')}, ${group.y}`);
+        group = null;
+    };
+
+    for (const entry of (entries || []).filter(Boolean)) {
+        const [fromStr, toStr = fromStr] = entry.split(' - ');
         const from = parseDay(fromStr);
         const to = parseDay(toStr);
-        if (from.y === to.y && from.m === to.m && from.d === to.d) return longDate(fromStr);
-        if (from.y === to.y && from.m === to.m) return `${MONTHS[from.m - 1]} ${from.d}-${to.d}, ${to.y}`;
-        if (from.y === to.y) return `${MONTHS[from.m - 1]} ${from.d} - ${MONTHS[to.m - 1]} ${to.d}, ${to.y}`;
-        return `${longDate(fromStr)} - ${longDate(toStr)}`;
-    }).join('; ');
+        if (!from.y || !to.y) {
+            flush();
+            parts.push(entry);
+        } else if (from.y === to.y && from.m === to.m) {
+            const days = from.d === to.d ? `${from.d}` : `${from.d}-${to.d}`;
+            if (group && group.y === from.y && group.m === from.m) {
+                group.days.push(days);
+            } else {
+                flush();
+                group = { y: from.y, m: from.m, days: [days] };
+            }
+        } else {
+            flush();
+            parts.push(from.y === to.y
+                ? `${MONTHS[from.m - 1]} ${from.d} - ${MONTHS[to.m - 1]} ${to.d}, ${to.y}`
+                : `${longDate(fromStr)} - ${longDate(toStr)}`);
+        }
+    }
+    flush();
+
+    return parts.join('; ');
+};
 
 /** "3 working days", "1 working day", "0.5 working day (AM)" */
 export const daysText = (leave: { is_half_day?: boolean; half_day_period?: string | null; number_of_working_days_applied_for?: number | string | null }): string => {

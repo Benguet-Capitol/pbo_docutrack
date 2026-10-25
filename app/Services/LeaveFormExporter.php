@@ -526,24 +526,43 @@ class LeaveFormExporter
      */
     public function inclusiveDatesText(array $entries): string
     {
+        // Dates and ranges next to each other in the same month share the month and year: "November 13, 16, 27, 2026".
+        // Keep in sync with inclusiveDatesText() in useLeaveFormPrint.ts.
         $parts = [];
+        $group = null; // ['month' => 'Y-m', 'label' => 'November', 'year' => 2026, 'days' => ['13', '3-5']]
+        $flush = function () use (&$parts, &$group) {
+            if ($group) $parts[] = $group['label'] . ' ' . implode(', ', $group['days']) . ', ' . $group['year'];
+            $group = null;
+        };
+
         foreach ($entries as $entry) {
             if (!$entry) continue;
-            if (str_contains($entry, ' - ')) {
-                [$from, $to] = array_map(fn ($d) => Carbon::parse(trim($d)), explode(' - ', $entry, 2));
-                if ($from->isSameDay($to)) {
-                    $parts[] = $from->format('F j, Y');
-                } elseif ($from->isSameMonth($to)) {
-                    $parts[] = $from->format('F j') . '-' . $to->format('j, Y');
-                } elseif ($from->isSameYear($to)) {
-                    $parts[] = $from->format('F j') . ' - ' . $to->format('F j, Y');
+            $pieces = explode(' - ', (string) $entry, 2);
+            try {
+                $from = Carbon::parse(trim($pieces[0]));
+                $to = Carbon::parse(trim($pieces[1] ?? $pieces[0]));
+            } catch (\Throwable) {
+                $flush();
+                $parts[] = (string) $entry;
+                continue;
+            }
+
+            if ($from->isSameMonth($to)) {
+                $days = $from->isSameDay($to) ? $from->format('j') : $from->format('j') . '-' . $to->format('j');
+                if ($group && $group['month'] === $from->format('Y-m')) {
+                    $group['days'][] = $days;
                 } else {
-                    $parts[] = $from->format('F j, Y') . ' - ' . $to->format('F j, Y');
+                    $flush();
+                    $group = ['month' => $from->format('Y-m'), 'label' => $from->format('F'), 'year' => $from->year, 'days' => [$days]];
                 }
             } else {
-                $parts[] = Carbon::parse(trim($entry))->format('F j, Y');
+                $flush();
+                $parts[] = $from->isSameYear($to)
+                    ? $from->format('F j') . ' - ' . $to->format('F j, Y')
+                    : $from->format('F j, Y') . ' - ' . $to->format('F j, Y');
             }
         }
+        $flush();
 
         return implode('; ', $parts);
     }
