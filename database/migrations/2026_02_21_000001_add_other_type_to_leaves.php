@@ -11,6 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
+        // create_leaves_table already has it on a fresh install (only older databases need it added)
+        if (Schema::hasColumn('leaves', 'other_type')) {
+            return;
+        }
+
         Schema::table('leaves', function (Blueprint $table) {
             $table->string('other_type')->nullable()->after('completion_type');
         });

@@ -12,3 +12,8 @@ Artisan::command('inspire', function () {
 Schedule::command('employees:sync-hris')
     ->monthlyOn(1, '02:00')
     ->withoutOverlapping();
+
+// Backups: the database and uploaded files every night, 1:00 AM; old ones pruned (config/backup.php, docs/backups.md)
+Schedule::command('backup:run')
+    ->dailyAt('01:00')
+    ->withoutOverlapping();

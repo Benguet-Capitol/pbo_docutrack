@@ -44,8 +44,9 @@ onMounted(async () => {
             </h2>
         </template>
 
-        <div class="py-12">
-            <div class="mx-auto max-w-7xl space-y-6 sm:px-6 lg:px-8">
+        <!-- Full width, like the Dashboard and the other pages -->
+        <div class="py-6 px-4 sm:px-6 lg:px-8">
+            <div class="space-y-6">
                 <MyHRSummary
                     v-if="canViewHRSummary"
                     :employee-id="ownEmployeeId"

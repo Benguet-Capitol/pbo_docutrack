@@ -38,6 +38,16 @@ return [
             'report' => false,
         ],
 
+        // Records module uploads (Administrative records included): private, never served by URL. Files are opened
+        // only through the permission-checked endpoints (/api/records/{id}/view|download, the shared Records API).
+        'records' => [
+            'driver' => 'local',
+            'root' => storage_path('app/private'),
+            'serve' => false,
+            'throw' => false,
+            'report' => false,
+        ],
+
         'public' => [
             'driver' => 'local',
             'root' => storage_path('app/public'),

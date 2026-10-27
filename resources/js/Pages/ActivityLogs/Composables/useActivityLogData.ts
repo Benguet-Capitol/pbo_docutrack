@@ -46,6 +46,10 @@ export const ACTION_META: Record<string, { label: string; classes: string; icon:
     routed: { label: 'Routed', icon: 'fas fa-route', classes: 'text-purple-700 bg-purple-100 dark:text-purple-300 dark:bg-purple-900/40' },
     login: { label: 'Login', icon: 'fas fa-sign-in-alt', classes: 'text-gray-700 bg-gray-100 dark:text-gray-300 dark:bg-gray-700' },
     logout: { label: 'Logout', icon: 'fas fa-sign-out-alt', classes: 'text-gray-700 bg-gray-100 dark:text-gray-300 dark:bg-gray-700' },
+    login_failed: { label: 'Failed Sign-in', icon: 'fas fa-user-times', classes: 'text-amber-700 bg-amber-100 dark:text-amber-300 dark:bg-amber-900/40' },
+    login_locked: { label: 'Locked Out', icon: 'fas fa-user-lock', classes: 'text-red-700 bg-red-100 dark:text-red-300 dark:bg-red-900/40' },
+    api_access: { label: 'API Read', icon: 'fas fa-plug', classes: 'text-sky-700 bg-sky-100 dark:text-sky-300 dark:bg-sky-900/40' },
+    api_denied: { label: 'API Refused', icon: 'fas fa-ban', classes: 'text-red-700 bg-red-100 dark:text-red-300 dark:bg-red-900/40' },
 };
 
 export const actionMeta = (action: string) =>

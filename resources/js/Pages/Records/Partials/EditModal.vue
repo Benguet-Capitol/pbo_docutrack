@@ -116,7 +116,7 @@
                                 <p class="text-xs text-gray-600 dark:text-gray-300 mb-2">Current file:</p>
                                 <div class="flex items-center gap-2">
                                     <i class="fas fa-file text-blue-600 dark:text-blue-400"></i>
-                                    <a :href="`/storage/${recordToEdit.image_path}`" target="_blank" class="text-xs text-blue-600 dark:text-blue-400 hover:underline">View File</a>
+                                    <a :href="`/api/records/${recordToEdit.id}/view`" target="_blank" class="text-xs text-blue-600 dark:text-blue-400 hover:underline">View File</a>
                                 </div>
                             </div>
                             <div 

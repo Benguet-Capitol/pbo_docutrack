@@ -22,6 +22,10 @@ class ActivityLogService
         'routed' => 'routed',
         'login' => 'logged in',
         'logout' => 'logged out',
+        'login_failed' => 'failed to sign in',
+        'login_locked' => 'locked out',
+        'api_access' => 'read through the shared API',
+        'api_denied' => 'refused by the shared API',
     ];
 
     /**
@@ -34,7 +38,8 @@ class ActivityLogService
         ?Model $subject = null,
         ?string $subjectLabel = null,
         array $properties = [],
-        $user = null
+        $user = null,
+        ?string $actor = null
     ): ?ActivityLog {
         try {
             $user = $user ?? Auth::user();
@@ -42,7 +47,8 @@ class ActivityLogService
 
             return ActivityLog::create([
                 'user_id' => $user?->id,
-                'user_name' => $user?->name ?? 'System',
+                // Who did it when no user is signed in: e.g. "Guest" (failed sign-in) or "API client" (shared APIs)
+                'user_name' => $user?->name ?? $actor ?? 'System',
                 'usertype' => $user?->usertype,
                 'module' => $module,
                 'action' => $action,

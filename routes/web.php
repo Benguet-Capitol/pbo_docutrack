@@ -113,8 +113,8 @@ Route::middleware('auth')
     Route::post('/api/records', [RecordController::class, 'store'])->middleware('permission:records.create');
     Route::put('/api/records/{id}', [RecordController::class, 'update'])->middleware('permission:records.edit');
     Route::delete('/api/records/{id}', [RecordController::class, 'destroy'])->middleware('permission:records.delete');
-    Route::get('/api/records/{id}/view', [RecordController::class, 'viewFile']);
-    Route::get('/api/records/{id}/download', [RecordController::class, 'downloadFile']);
+    Route::get('/api/records/{id}/view', [RecordController::class, 'viewFile'])->middleware('permission:records.view');
+    Route::get('/api/records/{id}/download', [RecordController::class, 'downloadFile'])->middleware('permission:records.view');
 });
 
 require __DIR__.'/auth.php';

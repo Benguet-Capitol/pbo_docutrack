@@ -30,7 +30,7 @@
                 <ErrorState v-else-if="error" :error="error" />
 
                 <!-- Empty State -->
-                <EmptyState v-else-if="!loading && employees.length === 0 && !searchQuery" />
+                <EmptyState v-else-if="!loading && totalCount === 0 && !searchQuery" />
 
                 <!-- Empty Search Results -->
                 <div v-else-if="paginatedEmployees.length === 0" class="bg-white dark:bg-gray-800 rounded-lg shadow p-8 text-center">
@@ -68,7 +68,7 @@
                     :current-page="currentPage"
                     :total-pages="totalPages"
                     :items-per-page="itemsPerPage"
-                    :total-count="filteredEmployees.length"
+                    :total-count="totalCount"
                     @page-change="handleChangePage"
                 />
             </div>
@@ -150,7 +150,7 @@ const currentPage = dataComposable.currentPage;
 const itemsPerPage = dataComposable.itemsPerPage;
 const sortBy = dataComposable.sortBy;
 const sortOrder = dataComposable.sortOrder;
-const filteredEmployees = dataComposable.filteredEmployees;
+const totalCount = dataComposable.totalCount;
 const totalPages = dataComposable.totalPages;
 const paginatedEmployees = dataComposable.paginatedEmployees;
 

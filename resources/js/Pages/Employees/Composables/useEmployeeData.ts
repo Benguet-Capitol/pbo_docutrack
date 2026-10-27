@@ -35,15 +35,24 @@ export interface Office {
     office_name: string;
 }
 
+/** Sortable columns (the server sorts) */
+export type EmployeeSort = 'id' | 'employee_id' | 'name' | 'position_title' | 'parenthetical_title' | 'status' | 'designation';
+
 /**
- * useEmployeeData: Composable for managing employee data
- * Handles fetching, filtering, sorting, and pagination of employees
+ * useEmployeeData: the Employees page list, one page at a time from the server (searched, sorted and paged
+ * there: HRIS brings in thousands of employees), plus the offices for the forms.
  */
 export function useEmployeeData() {
     // ============== State ==============
-    
-    /** Stores the list of all employees fetched from the API */
+
+    /** The employees on the current page */
     const employees = ref<Employee[]>([]);
+
+    /** Employees matching the search, on every page */
+    const totalCount = ref(0);
+
+    /** Pages for the search */
+    const totalPages = ref(0);
 
     /** Stores the list of all offices for reference */
     const offices = ref<Office[]>([]);
@@ -63,78 +72,16 @@ export function useEmployeeData() {
     /** Number of items to display per page */
     const itemsPerPage = ref(10);
 
-    // Back to the first page when the search or page size changes
-    watch([searchQuery, itemsPerPage], () => {
-        currentPage.value = 1;
-    });
-
     /** The field to sort employees by */
-    const sortBy = ref<'id' | 'employee_id' | 'name' | 'designation'>('id');
+    const sortBy = ref<EmployeeSort>('id');
 
     /** Sort direction: 'asc' for ascending, 'desc' for descending */
     const sortOrder = ref<'asc' | 'desc'>('asc');
 
     // ============== Computed Properties ==============
 
-    /**
-     * filteredEmployees: Filters and sorts employees based on search query and sort settings
-     * - Filters employees by employee_id, name, and designation
-     * - Applies sorting based on sortBy and sortOrder
-     * Returns the filtered and sorted array of employees
-     */
-    const filteredEmployees = computed(() => {
-        let filtered = employees.value.filter(employee => {
-            const query = searchQuery.value.toLowerCase();
-            return (
-                String(employee.employee_id ?? '').toLowerCase().includes(query) ||
-                employee.name.toLowerCase().includes(query) ||
-                String(employee.full_position ?? employee.designation ?? '').toLowerCase().includes(query) ||
-                String(employee.status ?? '').toLowerCase().includes(query) ||
-                (typeof employee.office === 'object' && employee.office
-                    ? `${employee.office.office_abbreviation ?? ''} ${employee.office.office_name}`.toLowerCase().includes(query)
-                    : false)
-            );
-        });
-        
-        // Sort
-        filtered.sort((a, b) => {
-            let aVal: any = a[sortBy.value];
-            let bVal: any = b[sortBy.value];
-
-            if (aVal === null || aVal === undefined) aVal = '';
-            if (bVal === null || bVal === undefined) bVal = '';
-
-            if (typeof aVal === 'string') {
-                aVal = aVal.toLowerCase();
-                bVal = bVal.toLowerCase();
-            }
-
-            if (aVal < bVal) return sortOrder.value === 'asc' ? -1 : 1;
-            if (aVal > bVal) return sortOrder.value === 'asc' ? 1 : -1;
-            return 0;
-        });
-        
-        return filtered;
-    });
-
-    /**
-     * totalPages: Calculates the total number of pages needed for pagination
-     * Based on the filtered employees count and items per page
-     */
-    const totalPages = computed(() => {
-        return Math.ceil(filteredEmployees.value.length / itemsPerPage.value);
-    });
-
-    /**
-     * paginatedEmployees: Slices filtered employees to show only the current page
-     * Calculates start and end indices based on currentPage and itemsPerPage
-     * Returns the employees for the current page only
-     */
-    const paginatedEmployees = computed(() => {
-        const start = (currentPage.value - 1) * itemsPerPage.value;
-        const end = start + itemsPerPage.value;
-        return filteredEmployees.value.slice(start, end);
-    });
+    /** The current page (the server already searched, sorted and paged) */
+    const paginatedEmployees = computed(() => employees.value);
 
     /**
      * officeMap: Creates a map of office IDs to office names for quick lookup
@@ -149,33 +96,61 @@ export function useEmployeeData() {
 
     // ============== Methods ==============
 
+    /** Only the latest request's answer is shown (typing fires several) */
+    let requestId = 0;
+
     /**
-     * fetchEmployees: Fetches employees from the API
-     * - Sets loading state to true initially
-     * - Makes API request to /api/employees
-     * - Populates employees.value with response data
-     * - Handles errors and sets loading state to false on completion
+     * fetchEmployees: the current page for the search and sort. A page past the end (e.g. after a delete) moves
+     * to the last page.
      */
     const fetchEmployees = async () => {
-        loading.value = true;
+        const id = ++requestId;
+        loading.value = employees.value.length === 0;
         error.value = null;
         try {
-            const response = await fetch('/api/employees?with_separated=1', {
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`,
-                },
+            const params = new URLSearchParams({
+                page: String(currentPage.value),
+                per_page: String(itemsPerPage.value),
+                sort: sortBy.value,
+                order: sortOrder.value,
             });
+            if (searchQuery.value.trim()) params.set('search', searchQuery.value.trim());
+
+            const response = await fetch(`/api/employees?${params}`, { headers: { Accept: 'application/json' } });
             if (!response.ok) {
                 throw new Error('Failed to fetch employees');
             }
             const data = await response.json();
-            employees.value = data.data || data;
+            if (id !== requestId) return;
+
+            if (data.last_page > 0 && currentPage.value > data.last_page) {
+                currentPage.value = data.last_page;
+                return;
+            }
+            employees.value = data.data;
+            totalCount.value = data.total;
+            totalPages.value = data.last_page;
         } catch (e) {
-            error.value = e instanceof Error ? e.message : 'An error occurred';
+            if (id === requestId) error.value = e instanceof Error ? e.message : 'An error occurred';
         } finally {
-            loading.value = false;
+            if (id === requestId) loading.value = false;
         }
     };
+
+    // Searching waits for a pause in typing; the page, page size and sort reload at once
+    let searchTimer: ReturnType<typeof setTimeout> | undefined;
+    watch(searchQuery, () => {
+        clearTimeout(searchTimer);
+        searchTimer = setTimeout(() => {
+            if (currentPage.value !== 1) currentPage.value = 1;
+            else fetchEmployees();
+        }, 300);
+    });
+    watch(itemsPerPage, () => {
+        if (currentPage.value !== 1) currentPage.value = 1;
+        else fetchEmployees();
+    });
+    watch([currentPage, sortBy, sortOrder], () => fetchEmployees());
 
     /**
      * fetchOffices: Fetches offices from the API
@@ -217,7 +192,7 @@ export function useEmployeeData() {
      * If already sorting by this field, toggles between asc/desc
      * If sorting by a different field, sets it as the new sort and resets to asc
      */
-    const toggleSort = (field: 'id' | 'employee_id' | 'name' | 'designation') => {
+    const toggleSort = (field: EmployeeSort) => {
         if (sortBy.value === field) {
             sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc';
         } else {
@@ -226,33 +201,10 @@ export function useEmployeeData() {
         }
     };
 
-    /**
-     * addEmployee: Adds a new employee to the list
-     * @param {Employee} employee - The employee to add
-     */
-    const addEmployee = (employee: Employee) => {
-        employees.value.push(employee);
-    };
-
-    /**
-     * updateEmployee: Updates an employee in the list
-     * @param {number} id - The ID of the employee to update
-     * @param {Employee} updatedEmployee - The updated employee data
-     */
-    const updateEmployee = (id: number, updatedEmployee: Employee) => {
-        const index = employees.value.findIndex(e => e.id === id);
-        if (index !== -1) {
-            employees.value[index] = updatedEmployee;
-        }
-    };
-
-    /**
-     * deleteEmployee: Removes an employee from the list
-     * @param {number} id - The ID of the employee to delete
-     */
-    const deleteEmployee = (id: number) => {
-        employees.value = employees.value.filter(e => e.id !== id);
-    };
+    // After a change the current page is reloaded (where the employee lands depends on the search and sort)
+    const addEmployee = (_employee?: Employee) => fetchEmployees();
+    const updateEmployee = (_id?: number, _employee?: Employee) => fetchEmployees();
+    const deleteEmployee = (_id?: number) => fetchEmployees();
 
     /**
      * getOfficeNameById: Get the office name for a given ID
@@ -314,10 +266,10 @@ export function useEmployeeData() {
         itemsPerPage,
         sortBy,
         sortOrder,
+        totalCount,
+        totalPages,
 
         // Computed
-        filteredEmployees,
-        totalPages,
         paginatedEmployees,
         officeMap,
 

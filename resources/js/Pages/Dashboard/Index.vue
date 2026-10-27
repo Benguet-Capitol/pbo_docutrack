@@ -2,11 +2,15 @@
     <PageHead />
     <AuthenticatedLayout>
         <template #header>
-            <h2
-                class="text-xl font-semibold leading-tight text-gray-800 dark:text-gray-200"
-            >
-                Dashboard
-            </h2>
+            <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <h2
+                    class="text-xl font-semibold leading-tight text-gray-800 dark:text-gray-200"
+                >
+                    Dashboard
+                </h2>
+                <!-- Backup and HRIS sync status (roles with "See backup and HRIS sync status") -->
+                <SystemStatus v-if="canViewSystemStatus" />
+            </div>
         </template>
 
         <div class="py-6 px-4 sm:px-6 lg:px-8 space-y-8">
@@ -181,6 +185,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import PageHead from '@/Components/PageHead.vue';
 import HRSummaryPanel from './Partials/HRSummaryPanel.vue';
 import MyHRSummary from './Partials/MyHRSummary.vue';
+import SystemStatus from './Partials/SystemStatus.vue';
 import DocumentsSection from './Partials/DocumentsSection.vue';
 import UserStatisticsSection from './Partials/UserStatisticsSection.vue';
 import DocumentStatisticsSection from './Partials/DocumentStatisticsSection.vue';
@@ -205,6 +210,7 @@ const canViewAllLeaves = computed(() => ((page.props.auth as any)?.permissions |
 /** The signed-in user's employee */
 const ownEmployeeId = computed<number | null>(() => Number((page.props.auth as any)?.user?.employee_id) || null);
 const canViewHRSummary = computed(() => ((page.props.auth as any)?.permissions || []).includes('hr_summary.view'));
+const canViewSystemStatus = computed(() => ((page.props.auth as any)?.permissions || []).includes('system.status'));
 
 const supervisorUsers = computed(() => {
     return documentsComposable.users.value.filter(user => user.usertype === 'Supervisor');

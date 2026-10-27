@@ -8,7 +8,6 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -137,15 +136,15 @@ class SharedRecordController extends Controller
         if (!$record) {
             return response()->json(['message' => 'Record not found.'], 404);
         }
-        if (!$record->image_path || !Storage::disk('public')->exists($record->image_path)) {
+        if (!$record->image_path || !Record::files()->exists($record->image_path)) {
             return response()->json(['message' => 'This record has no file.'], 404);
         }
 
         $name = $this->fileName($record);
 
         return $request->boolean('download')
-            ? Storage::disk('public')->download($record->image_path, $name)
-            : response()->file(Storage::disk('public')->path($record->image_path), [
+            ? Record::files()->download($record->image_path, $name)
+            : response()->file(Record::files()->path($record->image_path), [
                 'Content-Disposition' => 'inline; filename="' . addslashes($name) . '"',
             ]);
     }
@@ -204,7 +203,7 @@ class SharedRecordController extends Controller
     {
         $key = collect($this->sharedCategories())->search(fn ($category) => $category['name'] === $record->record_type);
         $category = $this->sharedCategories()[$key] ?? null;
-        $hasFile = $record->image_path && Storage::disk('public')->exists($record->image_path);
+        $hasFile = $record->image_path && Record::files()->exists($record->image_path);
 
         return [
             'id' => $record->id,
@@ -216,8 +215,8 @@ class SharedRecordController extends Controller
             'file' => $hasFile ? [
                 'name' => $this->fileName($record),
                 'extension' => strtolower(pathinfo($record->image_path, PATHINFO_EXTENSION)),
-                'mime_type' => Storage::disk('public')->mimeType($record->image_path) ?: null,
-                'size' => Storage::disk('public')->size($record->image_path),
+                'mime_type' => Record::files()->mimeType($record->image_path) ?: null,
+                'size' => Record::files()->size($record->image_path),
                 'view_url' => url("/api/v1/records/{$record->id}/file"),
                 'download_url' => url("/api/v1/records/{$record->id}/file?download=1"),
             ] : null,

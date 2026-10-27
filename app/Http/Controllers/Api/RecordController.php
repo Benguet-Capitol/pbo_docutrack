@@ -7,7 +7,6 @@ use App\Models\Record;
 use App\Services\RoleService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 
 class RecordController extends Controller
 {
@@ -27,9 +26,8 @@ class RecordController extends Controller
 
             // Add file details to each record
             $records->each(function ($record) {
-                if ($record->image_path && Storage::disk('public')->exists($record->image_path)) {
-                    $filePath = Storage::disk('public')->path($record->image_path);
-                    $fileSize = filesize($filePath);
+                if ($record->hasFile()) {
+                    $fileSize = Record::files()->size($record->image_path);
                     $extension = pathinfo($record->image_path, PATHINFO_EXTENSION);
                     
                     $record->file_size = $fileSize;
@@ -134,7 +132,7 @@ class RecordController extends Controller
             if ($request->hasFile('file')) {
                 $file = $request->file('file');
                 $filename = time() . '_' . $file->getClientOriginalName();
-                $path = $file->storeAs('records', $filename, 'public');
+                $path = $file->storeAs('records', $filename, Record::FILE_DISK);
                 $validated['image_path'] = $path;
             }
 
@@ -181,13 +179,13 @@ class RecordController extends Controller
             // Handle file upload
             if ($request->hasFile('file')) {
                 // Delete old file if exists
-                if ($record->image_path && Storage::disk('public')->exists($record->image_path)) {
-                    Storage::disk('public')->delete($record->image_path);
+                if ($record->hasFile()) {
+                    Record::files()->delete($record->image_path);
                 }
 
                 $file = $request->file('file');
                 $filename = time() . '_' . $file->getClientOriginalName();
-                $path = $file->storeAs('records', $filename, 'public');
+                $path = $file->storeAs('records', $filename, Record::FILE_DISK);
                 $validated['image_path'] = $path;
             }
 
@@ -243,15 +241,12 @@ class RecordController extends Controller
                 return response()->json(['error' => 'Forbidden'], 403);
             }
 
-            if (!$record->image_path || !Storage::disk('public')->exists($record->image_path)) {
+            if (!$record->hasFile()) {
                 return response()->json(['error' => 'File not found'], 404);
             }
 
-            // Get the file path
-            $filePath = Storage::disk('public')->path($record->image_path);
-
-            // Display the file in the browser
-            return response()->file($filePath);
+            // Display the file in the browser (from private storage: there is no public URL)
+            return response()->file($record->filePath());
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], 500);
         }
@@ -274,15 +269,11 @@ class RecordController extends Controller
                 return response()->json(['error' => 'Forbidden'], 403);
             }
 
-            if (!$record->image_path || !Storage::disk('public')->exists($record->image_path)) {
+            if (!$record->hasFile()) {
                 return response()->json(['error' => 'File not found'], 404);
             }
 
-            // Get the file name
-            $fileName = basename($record->image_path);
-            
-            // Download the file
-            return Storage::disk('public')->download($record->image_path, $fileName);
+            return Record::files()->download($record->image_path, basename($record->image_path));
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], 500);
         }

@@ -71,9 +71,8 @@ class SharedLeaveController extends Controller
         ])->values();
 
         $years = Leave::where('employee_id', $employee->id)
-            ->selectRaw('DISTINCT YEAR(date_of_filing) as year')
-            ->pluck('year')
-            ->map(fn ($y) => (int) $y)
+            ->pluck('date_of_filing')
+            ->map(fn ($date) => (int) substr((string) $date, 0, 4))
             ->push($year)
             ->unique()
             ->sortDesc()

@@ -28,14 +28,35 @@ class Record extends Model
         'user_id',
     ];
 
+    /** Uploads live on the private "records" disk (config/filesystems.php), stored as "records/<file>" */
+    public const FILE_DISK = 'records';
+
     protected static function booted(): void
     {
         // Keep the uploaded file while the record is in the Trash; remove it only on permanent delete
         static::forceDeleted(function (Record $record) {
-            if ($record->image_path && Storage::disk('public')->exists($record->image_path)) {
-                Storage::disk('public')->delete($record->image_path);
+            if ($record->hasFile()) {
+                static::files()->delete($record->image_path);
             }
         });
+    }
+
+    /** The private disk the uploads are on */
+    public static function files(): \Illuminate\Contracts\Filesystem\Filesystem
+    {
+        return Storage::disk(self::FILE_DISK);
+    }
+
+    /** Whether the record has an uploaded file that is still there */
+    public function hasFile(): bool
+    {
+        return (bool) $this->image_path && static::files()->exists($this->image_path);
+    }
+
+    /** The upload's full path on the server (check hasFile() first) */
+    public function filePath(): string
+    {
+        return static::files()->path($this->image_path);
     }
 
     /**
