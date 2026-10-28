@@ -3,6 +3,7 @@ import { useFormChanges } from '@/Composables/useFormChanges';
 import { getCsrfToken } from './documentDisplay';
 import type { Document } from './types';
 import type { DocumentsState } from './useDocumentsState';
+import { localDateString } from '@/utils/date';
 
 /** Document actions: create/edit form, delete, forward, end transaction, receive, and the transactions history. */
 export function useDocumentActions(state: DocumentsState) {
@@ -26,10 +27,7 @@ export function useDocumentActions(state: DocumentsState) {
     );
 
     /** Get today's date in YYYY-MM-DD format */
-    const todayDate = computed(() => {
-        const today = new Date();
-        return today.toISOString().split('T')[0];
-    });
+    const todayDate = computed(() => localDateString());
 
     /**
      * documentTypeHasChecklist: Check if the selected document type has a checklist

@@ -4,6 +4,7 @@ import { useTrashedControlNumbers } from '@/Composables/useTrashedControlNumbers
 import { usePage } from '@inertiajs/vue3';
 import type { TimeSlip, Employee } from './useTimeSlipsData';
 import { isProvincialBudgetOfficer, isProvincialGovernor } from '@/Composables/useOfficials';
+import { localDateString } from '@/utils/date';
 
 export function useTimeSlipsForm(employees: any, timeSlips: any) {
     const { can } = usePermissions();
@@ -37,10 +38,7 @@ export function useTimeSlipsForm(employees: any, timeSlips: any) {
     const timeSlipToDelete = ref<TimeSlip | null>(null);
     const isRegeneratingControlNo = ref(false);
 
-    const todayDate = computed(() => {
-        const today = new Date();
-        return today.toISOString().split('T')[0];
-    });
+    const todayDate = computed(() => localDateString());
 
     const sortedEmployees = computed(() => {
         return employees.value.slice().sort((a: Employee, b: Employee) => {
@@ -136,7 +134,7 @@ export function useTimeSlipsForm(employees: any, timeSlips: any) {
 
     const openCreateModal = () => {
         isRegeneratingControlNo.value = true;
-        const today = new Date().toISOString().split('T')[0];
+        const today = localDateString();
         formData.value = {
             control_no: generateControlNo(today),
             requesting_employee_id: null,

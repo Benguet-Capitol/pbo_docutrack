@@ -4,6 +4,7 @@ import { useTrashedControlNumbers } from '@/Composables/useTrashedControlNumbers
 import { usePage } from '@inertiajs/vue3';
 import type { TardinessRecord, Employee } from './useTardinessData';
 import { isProvincialBudgetOfficer, isProvincialGovernor } from '@/Composables/useOfficials';
+import { localDateString } from '@/utils/date';
 
 export function useTardinessForm(employees: any, tardiness: any) {
     const { can } = usePermissions();
@@ -38,10 +39,7 @@ export function useTardinessForm(employees: any, tardiness: any) {
     const recordToDelete = ref<TardinessRecord | null>(null);
     const isRegeneratingControlNo = ref(false);
 
-    const todayDate = computed(() => {
-        const today = new Date();
-        return today.toISOString().split('T')[0];
-    });
+    const todayDate = computed(() => localDateString());
 
     // Watch for returnType changes to auto-set return_time for NWD
     watch(
@@ -308,7 +306,7 @@ export function useTardinessForm(employees: any, tardiness: any) {
 
     const openCreateModal = () => {
         isRegeneratingControlNo.value = true;
-        const today = new Date().toISOString().split('T')[0];
+        const today = localDateString();
         formData.value = {
             control_no: '',
             date_filed: today,

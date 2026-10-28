@@ -35,208 +35,219 @@
                     </div>
 
                     <!-- Modal Body - Document Preview -->
-                    <div class="p-4 flex flex-col" :class="paperSize === 'long' ? 'paper-long' : 'paper-short'" style="background-color: white;">
-                        <!-- Header Section with Logos -->
-                        <div class="flex items-center justify-center gap-2 pb-2" style="border-bottom: 3px double #050505;">
-                            <div style="width: 85px; flex-shrink: 0;">
-                                <img src="/benguetlogo.png" alt="Benguet Logo" style="width: 100%; height: auto;">
+                    <!-- The whole sheet, its margins inside (like the Leave preview); only this page is printed -->
+                    <div class="p-4 bg-gray-100 dark:bg-gray-900 overflow-x-auto">
+                        <div
+                            id="preview-content"
+                            class="mx-auto flex flex-col bg-white shadow"
+                            data-print-page-only
+                            data-page-width-in="8.5"
+                            :data-page-height-in="paperSize === 'long' ? 13 : 11"
+                            data-page-margin-in="0"
+                            :style="{ boxSizing: 'border-box', width: '8.5in', minHeight: paperSize === 'long' ? '13in' : '11in', padding: '0.5in' }"
+                        >
+                            <!-- Header Section with Logos -->
+                            <div class="flex items-center justify-center gap-2 pb-2" style="border-bottom: 3px double #050505;">
+                                <div style="width: 85px; flex-shrink: 0;">
+                                    <img src="/benguetlogo.png" alt="Benguet Logo" style="width: 100%; height: auto;">
+                                </div>
+                                <div class="text-center">
+                                    <p class="text-sm font-semibold text-gray-700 mt-2">Republic of the Philippines</p>
+                                    <p class="text-sm font-bold text-gray-900">PROVINCE OF BENGUET</p>
+                                    <p class="text-lg font-bold text-gray-900">PROVINCIAL BUDGET OFFICE</p>
+                                    <p class="text-sm text-gray-700 mb-1">Poblacion, La Trinidad, Benguet 2601</p>
+                                </div>
+                                <div style="width: 85px; flex-shrink: 0;">
+                                    <img src="/bagongpilipinaslogo.png" alt="Bagong Pilipinas Logo" style="width: 100%; height: auto;">
+                                </div>
                             </div>
-                            <div class="text-center">
-                                <p class="text-sm font-semibold text-gray-700 mt-2">Republic of the Philippines</p>
-                                <p class="text-sm font-bold text-gray-900">PROVINCE OF BENGUET</p>
-                                <p class="text-lg font-bold text-gray-900">PROVINCIAL BUDGET OFFICE</p>
-                                <p class="text-sm text-gray-700 mb-1">Poblacion, La Trinidad, Benguet 2601</p>
+                            
+                            <div class="text-left">
+                                <p class="text-base font-semibold text-blue-700">PBO COPY</p>
                             </div>
-                            <div style="width: 85px; flex-shrink: 0;">
-                                <img src="/bagongpilipinaslogo.png" alt="Bagong Pilipinas Logo" style="width: 100%; height: auto;">
+                            
+                            <div>
+                                <p class="font-bold text-2xl text-center text-gray-900 mb-4">DTR TIME IN/OUT FORM</p>
                             </div>
-                        </div>
-                        
-                        <div class="text-left">
-                            <p class="text-base font-semibold text-blue-700">PBO COPY</p>
-                        </div>
-                        
-                        <div>
-                            <p class="font-bold text-2xl text-center text-gray-900 mb-4">DTR TIME IN/OUT FORM</p>
-                        </div>
 
-                        <!-- Date & Control Numbers -->
-                        <div class="mb-1 flex justify-end pr-8">
-                            <div class="text-center text-sm">
-                                <p><span class="w-26 inline-block text-right">Control No.: </span><span class="font-bold text-gray-900 w-48 border-b border-gray-900 inline-block text-center">{{ formData.control_no }}</span></p>
-                                <p class="mt-1"><span class="w-26 inline-block text-right">Date: </span><span class="font-bold text-gray-900 w-48 border-b border-gray-900 inline-block text-center">{{ formatDate(formData.date) }}</span></p>
+                            <!-- Date & Control Numbers -->
+                            <div class="mb-1 flex justify-end pr-8">
+                                <div class="text-center text-sm">
+                                    <p><span class="w-26 inline-block text-right">Control No.: </span><span class="font-bold text-gray-900 w-48 border-b border-gray-900 inline-block text-center">{{ formData.control_no }}</span></p>
+                                    <p class="mt-1"><span class="w-26 inline-block text-right">Date: </span><span class="font-bold text-gray-900 w-48 border-b border-gray-900 inline-block text-center">{{ formatDate(formData.date) }}</span></p>
+                                </div>
                             </div>
-                        </div>
 
-                        <!-- Requesting Employee -->
-                        <div class="space-y-2 text-base mb-4">
-                            <div class="space-y-1">
-                                <div class="flex gap-2 items-start">
-                                    <div class="text-center">
-                                        <span class="w-56 text-center font-semibold uppercase block">{{ getEmployeeNameById(formData.requesting_employee_id) }}</span>
-                                        <span class="text-xs text-gray-700">Requesting Employee</span>
+                            <!-- Requesting Employee -->
+                            <div class="space-y-2 text-base mb-4">
+                                <div class="space-y-1">
+                                    <div class="flex gap-2 items-start">
+                                        <div class="text-center">
+                                            <span class="w-56 text-center font-semibold uppercase block">{{ getEmployeeNameById(formData.requesting_employee_id) }}</span>
+                                            <span class="text-xs text-gray-700">Requesting Employee</span>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
 
-                        <!-- Time Fields & Details Section -->
-                        <div class="space-y-4 text-sm mb-4">
-                            <!-- Time Information Grid -->
-                            <div class="grid grid-cols-4 gap-2 mb-4">
+                            <!-- Time Fields & Details Section -->
+                            <div class="space-y-4 text-sm mb-4">
+                                <!-- Time Information Grid -->
+                                <div class="grid grid-cols-4 gap-2 mb-4">
+                                    <div>
+                                        <p class="text-xs font-medium text-gray-600 mb-1">In AM</p>
+                                        <p class="border-b border-gray-900 text-center font-semibold" style="min-height: 24px;">{{ formData.time_in_am ? formatTime(formData.time_in_am) : '—' }}</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-xs font-medium text-gray-600 mb-1">Out AM</p>
+                                        <p class="border-b border-gray-900 text-center font-semibold" style="min-height: 24px;">{{ formData.time_out_am ? formatTime(formData.time_out_am) : '—' }}</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-xs font-medium text-gray-600 mb-1">In PM</p>
+                                        <p class="border-b border-gray-900 text-center font-semibold" style="min-height: 24px;">{{ formData.time_in_pm ? formatTime(formData.time_in_pm) : '—' }}</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-xs font-medium text-gray-600 mb-1">Out PM</p>
+                                        <p class="border-b border-gray-900 text-center font-semibold" style="min-height: 24px;">{{ formData.time_out_pm ? formatTime(formData.time_out_pm) : '—' }}</p>
+                                    </div>
+                                </div>
+
+                                <!-- Reason -->
                                 <div>
-                                    <p class="text-xs font-medium text-gray-600 mb-1">In AM</p>
-                                    <p class="border-b border-gray-900 text-center font-semibold" style="min-height: 24px;">{{ formData.time_in_am ? formatTime(formData.time_in_am) : '—' }}</p>
-                                </div>
-                                <div>
-                                    <p class="text-xs font-medium text-gray-600 mb-1">Out AM</p>
-                                    <p class="border-b border-gray-900 text-center font-semibold" style="min-height: 24px;">{{ formData.time_out_am ? formatTime(formData.time_out_am) : '—' }}</p>
-                                </div>
-                                <div>
-                                    <p class="text-xs font-medium text-gray-600 mb-1">In PM</p>
-                                    <p class="border-b border-gray-900 text-center font-semibold" style="min-height: 24px;">{{ formData.time_in_pm ? formatTime(formData.time_in_pm) : '—' }}</p>
-                                </div>
-                                <div>
-                                    <p class="text-xs font-medium text-gray-600 mb-1">Out PM</p>
-                                    <p class="border-b border-gray-900 text-center font-semibold" style="min-height: 24px;">{{ formData.time_out_pm ? formatTime(formData.time_out_pm) : '—' }}</p>
+                                    <p class="text-xs font-medium text-gray-600 mb-1">Reason:</p>
+                                    <p class="text-sm text-gray-900 whitespace-pre-wrap border-b border-gray-900 pb-2">{{ formData.reason }}</p>
                                 </div>
                             </div>
 
-                            <!-- Reason -->
-                            <div>
-                                <p class="text-xs font-medium text-gray-600 mb-1">Reason:</p>
-                                <p class="text-sm text-gray-900 whitespace-pre-wrap border-b border-gray-900 pb-2">{{ formData.reason }}</p>
-                            </div>
-                        </div>
-
-                        <!-- Certified By & Approved By (Inline) -->
-                        <div v-if="(getCertifiedBySignatory() && formData.certified_by_employee_id) || getApprovedBySignatory()" class="mb-6 flex items-start justify-between pr-8">
-                            <!-- Generated On -->
-                            <div class="self-end text-left" style="font-size: 9px; color: #555;">
-                                <p class="m-0">Generated on {{ printGeneratedAtDisplay() }}</p>
-                                <p class="m-0 font-bold">PBO|DocuTrack</p>
-                            </div>
-
-                            <!-- Certified By -->
-                            <div v-if="getCertifiedBySignatory() && formData.certified_by_employee_id">
-                                <p class="text-sm text-gray-900 mb-8">CERTIFIED BY:</p>
-                                <div class="w-72 text-center">
-                                    <p class="font-bold text-base text-center text-gray-900 w-72 uppercase border-b border-gray-900 pb-1">{{ getCertifiedBySignatory()?.name }}</p>
-                                    <p class="text-sm text-center text-gray-700 w-72">{{ getCertifiedBySignatory()?.designation }}</p>
+                            <!-- Certified By & Approved By (Inline) -->
+                            <div v-if="(getCertifiedBySignatory() && formData.certified_by_employee_id) || getApprovedBySignatory()" class="mb-6 flex items-start justify-between pr-8">
+                                <!-- Generated On -->
+                                <div class="self-end text-left" style="font-size: 9px; color: #555;">
+                                    <p class="m-0">Generated on {{ printGeneratedAtDisplay() }}</p>
+                                    <p class="m-0 font-bold">PBO|DocuTrack</p>
                                 </div>
-                            </div>
 
-                            <!-- Approved By -->
-                            <div v-if="getApprovedBySignatory()">
-                                <p class="text-sm text-gray-900 mb-8">APPROVED BY:</p>
-                                <div class="w-72 text-center">
-                                    <p class="text-sm text-center text-gray-700"></p>
-                                    <p class="font-bold text-base text-center text-gray-900 w-72 uppercase border-b border-gray-900 pb-1">{{ getApprovedBySignatory()?.name }}</p>
-                                    <p class="text-sm text-center text-gray-700">{{ getApprovedBySignatory()?.designation }}</p>
+                                <!-- Certified By -->
+                                <div v-if="getCertifiedBySignatory() && formData.certified_by_employee_id">
+                                    <p class="text-sm text-gray-900 mb-8">CERTIFIED BY:</p>
+                                    <div class="w-72 text-center">
+                                        <p class="font-bold text-base text-center text-gray-900 w-72 uppercase border-b border-gray-900 pb-1">{{ getCertifiedBySignatory()?.name }}</p>
+                                        <p class="text-sm text-center text-gray-700 w-72">{{ getCertifiedBySignatory()?.designation }}</p>
+                                    </div>
                                 </div>
-                            </div>
-                        </div>
 
-                        <!-- Divider Border -->
-                        <div class="mt-4" style="border-top: 3px dotted #050505;"></div>
-
-                        <!-- Second Copy - Header Section with Logos -->
-                        <div class="flex items-center justify-center gap-2 pb-2" style="border-bottom: 3px double #050505;">
-                            <div style="width: 85px; flex-shrink: 0;">
-                                <img src="/benguetlogo.png" alt="Benguet Logo" style="width: 100%; height: auto;">
-                            </div>
-                            <div class="text-center">
-                                <p class="text-sm font-semibold text-gray-700 mt-8">Republic of the Philippines</p>
-                                <p class="text-sm font-bold text-gray-900">PROVINCE OF BENGUET</p>
-                                <p class="text-lg font-bold text-gray-900">PROVINCIAL BUDGET OFFICE</p>
-                                <p class="text-sm text-gray-700 mb-1">Poblacion, La Trinidad, Benguet 2601</p>
-                            </div>
-                            <div style="width: 85px; flex-shrink: 0;">
-                                <img src="/bagongpilipinaslogo.png" alt="Bagong Pilipinas Logo" style="width: 100%; height: auto;">
-                            </div>
-                        </div>
-                        
-                        <div class="text-left">
-                            <p class="text-base font-semibold text-blue-700">PHRMDO COPY</p>
-                        </div>
-                        
-                        <div>
-                            <p class="font-bold text-2xl text-center text-gray-900 mb-4">DTR TIME IN/OUT FORM</p>
-                        </div>
-
-                        <!-- Date & Control Numbers - Copy 2 -->
-                        <div class="mb-1 flex justify-end pr-8">
-                            <div class="text-center text-sm">
-                                <p><span class="w-26 inline-block text-right">Control No.: </span><span class="font-bold text-gray-900 w-48 border-b border-gray-900 inline-block text-center">{{ formData.control_no }}</span></p>
-                                <p class="mt-1"><span class="w-26 inline-block text-right">Date: </span><span class="font-bold text-gray-900 w-48 border-b border-gray-900 inline-block text-center">{{ formatDate(formData.date) }}</span></p>
-                            </div>
-                        </div>
-
-                        <!-- Requesting Employee - Copy 2 -->
-                        <div class="space-y-2 text-base mb-4">
-                            <div class="space-y-1">
-                                <div class="flex gap-2 items-start">
-                                    <div class="text-center">
-                                        <span class="w-56 text-center font-semibold uppercase block">{{ getEmployeeNameById(formData.requesting_employee_id) }}</span>
-                                        <span class="text-xs text-gray-700">Requesting Employee</span>
+                                <!-- Approved By -->
+                                <div v-if="getApprovedBySignatory()">
+                                    <p class="text-sm text-gray-900 mb-8">APPROVED BY:</p>
+                                    <div class="w-72 text-center">
+                                        <p class="text-sm text-center text-gray-700"></p>
+                                        <p class="font-bold text-base text-center text-gray-900 w-72 uppercase border-b border-gray-900 pb-1">{{ getApprovedBySignatory()?.name }}</p>
+                                        <p class="text-sm text-center text-gray-700">{{ getApprovedBySignatory()?.designation }}</p>
                                     </div>
                                 </div>
                             </div>
-                        </div>
 
-                        <!-- Time Fields & Details Section - Copy 2 -->
-                        <div class="space-y-4 text-sm mb-4">
-                            <!-- Time Information Grid -->
-                            <div class="grid grid-cols-4 gap-2 mb-4">
-                                <div>
-                                    <p class="text-xs font-medium text-gray-600 mb-1">In AM</p>
-                                    <p class="border-b border-gray-900 text-center font-semibold" style="min-height: 24px;">{{ formData.time_in_am ? formatTime(formData.time_in_am) : '—' }}</p>
+                            <!-- Divider Border -->
+                            <div class="mt-4" style="border-top: 3px dotted #050505;"></div>
+
+                            <!-- Second Copy - Header Section with Logos -->
+                            <div class="flex items-center justify-center gap-2 pb-2" style="border-bottom: 3px double #050505;">
+                                <div style="width: 85px; flex-shrink: 0;">
+                                    <img src="/benguetlogo.png" alt="Benguet Logo" style="width: 100%; height: auto;">
                                 </div>
-                                <div>
-                                    <p class="text-xs font-medium text-gray-600 mb-1">Out AM</p>
-                                    <p class="border-b border-gray-900 text-center font-semibold" style="min-height: 24px;">{{ formData.time_out_am ? formatTime(formData.time_out_am) : '—' }}</p>
+                                <div class="text-center">
+                                    <p class="text-sm font-semibold text-gray-700 mt-8">Republic of the Philippines</p>
+                                    <p class="text-sm font-bold text-gray-900">PROVINCE OF BENGUET</p>
+                                    <p class="text-lg font-bold text-gray-900">PROVINCIAL BUDGET OFFICE</p>
+                                    <p class="text-sm text-gray-700 mb-1">Poblacion, La Trinidad, Benguet 2601</p>
                                 </div>
-                                <div>
-                                    <p class="text-xs font-medium text-gray-600 mb-1">In PM</p>
-                                    <p class="border-b border-gray-900 text-center font-semibold" style="min-height: 24px;">{{ formData.time_in_pm ? formatTime(formData.time_in_pm) : '—' }}</p>
-                                </div>
-                                <div>
-                                    <p class="text-xs font-medium text-gray-600 mb-1">Out PM</p>
-                                    <p class="border-b border-gray-900 text-center font-semibold" style="min-height: 24px;">{{ formData.time_out_pm ? formatTime(formData.time_out_pm) : '—' }}</p>
+                                <div style="width: 85px; flex-shrink: 0;">
+                                    <img src="/bagongpilipinaslogo.png" alt="Bagong Pilipinas Logo" style="width: 100%; height: auto;">
                                 </div>
                             </div>
-
-                            <!-- Reason - Copy 2 -->
+                            
+                            <div class="text-left">
+                                <p class="text-base font-semibold text-blue-700">PHRMDO COPY</p>
+                            </div>
+                            
                             <div>
-                                <p class="text-xs font-medium text-gray-600 mb-1">Reason:</p>
-                                <p class="text-sm text-gray-900 whitespace-pre-wrap border-b border-gray-900 pb-2">{{ formData.reason }}</p>
-                            </div>
-                        </div>
-
-                        <!-- Certified By & Approved By (Inline) - Copy 2 -->
-                        <div v-if="(getCertifiedBySignatory() && formData.certified_by_employee_id) || getApprovedBySignatory()" class="mb-6 flex items-start justify-between pr-8">
-                            <!-- Generated On -->
-                            <div class="self-end text-left" style="font-size: 9px; color: #555;">
-                                <p class="m-0">Generated on {{ printGeneratedAtDisplay() }}</p>
-                                <p class="m-0 font-bold">PBO|DocuTrack</p>
+                                <p class="font-bold text-2xl text-center text-gray-900 mb-4">DTR TIME IN/OUT FORM</p>
                             </div>
 
-                            <!-- Certified By -->
-                            <div v-if="getCertifiedBySignatory() && formData.certified_by_employee_id">
-                                <p class="text-sm text-gray-900 mb-8">CERTIFIED BY:</p>
-                                <div class="w-72 text-center">
-                                    <p class="font-bold text-base text-center text-gray-900 w-72 uppercase border-b border-gray-900 pb-1">{{ getCertifiedBySignatory()?.name }}</p>
-                                    <p class="text-sm text-center text-gray-700 w-72">{{ getCertifiedBySignatory()?.designation }}</p>
+                            <!-- Date & Control Numbers - Copy 2 -->
+                            <div class="mb-1 flex justify-end pr-8">
+                                <div class="text-center text-sm">
+                                    <p><span class="w-26 inline-block text-right">Control No.: </span><span class="font-bold text-gray-900 w-48 border-b border-gray-900 inline-block text-center">{{ formData.control_no }}</span></p>
+                                    <p class="mt-1"><span class="w-26 inline-block text-right">Date: </span><span class="font-bold text-gray-900 w-48 border-b border-gray-900 inline-block text-center">{{ formatDate(formData.date) }}</span></p>
                                 </div>
                             </div>
 
-                            <!-- Approved By -->
-                            <div v-if="getApprovedBySignatory()">
-                                <p class="text-sm text-gray-900 mb-8">APPROVED BY:</p>
-                                <div class="w-72 text-center">
-                                    <p class="text-sm text-center text-gray-700"></p>
-                                    <p class="font-bold text-base text-center text-gray-900 w-72 uppercase border-b border-gray-900 pb-1">{{ getApprovedBySignatory()?.name }}</p>
-                                    <p class="text-sm text-center text-gray-700 w-72">{{ getApprovedBySignatory()?.designation }}</p>
+                            <!-- Requesting Employee - Copy 2 -->
+                            <div class="space-y-2 text-base mb-4">
+                                <div class="space-y-1">
+                                    <div class="flex gap-2 items-start">
+                                        <div class="text-center">
+                                            <span class="w-56 text-center font-semibold uppercase block">{{ getEmployeeNameById(formData.requesting_employee_id) }}</span>
+                                            <span class="text-xs text-gray-700">Requesting Employee</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Time Fields & Details Section - Copy 2 -->
+                            <div class="space-y-4 text-sm mb-4">
+                                <!-- Time Information Grid -->
+                                <div class="grid grid-cols-4 gap-2 mb-4">
+                                    <div>
+                                        <p class="text-xs font-medium text-gray-600 mb-1">In AM</p>
+                                        <p class="border-b border-gray-900 text-center font-semibold" style="min-height: 24px;">{{ formData.time_in_am ? formatTime(formData.time_in_am) : '—' }}</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-xs font-medium text-gray-600 mb-1">Out AM</p>
+                                        <p class="border-b border-gray-900 text-center font-semibold" style="min-height: 24px;">{{ formData.time_out_am ? formatTime(formData.time_out_am) : '—' }}</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-xs font-medium text-gray-600 mb-1">In PM</p>
+                                        <p class="border-b border-gray-900 text-center font-semibold" style="min-height: 24px;">{{ formData.time_in_pm ? formatTime(formData.time_in_pm) : '—' }}</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-xs font-medium text-gray-600 mb-1">Out PM</p>
+                                        <p class="border-b border-gray-900 text-center font-semibold" style="min-height: 24px;">{{ formData.time_out_pm ? formatTime(formData.time_out_pm) : '—' }}</p>
+                                    </div>
+                                </div>
+
+                                <!-- Reason - Copy 2 -->
+                                <div>
+                                    <p class="text-xs font-medium text-gray-600 mb-1">Reason:</p>
+                                    <p class="text-sm text-gray-900 whitespace-pre-wrap border-b border-gray-900 pb-2">{{ formData.reason }}</p>
+                                </div>
+                            </div>
+
+                            <!-- Certified By & Approved By (Inline) - Copy 2 -->
+                            <div v-if="(getCertifiedBySignatory() && formData.certified_by_employee_id) || getApprovedBySignatory()" class="mb-6 flex items-start justify-between pr-8">
+                                <!-- Generated On -->
+                                <div class="self-end text-left" style="font-size: 9px; color: #555;">
+                                    <p class="m-0">Generated on {{ printGeneratedAtDisplay() }}</p>
+                                    <p class="m-0 font-bold">PBO|DocuTrack</p>
+                                </div>
+
+                                <!-- Certified By -->
+                                <div v-if="getCertifiedBySignatory() && formData.certified_by_employee_id">
+                                    <p class="text-sm text-gray-900 mb-8">CERTIFIED BY:</p>
+                                    <div class="w-72 text-center">
+                                        <p class="font-bold text-base text-center text-gray-900 w-72 uppercase border-b border-gray-900 pb-1">{{ getCertifiedBySignatory()?.name }}</p>
+                                        <p class="text-sm text-center text-gray-700 w-72">{{ getCertifiedBySignatory()?.designation }}</p>
+                                    </div>
+                                </div>
+
+                                <!-- Approved By -->
+                                <div v-if="getApprovedBySignatory()">
+                                    <p class="text-sm text-gray-900 mb-8">APPROVED BY:</p>
+                                    <div class="w-72 text-center">
+                                        <p class="text-sm text-center text-gray-700"></p>
+                                        <p class="font-bold text-base text-center text-gray-900 w-72 uppercase border-b border-gray-900 pb-1">{{ getApprovedBySignatory()?.name }}</p>
+                                        <p class="text-sm text-center text-gray-700 w-72">{{ getApprovedBySignatory()?.designation }}</p>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -380,80 +391,5 @@ const printGeneratedAtDisplay = (): string => {
 
 .animate-scaleInUp {
     animation: scaleInUp 0.3s ease-out;
-}
-
-.paper-short {
-    min-height: 1050px;
-}
-
-.paper-long {
-    min-height: 1250px;
-}
-
-@media print {
-    .sticky {
-        position: static !important;
-    }
-
-    .sticky.top-0 {
-        display: none !important;
-    }
-
-    .sticky.bottom-0 {
-        display: none !important;
-    }
-
-    .overflow-y-auto {
-        overflow: visible !important;
-    }
-
-    .max-h-\[90vh\] {
-        max-height: none !important;
-    }
-
-    .max-w-4xl {
-        max-width: 100% !important;
-        width: 100% !important;
-    }
-
-    body, html {
-        margin: 0 !important;
-        padding: 0 !important;
-    }
-
-    .fixed.inset-0.z-\[60\].flex.items-center.justify-center {
-        align-items: flex-start !important;
-        padding: 0 !important;
-    }
-
-    /* Remove shadows from printed form */
-    .shadow-2xl {
-        box-shadow: none !important;
-    }
-
-    [class*="shadow"] {
-        box-shadow: none !important;
-    }
-
-    /* Assign named pages so each paper size prints at its exact dimensions */
-    .paper-short {
-        page: time-slip-short;
-        min-height: 10.5in;
-    }
-
-    .paper-long {
-        page: time-slip-long;
-        min-height: 12.5in;
-    }
-
-    @page time-slip-short {
-        size: 8.5in 11in;
-        margin: 0.5in;
-    }
-
-    @page time-slip-long {
-        size: 8.5in 13in;
-        margin: 0.5in;
-    }
 }
 </style>

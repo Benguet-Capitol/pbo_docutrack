@@ -34,261 +34,264 @@
                 </div>
 
                 <!-- Preview Content - Two Column Layout -->
-                <div
-                    id="preview-content"
-                    class="grid grid-cols-2 gap-4 p-4"
-                    :class="paperSize === 'long' ? 'paper-long' : 'paper-short'"
-                    :data-page-width-in="paperSize === 'long' ? 13 : 11"
-                    data-page-height-in="8.5"
-                    data-page-margin-in="0.3"
-                    style="background-color: white;"
-                >
-                    <!-- Copy 1 -->
-                    <div>
-                    <!-- Header Section with Logos -->
-                    <div class="flex items-center justify-center gap-2 pb-2" style="border-bottom: 3px double #050505;">
-                        <div style="width: 70px; flex-shrink: 0;">
-                            <img src="/benguetlogo.png" alt="Benguet Logo" style="width: 100%; height: auto;">
-                        </div>
-                        <div class="text-center">
-                            <p class="text-xs font-semibold text-gray-900 mb-1">Republic of the Philippines</p>
-                            <p class="text-xs font-bold text-gray-900">PROVINCE OF BENGUET</p>
-                            <p class="text-base font-bold text-gray-900">PROVINCIAL BUDGET OFFICE</p>
-                            <p class="text-xs text-gray-900 mb-1">Poblacion, La Trinidad, Benguet 2601</p>
-                        </div>
-                        <div style="width: 70px; flex-shrink: 0;">
-                            <img src="/bagongpilipinaslogo.png" alt="Bagong Pilipinas Logo" style="width: 100%; height: auto;">
-                        </div>
-                    </div>
-
-                    <p class="font-bold text-sm text-blue-800">PBO COPY</p>
-
-                    <div class="flex items-center justify-center mb-6">
-                        <p class="font-bold text-lg text-gray-900">PASS SLIP</p>
-                    </div>
-
-                    <!-- Top Information Row -->
-                    <div class="mb-6 text-xs space-y-1">
+                <!-- The whole sheet, its margins inside (like the Leave preview); only this page is printed -->
+                <div class="p-4 bg-gray-100 dark:bg-gray-900 overflow-x-auto">
+                    <div
+                        id="preview-content"
+                        class="mx-auto grid grid-cols-2 gap-4 bg-white shadow"
+                        data-print-page-only
+                        :data-page-width-in="paperSize === 'long' ? 13 : 11"
+                        data-page-height-in="8.5"
+                        data-page-margin-in="0"
+                        :style="{ boxSizing: 'border-box', width: paperSize === 'long' ? '13in' : '11in', minHeight: '8.5in', padding: '0.3in' }"
+                    >
+                        <!-- Copy 1 -->
                         <div>
-                            <p class="font-semibold text-gray-700"><span class="w-20 inline-block text-right">Date: </span><span class="font-bold text-gray-900 w-48 border-b border-gray-900 inline-block text-center">{{ new Date(formData.date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) }}</span></p>
+                        <!-- Header Section with Logos -->
+                        <div class="flex items-center justify-center gap-2 pb-2" style="border-bottom: 3px double #050505;">
+                            <div style="width: 70px; flex-shrink: 0;">
+                                <img src="/benguetlogo.png" alt="Benguet Logo" style="width: 100%; height: auto;">
+                            </div>
+                            <div class="text-center">
+                                <p class="text-xs font-semibold text-gray-900 mb-1">Republic of the Philippines</p>
+                                <p class="text-xs font-bold text-gray-900">PROVINCE OF BENGUET</p>
+                                <p class="text-base font-bold text-gray-900">PROVINCIAL BUDGET OFFICE</p>
+                                <p class="text-xs text-gray-900 mb-1">Poblacion, La Trinidad, Benguet 2601</p>
+                            </div>
+                            <div style="width: 70px; flex-shrink: 0;">
+                                <img src="/bagongpilipinaslogo.png" alt="Bagong Pilipinas Logo" style="width: 100%; height: auto;">
+                            </div>
                         </div>
-                        <div>
-                            <p class="font-semibold text-gray-700"><span class="w-20 inline-block text-right">Control No.: </span><span class="font-bold text-gray-900 w-48 border-b border-gray-900 inline-block text-center">{{ formData.control_no }}</span></p>
+
+                        <p class="font-bold text-sm text-blue-800">PBO COPY</p>
+
+                        <div class="flex items-center justify-center mb-6">
+                            <p class="font-bold text-lg text-gray-900">PASS SLIP</p>
                         </div>
-                    </div>
 
-                    <!-- Provincial Budget Officer Info -->
-                    <div class="text-left mb-6 w-40">
-                        <p class="font-bold text-xs text-gray-900 text-center border-b border-gray-900 w-72 uppercase">{{ getProvincialBudgetOfficer() }}</p>
-                        <p class="text-xs text-gray-700 text-center w-72">Provincial Budget Officer</p>
-                    </div>
+                        <!-- Top Information Row -->
+                        <div class="mb-6 text-xs space-y-1">
+                            <div>
+                                <p class="font-semibold text-gray-700"><span class="w-20 inline-block text-right">Date: </span><span class="font-bold text-gray-900 w-48 border-b border-gray-900 inline-block text-center">{{ new Date(formData.date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) }}</span></p>
+                            </div>
+                            <div>
+                                <p class="font-semibold text-gray-700"><span class="w-20 inline-block text-right">Control No.: </span><span class="font-bold text-gray-900 w-48 border-b border-gray-900 inline-block text-center">{{ formData.control_no }}</span></p>
+                            </div>
+                        </div>
 
-                    <!-- Main Content -->
-                    <div class="mb-4 text-xs leading-relaxed text-gray-700">
-                        <p class="mb-4">
-                            Permission is respectfully requested to leave at <span class="border-b border-gray-900 w-24 inline-block text-center font-semibold">{{ formatTimeDisplay(formData.requested_time) }}</span> 
-                            on <span class="border-b border-gray-900 w-40 inline-block text-center font-semibold">{{ formatInclusiveDatesForDisplay() }}</span> 
-                            to <span class="border-b border-gray-900 inline-block text-center font-semibold" :class="getPurposeSpanClass()" :style="getPurposeSpanStyle()">{{ formData.purpose }}</span> 
-                            at the <span class="border-b border-gray-900 w-96 inline-block text-center font-semibold">{{ formData.location }}</span>.
-                        </p>
-                        
-                        <div class="ml-4 space-y-1">
-                            <p>
-                                <span>Expected Time of Return: </span> 
-                                <span class="font-bold border-b border-gray-900 w-48 inline-block text-center">
-                                    {{ formData.returnType === 'asap' ? 'As soon as possible' : 
-                                       formData.returnType === 'nwd' ? 'Next Working Day' : 
-                                       formData.returnType === 'time_slip' ? 'Time Slip' : 
-                                       formData.returnType === 'nom' ? 'NOM' : 
-                                       formData.returnType === 'memo' ? 'Memo' : 
-                                       formatTimeDisplay(formData.expected_return_time) }}
-                                </span>
+                        <!-- Provincial Budget Officer Info -->
+                        <div class="text-left mb-6 w-40">
+                            <p class="font-bold text-xs text-gray-900 text-center border-b border-gray-900 w-72 uppercase">{{ getProvincialBudgetOfficer() }}</p>
+                            <p class="text-xs text-gray-700 text-center w-72">Provincial Budget Officer</p>
+                        </div>
+
+                        <!-- Main Content -->
+                        <div class="mb-4 text-xs leading-relaxed text-gray-700">
+                            <p class="mb-4">
+                                Permission is respectfully requested to leave at <span class="border-b border-gray-900 w-24 inline-block text-center font-semibold">{{ formatTimeDisplay(formData.requested_time) }}</span> 
+                                on <span class="border-b border-gray-900 w-40 inline-block text-center font-semibold">{{ formatInclusiveDatesForDisplay() }}</span> 
+                                to <span class="border-b border-gray-900 inline-block text-center font-semibold" :class="getPurposeSpanClass()" :style="getPurposeSpanStyle()">{{ formData.purpose }}</span> 
+                                at the <span class="border-b border-gray-900 w-96 inline-block text-center font-semibold">{{ formData.location }}</span>.
                             </p>
-                            <p>
-                                <span>Vehicle to be used: </span> 
-                                <span class="font-bold border-b border-gray-900 w-48 inline-block text-center">{{ formData.vehicle }}</span>
-                            </p>
+                            
+                            <div class="ml-4 space-y-1">
+                                <p>
+                                    <span>Expected Time of Return: </span> 
+                                    <span class="font-bold border-b border-gray-900 w-48 inline-block text-center">
+                                        {{ formData.returnType === 'asap' ? 'As soon as possible' : 
+                                           formData.returnType === 'nwd' ? 'Next Working Day' : 
+                                           formData.returnType === 'time_slip' ? 'Time Slip' : 
+                                           formData.returnType === 'nom' ? 'NOM' : 
+                                           formData.returnType === 'memo' ? 'Memo' : 
+                                           formatTimeDisplay(formData.expected_return_time) }}
+                                    </span>
+                                </p>
+                                <p>
+                                    <span>Vehicle to be used: </span> 
+                                    <span class="font-bold border-b border-gray-900 w-48 inline-block text-center">{{ formData.vehicle }}</span>
+                                </p>
+                            </div>
                         </div>
-                    </div>
 
-                    <!-- Requesting Employee Section -->
-                    <div class="mb-6">
-                        <p class="text-xs text-gray-700 mb-6">Requesting Employee:</p>
-                        <div class="flex flex-wrap gap-3">
-                            <div v-for="empId in formData.employee_ids" :key="empId" class="text-center">
-                                <div class="w-48">
-                                    <p class="font-bold text-xs text-gray-900 border-b border-gray-900 text-center uppercase">{{ getEmployeeName(empId) }}</p>
-                                    <p class="text-xs text-gray-700 text-center">{{ getEmployeeDesignation(empId) }}</p>
+                        <!-- Requesting Employee Section -->
+                        <div class="mb-6">
+                            <p class="text-xs text-gray-700 mb-6">Requesting Employee:</p>
+                            <div class="flex flex-wrap gap-3">
+                                <div v-for="empId in formData.employee_ids" :key="empId" class="text-center">
+                                    <div class="w-48">
+                                        <p class="font-bold text-xs text-gray-900 border-b border-gray-900 text-center uppercase">{{ getEmployeeName(empId) }}</p>
+                                        <p class="text-xs text-gray-700 text-center">{{ getEmployeeDesignation(empId) }}</p>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
 
-                    <!-- Recommending Approval -->
-                    <div v-if="getRecommendingApprovalEmployee() && !isProvincialBudgetOfficerRequesting()" class="mb-4">
-                        <p class="text-xs text-gray-900 mb-6">Recommending Approval:</p>
-                        <div class="space-y-8">
-                            <div class="w-72">
-                                <p class="font-bold text-xs text-center text-gray-900 w-72 uppercase">{{ getRecommendingApprovalEmployee().name }}</p>
-                                <p class="text-xs text-center text-gray-700 border-b border-gray-900 w-72">{{ getRecommendingApprovalEmployee().designation }}</p>
-                                <p class="text-xs text-center text-gray-700 w-72">Immediate Supervisor</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Approved Section -->
-                    <div class="flex justify-between items-end pr-8">
-                        <div class="text-left" style="font-size: 9px; color: #555;">
-                            <p class="m-0">Generated on {{ printGeneratedAtDisplay() }}</p>
-                            <p class="m-0 font-bold">PBO|DocuTrack</p>
-                        </div>
-                        <div class="w-72 text-center mb-6">
-                            <p class="text-xs text-left text-gray-900 mb-6">APPROVED:</p>
-                            <p v-if="isProvincialBudgetOfficerRequesting() && getProvincialGovernor()" class="text-xs text-center text-gray-900 font-bold uppercase">{{ getProvincialGovernor().name }}</p>
-                            <p v-else class="text-xs text-center text-gray-900 font-bold uppercase">{{ getApprovedBy().name || 'Provincial Budget Officer' }}</p>
-                            <p v-if="isProvincialBudgetOfficerRequesting() && getProvincialGovernor()" class="text-xs text-center text-gray-700 border-b border-gray-900">Provincial Governor</p>
-                            <p v-else class="text-xs text-center text-gray-700 border-b border-gray-900">{{ getApprovedBy().title }}</p>
-                            <p class="text-xs text-center text-gray-700">Department Head</p>
-                        </div>
-                    </div>
-
-                    <!-- Certificate of Appearance -->
-                    <div class="mt-2 pt-4" style="border-top: 3px double #050505;">
-                        <p class="font-bold text-xs text-center text-gray-900 mb-2">CERTIFICATE OF APPEARANCE</p>
-                        <p class="text-xs text-gray-700 leading-relaxed">
-                            This is to CERTIFY that the above mentioned person appeared in this office on {{ formatInclusiveDatesForDisplay() }}.
-                        </p>
-
-                        <!-- Signature and Printed Name Section -->
-                        <div class="mt-2 w-72 text-center">
-                                <p class="text-xs text-center text-gray-700 border-b border-gray-900 pb-6 mb-1"></p>
-                                <p class="text-xs text-center text-gray-700">Signature over Printed Name</p>
-                        </div>
-                    </div>
-                    </div>
-
-                    <!-- Copy 2 (Duplicate) -->
-                    <div>
-                    <!-- Header Section with Logos -->
-                    <div class="flex items-center justify-center gap-2 pb-2" style="border-bottom: 3px double #050505;">
-                        <div style="width: 70px; flex-shrink: 0;">
-                            <img src="/benguetlogo.png" alt="Benguet Logo" style="width: 100%; height: auto;">
-                        </div>
-                        <div class="text-center">
-                            <p class="text-xs font-semibold text-gray-900 mb-1">Republic of the Philippines</p>
-                            <p class="text-xs font-bold text-gray-900">PROVINCE OF BENGUET</p>
-                            <p class="text-base font-bold text-gray-900">PROVINCIAL BUDGET OFFICE</p>
-                            <p class="text-xs text-gray-900 mb-1">Poblacion, La Trinidad, Benguet 2601</p>
-                        </div>
-                        <div style="width: 70px; flex-shrink: 0;">
-                            <img src="/bagongpilipinaslogo.png" alt="Bagong Pilipinas Logo" style="width: 100%; height: auto;">
-                        </div>
-                    </div>
-
-                    <p class="font-bold text-sm text-blue-800">PHRMDO COPY</p>
-
-                    <div class="flex items-center justify-center mb-6">
-                        <p class="font-bold text-lg text-gray-900">PASS SLIP</p>
-                    </div>
-
-                     <!-- Top Information Row -->
-                    <div class="mb-6 text-xs space-y-1">
-                        <div>
-                            <p class="font-semibold text-gray-700"><span class="w-20 inline-block text-right">Date: </span><span class="font-bold text-gray-900 w-48 border-b border-gray-900 inline-block text-center">{{ new Date(formData.date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) }}</span></p>
-                        </div>
-                        <div>
-                            <p class="font-semibold text-gray-700"><span class="w-20 inline-block text-right">Control No.: </span><span class="font-bold text-gray-900 w-48 border-b border-gray-900 inline-block text-center">{{ formData.control_no }}</span></p>
-                        </div>
-                    </div>
-
-                    <!-- Provincial Budget Officer Info -->
-                    <div class="text-left mb-6 w-40">
-                        <p class="font-bold text-xs text-gray-900 text-center border-b border-gray-900 w-72 uppercase">{{ getProvincialBudgetOfficer() }}</p>
-                        <p class="text-xs text-gray-700 text-center w-72">Provincial Budget Officer</p>
-                    </div>
-
-                    <!-- Main Content -->
-                    <div class="mb-4 text-xs leading-relaxed text-gray-700">
-                        <p class="mb-4">
-                            Permission is respectfully requested to leave at <span class="border-b border-gray-900 w-24 inline-block text-center font-semibold">{{ formatTimeDisplay(formData.requested_time) }}</span> 
-                            on <span class="border-b border-gray-900 w-40 inline-block text-center font-semibold">{{ formatInclusiveDatesForDisplay() }}</span> 
-                            to <span class="border-b border-gray-900 inline-block text-center font-semibold" :class="getPurposeSpanClass()" :style="getPurposeSpanStyle()">{{ formData.purpose }}</span> 
-                            at the <span class="border-b border-gray-900 w-96 inline-block text-center font-semibold">{{ formData.location }}</span>.
-                        </p>
-                        
-                        <div class="ml-4 space-y-1">
-                            <p>
-                                <span>Expected Time of Return: </span> 
-                                <span class="font-bold border-b border-gray-900 w-48 inline-block text-center">
-                                    {{ formData.returnType === 'asap' ? 'As soon as possible' : 
-                                       formData.returnType === 'nwd' ? 'Next Working Day' : 
-                                       formData.returnType === 'time_slip' ? 'Time Slip' : 
-                                       formData.returnType === 'nom' ? 'NOM' : 
-                                       formData.returnType === 'memo' ? 'Memo' : 
-                                       formatTimeDisplay(formData.expected_return_time) }}
-                                </span>
-                            </p>
-                            <p>
-                                <span>Vehicle to be used: </span> 
-                                <span class="font-bold border-b border-gray-900 w-48 inline-block text-center">{{ formData.vehicle }}</span>
-                            </p>
-                        </div>
-                    </div>
-
-                    <!-- Requesting Employee Section -->
-                    <div class="mb-6">
-                        <p class="text-xs text-gray-700 mb-6">Requesting Employee:</p>
-                        <div class="flex flex-wrap gap-3">
-                            <div v-for="empId in formData.employee_ids" :key="empId" class="text-center">
-                                <div class="w-48">
-                                    <p class="font-bold text-xs text-gray-900 border-b border-gray-900 text-center uppercase">{{ getEmployeeName(empId) }}</p>
-                                    <p class="text-xs text-gray-700 text-center">{{ getEmployeeDesignation(empId) }}</p>
+                        <!-- Recommending Approval -->
+                        <div v-if="getRecommendingApprovalEmployee() && !isProvincialBudgetOfficerRequesting()" class="mb-4">
+                            <p class="text-xs text-gray-900 mb-6">Recommending Approval:</p>
+                            <div class="space-y-8">
+                                <div class="w-72">
+                                    <p class="font-bold text-xs text-center text-gray-900 w-72 uppercase">{{ getRecommendingApprovalEmployee().name }}</p>
+                                    <p class="text-xs text-center text-gray-700 border-b border-gray-900 w-72">{{ getRecommendingApprovalEmployee().designation }}</p>
+                                    <p class="text-xs text-center text-gray-700 w-72">Immediate Supervisor</p>
                                 </div>
                             </div>
                         </div>
-                    </div>
 
-                    <!-- Recommending Approval -->
-                    <div v-if="getRecommendingApprovalEmployee() && !isProvincialBudgetOfficerRequesting()" class="mb-4">
-                        <p class="text-xs text-gray-700 mb-6">Recommending Approval:</p>
-                        <div class="space-y-8">
-                            <div class="w-72">
-                                <p class="font-bold text-xs text-center text-gray-900 w-72 uppercase">{{ getRecommendingApprovalEmployee().name }}</p>
-                                <p class="text-xs text-center text-gray-700 border-b border-gray-900 w-72">{{ getRecommendingApprovalEmployee().designation }}</p>
-                                <p class="text-xs text-center text-gray-700 w-72">Immediate Supervisor</p>
+                        <!-- Approved Section -->
+                        <div class="flex justify-between items-end pr-8">
+                            <div class="text-left" style="font-size: 9px; color: #555;">
+                                <p class="m-0">Generated on {{ printGeneratedAtDisplay() }}</p>
+                                <p class="m-0 font-bold">PBO|DocuTrack</p>
+                            </div>
+                            <div class="w-72 text-center mb-6">
+                                <p class="text-xs text-left text-gray-900 mb-6">APPROVED:</p>
+                                <p v-if="isProvincialBudgetOfficerRequesting() && getProvincialGovernor()" class="text-xs text-center text-gray-900 font-bold uppercase">{{ getProvincialGovernor().name }}</p>
+                                <p v-else class="text-xs text-center text-gray-900 font-bold uppercase">{{ getApprovedBy().name || 'Provincial Budget Officer' }}</p>
+                                <p v-if="isProvincialBudgetOfficerRequesting() && getProvincialGovernor()" class="text-xs text-center text-gray-700 border-b border-gray-900">Provincial Governor</p>
+                                <p v-else class="text-xs text-center text-gray-700 border-b border-gray-900">{{ getApprovedBy().title }}</p>
+                                <p class="text-xs text-center text-gray-700">Department Head</p>
                             </div>
                         </div>
-                    </div>
 
-                    <!-- Approved Section -->
-                    <div class="flex justify-between items-end pr-8">
-                        <div class="text-left" style="font-size: 9px; visibility: hidden;">
-                            <p class="m-0">Generated on {{ printGeneratedAtDisplay() }}</p>
-                            <p class="m-0 font-bold">PBO|DocuTrack</p>
-                        </div>
-                        <div class="w-72 text-center mb-6">
-                            <p class="text-xs text-left text-gray-900 mb-6">APPROVED:</p>
-                            <p v-if="isProvincialBudgetOfficerRequesting() && getProvincialGovernor()" class="text-xs text-center text-gray-900 font-bold uppercase">{{ getProvincialGovernor().name }}</p>
-                            <p v-else class="text-xs text-center text-gray-900 font-bold uppercase">{{ getApprovedBy().name || 'Provincial Budget Officer' }}</p>
-                            <p v-if="isProvincialBudgetOfficerRequesting() && getProvincialGovernor()" class="text-xs text-center text-gray-700 border-b border-gray-900">Provincial Governor</p>
-                            <p v-else class="text-xs text-center text-gray-700 border-b border-gray-900">{{ getApprovedBy().title }}</p>
-                            <p class="text-xs text-center text-gray-700">Department Head</p>
-                        </div>
-                    </div>
+                        <!-- Certificate of Appearance -->
+                        <div class="mt-2 pt-4" style="border-top: 3px double #050505;">
+                            <p class="font-bold text-xs text-center text-gray-900 mb-2">CERTIFICATE OF APPEARANCE</p>
+                            <p class="text-xs text-gray-700 leading-relaxed">
+                                This is to CERTIFY that the above mentioned person appeared in this office on {{ formatInclusiveDatesForDisplay() }}.
+                            </p>
 
-                    <!-- Certificate of Appearance -->
-                    <div class="mt-2 pt-4" style="border-top: 3px double #050505;">
-                        <p class="font-bold text-xs text-center text-gray-900 mb-2">CERTIFICATE OF APPEARANCE</p>
-                        <p class="text-xs text-gray-700 leading-relaxed">
-                            This is to CERTIFY that the above mentioned person appeared in this office on {{ formatInclusiveDatesForDisplay() }}.
-                        </p>
-
-                        <!-- Signature and Printed Name Section -->
-                        <div class="mt-2 w-72 text-center">
-                                <p class="text-xs text-center text-gray-900 border-b border-gray-900 pb-6 mb-1"></p>
-                                <p class="text-xs text-center text-gray-700">Signature over Printed Name</p>
+                            <!-- Signature and Printed Name Section -->
+                            <div class="mt-2 w-72 text-center">
+                                    <p class="text-xs text-center text-gray-700 border-b border-gray-900 pb-6 mb-1"></p>
+                                    <p class="text-xs text-center text-gray-700">Signature over Printed Name</p>
+                            </div>
                         </div>
-                    </div>
+                        </div>
+
+                        <!-- Copy 2 (Duplicate) -->
+                        <div>
+                        <!-- Header Section with Logos -->
+                        <div class="flex items-center justify-center gap-2 pb-2" style="border-bottom: 3px double #050505;">
+                            <div style="width: 70px; flex-shrink: 0;">
+                                <img src="/benguetlogo.png" alt="Benguet Logo" style="width: 100%; height: auto;">
+                            </div>
+                            <div class="text-center">
+                                <p class="text-xs font-semibold text-gray-900 mb-1">Republic of the Philippines</p>
+                                <p class="text-xs font-bold text-gray-900">PROVINCE OF BENGUET</p>
+                                <p class="text-base font-bold text-gray-900">PROVINCIAL BUDGET OFFICE</p>
+                                <p class="text-xs text-gray-900 mb-1">Poblacion, La Trinidad, Benguet 2601</p>
+                            </div>
+                            <div style="width: 70px; flex-shrink: 0;">
+                                <img src="/bagongpilipinaslogo.png" alt="Bagong Pilipinas Logo" style="width: 100%; height: auto;">
+                            </div>
+                        </div>
+
+                        <p class="font-bold text-sm text-blue-800">PHRMDO COPY</p>
+
+                        <div class="flex items-center justify-center mb-6">
+                            <p class="font-bold text-lg text-gray-900">PASS SLIP</p>
+                        </div>
+
+                         <!-- Top Information Row -->
+                        <div class="mb-6 text-xs space-y-1">
+                            <div>
+                                <p class="font-semibold text-gray-700"><span class="w-20 inline-block text-right">Date: </span><span class="font-bold text-gray-900 w-48 border-b border-gray-900 inline-block text-center">{{ new Date(formData.date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) }}</span></p>
+                            </div>
+                            <div>
+                                <p class="font-semibold text-gray-700"><span class="w-20 inline-block text-right">Control No.: </span><span class="font-bold text-gray-900 w-48 border-b border-gray-900 inline-block text-center">{{ formData.control_no }}</span></p>
+                            </div>
+                        </div>
+
+                        <!-- Provincial Budget Officer Info -->
+                        <div class="text-left mb-6 w-40">
+                            <p class="font-bold text-xs text-gray-900 text-center border-b border-gray-900 w-72 uppercase">{{ getProvincialBudgetOfficer() }}</p>
+                            <p class="text-xs text-gray-700 text-center w-72">Provincial Budget Officer</p>
+                        </div>
+
+                        <!-- Main Content -->
+                        <div class="mb-4 text-xs leading-relaxed text-gray-700">
+                            <p class="mb-4">
+                                Permission is respectfully requested to leave at <span class="border-b border-gray-900 w-24 inline-block text-center font-semibold">{{ formatTimeDisplay(formData.requested_time) }}</span> 
+                                on <span class="border-b border-gray-900 w-40 inline-block text-center font-semibold">{{ formatInclusiveDatesForDisplay() }}</span> 
+                                to <span class="border-b border-gray-900 inline-block text-center font-semibold" :class="getPurposeSpanClass()" :style="getPurposeSpanStyle()">{{ formData.purpose }}</span> 
+                                at the <span class="border-b border-gray-900 w-96 inline-block text-center font-semibold">{{ formData.location }}</span>.
+                            </p>
+                            
+                            <div class="ml-4 space-y-1">
+                                <p>
+                                    <span>Expected Time of Return: </span> 
+                                    <span class="font-bold border-b border-gray-900 w-48 inline-block text-center">
+                                        {{ formData.returnType === 'asap' ? 'As soon as possible' : 
+                                           formData.returnType === 'nwd' ? 'Next Working Day' : 
+                                           formData.returnType === 'time_slip' ? 'Time Slip' : 
+                                           formData.returnType === 'nom' ? 'NOM' : 
+                                           formData.returnType === 'memo' ? 'Memo' : 
+                                           formatTimeDisplay(formData.expected_return_time) }}
+                                    </span>
+                                </p>
+                                <p>
+                                    <span>Vehicle to be used: </span> 
+                                    <span class="font-bold border-b border-gray-900 w-48 inline-block text-center">{{ formData.vehicle }}</span>
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Requesting Employee Section -->
+                        <div class="mb-6">
+                            <p class="text-xs text-gray-700 mb-6">Requesting Employee:</p>
+                            <div class="flex flex-wrap gap-3">
+                                <div v-for="empId in formData.employee_ids" :key="empId" class="text-center">
+                                    <div class="w-48">
+                                        <p class="font-bold text-xs text-gray-900 border-b border-gray-900 text-center uppercase">{{ getEmployeeName(empId) }}</p>
+                                        <p class="text-xs text-gray-700 text-center">{{ getEmployeeDesignation(empId) }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Recommending Approval -->
+                        <div v-if="getRecommendingApprovalEmployee() && !isProvincialBudgetOfficerRequesting()" class="mb-4">
+                            <p class="text-xs text-gray-700 mb-6">Recommending Approval:</p>
+                            <div class="space-y-8">
+                                <div class="w-72">
+                                    <p class="font-bold text-xs text-center text-gray-900 w-72 uppercase">{{ getRecommendingApprovalEmployee().name }}</p>
+                                    <p class="text-xs text-center text-gray-700 border-b border-gray-900 w-72">{{ getRecommendingApprovalEmployee().designation }}</p>
+                                    <p class="text-xs text-center text-gray-700 w-72">Immediate Supervisor</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Approved Section -->
+                        <div class="flex justify-between items-end pr-8">
+                            <div class="text-left" style="font-size: 9px; visibility: hidden;">
+                                <p class="m-0">Generated on {{ printGeneratedAtDisplay() }}</p>
+                                <p class="m-0 font-bold">PBO|DocuTrack</p>
+                            </div>
+                            <div class="w-72 text-center mb-6">
+                                <p class="text-xs text-left text-gray-900 mb-6">APPROVED:</p>
+                                <p v-if="isProvincialBudgetOfficerRequesting() && getProvincialGovernor()" class="text-xs text-center text-gray-900 font-bold uppercase">{{ getProvincialGovernor().name }}</p>
+                                <p v-else class="text-xs text-center text-gray-900 font-bold uppercase">{{ getApprovedBy().name || 'Provincial Budget Officer' }}</p>
+                                <p v-if="isProvincialBudgetOfficerRequesting() && getProvincialGovernor()" class="text-xs text-center text-gray-700 border-b border-gray-900">Provincial Governor</p>
+                                <p v-else class="text-xs text-center text-gray-700 border-b border-gray-900">{{ getApprovedBy().title }}</p>
+                                <p class="text-xs text-center text-gray-700">Department Head</p>
+                            </div>
+                        </div>
+
+                        <!-- Certificate of Appearance -->
+                        <div class="mt-2 pt-4" style="border-top: 3px double #050505;">
+                            <p class="font-bold text-xs text-center text-gray-900 mb-2">CERTIFICATE OF APPEARANCE</p>
+                            <p class="text-xs text-gray-700 leading-relaxed">
+                                This is to CERTIFY that the above mentioned person appeared in this office on {{ formatInclusiveDatesForDisplay() }}.
+                            </p>
+
+                            <!-- Signature and Printed Name Section -->
+                            <div class="mt-2 w-72 text-center">
+                                    <p class="text-xs text-center text-gray-900 border-b border-gray-900 pb-6 mb-1"></p>
+                                    <p class="text-xs text-center text-gray-700">Signature over Printed Name</p>
+                            </div>
+                        </div>
+                        </div>
                     </div>
                 </div>
 
@@ -447,112 +450,3 @@ const printGeneratedAtDisplay = (): string => {
         + now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
 };
 </script>
-
-<style scoped>
-
-.paper-short {
-    min-height: 720px;
-}
-
-.paper-long {
-    min-height: 720px;
-}
-
-/* Print Styles: Hide modal chrome and scrollbars */
-@media print {
-    /* Assign named pages so each paper size prints at its exact dimensions (landscape) */
-    .paper-short {
-        page: pass-slip-short;
-        min-height: 7.5in;
-    }
-
-    .paper-long {
-        page: pass-slip-long;
-        min-height: 7.5in;
-    }
-
-    @page pass-slip-short {
-        size: 11in 8.5in landscape;
-        margin: 0.3in;
-    }
-
-    @page pass-slip-long {
-        size: 13in 8.5in landscape;
-        margin: 0.3in;
-    }
-
-    /* Hide all modal chrome and UI elements */
-    .sticky {
-        position: static !important;
-    }
-
-    .sticky.top-0 {
-        display: none !important;
-    }
-
-    .sticky.bottom-0 {
-        display: none !important;
-    }
-
-    /* Remove scrollbars and margins */
-    body {
-        margin: 0 !important;
-        padding: 0 !important;
-        overflow: visible !important;
-    }
-
-    html {
-        margin: 0 !important;
-        padding: 0 !important;
-        overflow: visible !important;
-    }
-
-    /* Remove modal container padding and styles */
-    .relative {
-        box-shadow: none !important;
-        border-radius: 0 !important;
-        margin: 0 !important;
-        padding: 0 !important;
-    }
-
-    /* Remove preview content padding and margins */
-    #preview-content {
-        padding: 0 !important;
-        margin: 0 !important;
-        gap: 0 !important;
-    }
-
-    /* Remove margins from preview columns */
-    #preview-content > div {
-        margin: 0 !important;
-        padding: 0 !important;
-    }
-
-    /* Remove grid padding */
-    .grid {
-        padding: 0 !important;
-        margin: 0 !important;
-        gap: 0 !important;
-    }
-
-    /* Remove scroll from modal/container */
-    .overflow-y-auto {
-        overflow: visible !important;
-    }
-
-    /* Remove shadows from printed form */
-    .shadow-2xl {
-        box-shadow: none !important;
-    }
-
-    [class*="shadow"] {
-        box-shadow: none !important;
-    }
-
-    /* Ensure content takes full width */
-    div[style*="background-color: white"] {
-        margin: 0 !important;
-        padding: 0 !important;
-    }
-}
-</style>

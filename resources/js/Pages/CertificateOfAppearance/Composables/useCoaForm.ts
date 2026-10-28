@@ -1,6 +1,7 @@
 import { ref, watch, computed } from 'vue';
 import { useTrashedControlNumbers } from '@/Composables/useTrashedControlNumbers';
 import type { CertificateOfAppearance } from './useCoaData';
+import { localDateString } from '@/utils/date';
 
 export function useCoaForm(certificates: any) {
     const formData = ref({
@@ -28,10 +29,7 @@ export function useCoaForm(certificates: any) {
     const certificateToEdit = ref<CertificateOfAppearance | null>(null);
     const certificateToDelete = ref<CertificateOfAppearance | null>(null);
 
-    const todayDate = computed(() => {
-        const today = new Date();
-        return today.toISOString().split('T')[0];
-    });
+    const todayDate = computed(() => localDateString());
 
     // Watch for date changes to regenerate control number (only in CREATE mode)
     watch(
@@ -86,7 +84,7 @@ export function useCoaForm(certificates: any) {
     };
 
     const openCreateModal = () => {
-        const today = new Date().toISOString().split('T')[0];
+        const today = localDateString();
         formData.value = {
             control_no: generateControlNo(today),
             name: '',

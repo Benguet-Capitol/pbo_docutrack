@@ -6,6 +6,7 @@ import type { Leave } from './useLeavesData';
 import { leaveCredit, leaveDays, formatDays } from '@/Composables/useLeaveCredits';
 import { yearOf } from '@/Composables/useYearFilter';
 import { leaveWorkingDates, longDate } from './useLeaveFormPrint';
+import { localDateString } from '@/utils/date';
 
 /** Leave types whose 6.B location details (within the Philippines / abroad, purpose) apply */
 export const LOCATION_TYPES = ['Vacation Leave', 'Special Privilege Leave', 'Wellness Leave'];
@@ -209,7 +210,7 @@ export function useLeavesForm(
     const canDeleteLeaves = computed(() => can('leaves.delete'));
 
     const openCreateModal = () => {
-        const today = new Date().toISOString().split('T')[0];
+        const today = localDateString();
         formData.value = {
             ...blankForm(),
             control_no: generateControlNo(today),

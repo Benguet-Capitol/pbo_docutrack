@@ -129,9 +129,11 @@ export const printSafely = async (): Promise<void> => {
     // A page marked data-print-page-only prints just itself on its own paper size (no modal frame or backdrop)
     const page = root.querySelector<HTMLElement>('#preview-content[data-print-page-only]');
     const clone = (page ?? root).cloneNode(true) as HTMLElement;
+    // The body fills only the printable area (paper minus margins); a full-paper body overflows it and Chrome shrinks the whole page to fit
+    const pageMarginIn = parseFloat(page?.dataset.pageMarginIn || '0');
     const pageCss = page
-        ? `@page { size: ${page.dataset.pageWidthIn}in ${page.dataset.pageHeightIn}in; margin: ${page.dataset.pageMarginIn || 0}in; }` +
-          ` @media print { html, body { width: ${page.dataset.pageWidthIn}in; height: ${page.dataset.pageHeightIn}in; overflow: hidden !important; } }` +
+        ? `@page { size: ${page.dataset.pageWidthIn}in ${page.dataset.pageHeightIn}in; margin: ${pageMarginIn}in; }` +
+          ` @media print { html, body { width: ${parseFloat(page.dataset.pageWidthIn || '0') - pageMarginIn * 2}in; height: ${parseFloat(page.dataset.pageHeightIn || '0') - pageMarginIn * 2}in; overflow: hidden !important; } }` +
           ` #preview-content { margin: 0 !important; box-shadow: none !important; }`
         : '';
 

@@ -55,6 +55,7 @@
                     @edit="handleEditClick"
                     @delete="handleDeleteClick"
                     @preview="handlePreviewClick"
+                    @trip-ticket="openTripTicket"
                     @sort="handleSort"
                 />
                 <div v-else class="p-4">
@@ -65,6 +66,7 @@
                         @edit="handleEditClick"
                         @delete="handleDeleteClick"
                         @preview="handlePreviewClick"
+                        @trip-ticket="openTripTicket"
                     />
                 </div>
 
@@ -128,6 +130,14 @@
             :is-preview-from-table="formComposable.isPreviewFromTable.value"
             @close="formComposable.closePreviewModal()"
             @confirm="handleConfirmPreviewAndSubmit"
+            @trip-ticket="openTripTicketFromPreview"
+        />
+
+        <TripTicketModal
+            :show="tripTicketOrder !== null"
+            :order="tripTicketOrder"
+            :sorted-employees="sortedEmployees"
+            @close="tripTicketOrder = null"
         />
     </AuthenticatedLayout>
 </template>
@@ -148,6 +158,8 @@ import CreateModal from './Partials/CreateModal.vue';
 import EditModal from './Partials/EditModal.vue';
 import DeleteModal from './Partials/DeleteModal.vue';
 import PreviewModal from './Partials/PreviewModal.vue';
+import TripTicketModal from './Partials/TripTicketModal.vue';
+import type { TravelOrder } from './Composables/useTravelOrdersData';
 import { useTravelOrdersData } from './Composables/useTravelOrdersData';
 import { useTravelOrdersForm } from './Composables/useTravelOrdersForm';
 import { useResponsiveView } from '@/Composables/useResponsiveView';
@@ -230,6 +242,19 @@ const handlePreviewClick = (record: any) => {
     formComposable.travelOrderToEdit.value = record;
     formComposable.isPreviewFromTable.value = true;
     formComposable.openPreviewModal();
+};
+
+// Driver's Trip Ticket, for travel orders with a driver and an RP vehicle
+const tripTicketOrder = ref<TravelOrder | null>(null);
+
+const openTripTicket = (record: TravelOrder) => {
+    tripTicketOrder.value = record;
+};
+
+const openTripTicketFromPreview = () => {
+    const record = formComposable.travelOrderToEdit.value;
+    formComposable.closePreviewModal();
+    if (record) openTripTicket(record);
 };
 
 const showToast = (type: 'success' | 'error' | 'info', title: string, message: string) => {

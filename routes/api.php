@@ -91,6 +91,7 @@ Route::middleware(['web', 'auth'])->group(function () {
     Route::post('/travel-orders', [TravelOrderController::class, 'store'])->middleware('permission:travel_orders.create');
     Route::put('/travel-orders/{travelOrder}', [TravelOrderController::class, 'update'])->middleware('permission:travel_orders.edit');
     Route::delete('/travel-orders/{travelOrder}', [TravelOrderController::class, 'destroy'])->middleware('permission:travel_orders.delete');
+    Route::post('/travel-orders/{travelOrder}/trip-ticket', [TravelOrderController::class, 'tripTicket'])->middleware('permission:travel_orders.view');
 });
 
 // Leaves API

@@ -10,7 +10,7 @@
                 <col class="w-28">
                 <col class="w-40">
                 <col class="w-12">
-                <col class="w-16">
+                <col class="w-20">
             </colgroup>
             <thead>
                 <tr>
@@ -53,6 +53,7 @@
                     <td :class="[LIST_CELL, ACTIONS_CELL]">
                         <div class="flex items-center justify-center gap-1.5">
                             <RowIconButton color="purple" icon="fas fa-eye" tooltip="View" @click.stop="$emit('preview', order)" />
+                            <RowIconButton v-if="hasTripTicket(order)" color="emerald" icon="fas fa-car" tooltip="Trip Ticket" @click.stop="$emit('trip-ticket', order)" />
                             <RowIconButton v-if="canEditTravelOrders" color="blue" icon="fas fa-pencil-alt" tooltip="Edit" @click.stop="$emit('edit', order)" />
                             <RowIconButton v-if="canDeleteTravelOrders" color="red" icon="fas fa-trash-alt" tooltip="Delete" @click.stop="$emit('delete', order)" />
                         </div>
@@ -70,6 +71,7 @@ import {
     listDate, listRowClass, type ListColumn,
 } from '@/utils/listTable';
 import type { TravelOrder } from '../Composables/useTravelOrdersData';
+import { hasTripTicket } from '../Composables/tripTicket';
 
 defineProps<{
     records: TravelOrder[];
@@ -83,6 +85,7 @@ defineEmits<{
     edit: [order: TravelOrder];
     delete: [order: TravelOrder];
     preview: [order: TravelOrder];
+    'trip-ticket': [order: TravelOrder];
     sort: [field: string];
 }>();
 

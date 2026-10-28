@@ -4,6 +4,7 @@ import { useTrashedControlNumbers } from '@/Composables/useTrashedControlNumbers
 import { usePage } from '@inertiajs/vue3';
 import type { TravelOrder, Employee } from './useTravelOrdersData';
 import { isProvincialBudgetOfficer, isProvincialGovernor, isPboStaff } from '@/Composables/useOfficials';
+import { localDateString } from '@/utils/date';
 
 export function useTravelOrdersForm(employees: any, travelOrders: any) {
     const { can } = usePermissions();
@@ -46,10 +47,7 @@ export function useTravelOrdersForm(employees: any, travelOrders: any) {
     const editingPurposeIndex = ref<number | null>(null);
     const editingPurposeValue = ref('');
 
-    const todayDate = computed(() => {
-        const today = new Date();
-        return today.toISOString().split('T')[0];
-    });
+    const todayDate = computed(() => localDateString());
 
     const sortedEmployees = computed(() => {
         return employees.value.slice().sort((a: Employee, b: Employee) => {

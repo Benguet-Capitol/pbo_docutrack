@@ -58,6 +58,7 @@
             <div class="flex-1"></div>
             <div class="mt-3 flex justify-end gap-2 px-4 py-2 bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 rounded-b-lg">
                 <RowIconButton color="purple" icon="fas fa-eye" tooltip="View" @click.stop="$emit('preview', order)" />
+                <RowIconButton v-if="hasTripTicket(order)" color="emerald" icon="fas fa-car" tooltip="Trip Ticket" @click.stop="$emit('trip-ticket', order)" />
                 <RowIconButton v-if="canEditTravelOrders" color="blue" icon="fas fa-pencil-alt" tooltip="Edit" @click.stop="$emit('edit', order)" />
                 <RowIconButton v-if="canDeleteTravelOrders" color="red" icon="fas fa-trash-alt" tooltip="Delete" @click.stop="$emit('delete', order)" />
             </div>
@@ -68,6 +69,7 @@
 <script setup lang="ts">
 import RowIconButton from '@/Components/RowIconButton.vue';
 import type { TravelOrder } from '../Composables/useTravelOrdersData';
+import { hasTripTicket } from '../Composables/tripTicket';
 
 defineProps<{
     records: TravelOrder[];
@@ -79,6 +81,7 @@ defineEmits<{
     edit: [order: TravelOrder];
     delete: [order: TravelOrder];
     preview: [order: TravelOrder];
+    'trip-ticket': [order: TravelOrder];
 }>();
 
 const formatDateForDisplay = (dateStr: string): string => {

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\TravelOrder;
+use App\Models\TripTicket;
 use App\Models\Employee;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -145,6 +146,24 @@ class TravelOrderController extends Controller
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], 500);
         }
+    }
+
+    /**
+     * The travel order's Driver's Trip Ticket number (issued the first time) and date (the travel order's date).
+     * Only for travel orders with a driver and an RP vehicle.
+     */
+    public function tripTicket(TravelOrder $travelOrder): JsonResponse
+    {
+        if ($travelOrder->vehicle !== 'RP Vehicle' || !trim((string) $travelOrder->driver)) {
+            return response()->json(['error' => 'A trip ticket needs a driver and an RP vehicle.'], 422);
+        }
+
+        $ticket = TripTicket::issueFor($travelOrder);
+
+        return response()->json([
+            'control_no' => $ticket->control_no,
+            'date' => $travelOrder->date->format('Y-m-d'),
+        ]);
     }
 
     /**

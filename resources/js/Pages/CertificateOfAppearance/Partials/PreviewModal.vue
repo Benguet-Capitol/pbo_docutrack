@@ -91,71 +91,82 @@ const getApprovedBy = () => resolveApprovedBy(
                     </div>
 
                     <!-- Certificate Content -->
-                    <div class="p-4 flex flex-col bg-white" :class="paperSize === 'long' ? 'paper-long' : 'paper-short'" style="background-color: #ffffff; color-scheme: light;">
-                        <div v-if="formData" class="space-y-6">
-                            <!-- Header Section with Logos -->
-                            <div class="flex items-center justify-center gap-2 mb-6 pb-2" style="border-bottom: 4px double #050505;">
-                                <div style="width: 100px; flex-shrink: 0;">
-                                    <img src="/benguetlogo.png" alt="Benguet Logo" style="width: 100%; height: auto;">
+                    <!-- The whole sheet, its margins inside (like the Leave preview); only this page is printed -->
+                    <div class="p-4 bg-gray-100 dark:bg-gray-900 overflow-x-auto">
+                        <div
+                            id="preview-content"
+                            class="mx-auto flex flex-col bg-white shadow"
+                            data-print-page-only
+                            data-page-width-in="8.5"
+                            :data-page-height-in="paperSize === 'long' ? 13 : 11"
+                            data-page-margin-in="0"
+                            :style="{ boxSizing: 'border-box', width: '8.5in', minHeight: paperSize === 'long' ? '13in' : '11in', padding: '0.5in', colorScheme: 'light' }"
+                        >
+                            <div v-if="formData" class="space-y-6">
+                                <!-- Header Section with Logos -->
+                                <div class="flex items-center justify-center gap-2 mb-6 pb-2" style="border-bottom: 4px double #050505;">
+                                    <div style="width: 100px; flex-shrink: 0;">
+                                        <img src="/benguetlogo.png" alt="Benguet Logo" style="width: 100%; height: auto;">
+                                    </div>
+                                    <div class="text-center">
+                                        <p class="text-lg font-semibold text-gray-900 mt-2">Republic of the Philippines</p>
+                                        <p class="text-lg font-bold text-gray-900">PROVINCE OF BENGUET</p>
+                                        <p class="text-2xl font-bold text-gray-900">PROVINCIAL BUDGET OFFICE</p>
+                                        <p class="text-lg text-gray-900 mb-1">Poblacion, La Trinidad, Benguet 2601</p>
+                                    </div>
+                                    <div style="width: 100px; flex-shrink: 0;">
+                                        <img src="/bagongpilipinaslogo.png" alt="Bagong Pilipinas Logo" style="width: 100%; height: auto;">
+                                    </div>
                                 </div>
-                                <div class="text-center">
-                                    <p class="text-lg font-semibold text-gray-900 mt-2">Republic of the Philippines</p>
-                                    <p class="text-lg font-bold text-gray-900">PROVINCE OF BENGUET</p>
-                                    <p class="text-2xl font-bold text-gray-900">PROVINCIAL BUDGET OFFICE</p>
-                                    <p class="text-lg text-gray-900 mb-1">Poblacion, La Trinidad, Benguet 2601</p>
+                                
+                                <div>
+                                    <p class="font-bold text-3xl text-center text-gray-900 mb-10">CERTIFICATE OF APPEARANCE</p>
                                 </div>
-                                <div style="width: 100px; flex-shrink: 0;">
-                                    <img src="/bagongpilipinaslogo.png" alt="Bagong Pilipinas Logo" style="width: 100%; height: auto;">
+                                
+                                <!-- Date & Control Numbers -->
+                                <div class="mb-8 flex justify-start pr-8">
+                                    <div class="text-center text-base text-gray-900">
+                                        <p><span class="w-26 inline-block text-right">Control No.: </span><span class="font-bold text-gray-900 w-48 border-b border-gray-900 inline-block text-center">{{ formData.control_no }}</span></p>
+                                        <p class="mt-1 mb-8"><span class="w-26 inline-block text-right">Date: </span><span class="font-bold text-gray-900 w-48 border-b border-gray-900 inline-block text-center">{{ formattedDate(formData.date) }}</span></p>
+                                    </div>
                                 </div>
-                            </div>
-                            
-                            <div>
-                                <p class="font-bold text-3xl text-center text-gray-900 mb-10">CERTIFICATE OF APPEARANCE</p>
-                            </div>
-                            
-                            <!-- Date & Control Numbers -->
-                            <div class="mb-8 flex justify-start pr-8">
-                                <div class="text-center text-base text-gray-900">
-                                    <p><span class="w-26 inline-block text-right">Control No.: </span><span class="font-bold text-gray-900 w-48 border-b border-gray-900 inline-block text-center">{{ formData.control_no }}</span></p>
-                                    <p class="mt-1 mb-8"><span class="w-26 inline-block text-right">Date: </span><span class="font-bold text-gray-900 w-48 border-b border-gray-900 inline-block text-center">{{ formattedDate(formData.date) }}</span></p>
+
+                                <!-- Details Body -->
+                                <div class="space-y-4 text-lg mb-10 text-gray-900">
+                                    <p class="text-justify indent-8">This is to certify that <span class="font-semibold uppercase">{{ formData.name }}</span>, of <span class="font-semibold uppercase">{{ formData.office }}</span>, has appeared in this office on <span class="font-semibold">{{ formattedDate(formData.date) }}</span> on Official Business for the purpose of <span class="font-semibold">{{ formData.purpose }}</span>.</p>
+
+                                    <!-- Closing Statement -->
+                                    <p class="text-justify indent-8">This certification is issued upon the request of the above-named person for whatever legal purpose it may serve.</p>
+
+                                    <!-- Issued Statement -->
+                                    <p class="text-justify indent-8 mb-10">Issued this <span class="font-semibold">{{ formattedDate(formData.date) }}</span> at <span class="font-semibold">La Trinidad, Benguet, Philippines</span>.</p>
                                 </div>
-                            </div>
 
-                            <!-- Details Body -->
-                            <div class="space-y-4 text-lg mb-10 text-gray-900">
-                                <p class="text-justify indent-8">This is to certify that <span class="font-semibold uppercase">{{ formData.name }}</span>, of <span class="font-semibold uppercase">{{ formData.office }}</span>, has appeared in this office on <span class="font-semibold">{{ formattedDate(formData.date) }}</span> on Official Business for the purpose of <span class="font-semibold">{{ formData.purpose }}</span>.</p>
-
-                                <!-- Closing Statement -->
-                                <p class="text-justify indent-8">This certification is issued upon the request of the above-named person for whatever legal purpose it may serve.</p>
-
-                                <!-- Issued Statement -->
-                                <p class="text-justify indent-8 mb-10">Issued this <span class="font-semibold">{{ formattedDate(formData.date) }}</span> at <span class="font-semibold">La Trinidad, Benguet, Philippines</span>.</p>
-                            </div>
-
-                            <!-- Signature Section -->
-                            <div class="mt-12 mb-10">
-                                <div class="mt-8 flex justify-end pr-8">
-                                    <div class="w-72 text-center">
-                                        <p class="text-lg text-gray-700 mt-12"></p>
-                                        <p class="text-lg text-center text-gray-900 border-b border-gray-900 pb-1 font-bold uppercase">{{ getApprovedBy().name || 'PROVINCIAL BUDGET OFFICER' }}</p>
-                                        <p class="text-lg text-center text-gray-900 ">{{ getApprovedBy().title }}</p>
+                                <!-- Signature Section -->
+                                <div class="mt-12 mb-10">
+                                    <div class="mt-8 flex justify-end pr-8">
+                                        <div class="w-72 text-center">
+                                            <p class="text-lg text-gray-700 mt-12"></p>
+                                            <p class="text-lg text-center text-gray-900 border-b border-gray-900 pb-1 font-bold uppercase">{{ getApprovedBy().name || 'PROVINCIAL BUDGET OFFICER' }}</p>
+                                            <p class="text-lg text-center text-gray-900 ">{{ getApprovedBy().title }}</p>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
 
-                        <!-- Footer Section -->
-                        <div class="mb-6 mt-auto">
-                            <div class="text-right" style="font-size: 9px; color: #555;">
-                                <p class="m-0">Generated on {{ printGeneratedAtDisplay() }}</p>
-                                <p class="m-0 font-bold">PBO|DocuTrack</p>
-                            </div>
-                            <div style="border-top: 4px double #050505;">
-                                <div class="flex justify-between items-center mt-2" style="line-height: 1;">
-                                    <p><span class="font-semibold text-sm">PBO Telephone No.:</span> <span class="text-sm text-gray-900">(074) 422-1378, Local: 134</span></p>
-                                    <p><span class="font-semibold text-sm">Website:</span> <span class="text-sm font-semibold text-blue-800 underline">www.benguet.gov.ph</span></p>
+                            <!-- Footer Section -->
+                            <div class="mb-6 mt-auto">
+                                <div class="text-right" style="font-size: 9px; color: #555;">
+                                    <p class="m-0">Generated on {{ printGeneratedAtDisplay() }}</p>
+                                    <p class="m-0 font-bold">PBO|DocuTrack</p>
                                 </div>
-                                <p><span class="font-semibold text-sm">Email Address:</span> <span class="text-sm font-semibold text-blue-800 underline">benguetpbo@benguet.gov.ph</span></p>
+                                <div style="border-top: 4px double #050505;">
+                                    <div class="flex justify-between items-center mt-2" style="line-height: 1;">
+                                        <p><span class="font-semibold text-sm">PBO Telephone No.:</span> <span class="text-sm text-gray-900">(074) 422-1378, Local: 134</span></p>
+                                        <p><span class="font-semibold text-sm">Website:</span> <span class="text-sm font-semibold text-blue-800 underline">www.benguet.gov.ph</span></p>
+                                    </div>
+                                    <p><span class="font-semibold text-sm">Email Address:</span> <span class="text-sm font-semibold text-blue-800 underline">benguetpbo@benguet.gov.ph</span></p>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -204,94 +215,4 @@ const getApprovedBy = () => resolveApprovedBy(
 .animate-scaleInUp {
     animation: scaleInUp 0.3s ease-out;
 }
-
-.paper-short {
-    min-height: 1050px;
-    background-color: #ffffff !important;
-}
-
-.paper-long {
-    min-height: 1250px;
-    background-color: #ffffff !important;
-}
-
-@media print {
-    .sticky {
-        position: static !important;
-    }
-
-    .sticky.top-0 {
-        display: none !important;
-    }
-
-    .sticky.bottom-0 {
-        display: none !important;
-    }
-
-    .overflow-y-auto {
-        overflow: visible !important;
-    }
-
-    .max-h-\[90vh\] {
-        max-height: none !important;
-    }
-
-    body, html {
-        margin: 0 !important;
-        padding: 0 !important;
-    }
-
-    .fixed.inset-0.flex.items-center.justify-center {
-        align-items: flex-start !important;
-        justify-content: flex-start !important;
-        padding: 0 !important;
-    }
-
-    /* Remove modal chrome padding/margins so the certificate sits flush against the page margin */
-    .relative {
-        box-shadow: none !important;
-        border-radius: 0 !important;
-        margin: 0 !important;
-        padding: 0 !important;
-        max-width: 100% !important;
-        width: 100% !important;
-    }
-
-    .paper-short,
-    .paper-long {
-        padding: 0 !important;
-        margin: 0 !important;
-    }
-
-    /* Remove shadows from printed form */
-    .shadow-2xl {
-        box-shadow: none !important;
-    }
-
-    [class*="shadow"] {
-        box-shadow: none !important;
-    }
-
-    /* Assign named pages so each paper size prints at its exact dimensions */
-    .paper-short {
-        page: coa-short;
-        min-height: 9.5in;
-    }
-
-    .paper-long {
-        page: coa-long;
-        min-height: 11.5in;
-    }
-
-    @page coa-short {
-        size: 8.5in 11in;
-        margin: 0.5in;
-    }
-
-    @page coa-long {
-        size: 8.5in 13in;
-        margin: 0.5in;
-    }
-}
-
 </style>

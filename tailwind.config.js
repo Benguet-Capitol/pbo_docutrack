@@ -9,6 +9,8 @@ export default {
         './storage/framework/views/*.php',
         './resources/views/**/*.blade.php',
         './resources/js/**/*.vue',
+        // Shared class strings live in .ts too (utils/listTable.ts, composables)
+        './resources/js/**/*.ts',
         './node_modules/primevue/**/*.{vue,js,ts,jsx,tsx}',
     ],
 
