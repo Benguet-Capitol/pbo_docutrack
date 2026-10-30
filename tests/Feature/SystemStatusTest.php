@@ -37,9 +37,12 @@ class SystemStatusTest extends TestCase
 
     public function test_a_job_without_a_recent_success_is_overdue(): void
     {
+        // Weekly backup: a week old is fine, a missed Monday (over 8 days) is overdue
         JobRuns::record('backup', true);
-        DB::table('job_runs')->update(['ran_at' => now()->subDays(3)]);
+        DB::table('job_runs')->update(['ran_at' => now()->subDays(7)]);
+        $this->assertSame('ok', $this->jobStatus('backup')['status']);
 
+        DB::table('job_runs')->update(['ran_at' => now()->subDays(9)]);
         $this->assertSame('overdue', $this->jobStatus('backup')['status']);
     }
 

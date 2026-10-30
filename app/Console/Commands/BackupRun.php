@@ -12,8 +12,8 @@ use Symfony\Component\Finder\Finder;
 use ZipArchive;
 
 /**
- * One zip with the database (mysqldump) and the uploaded files, then old backups are pruned. Runs nightly
- * (routes/console.php); see docs/backups.md for restoring.
+ * One zip with the database (mysqldump) and the uploaded files, then old backups are pruned. Runs weekly,
+ * Mondays (routes/console.php); see docs/backups.md for restoring.
  */
 class BackupRun extends Command
 {

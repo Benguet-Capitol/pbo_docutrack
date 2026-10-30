@@ -1,7 +1,7 @@
 <?php
 
 /*
- * Nightly backups (php artisan backup:run): the database and the uploaded files in one zip. See docs/backups.md.
+ * Weekly backups, Mondays (php artisan backup:run): the database and the uploaded files in one zip. See docs/backups.md.
  */
 return [
 

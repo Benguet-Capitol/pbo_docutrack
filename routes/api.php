@@ -132,5 +132,5 @@ Route::middleware(['web', 'auth', 'permission:activity_logs.view'])->group(funct
     Route::get('/activity-logs/filters', [ActivityLogController::class, 'filters']);
 });
 
-// System status (Dashboard): how the nightly backup and the HRIS sync last went
+// System status (Dashboard): how the weekly backup and the HRIS sync last went
 Route::middleware(['web', 'auth', 'permission:system.status'])->get('/system-status', fn () => response()->json(\App\Support\JobRuns::statuses()));

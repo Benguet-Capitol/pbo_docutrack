@@ -113,7 +113,7 @@ APP_DEBUG=false
 RECORDS_API_KEYS=<records key>
 LEAVES_API_KEYS=<leaves key>
 
-# Nightly backups
+# Weekly backups (Mondays)
 BACKUP_PATH=E:\backups\pbo-mbm
 BACKUP_KEEP_DAYS=30
 BACKUP_MYSQLDUMP=D:\xampp\mysql\bin\mysqldump.exe
@@ -149,7 +149,7 @@ Run `php artisan config:cache` again after any later `.env` change.
 
 ### 8. Scheduler and backups
 
-The nightly backup (1:00 AM) and the monthly HRIS sync (1st of the month, 2:00 AM) run only if `schedule:run` runs every minute.
+The weekly backup (Mondays, 1:00 AM) and the monthly HRIS sync (1st of the month, 2:00 AM) run only if `schedule:run` runs every minute.
 
 **Windows: Task Scheduler**
 
@@ -200,7 +200,7 @@ php artisan up
 | Where | What to check |
 |---|---|
 | Sign in | Works as usual. One deliberately wrong password shows in **Activity Logs** as "Failed Sign-in" |
-| Dashboard (as Administrator) | The header shows **Nightly backup** and **HRIS employee sync** in green |
+| Dashboard (as Administrator) | The header shows **Weekly backup** and **HRIS employee sync** in green |
 | Documents | List, cards, tabs, search. Create a test document, edit it, forward and receive it, open a checklist, then delete it |
 | Records | View and download a file, including an Administrative one, and add a record with a file |
 | Leaves | Create a leave as someone without "View all employees' leaves": they see only their own |

@@ -287,7 +287,12 @@ watch(() => [props.show, props.order?.id], async () => {
     }
 }, { immediate: true });
 
-const passengers = computed(() => (props.order?.employees ?? []).map((employee) => employee.name));
+// The driver is not a passenger, even when they are also one of the travel order's employees
+const sameName = (a: string, b: string) => a.trim().replace(/\s+/g, ' ').toLowerCase() === b.trim().replace(/\s+/g, ' ').toLowerCase();
+const passengers = computed(() =>
+    (props.order?.employees ?? [])
+        .map((employee) => employee.name)
+        .filter((name) => !sameName(name, props.order?.driver ?? '')));
 // Passenger names on as few signature lines as possible: the font shrinks (14px down to 9px) until every
 // name fits on one line without wrapping; only then, or past six names, is another line added (rows balanced)
 const PASSENGER_LINE_PX = 720;

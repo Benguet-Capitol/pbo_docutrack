@@ -14,7 +14,8 @@ class JobRuns
 {
     /** Each job: its label and how long after a success it counts as overdue */
     public const JOBS = [
-        'backup' => ['label' => 'Nightly backup', 'overdue_after_hours' => 36],
+        // Weekly (Mondays): overdue once a Monday is missed, with a day to spare
+        'backup' => ['label' => 'Weekly backup', 'overdue_after_hours' => 24 * 8],
         'hris_sync' => ['label' => 'HRIS employee sync', 'overdue_after_hours' => 24 * 33],
     ];
 

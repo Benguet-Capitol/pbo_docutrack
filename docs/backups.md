@@ -8,7 +8,7 @@
 | `storage/app/public/…` | Uploaded files (Records attachments) |
 | `storage/app/private/…` | Private files |
 
-The scheduler runs it **every night at 1:00 AM** (`routes/console.php`). Backups older than `BACKUP_KEEP_DAYS` (default 30) are then deleted. The newest backup is always kept, even if it's old.
+The scheduler runs it **every Monday at 1:00 AM** (`routes/console.php`), weekly to save space on the server. Backups older than `BACKUP_KEEP_DAYS` (default 30) are then deleted. The newest backup is always kept, even if it's old.
 
 ## Setup on the server
 
