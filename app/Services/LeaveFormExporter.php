@@ -148,7 +148,7 @@ class LeaveFormExporter
             'E5' => [[$this->nameUnderLabels($name), true, 12]],
             'A6' => $this->labeled('3.  DATE OF FILING ', mb_strtoupper(Carbon::parse($leave->date_of_filing)->format('F j, Y')), 12),
             'E6' => array_merge(
-                $this->labeled('4.  POSITION ', mb_strtoupper((string) $employee?->designation), 12, '_____________________________'),
+                $this->labeled('4.  POSITION ', mb_strtoupper((string) ($leave->position ?: Leave::positionOf($employee))), 12, '_____________________________'),
                 $this->labeled('  5.  SALARY ', $leave->salary !== null ? number_format((float) $leave->salary, 2) : '', 12),
             ),
             'B44' => [[$this->applicationDaysText($rows), true, self::SECTION_6C_VALUE_SIZE]],

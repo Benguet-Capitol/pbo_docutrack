@@ -32,11 +32,11 @@
                                 <p v-if="formErrors['employee_id']" class="mt-1 text-xs text-red-600 dark:text-red-400">{{ formErrors['employee_id'] }}</p>
                             </div>
 
-                            <!-- Date of Filing (Disabled in Edit) -->
+                            <!-- Date of Filing (the control number stays as issued) -->
                             <div>
-                                <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Date of Filing</label>
-                                <input :value="formData.date_of_filing" type="date" disabled class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-xs dark:bg-gray-700 dark:text-white bg-gray-100 dark:bg-gray-800 cursor-not-allowed opacity-75" />
-                                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Filing date cannot be modified</p>
+                                <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Date of Filing <span class="text-red-500">*</span></label>
+                                <input v-model="formData.date_of_filing" type="date" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-xs dark:bg-gray-700 dark:text-white focus:outline-none focus:border-blue-500 dark:focus:border-blue-500" :class="[formErrors.date_of_filing ? 'border-red-500 focus:border-red-500' : '']" />
+                                <p v-if="formErrors['date_of_filing']" class="mt-1 text-xs text-red-600 dark:text-red-400">{{ formErrors['date_of_filing'] }}</p>
                             </div>
 
                             <!-- 5. Salary: the employee's monthly salary from HRIS, saved with the leave -->

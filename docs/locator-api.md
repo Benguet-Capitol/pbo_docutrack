@@ -60,8 +60,10 @@ Refused calls are written to Activity Logs (module "Shared API"). Successful cal
 |---|---|
 | `employees` | PBO staff, the Governor and anyone existing records still name, with at least one record to show. The Provincial Budget Officer comes first, then by last name. |
 | `status` | `Off Day`, `Undertime`, `On Leave`, `On Official Business`, `Present with Meetings` or `Present` |
-| `label` | `Pass Slip` or `Travel Order` for `On Official Business`, otherwise null |
-| `text` | The detail: "Leave", the undertime's times, or "purpose at place" |
+| `label` | `Pass Slip` or `Travel Order` for `On Official Business`, `Half Day` for a half day of `On Leave`, otherwise null |
+| `text` | The detail: "Leave" ("Leave (AM)" or "Leave (PM)" for a half day), the undertime's times, or "purpose at place" |
 | `meetings` | Only with `Present with Meetings`, by time |
 
-The first rule that applies wins, in the order of `App\Services\LocatorChart`: weekend, undertime (on the day it happened, not the day it was filed), leave, pass slip, travel order, meetings, Present.
+The first rule that applies wins, in the order of `App\Services\LocatorChart`: weekend, undertime (on the day it happened, not the day it was filed), leave, pass slip, travel order, meetings, an off day inside a leave (`Off Day`), Present.
+
+Only a leave's working days count as `On Leave`. A day inside its dates that it marks as an off day (for example a Friday, for someone off on Fridays) is `Off Day`, unless another record is on it. Morning and afternoon half days on the same day show as a whole day of `On Leave`.

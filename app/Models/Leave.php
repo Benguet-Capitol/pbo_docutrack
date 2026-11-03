@@ -16,6 +16,7 @@ class Leave extends Model
         'employee_id',
         'date_of_filing',
         'salary',
+        'position',
         'type_of_leave',
         'number_of_working_days_applied_for',
         'is_half_day',
@@ -118,6 +119,12 @@ class Leave extends Model
         'Special Privilege Leave' => 3,
         'Wellness Leave' => 5,
     ];
+
+    /** An employee's position as printed in "4. POSITION" */
+    public static function positionOf(?Employee $employee): ?string
+    {
+        return trim((string) $employee?->designation) ?: ($employee?->full_position ?: null);
+    }
 
     /** Every leave type in this leave's application (rows sharing its control number), oldest first */
     public function applicationRows(): \Illuminate\Support\Collection

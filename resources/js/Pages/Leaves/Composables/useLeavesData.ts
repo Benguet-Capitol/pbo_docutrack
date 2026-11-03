@@ -17,6 +17,8 @@ export interface Leave {
     date_of_filing: string;
     /** Monthly salary as of filing (5. SALARY) */
     salary?: string | number | null;
+    /** Position as of filing (4. POSITION) */
+    position?: string | null;
     type_of_leave: string;
     number_of_working_days_applied_for: number;
     is_half_day: boolean;

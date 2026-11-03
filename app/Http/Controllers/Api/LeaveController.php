@@ -3,13 +3,16 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Employee;
 use App\Models\Leave;
 use App\Models\User;
 use App\Services\RoleService;
+use Illuminate\Contracts\Cache\LockTimeoutException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
@@ -29,6 +32,9 @@ class LeaveController extends Controller
         'type_of_leave', 'number_of_working_days_applied_for', 'is_half_day', 'half_day_period', 'inclusive_dates',
         'off_days', 'within_philippines', 'purpose', 'in_hospital', 'illness', 'completion_type', 'other_type',
     ];
+
+    /** Held while a leave is checked and saved (see oneAtATime) */
+    public const FILING_LOCK = 'leaves:filing';
 
     /**
      * Download the application as a filled CS Form No. 6 (Application for Leave) Excel file.
@@ -82,8 +88,10 @@ class LeaveController extends Controller
                     'control_no' => $leave->control_no,
                     'employee_id' => $leave->employee_id,
                     'employee' => $leave->employee,
-                    'date_of_filing' => $leave->date_of_filing,
+                    // Plain Y-m-d: a Carbon here is sent as UTC, which is the previous day's 16:00 in Manila
+                    'date_of_filing' => $leave->date_of_filing?->format('Y-m-d'),
                     'salary' => $withSalary ? $leave->salary : null,
+                    'position' => $leave->position,
                 ] + $leave->only(self::ENTRY_FIELDS) + $leave->only($this->signatoryFields()) + $leave->only(['recommendation', 'disapproval_reason']) + [
                     'created_at' => $leave->created_at,
                     'updated_at' => $leave->updated_at,
@@ -103,13 +111,17 @@ class LeaveController extends Controller
         try {
             $validated = $this->validated($request);
             $this->ensureMayFileFor($request->user(), (int) $validated['employee_id']);
-            $this->ensureControlNoFree($validated['control_no']);
             $this->ensureCompleteEntries($validated);
-            $this->ensureNoOverlaps($validated);
-            $this->ensureWithinYearlyLimits($validated);
+            $validated['position'] = $this->currentPosition((int) $validated['employee_id']);
 
-            $rows = DB::transaction(fn () => collect($validated['entries'])
-                ->map(fn (array $entry) => Leave::create($this->rowValues($validated, $entry))));
+            $rows = $this->oneAtATime(function () use ($validated) {
+                $this->ensureControlNoFree($validated['control_no']);
+                $this->ensureNoOverlaps($validated);
+                $this->ensureWithinYearlyLimits($validated);
+
+                return DB::transaction(fn () => collect($validated['entries'])
+                    ->map(fn (array $entry) => Leave::create($this->rowValues($validated, $entry))));
+            });
 
             return response()->json([
                 'message' => 'Leave created successfully',
@@ -117,6 +129,8 @@ class LeaveController extends Controller
             ], 201);
         } catch (ValidationException $e) {
             return response()->json(['errors' => $e->errors()], 422);
+        } catch (LockTimeoutException) {
+            return response()->json(['error' => self::BUSY_MESSAGE], 503);
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], 500);
         }
@@ -132,29 +146,36 @@ class LeaveController extends Controller
             if (!$this->mayHandle($request->user(), $leave->employee_id)) {
                 return response()->json(['error' => 'You can only edit your own leaves.'], 403);
             }
-            $current = $this->application($leave);
             $validated = $this->validated($request);
             $this->ensureMayFileFor($request->user(), (int) $validated['employee_id']);
-            if ($validated['control_no'] !== $leave->control_no) {
-                $this->ensureControlNoFree($validated['control_no']);
-            }
             $this->ensureCompleteEntries($validated);
-            $this->ensureNoOverlaps($validated, $current->pluck('id')->all());
-            $this->ensureWithinYearlyLimits($validated, $current->pluck('id')->all());
+            // The position stays as filed, unless the leave is moved to another employee
+            $validated['position'] = (int) $validated['employee_id'] === $leave->employee_id && $leave->position
+                ? $leave->position
+                : $this->currentPosition((int) $validated['employee_id']);
 
-            DB::transaction(function () use ($validated, $current) {
-                $kept = [];
-                foreach ($validated['entries'] as $entry) {
-                    $row = isset($entry['id']) ? $current->firstWhere('id', (int) $entry['id']) : null;
-                    if ($row) {
-                        $row->update($this->rowValues($validated, $entry));
-                        $kept[] = $row->id;
-                    } else {
-                        $kept[] = Leave::create($this->rowValues($validated, $entry))->id;
-                    }
+            $this->oneAtATime(function () use ($validated, $leave) {
+                $current = $this->application($leave);
+                if ($validated['control_no'] !== $leave->control_no) {
+                    $this->ensureControlNoFree($validated['control_no']);
                 }
-                // A leave type taken out of the application is removed outright (not sent to the Trash)
-                $current->whereNotIn('id', $kept)->each->forceDelete();
+                $this->ensureNoOverlaps($validated, $current->pluck('id')->all());
+                $this->ensureWithinYearlyLimits($validated, $current->pluck('id')->all());
+
+                DB::transaction(function () use ($validated, $current) {
+                    $kept = [];
+                    foreach ($validated['entries'] as $entry) {
+                        $row = isset($entry['id']) ? $current->firstWhere('id', (int) $entry['id']) : null;
+                        if ($row) {
+                            $row->update($this->rowValues($validated, $entry));
+                            $kept[] = $row->id;
+                        } else {
+                            $kept[] = Leave::create($this->rowValues($validated, $entry))->id;
+                        }
+                    }
+                    // A leave type taken out of the application is removed outright (not sent to the Trash)
+                    $current->whereNotIn('id', $kept)->each->forceDelete();
+                });
             });
 
             return response()->json([
@@ -163,6 +184,8 @@ class LeaveController extends Controller
             ]);
         } catch (ValidationException $e) {
             return response()->json(['errors' => $e->errors()], 422);
+        } catch (LockTimeoutException) {
+            return response()->json(['error' => self::BUSY_MESSAGE], 503);
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], 500);
         }
@@ -233,6 +256,23 @@ class LeaveController extends Controller
                 ? 'You can only file leaves for yourself.'
                 : 'Your account is not linked to an employee yet; ask an administrator to link it (Users).']);
         }
+    }
+
+    private const BUSY_MESSAGE = 'Another leave is being saved. Please try again in a moment.';
+
+    /**
+     * Checks and saves one leave at a time. The control number, overlapping days and yearly limits are checked
+     * against what is saved, so two people saving at once could otherwise both pass and, with the same control
+     * number, merge into one application (its rows can't have a unique index: they share the number).
+     */
+    private function oneAtATime(callable $checkAndSave): mixed
+    {
+        return Cache::lock(self::FILING_LOCK, 30)->block(10, $checkAndSave);
+    }
+
+    private function currentPosition(int $employeeId): ?string
+    {
+        return Leave::positionOf(Employee::withTrashed()->find($employeeId));
     }
 
     /** The leave's application: every live row with its control number */
@@ -363,6 +403,7 @@ class LeaveController extends Controller
             'employee_id' => $validated['employee_id'],
             'date_of_filing' => $validated['date_of_filing'],
             'salary' => $validated['salary'] ?? null,
+            'position' => $validated['position'] ?? null,
             'type_of_leave' => $type,
             'number_of_working_days_applied_for' => $entry['number_of_working_days_applied_for'],
             'is_half_day' => $halfDay,

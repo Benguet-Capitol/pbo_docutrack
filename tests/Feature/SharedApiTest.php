@@ -154,6 +154,33 @@ class SharedApiTest extends TestCase
         $this->assertSame('Present', $days['2026-11-09']['status']);
     }
 
+    public function test_the_locator_shows_a_half_day_as_a_half_day(): void
+    {
+        $employee = $this->makeEmployee(['employee_id' => '01323001799']);
+        $leave = fn (string $no, string $type, string $date, string $period) => Leave::create(['employee_id' => $employee->id, 'control_no' => $no, 'date_of_filing' => '2026-10-01', 'is_half_day' => true, 'half_day_period' => $period, 'type_of_leave' => $type, 'number_of_working_days_applied_for' => 1, 'inclusive_dates' => [$date]]);
+        $leave('L-1', 'Sick Leave', '2026-11-03', 'AM');
+        $leave('L-2', 'Sick Leave', '2026-11-04', 'AM');
+        $leave('L-3', 'Vacation Leave', '2026-11-04', 'PM');
+
+        $days = $this->getJson('/api/v1/locator?from=2026-11-03&to=2026-11-04', ['X-API-Key' => self::LOCATOR_KEY])->assertOk()->json('data.employees.0.days');
+
+        $this->assertSame(['status' => 'On Leave', 'label' => 'Half Day', 'text' => 'Leave (AM)', 'meetings' => []], $days['2026-11-03']);
+        $this->assertSame(['status' => 'On Leave', 'label' => null, 'text' => 'Leave', 'meetings' => []], $days['2026-11-04'], 'Morning and afternoon together are the whole day.');
+    }
+
+    public function test_the_locator_does_not_show_a_leaves_off_days_as_on_leave(): void
+    {
+        $employee = $this->makeEmployee(['employee_id' => '01323001799']);
+        Leave::create(['employee_id' => $employee->id, 'control_no' => 'L-1', 'date_of_filing' => '2026-10-01', 'is_half_day' => false, 'type_of_leave' => 'Vacation Leave', 'number_of_working_days_applied_for' => 2, 'inclusive_dates' => ['2026-11-04 - 2026-11-13'], 'off_days' => ['Friday', 'Saturday', 'Sunday']]);
+        $this->passSlip([$employee], '2026-11-13', ['2026-11-13'], 'Capitol', 'Deliver forms');
+
+        $days = $this->getJson('/api/v1/locator?from=2026-11-04&to=2026-11-13', ['X-API-Key' => self::LOCATOR_KEY])->assertOk()->json('data.employees.0.days');
+
+        $this->assertSame('On Leave', $days['2026-11-05']['status'], 'Thursday is a working day of the leave.');
+        $this->assertSame('Off Day', $days['2026-11-06']['status'], 'Friday is an off day of the leave.');
+        $this->assertSame('On Official Business', $days['2026-11-13']['status'], 'A record on an off day still shows.');
+    }
+
     public function test_the_locator_hides_private_details_and_skips_disapproved_leaves(): void
     {
         $employee = $this->makeEmployee(['employee_id' => '01323001799']);

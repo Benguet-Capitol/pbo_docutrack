@@ -15,7 +15,8 @@ use Illuminate\Support\Collection;
 /**
  * The Locator Chart's status per employee per day, for the Shared Locator API. Follows the rules of the page
  * (Pages/LocatorChart/Index.vue): a weekend is an Off Day; otherwise undertime, then leave, then pass slip, then
- * travel order, then meetings, then Present. Keep the two in step when one changes.
+ * travel order, then meetings, then Present. Only a leave's working days count as On Leave: a day it marks as off is
+ * an Off Day if nothing else is on it. Keep the two in step when one changes.
  *
  * Only what the chart needs leaves this class: a leave shows as "Leave" without its type, and undertime without
  * its reason, as for anyone who can't open those modules.
@@ -40,7 +41,7 @@ class LocatorChart
 
         // Newest first, so the record shown when two overlap is the one the page shows
         $undertime = Tardiness::latest('created_at')->get(['id', 'employee_id', 'requested_date', 'requested_time', 'return_time']);
-        $leaves = Leave::latest('id')->get(['id', 'employee_id', 'inclusive_dates', 'recommendation'])
+        $leaves = Leave::latest('id')->get(['id', 'employee_id', 'inclusive_dates', 'off_days', 'is_half_day', 'half_day_period', 'recommendation'])
             ->reject(fn (Leave $leave) => $leave->recommendation === 'disapproval');
         $passSlips = PassSlip::with('employees:employees.id')->latest('date')->get(['id', 'date', 'inclusive_dates', 'purpose', 'location']);
         $travelOrders = TravelOrder::with('employees:employees.id')->latest('date')->get(['id', 'date', 'inclusive_dates', 'purpose', 'going_to']);
@@ -52,15 +53,15 @@ class LocatorChart
         foreach ($undertime as $record) {
             $undertimeByDay[$record->employee_id][$record->requested_date?->toDateString()] ??= $record;
         }
-        $leaveByDay = $this->index($leaves->map(fn ($leave) => [$leave, [$leave->employee_id]]), $days);
+        [$leaveByDay, $leaveOffDays] = $this->leaveDays($leaves, $days);
         $passSlipByDay = $this->index($passSlips->map(fn ($slip) => [$slip, $slip->employees->pluck('id')->all()]), $days);
         $travelByDay = $this->index($travelOrders->map(fn ($order) => [$order, $order->employees->pluck('id')->all()]), $days);
         $meetingsByDay = $meetings->groupBy(fn ($meeting) => $meeting->employee_id.'|'.$meeting->date->toDateString());
 
-        $employees = $roster->map(function (Employee $employee) use ($days, $undertimeByDay, $leaveByDay, $passSlipByDay, $travelByDay, $meetingsByDay) {
+        $employees = $roster->map(function (Employee $employee) use ($days, $undertimeByDay, $leaveByDay, $leaveOffDays, $passSlipByDay, $travelByDay, $meetingsByDay) {
             $row = [];
             foreach ($days as $date) {
-                $row[$date] = $this->status($employee->id, $date, $undertimeByDay, $leaveByDay, $passSlipByDay, $travelByDay, $meetingsByDay);
+                $row[$date] = $this->status($employee->id, $date, $undertimeByDay, $leaveByDay, $leaveOffDays, $passSlipByDay, $travelByDay, $meetingsByDay);
             }
 
             return [
@@ -74,7 +75,7 @@ class LocatorChart
         return ['from' => $from->toDateString(), 'to' => $to->toDateString(), 'days' => $days, 'employees' => $employees];
     }
 
-    private function status(int $id, string $date, array $undertime, array $leave, array $passSlip, array $travel, Collection $meetings): array
+    private function status(int $id, string $date, array $undertime, array $leave, array $leaveOffDays, array $passSlip, array $travel, Collection $meetings): array
     {
         $day = fn (string $status, ?string $label = null, ?string $text = null, array $list = []) => ['status' => $status, 'label' => $label, 'text' => $text, 'meetings' => $list];
 
@@ -84,8 +85,11 @@ class LocatorChart
         if ($record = $undertime[$id][$date] ?? null) {
             return $day('Undertime', null, $this->time($record->requested_time).' - '.$this->time($record->return_time));
         }
-        if ($leave[$id][$date] ?? null) {
-            return $day('On Leave', null, 'Leave');
+        if ($periods = $leave[$id][$date] ?? null) {
+            // A half day only when one half is on leave: morning and afternoon leaves together are the whole day
+            return !in_array(null, $periods, true) && count(array_unique($periods)) === 1
+                ? $day('On Leave', 'Half Day', "Leave ({$periods[0]})")
+                : $day('On Leave', null, 'Leave');
         }
         if ($record = $passSlip[$id][$date] ?? null) {
             return $day('On Official Business', 'Pass Slip', "{$record->purpose} at {$record->location}");
@@ -98,7 +102,37 @@ class LocatorChart
 
         $list = ($meetings["{$id}|{$date}"] ?? collect())->map(fn ($meeting) => ['time' => $this->time($meeting->time), 'particulars' => $meeting->particulars])->values()->all();
 
-        return $list ? $day('Present with Meetings', null, null, $list) : $day('Present');
+        if ($list) {
+            return $day('Present with Meetings', null, null, $list);
+        }
+
+        return isset($leaveOffDays[$id][$date]) ? $day('Off Day') : $day('Present');
+    }
+
+    /**
+     * For the days asked about: [employee id => [date => each leave's half day period, null for a whole day]] on a
+     * leave's working days, and [employee id => [date => true]] on the off days inside a leave.
+     */
+    private function leaveDays(Collection $leaves, array $days): array
+    {
+        $wanted = array_flip($days);
+        $working = [];
+        $off = [];
+        foreach ($leaves as $leave) {
+            $workingDates = array_flip(Leave::workingDates($leave->inclusive_dates ?? [], $leave->off_days));
+            foreach ($leave->inclusive_dates ?? [] as $entry) {
+                foreach ($this->expand((string) $entry, $days[0], end($days)) as $date) {
+                    if (!isset($wanted[$date])) continue;
+                    if (isset($workingDates[$date])) {
+                        $working[$leave->employee_id][$date][] = $leave->is_half_day ? $leave->half_day_period : null;
+                    } else {
+                        $off[$leave->employee_id][$date] = true;
+                    }
+                }
+            }
+        }
+
+        return [$working, $off];
     }
 
     /**

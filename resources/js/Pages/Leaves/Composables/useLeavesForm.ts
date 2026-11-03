@@ -419,6 +419,12 @@ export function useLeavesForm(
 
             if (!response.ok) {
                 const errorData = await response.json();
+                // Someone else just took this number: propose the next free one, so saving again works
+                if (errorData?.errors?.control_no) {
+                    await loadUsedControlNumbers();
+                    formData.value.control_no = generateControlNo(formData.value.date_of_filing);
+                    throw new Error(`Control number was just taken by another leave. Your leave now has ${formData.value.control_no}; please save again.`);
+                }
                 throw new Error(responseError(errorData, 'Failed to create leave'));
             }
 

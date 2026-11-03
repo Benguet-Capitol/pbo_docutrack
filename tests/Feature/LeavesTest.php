@@ -2,10 +2,14 @@
 
 namespace Tests\Feature;
 
+use App\Http\Controllers\Api\LeaveController;
 use App\Models\Employee;
 use App\Models\Leave;
 use App\Models\User;
+use App\Services\LeaveFormExporter;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Event;
 use Tests\TestCase;
 
 /**
@@ -145,6 +149,13 @@ class LeavesTest extends TestCase
         $this->actingAs($this->admin)->getJson('/api/leaves')->assertOk()->assertJsonPath('0.salary', '25000.00');
     }
 
+    public function test_the_list_sends_the_filing_date_as_filed(): void
+    {
+        $this->fileLeave($this->admin, $this->application($this->samuel, ['date_of_filing' => '2026-10-28']))->assertCreated();
+
+        $this->actingAs($this->admin)->getJson('/api/leaves')->assertOk()->assertJsonPath('0.date_of_filing', '2026-10-28');
+    }
+
     // ---- Control numbers
 
     public function test_a_control_number_can_only_be_used_once_even_after_the_leave_is_trashed(): void
@@ -243,6 +254,96 @@ class LeavesTest extends TestCase
         $application['entries'][0]['id'] = $leave->id;
         $application['entries'][0]['purpose'] = 'Family matter';
         $this->actingAs($this->admin)->putJson("/api/leaves/{$leave->id}", $application)->assertOk();
+    }
+
+    public function test_editing_can_change_the_filing_date_and_keeps_the_control_number(): void
+    {
+        $application = $this->application($this->samuel, ['control_no' => 'L-2026-10-0701']);
+        $this->fileLeave($this->admin, $application)->assertCreated();
+        $leave = Leave::firstWhere('control_no', 'L-2026-10-0701');
+
+        $application['date_of_filing'] = '2026-11-03';
+        $application['entries'][0]['id'] = $leave->id;
+        $this->actingAs($this->admin)->putJson("/api/leaves/{$leave->id}", $application)->assertOk();
+
+        $leave->refresh();
+        $this->assertSame('2026-11-03', $leave->date_of_filing->format('Y-m-d'));
+        $this->assertSame('L-2026-10-0701', $leave->control_no);
+    }
+
+    public function test_saving_holds_the_filing_lock_so_two_saves_can_not_both_pass_the_checks(): void
+    {
+        $lockHeld = [];
+        $check = function () use (&$lockHeld) {
+            $lock = Cache::lock(LeaveController::FILING_LOCK, 1);
+            $free = $lock->get();
+            if ($free) $lock->release();
+            $lockHeld[] = !$free;
+        };
+        Event::listen('eloquent.creating: ' . Leave::class, $check);
+        Event::listen('eloquent.updating: ' . Leave::class, $check);
+
+        $application = $this->application($this->samuel, ['control_no' => 'L-2026-10-0702']);
+        $this->fileLeave($this->admin, $application)->assertCreated();
+        $leave = Leave::firstWhere('control_no', 'L-2026-10-0702');
+        $application['entries'][0]['id'] = $leave->id;
+        $application['entries'][0]['purpose'] = 'Family matter';
+        $this->actingAs($this->admin)->putJson("/api/leaves/{$leave->id}", $application)->assertOk();
+
+        $this->assertSame([true, true], $lockHeld);
+        $this->assertTrue(Cache::lock(LeaveController::FILING_LOCK, 1)->get(), 'The lock is released afterwards.');
+    }
+
+    public function test_the_filing_lock_is_released_when_a_check_fails(): void
+    {
+        $this->fileLeave($this->admin, $this->application($this->samuel, ['control_no' => 'L-2026-10-0703']))->assertCreated();
+        $this->fileLeave($this->admin, $this->application($this->maria, ['control_no' => 'L-2026-10-0703']))->assertUnprocessable()->assertJsonValidationErrors('control_no', 'errors');
+
+        $this->assertTrue(Cache::lock(LeaveController::FILING_LOCK, 1)->get());
+    }
+
+    // ---- Position as of filing
+
+    private function promote(Employee $employee, string $position): void
+    {
+        $employee->update(['position_title' => $position]);
+    }
+
+    public function test_a_leave_keeps_the_position_as_of_filing_after_a_promotion(): void
+    {
+        $this->fileLeave($this->admin, $this->application($this->samuel, ['control_no' => 'L-2026-10-0710']))->assertCreated();
+        $this->promote($this->samuel, 'Administrative Officer V');
+
+        $this->actingAs($this->admin)->getJson('/api/leaves')->assertOk()->assertJsonPath('0.position', 'Administrative Assistant II');
+
+        $exporter = app(LeaveFormExporter::class);
+        $path = $exporter->export(Leave::firstWhere('control_no', 'L-2026-10-0710'));
+        $zip = new \ZipArchive();
+        $zip->open($path);
+        $sheet = $zip->getFromName('xl/worksheets/sheet1.xml');
+        $zip->close();
+        unlink($path);
+
+        $this->assertStringContainsString('ADMINISTRATIVE ASSISTANT II', $sheet);
+        $this->assertStringNotContainsString('ADMINISTRATIVE OFFICER V', $sheet);
+    }
+
+    public function test_editing_keeps_the_position_unless_the_employee_changes(): void
+    {
+        $application = $this->application($this->samuel, ['control_no' => 'L-2026-10-0711']);
+        $this->fileLeave($this->admin, $application)->assertCreated();
+        $leave = Leave::firstWhere('control_no', 'L-2026-10-0711');
+        $this->promote($this->samuel, 'Administrative Officer V');
+        $this->promote($this->maria, 'Budget Officer III');
+
+        $application['entries'][0]['id'] = $leave->id;
+        $application['position'] = 'Sent By The Browser';
+        $this->actingAs($this->admin)->putJson("/api/leaves/{$leave->id}", $application)->assertOk();
+        $this->assertSame('Administrative Assistant II', $leave->fresh()->position);
+
+        $application['employee_id'] = $this->maria->id;
+        $this->actingAs($this->admin)->putJson("/api/leaves/{$leave->id}", $application)->assertOk();
+        $this->assertSame('Budget Officer III', $leave->fresh()->position);
     }
 
     // ---- Form rules

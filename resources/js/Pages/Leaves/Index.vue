@@ -281,6 +281,8 @@ const currentDeleteRecord = ref<any>(null);
 const openCreateModal = () => {
     _openCreateModal();
     applyDefaultSignatories(formData.value as any, employees.value);
+    // Users who file only for themselves start with their own employee chosen, so no change triggers the watcher below
+    if (formData.value.employee_id) loadSalary();
 };
 
 const openEditModal = (leave: any) => {

@@ -541,6 +541,8 @@
 <script setup lang="ts">
 import { isPboStaff } from '@/Composables/useOfficials';
 import { isDisapproved } from '@/Composables/useLeaveCredits';
+import { leaveWorkingDates } from '@/Pages/Leaves/Composables/useLeaveFormPrint';
+import { localDateString } from '@/utils/date';
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
 import Toast from '@/Components/Toast.vue';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
@@ -950,15 +952,19 @@ const getEmployeeStatusAndRemarksFor = (
         };
     }
 
-    // Check for leave
-    const leave = leaves.value.find(l =>
-        l.employee_id === employeeId && isDateInInclusiveDates(l.inclusive_dates, target)
+    // Check for leave: only its working days (a day it marks as off is handled at the end)
+    const targetDay = localDateString(target);
+    const leavesOnDay = leaves.value.filter(l =>
+        l.employee_id === employeeId && leaveWorkingDates(l.inclusive_dates, l.off_days).includes(targetDay)
     );
-    if (leave) {
+    if (leavesOnDay.length > 0) {
+        // A half day only when one half is on leave: morning and afternoon leaves together are the whole day
+        const periods = leavesOnDay.map(l => (l.is_half_day ? l.half_day_period : null));
+        const halfDay = periods[0] && new Set(periods).size === 1 ? periods[0] : null;
         return {
             status: 'On Leave',
-            remarksLabel: '',
-            remarksText: `${leave.type_of_leave}`,
+            remarksLabel: halfDay ? 'Half Day' : '',
+            remarksText: halfDay ? `${leavesOnDay[0].type_of_leave} (${halfDay})` : `${leavesOnDay[0].type_of_leave}`,
             meetings: []
         };
     }
@@ -1002,7 +1008,9 @@ const getEmployeeStatusAndRemarksFor = (
     // Notice of Meetings — only reached once nothing above matched.
     const meetings = getEmployeeMeetingsFor(employeeId, target);
     if (meetings.length === 0) {
-        return { status: 'Present', remarksLabel: '', remarksText: '', meetings: [] };
+        // Not a working day of the leave covering it (see above): one of the off days it marks
+        const offDayOfLeave = leaves.value.some(l => l.employee_id === employeeId && isDateInInclusiveDates(l.inclusive_dates, target));
+        return { status: offDayOfLeave ? 'Off Day' : 'Present', remarksLabel: '', remarksText: '', meetings: [] };
     }
     return {
         status: 'Present with Meetings',

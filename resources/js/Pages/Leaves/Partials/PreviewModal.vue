@@ -72,7 +72,7 @@
                                     <td class="align-bottom">
                                         <div class="inline-row">
                                             <span class="label">4.&nbsp;&nbsp;POSITION</span>
-                                            <span class="line flex-1 text-center uppercase">{{ employee?.designation || employee?.full_position || '' }}</span>
+                                            <span class="line flex-1 text-center uppercase">{{ leave?.position || employee?.designation || employee?.full_position || '' }}</span>
                                             <span class="label ml-2">5.&nbsp;&nbsp;SALARY</span>
                                             <span class="line w-24 text-center uppercase">{{ salaryText }}</span>
                                         </div>
