@@ -98,6 +98,7 @@ This version's migrations:
 | `2026_10_27_000001_create_job_runs_table` | Backup/HRIS sync status for the Dashboard; the "See backup and HRIS sync status" permission for Administrator and Developer |
 | `2026_10_28_000000_create_trip_tickets_table` | Driver's Trip Tickets: the control no. issued to each travel order's ticket |
 | `2026_10_28_000001_number_existing_trip_tickets` | Numbers the trip tickets of the travel orders already in the system (driver and RP vehicle), in date order; new ones continue the series |
+| `2026_11_03_000000_let_more_roles_create_and_edit_leaves` | Reviewer, Receiving and Supervisor can create and edit leaves (their own only) |
 
 If the first one already ran on the server, `migrate` skips it.
 
@@ -235,7 +236,7 @@ API calls show in DocuTrack's Activity Logs as "API Read". Refused ones (a wrong
 
 - **The site errors after the update:** check `storage\logs\laravel.log`. With `APP_DEBUG=false`, details are only there.
 - **Undo the update** (in this order):
-  1. `php artisan migrate:rollback --step=4`, while the new code is still in place. This undoes the last four migrations (trip ticket numbering, trip tickets, the status table and the file move), and undoing the file move puts the Records files back in `storage\app\public\records`.
+  1. `php artisan migrate:rollback --step=N`, while the new code is still in place, where N is how many migrations this update ran (`migrate:status` shows them in the highest batch). Going back through the table above, undoing the file move puts the Records files back in `storage\app\public\records`.
   2. `git log --oneline -3`, then `git checkout <previous commit>`.
   3. `npm run build`, then `php artisan optimize:clear`.
   4. Only if something is still wrong: restore the database from step B1.

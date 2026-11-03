@@ -102,6 +102,26 @@ class LeavesTest extends TestCase
         $this->assertSame(1, Leave::where('employee_id', $this->samuel->id)->count());
     }
 
+    public function test_reviewer_receiving_and_supervisor_can_create_and_edit_only_their_own_leaves(): void
+    {
+        foreach (['Reviewer', 'Receiving', 'Supervisor'] as $index => $role) {
+            $employee = $this->makeEmployee();
+            $user = $this->makeUser($role, $employee);
+            $controlNo = 'L-2026-10-950' . $index;
+
+            $this->fileLeave($user, $this->application($this->maria))->assertStatus(422);
+
+            $application = $this->application($employee, ['control_no' => $controlNo]);
+            $this->fileLeave($user, $application)->assertCreated();
+            $leave = Leave::firstWhere('control_no', $controlNo);
+
+            $application['entries'][0]['id'] = $leave->id;
+            $application['entries'][0]['purpose'] = 'Family matter';
+            $this->actingAs($user)->putJson("/api/leaves/{$leave->id}", $application)->assertOk();
+            $this->actingAs($user)->deleteJson("/api/leaves/{$leave->id}")->assertForbidden();
+        }
+    }
+
     public function test_a_user_can_not_open_edit_or_delete_another_employees_leave(): void
     {
         $this->fileLeave($this->admin, $this->application($this->maria, ['control_no' => 'L-2026-10-9001']))->assertCreated();
