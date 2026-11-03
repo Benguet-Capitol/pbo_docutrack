@@ -112,6 +112,7 @@ APP_DEBUG=false
 # Shared APIs for pbo-registryV2: one key each, different keys
 RECORDS_API_KEYS=<records key>
 LEAVES_API_KEYS=<leaves key>
+LOCATOR_API_KEYS=<locator key>
 
 # Weekly backups (Mondays)
 BACKUP_PATH=E:\backups\pbo-mbm
@@ -218,6 +219,7 @@ In pbo-registryV2's `.env` on its server:
 DOCUTRACK_URL=http://192.168.2.19
 DOCUTRACK_RECORDS_KEY=<the same key as RECORDS_API_KEYS>
 DOCUTRACK_LEAVES_KEY=<the same key as LEAVES_API_KEYS>
+DOCUTRACK_LOCATOR_KEY=<the same key as LOCATOR_API_KEYS>
 DOCUTRACK_TIMEOUT=10
 # HRIS IDs of staff from other offices detailed to the PBO (comma-separated)
 DOCUTRACK_PBO_DETAILED_EMPLOYEES=

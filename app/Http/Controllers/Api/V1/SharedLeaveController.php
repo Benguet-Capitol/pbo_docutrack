@@ -5,6 +5,9 @@ namespace App\Http\Controllers\Api\V1;
 use App\Http\Controllers\Controller;
 use App\Models\Employee;
 use App\Models\Leave;
+use App\Models\PassSlip;
+use App\Models\Tardiness;
+use App\Models\TravelOrder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -70,8 +73,17 @@ class SharedLeaveController extends Controller
             ])->values(),
         ])->values();
 
+        // The rest of My Summary, by the same dates: travel orders and pass slips by their date, tardiness by the day it happened
+        $assigned = fn ($query) => $query->where('employees.id', $employee->id);
+        $travelOrders = TravelOrder::whereHas('employees', $assigned)->whereYear('date', $year)->latest('date')->get(['id', 'control_no', 'date', 'going_to', 'purpose', 'inclusive_dates']);
+        $passSlips = PassSlip::whereHas('employees', $assigned)->whereYear('date', $year)->latest('date')->get(['id', 'control_no', 'date', 'purpose', 'location', 'requested_time', 'expected_return_time']);
+        $tardiness = Tardiness::where('employee_id', $employee->id)->whereYear('requested_date', $year)->latest('requested_date')->get(['id', 'control_no', 'type', 'requested_date', 'requested_time', 'return_time', 'reason']);
+
         $years = Leave::where('employee_id', $employee->id)
             ->pluck('date_of_filing')
+            ->merge(TravelOrder::whereHas('employees', $assigned)->pluck('date'))
+            ->merge(PassSlip::whereHas('employees', $assigned)->pluck('date'))
+            ->merge(Tardiness::where('employee_id', $employee->id)->pluck('requested_date'))
             ->map(fn ($date) => (int) substr((string) $date, 0, 4))
             ->push($year)
             ->unique()
@@ -91,6 +103,29 @@ class SharedLeaveController extends Controller
             'used_by_type' => collect($usedByType)->map(fn ($used, $type) => ['type' => $type, 'days' => (float) $used])->values(),
             'limited_leaves' => $limited,
             'applications' => $applications,
+            'travel_orders' => $travelOrders->map(fn (TravelOrder $order) => [
+                'control_no' => $order->control_no,
+                'date' => $order->date?->format('Y-m-d'),
+                'going_to' => $order->going_to,
+                'purpose' => is_array($order->purpose) ? implode(', ', $order->purpose) : $order->purpose,
+                'inclusive_dates' => $order->inclusive_dates ?? [],
+            ])->values(),
+            'pass_slips' => $passSlips->map(fn (PassSlip $slip) => [
+                'control_no' => $slip->control_no,
+                'date' => $slip->date?->format('Y-m-d'),
+                'purpose' => $slip->purpose,
+                'location' => $slip->location,
+                'requested_time' => $slip->requested_time,
+                'expected_return_time' => $slip->expected_return_time,
+            ])->values(),
+            'tardiness' => $tardiness->map(fn (Tardiness $record) => [
+                'control_no' => $record->control_no,
+                'type' => $record->type,
+                'date' => $record->requested_date?->format('Y-m-d'),
+                'requested_time' => $record->requested_time,
+                'return_time' => $record->return_time,
+                'reason' => $record->reason,
+            ])->values(),
         ]]);
     }
 }

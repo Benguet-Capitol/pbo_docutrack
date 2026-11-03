@@ -8,7 +8,7 @@ use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
- * Shared APIs for other PBO systems (api.key:records, api.key:leaves): the client app sends one of the keys in
+ * Shared APIs for other PBO systems (api.key:records, api.key:leaves, api.key:locator): the client app sends one of the keys in
  * config("services.{api}_api.keys") as the X-API-Key header (or "Authorization: Bearer <key>"). No session, no user.
  * Each API has its own keys, so a Records key can't read leaves.
  *

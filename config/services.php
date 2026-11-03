@@ -55,4 +55,10 @@ return [
         'keys' => array_values(array_filter(array_map('trim', explode(',', (string) env('LEAVES_API_KEYS', ''))))),
     ],
 
+    // Shared Locator API (/api/v1/locator, read-only): where PBO staff are, per day, e.g. for pbo-registryV2's Locator Chart.
+    // LOCATOR_API_KEYS: separate from the other keys.
+    'locator_api' => [
+        'keys' => array_values(array_filter(array_map('trim', explode(',', (string) env('LOCATOR_API_KEYS', ''))))),
+    ],
+
 ];

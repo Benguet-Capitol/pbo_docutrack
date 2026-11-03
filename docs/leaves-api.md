@@ -80,7 +80,17 @@ Generate a key with `php -r "echo bin2hex(random_bytes(32)), PHP_EOL;"`. Then ru
 | `days` | A half day counts as 0.5 |
 | `inclusive_dates` | `Y-m-d` dates, or `Y-m-d - Y-m-d` ranges |
 
-Salary, signatories, disapproval reasons and trashed leaves are never returned.
+The response also carries the rest of My Summary for that employee and year, newest first:
+
+| Field | Items |
+|---|---|
+| `travel_orders` | `control_no`, `date`, `going_to`, `purpose`, `inclusive_dates` |
+| `pass_slips` | `control_no`, `date`, `purpose`, `location`, `requested_time`, `expected_return_time` |
+| `tardiness` | `control_no`, `type` (Tardiness or Undertime), `date`, `requested_time`, `return_time`, `reason` |
+
+`years` includes the years of these records too.
+
+Salary, signatories, disapproval reasons and trashed records are never returned.
 
 ## Example (pbo-registryV2, Laravel)
 

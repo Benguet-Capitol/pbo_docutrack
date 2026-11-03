@@ -35,6 +35,12 @@ Route::prefix('v1/leaves')->middleware(['api.key:leaves', 'throttle:120,1'])->gr
     Route::get('/employees/{employeeId}', [\App\Http\Controllers\Api\V1\SharedLeaveController::class, 'summary']);
 });
 
+// Shared Locator API (read-only): where PBO staff are, per day, e.g. on pbo-registryV2's Locator Chart page.
+// Its own keys (LOCATOR_API_KEYS); computed statuses only. See docs/locator-api.md.
+Route::prefix('v1/locator')->middleware(['api.key:locator', 'throttle:120,1'])->group(function () {
+    Route::get('/', [\App\Http\Controllers\Api\V1\SharedLocatorController::class, 'index']);
+});
+
 // Documents API
 Route::middleware(['web', 'auth'])->group(function () {
     // More specific routes first

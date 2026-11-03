@@ -939,7 +939,7 @@ const getEmployeeStatusAndRemarksFor = (
 
     // Check for undertime first
     const undertime = tardiness.value.find(t =>
-        t.employee_id === employeeId && isSameDate(t.date_filed, target)
+        t.employee_id === employeeId && isSameDate(t.requested_date, target)
     );
     if (undertime) {
         return {
@@ -1400,7 +1400,9 @@ const employeeIdsWithAnyRecord = computed(() => {
     });
 
     passSlips.value.forEach(ps => {
-        ids.add(ps.employee_id);
+        if (ps.employees && Array.isArray(ps.employees)) {
+            ps.employees.forEach((emp: any) => ids.add(emp.id));
+        }
     });
 
     travelOrders.value.forEach(to => {
