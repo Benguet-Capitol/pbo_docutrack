@@ -2,7 +2,7 @@
 
 Read-only API that lets other PBO systems (e.g. **pbo-registryV2**'s Locator Chart page) show where PBO staff are, per day: the same statuses as **Locator Chart** here.
 
-It returns computed statuses only, never the underlying records. A leave shows as "Leave" without its type, and undertime shows its times without the reason, as for anyone here who can't open those modules. Salary, signatories, disapproved leaves and trashed records are never returned.
+It returns computed statuses only, never the underlying records. A leave shows its type (Sick Leave, Vacation Leave …) and nothing else from the record, and undertime shows its times without the reason. Salary, signatories, disapproved leaves and trashed records are never returned.
 
 ## Authentication
 
@@ -61,7 +61,7 @@ Refused calls are written to Activity Logs (module "Shared API"). Successful cal
 | `employees` | PBO staff, the Governor and anyone existing records still name, with at least one record to show. The Provincial Budget Officer comes first, then by last name. |
 | `status` | `Off Day`, `Undertime`, `On Leave`, `On Official Business`, `Present with Meetings` or `Present` |
 | `label` | `Pass Slip` or `Travel Order` for `On Official Business`, `Half Day` for a half day of `On Leave`, otherwise null |
-| `text` | The detail: "Leave" ("Leave (AM)" or "Leave (PM)" for a half day), the undertime's times, or "purpose at place" |
+| `text` | The detail: the leave's type, e.g. "Sick Leave" ("Sick Leave (AM)" or "Sick Leave (PM)" for a half day), the undertime's times, or "purpose at place" |
 | `meetings` | Only with `Present with Meetings`, by time |
 
 The first rule that applies wins, in the order of `App\Services\LocatorChart`: weekend, undertime (on the day it happened, not the day it was filed), leave, pass slip, travel order, meetings, an off day inside a leave (`Off Day`), Present.

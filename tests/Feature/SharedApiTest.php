@@ -144,7 +144,7 @@ class SharedApiTest extends TestCase
         $days = $this->getJson('/api/v1/locator?from=2026-11-02&to=2026-11-09', ['X-API-Key' => self::LOCATOR_KEY])->assertOk()->json('data.employees.0.days');
 
         $this->assertSame(['status' => 'Undertime', 'label' => null, 'text' => '08:00 AM - 12:00 PM', 'meetings' => []], $days['2026-11-02']);
-        $this->assertSame(['status' => 'On Leave', 'label' => null, 'text' => 'Leave', 'meetings' => []], $days['2026-11-03']);
+        $this->assertSame(['status' => 'On Leave', 'label' => null, 'text' => 'Sick Leave', 'meetings' => []], $days['2026-11-03']);
         $this->assertSame(['status' => 'On Official Business', 'label' => 'Pass Slip', 'text' => 'Deliver forms at Capitol', 'meetings' => []], $days['2026-11-04']);
         $this->assertSame(['status' => 'On Official Business', 'label' => 'Travel Order', 'text' => 'Seminar, Training at Baguio City', 'meetings' => []], $days['2026-11-05']);
         $this->assertSame('Present with Meetings', $days['2026-11-06']['status']);
@@ -164,8 +164,8 @@ class SharedApiTest extends TestCase
 
         $days = $this->getJson('/api/v1/locator?from=2026-11-03&to=2026-11-04', ['X-API-Key' => self::LOCATOR_KEY])->assertOk()->json('data.employees.0.days');
 
-        $this->assertSame(['status' => 'On Leave', 'label' => 'Half Day', 'text' => 'Leave (AM)', 'meetings' => []], $days['2026-11-03']);
-        $this->assertSame(['status' => 'On Leave', 'label' => null, 'text' => 'Leave', 'meetings' => []], $days['2026-11-04'], 'Morning and afternoon together are the whole day.');
+        $this->assertSame(['status' => 'On Leave', 'label' => 'Half Day', 'text' => 'Sick Leave (AM)', 'meetings' => []], $days['2026-11-03']);
+        $this->assertSame(['status' => 'On Leave', 'label' => null, 'text' => 'Vacation Leave', 'meetings' => []], $days['2026-11-04'], 'Morning and afternoon together are the whole day, under the newest leave.');
     }
 
     public function test_the_locator_does_not_show_a_leaves_off_days_as_on_leave(): void
@@ -191,7 +191,8 @@ class SharedApiTest extends TestCase
         $response = $this->getJson('/api/v1/locator?from=2026-11-02&to=2026-11-04', ['X-API-Key' => self::LOCATOR_KEY])->assertOk();
 
         $this->assertSame('Present', $response->json('data.employees.0.days.2026-11-04.status'), 'A disapproved leave did not happen.');
-        foreach (['Private medical', 'Sick Leave', 'Vacation Leave', $employee->id.'"'] as $private) {
+        $this->assertSame('Sick Leave', $response->json('data.employees.0.days.2026-11-03.text'));
+        foreach (['Private medical', 'Vacation Leave', $employee->id.'"'] as $private) {
             $this->assertStringNotContainsString($private, str_replace('"employee_id":"01323001799"', '', $response->getContent()));
         }
     }

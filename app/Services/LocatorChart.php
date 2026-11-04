@@ -18,8 +18,8 @@ use Illuminate\Support\Collection;
  * travel order, then meetings, then Present. Only a leave's working days count as On Leave: a day it marks as off is
  * an Off Day if nothing else is on it. Keep the two in step when one changes.
  *
- * Only what the chart needs leaves this class: a leave shows as "Leave" without its type, and undertime without
- * its reason, as for anyone who can't open those modules.
+ * Only what the chart needs leaves this class: a leave shows its type (Sick Leave, Vacation Leave …) without the
+ * rest of the record, and undertime its times without the reason.
  */
 class LocatorChart
 {
@@ -41,7 +41,7 @@ class LocatorChart
 
         // Newest first, so the record shown when two overlap is the one the page shows
         $undertime = Tardiness::latest('created_at')->get(['id', 'employee_id', 'requested_date', 'requested_time', 'return_time']);
-        $leaves = Leave::latest('id')->get(['id', 'employee_id', 'inclusive_dates', 'off_days', 'is_half_day', 'half_day_period', 'recommendation'])
+        $leaves = Leave::latest('id')->get(['id', 'employee_id', 'inclusive_dates', 'off_days', 'type_of_leave', 'is_half_day', 'half_day_period', 'recommendation'])
             ->reject(fn (Leave $leave) => $leave->recommendation === 'disapproval');
         $passSlips = PassSlip::with('employees:employees.id')->latest('date')->get(['id', 'date', 'inclusive_dates', 'purpose', 'location']);
         $travelOrders = TravelOrder::with('employees:employees.id')->latest('date')->get(['id', 'date', 'inclusive_dates', 'purpose', 'going_to']);
@@ -85,11 +85,15 @@ class LocatorChart
         if ($record = $undertime[$id][$date] ?? null) {
             return $day('Undertime', null, $this->time($record->requested_time).' - '.$this->time($record->return_time));
         }
-        if ($periods = $leave[$id][$date] ?? null) {
+        if ($onLeave = $leave[$id][$date] ?? null) {
+            $periods = array_column($onLeave, 'period');
+            // The newest leave's type when two overlap, as the page shows it
+            $type = $onLeave[0]['type'] ?: 'Leave';
+
             // A half day only when one half is on leave: morning and afternoon leaves together are the whole day
             return !in_array(null, $periods, true) && count(array_unique($periods)) === 1
-                ? $day('On Leave', 'Half Day', "Leave ({$periods[0]})")
-                : $day('On Leave', null, 'Leave');
+                ? $day('On Leave', 'Half Day', "{$type} ({$periods[0]})")
+                : $day('On Leave', null, $type);
         }
         if ($record = $passSlip[$id][$date] ?? null) {
             return $day('On Official Business', 'Pass Slip', "{$record->purpose} at {$record->location}");
@@ -110,8 +114,8 @@ class LocatorChart
     }
 
     /**
-     * For the days asked about: [employee id => [date => each leave's half day period, null for a whole day]] on a
-     * leave's working days, and [employee id => [date => true]] on the off days inside a leave.
+     * For the days asked about: [employee id => [date => each leave's type and half day period, null for a whole day]]
+     * on a leave's working days, and [employee id => [date => true]] on the off days inside a leave.
      */
     private function leaveDays(Collection $leaves, array $days): array
     {
@@ -124,7 +128,7 @@ class LocatorChart
                 foreach ($this->expand((string) $entry, $days[0], end($days)) as $date) {
                     if (!isset($wanted[$date])) continue;
                     if (isset($workingDates[$date])) {
-                        $working[$leave->employee_id][$date][] = $leave->is_half_day ? $leave->half_day_period : null;
+                        $working[$leave->employee_id][$date][] = ['type' => $leave->type_of_leave, 'period' => $leave->is_half_day ? $leave->half_day_period : null];
                     } else {
                         $off[$leave->employee_id][$date] = true;
                     }

@@ -1,3 +1,4 @@
+import type { CardAccent } from '@/Components/RecordCard.vue';
 /**
  * Documents page helpers with no state: processing time limits and business-day maths, status and type styles,
  * transaction labels and the checklist's group layout.
@@ -240,12 +241,12 @@ export const formatDuration = (hours: number): string => {
 /**
  * statusBadge: label, badge classes and card accent for a document's display status (card view)
  */
-export const STATUS_BADGES: Record<string, { label: string; classes: string; accent: string }> = {
-    'created': { label: 'Created', classes: 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300', accent: 'border-t-blue-500' },
-    'forwarded': { label: 'Forwarded', classes: 'bg-cyan-100 dark:bg-cyan-900/30 text-cyan-800 dark:text-cyan-300', accent: 'border-t-cyan-500' },
-    'to be received': { label: 'To Be Received', classes: 'bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-300', accent: 'border-t-orange-500' },
-    'pending': { label: 'Pending', classes: 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300', accent: 'border-t-yellow-500' },
-    'finalized': { label: 'Transaction Ended', classes: 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300', accent: 'border-t-green-500' },
+export const STATUS_BADGES: Record<string, { label: string; classes: string; accent: CardAccent }> = {
+    'created': { label: 'Created', classes: 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300', accent: 'blue' },
+    'forwarded': { label: 'Forwarded', classes: 'bg-cyan-100 dark:bg-cyan-900/30 text-cyan-800 dark:text-cyan-300', accent: 'cyan' },
+    'to be received': { label: 'To Be Received', classes: 'bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-300', accent: 'orange' },
+    'pending': { label: 'Pending', classes: 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300', accent: 'yellow' },
+    'finalized': { label: 'Transaction Ended', classes: 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300', accent: 'green' },
 };
 
 // List view (same look as pbo-registryV2 lists): header cells, the Document column's sort buttons, row shading

@@ -204,7 +204,7 @@ export function useDocumentsList(state: DocumentsState) {
 
     const statusBadge = (document: Document) => {
         const status = getDisplayStatus(document);
-        return STATUS_BADGES[status] ?? { label: status, classes: 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300', accent: 'border-t-gray-400' };
+        return STATUS_BADGES[status] ?? { label: status, classes: 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300', accent: 'gray' as const };
     };
 
     // ============== Computed Properties ==============

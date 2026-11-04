@@ -12,54 +12,46 @@
             Select all on this page
         </label>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-            <div
+        <div :class="CARD_GRID">
+            <RecordCard
                 v-for="item in items"
                 :key="itemKey(item)"
-                :class="[
-                    'border border-t-4 rounded-lg shadow-sm hover:shadow-md transition-shadow text-xs flex flex-col',
-                    selectedKeys.has(itemKey(item))
-                        ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-300 dark:border-emerald-700 border-t-emerald-500'
-                        : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 border-t-gray-400',
-                ]"
+                :accent="selectedKeys.has(itemKey(item)) ? 'emerald' : 'gray'"
+                icon="fas fa-trash-alt"
+                :title="item.module_label"
+                :selected="selectedKeys.has(itemKey(item))"
             >
-                <div class="px-4 pt-3 flex items-start gap-3">
+                <template #leading>
                     <input
                         type="checkbox"
                         :checked="selectedKeys.has(itemKey(item))"
                         @change="$emit('toggle-select', item)"
-                        class="mt-0.5 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500 dark:bg-gray-700 dark:border-gray-600"
+                        class="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500 dark:bg-gray-700 dark:border-gray-600"
                     />
-                    <div class="min-w-0 flex-1">
-                        <span class="inline-flex items-center px-2 py-1 rounded-full font-medium text-gray-700 dark:text-gray-200 bg-gray-100 dark:bg-gray-700">
-                            {{ item.module_label }}
-                        </span>
-                        <p class="mt-2 font-semibold text-gray-900 dark:text-gray-100 break-words">{{ item.label }}</p>
-                        <p v-if="item.details" class="text-gray-600 dark:text-gray-400 mt-0.5 line-clamp-2">{{ item.details }}</p>
-                        <p v-if="item.warning" class="text-amber-700 dark:text-amber-400 mt-1">
-                            <i class="fas fa-exclamation-triangle mr-1"></i>{{ item.warning }}
-                        </p>
-                    </div>
-                </div>
+                </template>
+                <p :class="CARD_SUBJECT">{{ item.label }}</p>
+                <p v-if="item.details" class="text-gray-600 line-clamp-2 dark:text-gray-400">{{ item.details }}</p>
+                <p v-if="item.warning" class="rounded-lg bg-amber-50 px-2.5 py-1.5 text-amber-800 dark:bg-amber-900/20 dark:text-amber-300">
+                    <i class="fas fa-exclamation-triangle mr-1"></i>{{ item.warning }}
+                </p>
 
-                <div class="flex-1"></div>
-                <div class="mt-3 flex items-center justify-between gap-2 px-4 py-2 bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 rounded-b-lg">
-                    <div class="min-w-0 leading-tight">
-                        <p class="font-semibold text-gray-800 dark:text-gray-200 truncate">{{ item.deleted_by || '-' }}</p>
-                        <p class="text-[10px] text-gray-500 dark:text-gray-400">{{ formatDateTime(item.deleted_at) }}</p>
-                    </div>
-                    <div class="flex gap-2 flex-shrink-0">
-                        <RowIconButton color="emerald" icon="fas fa-trash-restore" tooltip="Restore" @click.stop="$emit('restore', item)" />
-                        <RowIconButton color="red" icon="fas fa-times-circle" tooltip="Delete Permanently" @click.stop="$emit('delete', item)" />
-                    </div>
-                </div>
-            </div>
+                <template #meta>
+                    <p class="truncate font-semibold text-gray-800 dark:text-gray-200">{{ item.deleted_by || '-' }}</p>
+                    <p class="text-[10px] text-gray-500 dark:text-gray-400">{{ formatDateTime(item.deleted_at) }}</p>
+                </template>
+                <template #actions>
+                    <RowIconButton color="emerald" icon="fas fa-trash-restore" tooltip="Restore" @click.stop="$emit('restore', item)" />
+                    <RowIconButton color="red" icon="fas fa-times-circle" tooltip="Delete Permanently" @click.stop="$emit('delete', item)" />
+                </template>
+            </RecordCard>
         </div>
     </div>
 </template>
 
 <script setup lang="ts">
 import RowIconButton from '@/Components/RowIconButton.vue';
+import RecordCard from '@/Components/RecordCard.vue';
+import { CARD_GRID, CARD_SUBJECT } from '@/utils/cardView';
 import { itemKey } from '../Composables/useTrashData';
 import type { TrashItem } from '../Composables/useTrashData';
 

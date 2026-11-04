@@ -1,38 +1,35 @@
 <template>
     <!-- Card View: used on small screens, or when chosen on desktop -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-        <div
+    <div :class="CARD_GRID">
+        <RecordCard
             v-for="user in users"
             :key="user.id"
-            class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 border-t-4 border-t-emerald-500 rounded-lg shadow-sm hover:shadow-md transition-shadow text-xs flex flex-col"
+            accent="emerald"
+            :title="user.name"
         >
-            <div class="px-4 pt-3 flex items-start gap-3">
-                <div class="w-10 h-10 rounded-full bg-emerald-600 dark:bg-emerald-700 text-white flex items-center justify-center flex-shrink-0 text-sm font-bold">
-                    {{ initials(user.name) }}
-                </div>
-                <div class="min-w-0 flex-1">
-                    <h4 class="text-sm font-bold text-gray-900 dark:text-gray-100 leading-tight break-words">{{ user.name }}</h4>
-                    <p class="text-gray-600 dark:text-gray-300 truncate" :title="user.username">
-                        <i class="fas fa-at text-[10px] text-gray-400"></i> {{ user.username }}
-                    </p>
-                    <span v-if="user.usertype" class="mt-1.5 inline-block px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-300 text-[11px] font-semibold">
-                        {{ user.usertype }}
-                    </span>
-                </div>
-            </div>
+            <template #icon>
+                <div :class="CARD_AVATAR">{{ initials(user.name) }}</div>
+            </template>
+            <template #subtitle><i class="fas fa-at mr-1 text-[10px]"></i>{{ user.username }}</template>
+            <CardField label="Role" icon="fas fa-user-shield">
+                <span v-if="user.usertype" :class="[LIST_TAG, 'rounded bg-emerald-100 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-300']">{{ user.usertype }}</span>
+                <template v-else>—</template>
+            </CardField>
 
-            <div class="flex-1"></div>
-            <div v-if="canManageUsers" class="mt-3 flex justify-end gap-2 px-4 py-2 bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 rounded-b-lg">
+            <template v-if="canManageUsers" #actions>
                 <RowIconButton color="blue" icon="fas fa-pencil-alt" tooltip="Edit" @click.stop="$emit('edit', user)" />
                 <RowIconButton color="red" icon="fas fa-trash-alt" tooltip="Delete" @click.stop="$emit('delete', user)" />
-            </div>
-            <div v-else class="mt-3"></div>
-        </div>
+            </template>
+        </RecordCard>
     </div>
 </template>
 
 <script setup lang="ts">
 import RowIconButton from '@/Components/RowIconButton.vue';
+import CardField from '@/Components/CardField.vue';
+import RecordCard from '@/Components/RecordCard.vue';
+import { CARD_AVATAR, CARD_GRID } from '@/utils/cardView';
+import { LIST_TAG } from '@/utils/listTable';
 import type { User } from '../Composables/useUserData';
 
 defineProps<{
