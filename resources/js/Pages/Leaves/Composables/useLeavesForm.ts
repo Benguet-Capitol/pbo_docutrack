@@ -118,7 +118,7 @@ const SIGNATORY_KEYS = ['certified_by', 'recommended_by', 'approved_by'] as cons
 export function useLeavesForm(
     leavesRef: any,
     onFetchLeaves: () => Promise<void>,
-    showToastFn: (message: string, type: 'success' | 'error' | 'info') => void
+    showToastFn: (message: string, type: 'success' | 'error' | 'info', title?: string) => void
 ) {
     const { can } = usePermissions();
 
@@ -489,7 +489,7 @@ export function useLeavesForm(
             const controlNo = leaveToDelete.value.control_no;
             await onFetchLeaves();
             closeDeleteModal();
-            showToastFn(`Leave ${controlNo} has been deleted successfully!`, 'error');
+            showToastFn(`Leave <strong>${controlNo}</strong> has been deleted successfully!`, 'error', 'Deleted');
         } catch (err: any) {
             const errorMsg = err instanceof Error ? err.message : 'An error occurred';
             showToastFn(errorMsg, 'error');

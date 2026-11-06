@@ -214,13 +214,14 @@ const {
 const toastRef = ref<InstanceType<typeof Toast> | null>(null);
 
 // Toast function
-const showToast = (message: string, type: 'success' | 'error' | 'info' = 'info') => {
+// title: in place of the type's own (e.g. "Deleted" on the red toast of a successful delete)
+const showToast = (message: string, type: 'success' | 'error' | 'info' = 'info', title?: string) => {
     if (type === 'success') {
-        toastRef.value?.add('success', 'Success', message, 3000);
+        toastRef.value?.add('success', title ?? 'Success', message, 3000);
     } else if (type === 'error') {
-        toastRef.value?.add('error', 'Error', message, 4000);
+        toastRef.value?.add('error', title ?? 'Error', message, title ? 3000 : 4000);
     } else {
-        toastRef.value?.add('info', 'Info', message, 3000);
+        toastRef.value?.add('info', title ?? 'Info', message, 3000);
     }
 };
 

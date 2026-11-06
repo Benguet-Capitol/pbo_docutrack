@@ -277,7 +277,7 @@ export function useDocumentActions(state: DocumentsState) {
             
             toastRef.value?.add(
                 'error',
-                'Success',
+                'Deleted',
                 `Document: <strong>${deletingDocument.tracking_no}</strong> has been deleted successfully!`,
                 3000
             );

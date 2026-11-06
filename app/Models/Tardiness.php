@@ -27,8 +27,9 @@ class Tardiness extends Model
     ];
 
     protected $casts = [
-        'date_filed' => 'date',
-        'requested_date' => 'date',
+        // Sent as "2026-07-20", not midnight converted to UTC ("2026-07-19T16:00:00Z"), which showed a day earlier
+        'date_filed' => 'date:Y-m-d',
+        'requested_date' => 'date:Y-m-d',
         'requested_time' => 'string',
     ];
 

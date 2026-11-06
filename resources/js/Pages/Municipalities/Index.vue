@@ -274,7 +274,7 @@ const handleConfirmDelete = async () => {
         
         toastRef.value?.add(
             'error',
-            'Success',
+            'Deleted',
             `Municipality: <strong>${deletingMunicipality.name}</strong> has been deleted successfully!`,
             3000
         );

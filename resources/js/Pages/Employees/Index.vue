@@ -301,7 +301,7 @@ const handleConfirmDelete = async () => {
         
         toastRef.value?.add(
             'error',
-            'Success',
+            'Deleted',
             `Employee: <strong>${deletingEmployee.name}</strong> has been deleted successfully!`,
             3000
         );
