@@ -1,5 +1,6 @@
 import { ref, computed } from 'vue';
 import { usePage } from '@inertiajs/vue3';
+import { urlParam } from '@/utils/urlQuery';
 
 export interface Record {
     id: number;
@@ -18,12 +19,13 @@ export interface Record {
 
 export function useRecordsData() {
     const records = ref<Record[]>([]);
-    const searchQuery = ref('');
+    // A link may open the list on a record (?search=, e.g. a navbar search result)
+    const searchQuery = ref(urlParam('search') ?? '');
     const currentPage = ref(1);
     const itemsPerPage = ref(10);
     const loading = ref(true);
     const error = ref<string | null>(null);
-    const activeTab = ref('Provincial Budget');
+    const activeTab = ref(urlParam('tab') ?? 'Provincial Budget');
     const activeSubtype = ref<string | null>(null);
     const sortBy = ref<'id' | 'record_no' | 'title' | 'created_at' | 'record_subtype' | 'remarks' | 'file_extension'>('id');
     const sortOrder = ref<'asc' | 'desc'>('desc');

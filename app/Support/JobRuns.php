@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 /**
- * How the background jobs went (job_runs table), for the Dashboard's system status: a job is "ok", "failed" (its last
+ * How the background jobs went (job_runs table), for System → Connections: a job is "ok", "failed" (its last
  * run failed), "overdue" (no success for longer than expected: the scheduler may have stopped) or "never" (no run yet).
  */
 class JobRuns

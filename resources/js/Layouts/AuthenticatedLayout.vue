@@ -4,6 +4,8 @@ import SideNavigation from '@/Components/SideNavigation.vue';
 import Dropdown from '@/Components/Dropdown.vue';
 import DropdownLink from '@/Components/DropdownLink.vue';
 import Footer from '@/Components/Footer.vue';
+import GlobalSearch from '@/Components/GlobalSearch.vue';
+import { usePermissions } from '@/Composables/usePermissions';
 import { Link } from '@inertiajs/vue3';
 
 const showingSideNavigation = ref(true);
@@ -12,6 +14,7 @@ const isSidebarOpen = ref(false);
 // Touch devices can't hover the collapsed rail to expand it, so they keep the menu button at every width
 const canHover = typeof window !== 'undefined' && window.matchMedia('(hover: hover) and (pointer: fine)').matches;
 const isDarkMode = ref(false);
+const { can } = usePermissions();
 
 onMounted(() => {
     // Check if dark mode was previously saved
@@ -44,17 +47,20 @@ const toggleDarkMode = () => {
             <!-- Top Navigation (User Profile & Logout) -->
             <nav class="border-b border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
                 <div class="mx-auto flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
-                    <!-- Hamburger Menu for Small Screens (below md the sidebar is fully hidden until opened) -->
-                    <button
-                        type="button"
-                        @click="isSidebarOpen = !isSidebarOpen"
-                        aria-label="Toggle navigation"
-                        :class="['inline-flex items-center justify-center rounded-md p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-500 dark:hover:bg-gray-700', canHover ? 'md:hidden' : '']"
-                    >
-                        <i class="fas fa-bars h-6 w-6"></i>
-                    </button>
+                    <div class="flex items-center gap-3">
+                        <!-- Hamburger Menu for Small Screens (below md the sidebar is fully hidden until opened) -->
+                        <button
+                            type="button"
+                            @click="isSidebarOpen = !isSidebarOpen"
+                            aria-label="Toggle navigation"
+                            :class="['inline-flex items-center justify-center rounded-md p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-500 dark:hover:bg-gray-700', canHover ? 'md:hidden' : '']"
+                        >
+                            <i class="fas fa-bars h-6 w-6"></i>
+                        </button>
 
-                    <div></div>
+                        <!-- Search across the DocuTrack and Admin modules (as in pbo-registryV2) -->
+                        <GlobalSearch v-if="can('global_search.use')" />
+                    </div>
 
                     <!-- Dark Mode Toggle & Settings Dropdown -->
                     <div class="flex items-center gap-4">

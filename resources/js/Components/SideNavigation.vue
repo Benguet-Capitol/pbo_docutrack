@@ -62,6 +62,7 @@ const ITEM_PERMISSIONS: Record<string, string> = {
     'municipalities': 'municipalities.view',
     'activity-logs': 'activity_logs.view',
     'trash': 'trash.manage',
+    'connections': 'connections.view',
 };
 
 /**
@@ -388,7 +389,7 @@ const handleSidebarHover = (hovered: boolean) => {
 
             <!-- System Section Divider -->
             <div
-                v-show="(isSidebarOpen || isSidebarHovered) && canViewAny('activity-logs', 'trash')"
+                v-show="(isSidebarOpen || isSidebarHovered) && canViewAny('activity-logs', 'trash', 'connections')"
                 class="text-xs font-bold uppercase tracking-widest text-emerald-600 dark:text-emerald-400 px-3 pt-4 pb-2 mt-2 border-b-2 border-emerald-200 dark:border-emerald-900 transition-opacity"
             >
                 System
@@ -407,6 +408,21 @@ const handleSidebarHover = (hovered: boolean) => {
             >
                 <i class="fas fa-history text-xl flex-shrink-0 dark:text-gray-100" aria-hidden="true"></i>
                 <span class="text-sm font-medium whitespace-nowrap" v-show="isSidebarOpen || isSidebarHovered">Activity Logs</span>
+            </Link>
+
+            <!-- Connections Link -->
+            <Link
+                v-if="canViewItem('connections')"
+                :href="route('connections.index')"
+                :class="[
+                    route().current('connections.*')
+                        ? 'text-white bg-gradient-to-r from-emerald-500 to-emerald-600 shadow-md hover:from-emerald-600 hover:to-emerald-700'
+                        : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 hover:shadow-sm',
+                    'flex-shrink-0 flex items-center gap-3 px-3 py-1.5 transition-all rounded-lg overflow-hidden',
+                ]"
+            >
+                <i class="fas fa-plug text-xl flex-shrink-0 dark:text-gray-100" aria-hidden="true"></i>
+                <span class="text-sm font-medium whitespace-nowrap" v-show="isSidebarOpen || isSidebarHovered">Connections</span>
             </Link>
 
             <!-- Trash Link -->

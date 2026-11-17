@@ -4,6 +4,7 @@ import { useYearFilter } from '@/Composables/useYearFilter';
 import { IN_PROGRESS_STATUSES } from './documentDisplay';
 import type { Document, DocumentTransaction } from './types';
 import Toast from '@/Components/Toast.vue';
+import { urlParam } from '@/utils/urlQuery';
 
 /** Shared state of the Documents page: the list, filters, every modal's open state and form, the checklist being edited. */
 export function useDocumentsState() {
@@ -34,7 +35,8 @@ export function useDocumentsState() {
     const error = ref<string | null>(null);
 
     /** Stores the search query for filtering documents */
-    const searchQuery = ref('');
+    // A link may open the list on a record (?search=, e.g. a navbar search result)
+    const searchQuery = ref(urlParam('search') ?? '');
 
     /** Current page number for pagination */
     const currentPage = ref(1);

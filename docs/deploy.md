@@ -95,10 +95,11 @@ This version's migrations:
 |---|---|
 | `2026_10_23_000000_add_leaves_view_all_permission` | "View all employees' leaves" for Administrative, Administrator and Developer; HR summary for every role |
 | `2026_10_27_000000_move_record_files_to_private_storage` | Moves Records uploads from `storage\app\public\records` to `storage\app\private\records` (no public URL) |
-| `2026_10_27_000001_create_job_runs_table` | Backup/HRIS sync status for the Dashboard; the "See backup and HRIS sync status" permission for Administrator and Developer |
+| `2026_10_27_000001_create_job_runs_table` | Backup/HRIS sync status (now on System → Connections); the "See backup and HRIS sync status" permission for Administrator and Developer |
 | `2026_10_28_000000_create_trip_tickets_table` | Driver's Trip Tickets: the control no. issued to each travel order's ticket |
 | `2026_10_28_000001_number_existing_trip_tickets` | Numbers the trip tickets of the travel orders already in the system (driver and RP vehicle), in date order; new ones continue the series |
 | `2026_11_03_000000_let_more_roles_create_and_edit_leaves` | Reviewer, Receiving and Supervisor can create and edit leaves (their own only) |
+| `2026_11_17_000000_add_global_search_and_connections_permissions` | The top-bar search for every role; System → Connections for Administrator and Developer; removes "See backup and HRIS sync status" (that status moved from the Dashboard to Connections) |
 
 If the first one already ran on the server, `migrate` skips it.
 
@@ -182,7 +183,7 @@ The weekly backup (Mondays, 1:00 AM) and the monthly HRIS sync (1st of the month
 2. Share it (Properties → Sharing → Advanced Sharing). Give the scheduler task's user **Change** permission.
 3. From the server, check that `\\<that PC>\<share>` opens in File Explorer while signed in as that user.
 
-**Run both jobs once now**, so the Dashboard has a status straight away:
+**Run both jobs once now**, so System → Connections has a status straight away:
 
 ```
 php artisan backup:run
@@ -202,7 +203,7 @@ php artisan up
 | Where | What to check |
 |---|---|
 | Sign in | Works as usual. One deliberately wrong password shows in **Activity Logs** as "Failed Sign-in" |
-| Dashboard (as Administrator) | The header shows **Weekly backup** and **HRIS employee sync** in green |
+| System → Connections (as Administrator) | **Weekly backup**, **HRIS employee sync** and **Scheduler** are green (Working) |
 | Documents | List, cards, tabs, search. Create a test document, edit it, forward and receive it, open a checklist, then delete it |
 | Records | View and download a file, including an Administrative one, and add a record with a file |
 | Leaves | Create a leave as someone without "View all employees' leaves": they see only their own |
@@ -240,7 +241,7 @@ API calls show in DocuTrack's Activity Logs as "API Read". Refused ones (a wrong
   2. `git log --oneline -3`, then `git checkout <previous commit>`.
   3. `npm run build`, then `php artisan optimize:clear`.
   4. Only if something is still wrong: restore the database from step B1.
-- **Dashboard backup status is red:** hover over it to see the reason.
+- **Weekly backup is red on System → Connections:** its message gives the reason.
   - Most often the share can't be reached: wrong path, PC off, or no access for the task's user.
   - Or the scheduler task stopped: check its "Last Run Result" in Task Scheduler.
 

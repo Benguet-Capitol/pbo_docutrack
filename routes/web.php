@@ -1,6 +1,8 @@
 <?php
 
+use App\Http\Controllers\ConnectionController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\SearchController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\EmployeeController;
 use App\Http\Controllers\Api\OfficeController;
@@ -50,6 +52,10 @@ Route::middleware('auth')->group(function () {
     // System
     $page('/activity-logs', 'ActivityLogs/Index', 'activity-logs.index', 'activity_logs.view');
     $page('/trash', 'Trash/Index', 'trash.index', 'trash.manage');
+    Route::get('/connections', [ConnectionController::class, 'index'])->middleware('permission:connections.view')->name('connections.index');
+
+    // The navbar search; each result group still needs its module's View permission (GlobalSearch)
+    Route::get('/search', SearchController::class)->middleware(['permission:global_search.use', 'throttle:60,1'])->name('search');
 });
 
 // Notice of Meetings

@@ -1,6 +1,7 @@
 import { ref, computed, watch } from 'vue';
 import { useYearFilter } from '@/Composables/useYearFilter';
 import { isProvincialBudgetOfficer, isProvincialGovernor } from '@/Composables/useOfficials';
+import { urlParam } from '@/utils/urlQuery';
 
 export interface Employee {
     id: number;
@@ -36,7 +37,8 @@ export interface PassSlip {
 export function usePassSlipsData() {
     const passSlips = ref<PassSlip[]>([]);
     const employees = ref<Employee[]>([]);
-    const searchQuery = ref('');
+    // A link may open the list on a record (?search=, e.g. a navbar search result)
+    const searchQuery = ref(urlParam('search') ?? '');
     const currentPage = ref(1);
 
     /** Year shown in the list, based on date (defaults to the current year) */

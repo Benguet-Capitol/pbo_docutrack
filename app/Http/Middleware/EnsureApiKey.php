@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Services\ActivityLogService;
+use App\Services\ConnectionChecks;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -27,11 +28,13 @@ class EnsureApiKey
         if ($index === false) {
             $name = ucfirst($api);
             $this->log($request, $api, 'api_denied', $sent === '' ? 'no API key' : 'wrong API key', $keys ? 401 : 503);
+            ConnectionChecks::noteApiCall($api, false, $sent === '' ? 'no API key' : ($keys ? 'wrong API key' : 'no keys set here'));
 
             return response()->json(['message' => $keys ? 'Invalid or missing API key.' : "The {$name} API is not enabled."], $keys ? 401 : 503);
         }
 
         $response = $next($request);
+        ConnectionChecks::noteApiCall($api, true);
 
         // Leaves: every call; Records: file downloads only (listing is frequent and holds no personal data)
         if ($api === 'leaves' || str_ends_with($request->path(), '/file')) {

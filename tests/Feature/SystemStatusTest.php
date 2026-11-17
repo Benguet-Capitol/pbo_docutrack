@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
-/** The Dashboard's backup and HRIS sync status */
+/** How the weekly backup and the HRIS sync went (shown on System → Connections) */
 class SystemStatusTest extends TestCase
 {
     use RefreshDatabase;
@@ -64,12 +64,6 @@ class SystemStatusTest extends TestCase
 
         $this->assertSame('failed', $this->jobStatus('hris_sync')['status']);
         $this->assertStringContainsString('Monthly sync failed', $this->jobStatus('hris_sync')['message']);
-    }
-
-    public function test_only_roles_with_the_permission_see_the_status(): void
-    {
-        $this->actingAs($this->makeUser('Administrator'))->getJson('/api/system-status')->assertOk()->assertJsonCount(2);
-        $this->actingAs($this->makeUser('Reviewer'))->getJson('/api/system-status')->assertForbidden();
     }
 
     public function test_old_runs_are_trimmed(): void

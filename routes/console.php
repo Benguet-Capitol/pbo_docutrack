@@ -1,5 +1,6 @@
 <?php
 
+use App\Services\ServerChecks;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
@@ -7,6 +8,9 @@ use Illuminate\Support\Facades\Schedule;
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
+
+// Heartbeat: lets the Connections page tell whether the scheduler runs, and whether every minute
+Schedule::call(fn () => ServerChecks::beat())->everyMinute()->name('scheduler-heartbeat');
 
 // Employees: sync from HRIS on the 1st of every month, 2:00 AM (needs `php artisan schedule:run` every minute)
 Schedule::command('employees:sync-hris')

@@ -149,6 +149,7 @@ import { useTimeSlipsData } from './Composables/useTimeSlipsData';
 import { useTimeSlipsForm } from './Composables/useTimeSlipsForm';
 import type { TimeSlip } from './Composables/useTimeSlipsData';
 import { useResponsiveView } from '@/Composables/useResponsiveView';
+import { urlParam } from '@/utils/urlQuery';
 
 // Table on desktop (user can switch to cards), always cards on small screens
 const { viewMode, setViewMode } = useResponsiveView('timeSlipsView');
@@ -187,7 +188,8 @@ const {
 } = formComposable;
 
 const toastRef = ref();
-const searchQuery = ref('');
+// A link may open the list on a record (?search=, e.g. a navbar search result)
+const searchQuery = ref(urlParam('search') ?? '');
 const itemsPerPage = ref(10);
 const currentPage = ref(1);
 const sortBy = ref<'control_no' | 'date' | 'reason'>('control_no');

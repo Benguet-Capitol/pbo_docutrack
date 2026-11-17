@@ -44,7 +44,7 @@ BACKUP_COPY_KEEP_DAYS=30
 - **Access:** the account running the scheduler needs write access to that share.
   - With Windows Task Scheduler, run the task as a user that can open the share.
   - Using the SYSTEM account usually won't work for network shares.
-- **If the copy fails** (share offline, no access): the backup on the server is kept, but the run counts as failed. The Dashboard's backup status turns red, and the message says why.
+- **If the copy fails** (share offline, no access): the backup on the server is kept, but the run counts as failed. "Weekly backup" on System → Connections turns red, and the message says why.
 - **Old copies** are pruned the same way as on the server.
 
 If you can't set up a share, copy the newest zip to another machine or an external drive by hand, about once a week.

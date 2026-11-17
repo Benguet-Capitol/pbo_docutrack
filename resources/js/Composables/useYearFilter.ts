@@ -1,4 +1,5 @@
 import { ref, computed, type Ref } from 'vue';
+import { urlYear } from '@/utils/urlQuery';
 
 /**
  * Year of a date value. Plain dates ("2026-10-13") are read from the string; timestamps
@@ -26,7 +27,9 @@ export function useYearFilter<T>(
     alwaysInclude?: (record: T) => boolean,
 ) {
     const currentYear = new Date().getFullYear();
-    const selectedYear = ref<number | null>(currentYear);
+    // A link may open the list on a year (?year=2026, e.g. a navbar search result)
+    const linkedYear = urlYear();
+    const selectedYear = ref<number | null>(linkedYear === undefined ? currentYear : linkedYear);
 
     /** Years that have records, plus the current year, newest first */
     const availableYears = computed(() => {
