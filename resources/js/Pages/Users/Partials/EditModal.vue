@@ -1,7 +1,7 @@
 <template>
     <!-- Edit User Modal -->
     <Teleport to="body" v-if="showEditModal">
-        <div class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50" @click.self="onClose">
+        <div class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50" @dblclick.self="onClose">
             <div class="relative w-full max-w-4xl mx-4 bg-white rounded-lg shadow-lg dark:bg-gray-800 animate-scaleInUp">
                 <!-- Modal Header -->
                 <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 rounded-t-lg bg-gradient-to-r from-blue-50 to-blue-100 dark:from-gray-700 dark:to-gray-600 dark:border-gray-600">

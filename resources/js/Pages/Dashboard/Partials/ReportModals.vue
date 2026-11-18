@@ -1,7 +1,7 @@
 <template>
     <!-- Report Generation Modal -->
     <Teleport to="body" v-if="showReportModalLocal">
-        <div class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50" @click.self="$emit('close-report-modal')">
+        <div class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50" @dblclick.self="$emit('close-report-modal')">
             <div class="relative w-full max-w-md mx-4 bg-white rounded-lg shadow-lg dark:bg-gray-800 animate-scaleInUp">
                 <!-- Modal Header -->
                 <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 rounded-t-lg bg-gradient-to-r from-blue-50 to-blue-100 dark:from-gray-700 dark:to-gray-600 dark:border-gray-600">
@@ -116,7 +116,7 @@
 
     <!-- Summary Report Modal -->
     <Teleport to="body" v-if="showSummaryModalLocal">
-        <div class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50" @click.self="$emit('close-summary-modal')">
+        <div class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50" @dblclick.self="$emit('close-summary-modal')">
             <div class="relative w-full max-w-md mx-4 bg-white rounded-lg shadow-lg dark:bg-gray-800 animate-scaleInUp">
                 <!-- Modal Header -->
                 <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 rounded-t-lg bg-gradient-to-r from-emerald-50 to-emerald-100 dark:from-gray-700 dark:to-gray-600 dark:border-gray-600">

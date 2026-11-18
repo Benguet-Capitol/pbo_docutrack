@@ -125,6 +125,11 @@ Route::middleware('auth')
 
 require __DIR__.'/auth.php';
 
+// A filing's print preview for pbo-registryV2's My Filings: no sign-in, a short-lived link signed by the Filing API (relative, so any host name works)
+Route::get('/filing-print/{module}/{id}', [\App\Http\Controllers\FilingPrintController::class, 'show'])
+    ->whereIn('module', ['leaves', 'pass-slips', 'time-slips', 'tardiness'])->whereNumber('id')
+    ->middleware(['signed:relative', 'throttle:60,1'])->name('filing.print');
+
 // Fallback route for 404 errors - must be after all other routes
 Route::fallback(function () {
     return Inertia::render('Errors/Error404');

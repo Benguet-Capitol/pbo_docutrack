@@ -1,7 +1,7 @@
 <template>
     <!-- Document Checklist Modal: Shows checklist items before saving Annual Budget or Supplemental Budget documents -->
     <Teleport to="body" v-if="showChecklistModal">
-        <div class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50" @click.self="closeChecklistModal">
+        <div class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50" @dblclick.self="closeChecklistModal">
             <div class="relative w-full max-w-7xl mx-4 bg-white rounded-lg shadow-lg dark:bg-gray-800 animate-scaleInUp overflow-hidden flex flex-col h-screen sm:h-auto sm:max-h-screen">
                 <!-- Modal Header with Close Button -->
                 <div class="flex items-center justify-between px-8 py-3 border-b border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 sticky top-0 z-10">

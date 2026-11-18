@@ -61,4 +61,10 @@ return [
         'keys' => array_values(array_filter(array_map('trim', explode(',', (string) env('LOCATOR_API_KEYS', ''))))),
     ],
 
+    // Shared Filing API (/api/v1/filing): PBO staff file and edit their own leaves, pass slips, time slips and tardiness, e.g. from
+    // their pbo-registryV2 profile. FILING_API_KEYS: separate from the read-only keys, since this one writes.
+    'filing_api' => [
+        'keys' => array_values(array_filter(array_map('trim', explode(',', (string) env('FILING_API_KEYS', ''))))),
+    ],
+
 ];

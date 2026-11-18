@@ -56,8 +56,12 @@ const waitForImages = (doc: Document): Promise<void> =>
         )
     ).then(() => undefined);
 
+// Each wait has a time limit: inside another site's frame (pbo-registryV2's My Filings) Chrome doesn't render the offscreen print frame, so its frames and decodes never come.
+const atMost = (promise: Promise<unknown>, ms: number): Promise<void> =>
+    Promise.race([promise, new Promise((resolve) => window.setTimeout(resolve, ms))]).then(() => undefined);
+
 const nextFrames = (win: Window): Promise<void> =>
-    new Promise((resolve) => win.requestAnimationFrame(() => win.requestAnimationFrame(() => resolve())));
+    atMost(new Promise((resolve) => win.requestAnimationFrame(() => win.requestAnimationFrame(() => resolve(undefined)))), 150);
 
 const PRINT_DPI = 96;
 
@@ -146,14 +150,22 @@ export const printSafely = async (): Promise<void> => {
     doc.body.appendChild(doc.importNode(clone, true));
 
     try {
-        await Promise.all([waitForStyles(doc), waitForImages(doc), doc.fonts ? doc.fonts.ready : Promise.resolve()]);
-        await Promise.all(
+        await Promise.all([atMost(waitForStyles(doc), 5000), atMost(waitForImages(doc), 5000), doc.fonts ? atMost(doc.fonts.ready, 3000) : Promise.resolve()]);
+        await atMost(Promise.all(
             Array.from(doc.images).map((img) => (img.decode ? img.decode().catch(() => undefined) : undefined))
-        );
+        ), 2000);
         await nextFrames(win);
 
         fitContentToOnePage(doc);
         await nextFrames(win);
+
+        // Inside another site's frame (pbo-registryV2's My Filings, FilingPrint) the browser won't open the print dialog here: hand the prepared page to that site to print in its own tab
+        if (window.self !== window.top && document.documentElement.dataset.printByParent) {
+            const parentOrigin = document.referrer ? new URL(document.referrer).origin : '*';
+            window.parent.postMessage({ type: 'docutrack-filing-print', html: `<!DOCTYPE html>${doc.documentElement.outerHTML}` }, parentOrigin);
+            iframe.remove();
+            return;
+        }
 
         win.addEventListener('afterprint', () => setTimeout(() => iframe.remove(), 500), { once: true });
         win.focus();

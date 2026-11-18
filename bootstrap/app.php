@@ -28,7 +28,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->alias([
             'permission' => \App\Http\Middleware\EnsurePermission::class,
-            // Shared APIs for other PBO systems: api.key:records, api.key:leaves (keys in config/services.php)
+            // Shared APIs for other PBO systems: api.key:records, api.key:leaves, api.key:locator, api.key:filing (keys in config/services.php)
             'api.key' => \App\Http\Middleware\EnsureApiKey::class,
         ]);
 

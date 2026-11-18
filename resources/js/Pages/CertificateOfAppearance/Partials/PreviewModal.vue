@@ -57,7 +57,7 @@ const getApprovedBy = () => resolveApprovedBy(
 <template>
     <Teleport to="body" v-if="show">
         <Transition>
-            <div class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4" @click.self="$emit('close')">
+            <div class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4" @dblclick.self="$emit('close')">
                 <div class="relative w-full max-w-4xl mx-4 bg-white rounded-lg shadow-lg dark:bg-gray-800 max-h-[90vh] overflow-y-auto">
                     <!-- Modal Header -->
                     <div class="sticky top-0 flex items-center justify-between px-6 py-4 border-b border-gray-200 rounded-t-lg bg-gradient-to-r from-emerald-50 to-emerald-100 dark:from-gray-700 dark:to-gray-600 dark:border-gray-600 z-10">

@@ -477,7 +477,7 @@
              subtree, so a body-teleported modal would be invisible/unclickable
              behind it otherwise. -->
         <Teleport :to="isFullScreen && chartContainerRef ? chartContainerRef : 'body'" v-if="showMonthlyDetailsModal && monthlyDetailsEmployee && monthlyDetailsDay">
-            <div class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50" @click.self="closeMonthlyDetailsModal">
+            <div class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50" @dblclick.self="closeMonthlyDetailsModal">
                 <div class="relative w-full max-w-md mx-4 bg-white rounded-lg shadow-lg dark:bg-gray-800 animate-scaleInUp">
                     <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 rounded-t-lg dark:border-gray-600" :class="statusBadgeClass(monthlyDetailsDay.status)">
                         <h3 class="text-lg font-semibold flex items-center gap-2">

@@ -1,8 +1,8 @@
 <template>
     <!-- Create Document Modal: Teleports to body when showCreateModal is true -->
-    <!-- @click.self="closeCreateModal" closes modal when clicking outside the dialog -->
+    <!-- @dblclick.self="closeCreateModal": a double click outside closes it (a single click does not, so typed entries are not lost) -->
     <Teleport to="body" v-if="showCreateModal">
-        <div class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50" @click.self="closeCreateModal">
+        <div class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50" @dblclick.self="closeCreateModal">
             <div class="relative w-full max-w-2xl mx-4 bg-white rounded-lg shadow-lg dark:bg-gray-800 animate-scaleInUp">
                 <!-- Modal Header: Shows title and close button -->
                 <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 rounded-t-lg bg-gradient-to-r from-emerald-50 to-emerald-100 dark:from-gray-700 dark:to-gray-600 dark:border-gray-600">

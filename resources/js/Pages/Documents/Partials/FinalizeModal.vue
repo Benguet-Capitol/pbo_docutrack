@@ -1,7 +1,7 @@
 <template>
     <!-- End Transaction Document Modal: Confirmation dialog for ending a document transaction -->
     <Teleport to="body" v-if="showFinalizeModal && documentToFinalize">
-        <div class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50" @click.self="closeFinalizeModal">
+        <div class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50" @dblclick.self="closeFinalizeModal">
             <div class="relative w-full max-w-md mx-4 bg-white rounded-lg shadow-lg dark:bg-gray-800 animate-scaleInUp">
                 <!-- Modal Header: Shows success icon and title -->
                 <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 rounded-t-lg bg-gradient-to-r from-green-50 to-green-100 dark:from-gray-700 dark:to-gray-600 dark:border-gray-600">

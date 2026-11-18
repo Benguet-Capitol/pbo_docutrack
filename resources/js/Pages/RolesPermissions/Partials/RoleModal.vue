@@ -1,7 +1,7 @@
 <template>
     <!-- Create / Edit / View Role Modal -->
     <Teleport to="body" v-if="show">
-        <div class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4" @click.self="$emit('close')">
+        <div class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4" @dblclick.self="$emit('close')">
             <div class="relative w-full max-w-4xl bg-white rounded-lg shadow-lg dark:bg-gray-800 animate-scaleInUp flex flex-col max-h-[90vh]">
                 <!-- Modal Header -->
                 <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 rounded-t-lg bg-gradient-to-r from-emerald-50 to-emerald-100 dark:from-gray-700 dark:to-gray-600 dark:border-gray-600">

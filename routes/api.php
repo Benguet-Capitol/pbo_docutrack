@@ -41,6 +41,15 @@ Route::prefix('v1/locator')->middleware(['api.key:locator', 'throttle:120,1'])->
     Route::get('/', [\App\Http\Controllers\Api\V1\SharedLocatorController::class, 'index']);
 });
 
+// Shared Filing API: PBO staff file and edit their own leaves, pass slips, time slips and tardiness, e.g. from their pbo-registryV2
+// profile. Its own keys (FILING_API_KEYS); the employee by HRIS employee ID. See docs/filing-api.md.
+Route::prefix('v1/filing/employees/{employeeId}')->middleware(['api.key:filing', 'throttle:60,1'])->group(function () {
+    Route::get('/', [\App\Http\Controllers\Api\V1\SharedFilingController::class, 'index']);
+    Route::post('/{module}', [\App\Http\Controllers\Api\V1\SharedFilingController::class, 'store'])->whereIn('module', ['leaves', 'pass-slips', 'time-slips', 'tardiness']);
+    Route::put('/{module}/{id}', [\App\Http\Controllers\Api\V1\SharedFilingController::class, 'update'])->whereIn('module', ['leaves', 'pass-slips', 'time-slips', 'tardiness']);
+    Route::get('/{module}/{id}/print', [\App\Http\Controllers\Api\V1\SharedFilingController::class, 'printUrl'])->whereIn('module', ['leaves', 'pass-slips', 'time-slips', 'tardiness']);
+});
+
 // Documents API
 Route::middleware(['web', 'auth'])->group(function () {
     // More specific routes first

@@ -19,6 +19,7 @@ class ConnectionChecks
         'records' => ['name' => 'Records API', 'settings' => 'RECORDS_API_KEYS', 'used_for' => "pbo-registryV2's Archives → Records (DOCUTRACK_RECORDS_KEY there)."],
         'leaves' => ['name' => 'Leaves API', 'settings' => 'LEAVES_API_KEYS', 'used_for' => "pbo-registryV2's Profile → My Leaves (DOCUTRACK_LEAVES_KEY there)."],
         'locator' => ['name' => 'Locator API', 'settings' => 'LOCATOR_API_KEYS', 'used_for' => "pbo-registryV2's Locator Chart (DOCUTRACK_LOCATOR_KEY there)."],
+        'filing' => ['name' => 'Filing API', 'settings' => 'FILING_API_KEYS', 'used_for' => "pbo-registryV2's Profile → My Filings: PBO staff file their own leaves and slips (DOCUTRACK_FILING_KEY there)."],
     ];
 
     /** A call is noted at most once a minute per API and outcome, so busy APIs don't write on every request */

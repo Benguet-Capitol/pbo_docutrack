@@ -92,7 +92,7 @@ const maxWidthClass = computed(() => {
                 <div
                     v-show="show"
                     class="fixed inset-0 transform transition-all"
-                    @click="close"
+                    @dblclick="close"
                 >
                     <div
                         class="absolute inset-0 bg-gray-500 opacity-75 dark:bg-gray-900 dark:opacity-75"
