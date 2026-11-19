@@ -47,7 +47,7 @@ export interface LeaveFormData {
     approved_by_employee_id: number | null;
     approved_by_title: string | null;
     /** 7.B Recommendation: "" (pending), "approval" or "disapproval" */
-    recommendation: '' | 'approval' | 'disapproval';
+    recommendation: 'approval' | 'disapproval'; // 7.B: For approval unless changed (older leaves with none open as For approval)
     disapproval_reason: string;
 }
 
@@ -165,7 +165,7 @@ export function useLeavesForm(
         recommended_by_title: null,
         approved_by_employee_id: null,
         approved_by_title: null,
-        recommendation: '',
+        recommendation: 'approval',
         disapproval_reason: '',
     });
 
@@ -243,7 +243,7 @@ export function useLeavesForm(
             date_of_filing: formatDateForInput(leave.date_of_filing),
             salary: leave.salary ?? '',
             entries: rows.map(entryFromRow),
-            recommendation: (leave.recommendation as LeaveFormData['recommendation']) || '',
+            recommendation: (leave.recommendation as LeaveFormData['recommendation']) || 'approval',
             disapproval_reason: leave.disapproval_reason || '',
         };
         for (const key of SIGNATORY_KEYS) {

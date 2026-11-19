@@ -46,6 +46,48 @@ class SharedFilingApiTest extends TestCase
         $this->api('get', $detailed)->assertOk();
     }
 
+    public function test_the_records_carry_the_leave_signatory_choices_with_their_defaults(): void
+    {
+        $employee = $this->makeEmployee();
+        $budgetOfficer = $this->makeEmployee(['position_title' => Employee::TITLE_PBO]);
+        Office::forceCreate(['id' => Employee::PHRMDO_OFFICE_ID, 'office_abbreviation' => 'PHRMDO', 'office_name' => 'Human Resource']);
+        $hrmdo = $this->makeEmployee(['position_title' => Employee::TITLE_PHRMDO, 'office_id' => Employee::PHRMDO_OFFICE_ID]);
+        $administrator = Employee::create(['employee_id' => 'X-9', 'name' => 'Administrator', 'position_title' => Employee::TITLE_PA, 'office_id' => $hrmdo->office_id]);
+
+        $choices = $this->api('get', $employee)->assertOk()->json('data.leave_signatories.signatories');
+
+        $this->assertSame(['employee_id' => $hrmdo->id, 'title' => Employee::TITLE_PHRMDO], $choices['certified_by']['default']);
+        $this->assertEqualsCanonicalizing([$hrmdo->id, $administrator->id], $choices['certified_by']['candidates']);
+        $this->assertSame(['employee_id' => $budgetOfficer->id, 'title' => Employee::TITLE_PBO], $choices['recommended_by']['default']);
+        // 7.B: the Provincial Budget Officer by default, or the Provincial Governor (OIC / Acting), so anyone can be named
+        $this->assertNull($choices['recommended_by']['candidates']);
+        $this->assertContains('Acting ' . Employee::TITLE_GOVERNOR, $choices['recommended_by']['titles']);
+        $this->assertSame(['employee_id' => $administrator->id, 'title' => Employee::TITLE_PA], $choices['approved_by']['default']);
+        $this->assertNull($choices['approved_by']['candidates']);
+        $this->assertContains('OIC, ' . Employee::TITLE_GOVERNOR, $choices['approved_by']['titles']);
+    }
+
+    public function test_a_department_heads_leave_is_recommended_and_approved_by_the_governor_and_an_acting_head_can_choose_it(): void
+    {
+        $governor = $this->makeEmployee(['position_title' => Employee::TITLE_GOVERNOR, 'office_id' => Office::create(['office_abbreviation' => 'PGO', 'office_name' => 'Governor'])->id]);
+        $head = $this->makeEmployee(['position_title' => 'Provincial Government Department Head', 'parenthetical_title' => Employee::TITLE_PBO]);
+        $staff = $this->makeEmployee();
+
+        $choices = $this->api('get', $head)->assertOk()->json('data.leave_signatories');
+        $this->assertTrue($choices['department_head']);
+        $this->assertSame(['employee_id' => $governor->id, 'title' => Employee::TITLE_GOVERNOR], $choices['signatories']['recommended_by']['default']);
+        $this->assertNotContains(Employee::TITLE_PBO, $choices['signatories']['recommended_by']['titles']);
+        $this->assertSame(['employee_id' => $governor->id, 'title' => Employee::TITLE_GOVERNOR], $choices['signatories']['approved_by']['default']);
+
+        // Staff who are OIC / Acting department head tick the box: both go to the Provincial Governor
+        $choices = $this->api('get', $staff)->json('data.leave_signatories');
+        $this->assertFalse($choices['department_head']);
+        $this->assertSame(['employee_id' => $governor->id, 'title' => Employee::TITLE_GOVERNOR], $choices['acting_head']['recommended_by']);
+        $this->api('post', $staff, 'leaves', $this->leave() + ['recommended_by_employee_id' => $governor->id, 'recommended_by_title' => 'Acting ' . Employee::TITLE_GOVERNOR,
+            'approved_by_employee_id' => $governor->id, 'approved_by_title' => Employee::TITLE_GOVERNOR])->assertCreated();
+        $this->assertSame('Acting ' . Employee::TITLE_GOVERNOR, Leave::where('employee_id', $staff->id)->sole()->recommended_by_title);
+    }
+
     public function test_a_leave_gets_the_next_control_number_the_employees_salary_for_approval_and_no_signatories(): void
     {
         $employee = $this->makeEmployee(['monthly_salary' => 30000]);

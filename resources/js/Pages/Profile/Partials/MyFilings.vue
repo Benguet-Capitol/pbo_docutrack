@@ -6,6 +6,9 @@ import RowIconButton from '@/Components/RowIconButton.vue';
 import MissingFieldsHint from '@/Components/MissingFieldsHint.vue';
 import { LIST_HEAD, listRowClass } from '@/utils/listTable';
 import { MODAL_ADD, MODAL_ADD_OUTLINE, MODAL_CANCEL, MODAL_SUBMIT } from './profileStyles';
+import LeaveSignatoryField from '@/Pages/Leaves/Partials/LeaveSignatoryField.vue';
+import LeaveActingHeadCheckbox from '@/Pages/Leaves/Partials/LeaveActingHeadCheckbox.vue';
+import { LEAVE_SIGNATORIES, applyDefaultSignatories } from '@/Pages/Leaves/Composables/useLeaveSignatories';
 
 // PBO staff file and edit their own leaves, pass slips, time slips and tardiness (as on pbo-registryV2's profile, which saves
 // through the Filing API). The server sets the control number and runs the module's own checks; a leave is For approval unless
@@ -13,7 +16,23 @@ import { MODAL_ADD, MODAL_ADD_OUTLINE, MODAL_CANCEL, MODAL_SUBMIT } from './prof
 const props = withDefaults(defineProps<{
     records: any;
     travelOrders?: any[]; // from the leave summary: shown, not filed here
-}>(), { travelOrders: () => [] });
+    // Who can sign a leave (7.A, 7.B, authorized official) and the applicant, who decides the default authorized official
+    leaveSignatories?: { employees: any[]; applicant: any } | null;
+}>(), { travelOrders: () => [], leaveSignatories: null });
+
+// A leave's signatories: its own, else the current officers, as on the Leaves form (each can be changed to an OIC or Acting)
+function leaveSignatoryValues(row: any = null): Record<string, any> {
+    const list = props.leaveSignatories;
+    if (!list) return {};
+    const data: Record<string, any> = { employee: list.applicant };
+    for (const { key } of LEAVE_SIGNATORIES) {
+        data[`${key}_employee_id`] = row?.[`${key}_employee_id`] ?? null;
+        data[`${key}_title`] = row?.[`${key}_title`] ?? null;
+    }
+    applyDefaultSignatories(data, list.employees);
+    delete data.employee;
+    return data;
+}
 
 type Module = 'leaves' | 'pass-slips' | 'time-slips' | 'tardiness';
 type TabKey = Module | 'travel-orders';
@@ -113,7 +132,7 @@ const blankEntry = () => ({ id: null, type_of_leave: '', inclusive_dates: [] as 
 const signatoryBlank = (m: Exclude<Module, 'leaves'>) => ({ [SUPERVISOR[m][0]]: null, approved_by_employee_id: signatories.value.budget_officer_id, approved_by_title: signatories.value.titles[0] ?? null });
 
 function blank(m: Module): any {
-    if (m === 'leaves') return { recommendation: 'approval', disapproval_reason: '', entries: [blankEntry()] };
+    if (m === 'leaves') return { recommendation: 'approval', disapproval_reason: '', entries: [blankEntry()], ...leaveSignatoryValues() };
     if (m === 'pass-slips') return { date: today(), inclusive_dates: [today()], newDate: '', requested_time: '08:00', purpose: '', location: '', return: 'time', expected_return_time: '12:00', remarks: '', vehicle: 'RP Vehicle', ...signatoryBlank(m) };
     if (m === 'time-slips') return { date: today(), time_in_am: '', time_out_am: '', time_in_pm: '', time_out_pm: '', reason: '', ...signatoryBlank(m) };
     return { type: 'Undertime', requested_date: today(), requested_time: '', return_time: '', reason: '', ...signatoryBlank(m) };
@@ -126,6 +145,7 @@ function open(row: any = null) {
         values.entries = row.entries.map((e: any) => ({ ...blankEntry(), ...Object.fromEntries(Object.entries(e).filter(([, x]) => x !== null)), inclusive_dates: [...(e.inclusive_dates ?? [])], from: '', to: '', off: offWeekdays(e.off_days) }));
         values.recommendation = row.recommendation === 'disapproval' ? 'disapproval' : 'approval';
         values.disapproval_reason = row.disapproval_reason ?? '';
+        Object.assign(values, leaveSignatoryValues(row));
     } else if (row) {
         Object.keys(values).forEach((k) => { if (row[k] !== undefined && row[k] !== null) values[k] = Array.isArray(row[k]) ? [...row[k]] : row[k]; });
         values[supervisorField.value] = row[supervisorField.value] ?? null;
@@ -281,6 +301,8 @@ function payload() {
         return {
             recommendation: x.recommendation,
             disapproval_reason: x.recommendation === 'disapproval' ? x.disapproval_reason : null,
+            // Sent only when the form has them (else the server keeps the leave's own)
+            ...(props.leaveSignatories ? Object.fromEntries(LEAVE_SIGNATORIES.flatMap(({ key }) => [[`${key}_employee_id`, x[`${key}_employee_id`] ?? null], [`${key}_title`, x[`${key}_title`] ?? null]])) : {}),
             entries: x.entries.map((e: any) => {
                 const offDays = WEEK_ORDER.filter((d) => e.off.includes(d)).map((d) => WEEKDAYS[d]);
                 return {
@@ -446,7 +468,7 @@ const check = 'rounded border-gray-300 dark:border-gray-600 text-emerald-600 foc
 
                         <!-- Leave: one or more leave types, each with its dates and off days -->
                         <template v-if="tab === 'leaves'">
-                            <p class="text-[11px] text-gray-500 dark:text-gray-400 mb-3"><i class="fas fa-circle-info mr-1"></i>The control number is assigned when saved; HR sets the signatories.</p>
+                            <p class="text-[11px] text-gray-500 dark:text-gray-400 mb-3"><i class="fas fa-circle-info mr-1"></i>The control number is assigned when saved.</p>
                             <div v-for="(entry, i) in form.values.entries" :key="i" class="mb-3 rounded border border-gray-200 dark:border-gray-700 p-3">
                                 <div class="flex items-center justify-between mb-2">
                                     <span class="text-xs font-semibold text-gray-800 dark:text-gray-100">Leave {{ i + 1 }}</span>
@@ -508,6 +530,25 @@ const check = 'rounded border-gray-300 dark:border-gray-600 text-emerald-600 foc
                                     <label :class="label">Reason for Disapproval <span class="text-red-500">*</span></label>
                                     <textarea v-model="form.values.disapproval_reason" rows="2" maxlength="500" :class="input"></textarea>
                                 </div>
+                            </div>
+
+                            <!-- Signatories printed on the form (7.A, 7.B, authorized official): the current officers unless an OIC or Acting signs -->
+                            <div v-if="leaveSignatories" class="mt-4 rounded border border-gray-200 dark:border-gray-700 p-3 space-y-3">
+                                <div>
+                                    <span :class="label">Signatories</span>
+                                    <p class="text-[11px] text-gray-500 dark:text-gray-400"><i class="fas fa-circle-info mr-1"></i>Change the title and name when an OIC or Acting officer signs.</p>
+                                </div>
+                                <LeaveActingHeadCheckbox :form-data="form.values" :employees="leaveSignatories.employees" :applicant="leaveSignatories.applicant" />
+                                <LeaveSignatoryField
+                                    v-for="signatory in LEAVE_SIGNATORIES"
+                                    :key="signatory.key"
+                                    :signatory="signatory.key"
+                                    :employees="leaveSignatories.employees"
+                                    :applicant="leaveSignatories.applicant"
+                                    :employee-id="form.values[`${signatory.key}_employee_id`]"
+                                    :title="form.values[`${signatory.key}_title`]"
+                                    @change="(value) => { form.values[`${signatory.key}_employee_id`] = value.employeeId; form.values[`${signatory.key}_title`] = value.title; }"
+                                />
                             </div>
                         </template>
 

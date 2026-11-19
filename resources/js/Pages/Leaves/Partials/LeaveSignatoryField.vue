@@ -57,7 +57,7 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue';
-import { LEAVE_SIGNATORIES, signatoryTitles, defaultSignatory, type LeaveSignatoryKey } from '../Composables/useLeaveSignatories';
+import { LEAVE_SIGNATORIES, signatoryTitles, defaultSignatory, isSignatoryCandidate, type LeaveSignatoryKey } from '../Composables/useLeaveSignatories';
 
 const props = defineProps<{
     signatory: LeaveSignatoryKey;
@@ -75,7 +75,11 @@ const emit = defineEmits<{
 const LIMIT = 50;
 
 const config = computed(() => LEAVE_SIGNATORIES.find((item) => item.key === props.signatory)!);
-const titles = computed(() => signatoryTitles(props.signatory));
+// The applicant's officers (a department head's 7.B is the Provincial Governor's); a leave's own title stays listed
+const titles = computed(() => {
+    const list = signatoryTitles(props.signatory, props.applicant);
+    return props.title && !list.includes(props.title) ? [props.title, ...list] : list;
+});
 // Who signs when nothing is chosen (the authorized official depends on the applicant)
 const fallback = computed(() => defaultSignatory(props.employees, props.signatory, props.applicant));
 
@@ -89,7 +93,7 @@ const selectedName = computed(() => selected.value?.name || '');
 const candidates = computed(() => {
     const official = fallback.value.employee;
     const others = props.employees
-        .filter((emp) => emp.id !== official?.id && ((config.value.isCandidate(emp) && !emp.separated) || emp.id === selected.value?.id))
+        .filter((emp) => emp.id !== official?.id && ((isSignatoryCandidate(props.signatory, emp, props.applicant) && !emp.separated) || emp.id === selected.value?.id))
         .sort((a, b) => a.name.localeCompare(b.name));
     return official ? [official, ...others] : others;
 });

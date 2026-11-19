@@ -52,32 +52,38 @@ class Leave extends Model
 
     /**
      * Officers who can sign: the authorized official is the Provincial Governor for a department head, and the
-     * Provincial Administrator or the Assistant Provincial Administrator for other staff.
+     * Provincial Administrator or the Assistant Provincial Administrator for other staff. The 7.B recommendation is
+     * the Provincial Budget Officer's, or the Provincial Governor's (e.g. for staff who are OIC or Acting department
+     * head); a department head's (e.g. the Provincial Budget Officer's own leave) is the Provincial Governor's only.
      */
-    public static function signatoryOfficers(string $signatory): array
+    public static function signatoryOfficers(string $signatory, ?Employee $applicant = null): array
     {
-        return $signatory === 'approved_by'
-            ? [Employee::TITLE_GOVERNOR, Employee::TITLE_PA, Employee::TITLE_APA]
-            : [self::SIGNATORIES[$signatory]];
+        return match (true) {
+            $signatory === 'approved_by' => [Employee::TITLE_GOVERNOR, Employee::TITLE_PA, Employee::TITLE_APA],
+            $signatory === 'recommended_by' && $applicant?->isDepartmentHead() => [Employee::TITLE_GOVERNOR],
+            $signatory === 'recommended_by' => [Employee::TITLE_PBO, Employee::TITLE_GOVERNOR],
+            default => [self::SIGNATORIES[$signatory]],
+        };
     }
 
     /** Each officer's title, "OIC, <title>" and "Acting <title>" */
-    public static function signatoryTitles(string $signatory): array
+    public static function signatoryTitles(string $signatory, ?Employee $applicant = null): array
     {
-        return collect(self::signatoryOfficers($signatory))
+        return collect(self::signatoryOfficers($signatory, $applicant))
             ->flatMap(fn ($title) => [$title, "OIC, {$title}", "Acting {$title}"])
             ->all();
     }
 
     /**
-     * Who signs when nothing is stored: [employee, title]. The authorized official depends on the applicant:
-     * the Provincial Governor for a department head, else the Provincial Administrator (or the Assistant when
-     * there is none).
+     * Who signs when nothing is stored: [employee, title]. For a department head the Provincial Governor both
+     * recommends (7.B) and approves; for other staff the Provincial Budget Officer recommends and the Provincial
+     * Administrator (or the Assistant when there is none) approves.
      */
     public static function defaultSignatory(string $signatory, ?Employee $applicant): array
     {
-        if ($signatory !== 'approved_by' || $applicant?->isDepartmentHead()) {
-            $title = $signatory === 'approved_by' ? Employee::TITLE_GOVERNOR : self::SIGNATORIES[$signatory];
+        $head = (bool) $applicant?->isDepartmentHead();
+        if ($signatory !== 'approved_by' || $head) {
+            $title = ($signatory === 'approved_by' || ($signatory === 'recommended_by' && $head)) ? Employee::TITLE_GOVERNOR : self::SIGNATORIES[$signatory];
 
             return [Employee::official($title), $title];
         }

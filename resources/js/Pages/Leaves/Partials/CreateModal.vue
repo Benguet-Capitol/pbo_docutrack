@@ -95,6 +95,7 @@
                             <!-- Signatories printed on the form (7.A, 7.B, authorized official) -->
                             <div class="space-y-3 border-t border-gray-200 dark:border-gray-700 pt-4">
                                 <h3 class="font-medium text-gray-700 dark:text-gray-300">Signatories</h3>
+                                <LeaveActingHeadCheckbox :form-data="formData as any" :employees="employees" :applicant="applicant" />
                                 <LeaveSignatoryField
                                     v-for="signatory in LEAVE_SIGNATORIES"
                                     :key="signatory.key"
@@ -143,6 +144,7 @@ import LeaveEntryFields from './LeaveEntryFields.vue';
 import { newLeaveEntry, type LeaveFormData } from '../Composables/useLeavesForm';
 import MissingFieldsHint from '@/Components/MissingFieldsHint.vue';
 import LeaveSignatoryField from './LeaveSignatoryField.vue';
+import LeaveActingHeadCheckbox from './LeaveActingHeadCheckbox.vue';
 import { LEAVE_SIGNATORIES } from '../Composables/useLeaveSignatories';
 interface Employee {
     id: number;
@@ -181,9 +183,8 @@ const requestingOptions = computed(() => {
 /** The applicant: the authorized official is the Governor for a department head, else the Provincial Administrator */
 const applicant = computed(() => ((props.employees || []) as any[]).find((emp: any) => emp.id === Number(props.formData.employee_id)) || null);
 
-/** 7.B Recommendation choices ("" = not yet decided) */
+/** 7.B Recommendation choices (For approval unless changed) */
 const RECOMMENDATIONS = [
-    { value: '', label: 'Not yet' },
     { value: 'approval', label: 'For approval' },
     { value: 'disapproval', label: 'For disapproval' },
 ];

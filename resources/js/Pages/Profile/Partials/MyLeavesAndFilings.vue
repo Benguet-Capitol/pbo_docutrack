@@ -8,7 +8,7 @@ import SectionHeader from './SectionHeader.vue';
 // One panel for the user's own records: the leave balances above the records by type (My Filings), one year for both
 const props = defineProps<{
     leaves: { summary: any } | null;
-    filings: { records: any } | null;
+    filings: { records: any; leave_signatories?: { employees: any[]; applicant: any } | null } | null;
     employee: { employee_id: string; name: string; position_title: string | null; parenthetical_title: string | null } | null;
 }>();
 
@@ -80,7 +80,7 @@ function changeYear(event: Event) {
         <LeaveSummary v-if="summary" :summary="summary" />
 
         <div v-if="filings?.records" :class="summary ? 'mt-6 border-t border-gray-100 dark:border-gray-700 pt-5' : ''">
-            <MyFilings :records="filings.records" :travel-orders="summary?.travel_orders ?? []" />
+            <MyFilings :records="filings.records" :travel-orders="summary?.travel_orders ?? []" :leave-signatories="filings.leave_signatories ?? null" />
         </div>
     </section>
 </template>

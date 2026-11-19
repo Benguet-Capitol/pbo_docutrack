@@ -126,6 +126,92 @@ class ProfileTest extends TestCase
         $this->assertSame(1, Leave::count());
     }
 
+    public function test_a_leave_is_filed_with_an_oic_or_acting_signatory(): void
+    {
+        $employee = $this->makeEmployee();
+        $user = User::factory()->create(['employee_id' => $employee->id]);
+        $oic = $this->makeEmployee(['name' => 'Officer In Charge']);
+        $leave = ['entries' => [['type_of_leave' => 'Vacation Leave', 'number_of_working_days_applied_for' => 1, 'is_half_day' => false,
+            'inclusive_dates' => ['2026-12-07'], 'within_philippines' => true, 'purpose' => 'Home']]];
+
+        // The form lists who can sign
+        $this->actingAs($user)->get('/profile')->assertInertia(fn (Assert $page) => $page
+            ->loadDeferredProps('filings', fn (Assert $reload) => $reload->has('filings.leave_signatories.employees')->where('filings.leave_signatories.applicant.id', $employee->id)));
+
+        $this->actingAs($user)->from('/profile')->post('/profile/filings/leaves', ['values' => $leave + [
+            'recommended_by_employee_id' => $oic->id, 'recommended_by_title' => 'OIC, Provincial Budget Officer',
+        ]])->assertSessionHasNoErrors();
+        $filed = Leave::sole();
+        $this->assertSame($oic->id, (int) $filed->recommended_by_employee_id);
+        $this->assertSame('OIC, Provincial Budget Officer', $filed->recommended_by_title);
+
+        // An edit that doesn't send them keeps them; a title that isn't the officer's, OIC or Acting is refused
+        $this->actingAs($user)->from('/profile')->post("/profile/filings/leaves/{$filed->control_no}", ['values' => $leave])->assertSessionHasNoErrors();
+        $this->assertSame('OIC, Provincial Budget Officer', Leave::where('control_no', $filed->control_no)->sole()->recommended_by_title);
+        $this->actingAs($user)->from('/profile')->post("/profile/filings/leaves/{$filed->control_no}", ['values' => $leave + ['recommended_by_title' => 'Mayor']])->assertSessionHasErrors();
+        $this->assertSame('OIC, Provincial Budget Officer', Leave::where('control_no', $filed->control_no)->sole()->recommended_by_title);
+    }
+
+    public function test_a_leave_signatory_must_be_someone_who_can_sign_it(): void
+    {
+        $user = User::factory()->create(['employee_id' => $this->makeEmployee()->id]);
+        $outsider = Employee::create(['employee_id' => 'X-2', 'name' => 'Not PBO', 'position_title' => 'Clerk',
+            'office_id' => Office::create(['office_abbreviation' => 'OTH', 'office_name' => 'Other Office'])->id]);
+        $leave = ['entries' => [['type_of_leave' => 'Vacation Leave', 'number_of_working_days_applied_for' => 1, 'is_half_day' => false,
+            'inclusive_dates' => ['2026-12-08'], 'within_philippines' => true, 'purpose' => 'Home']]];
+
+        // 7.A is certified by the PHRMDO's staff only
+        $this->actingAs($user)->from('/profile')->post('/profile/filings/leaves', ['values' => $leave + [
+            'certified_by_employee_id' => $outsider->id, 'certified_by_title' => 'OIC, ' . Employee::TITLE_PHRMDO,
+        ]])->assertSessionHasErrors('certified_by_employee_id');
+        $this->assertSame(0, Leave::count());
+    }
+
+    public function test_staff_may_have_the_governor_recommend_their_leave_but_the_budget_officer_is_the_default(): void
+    {
+        $staff = $this->makeEmployee(['position_title' => 'Supervising Administrative Officer']); // e.g. OIC department head
+        $user = User::factory()->create(['employee_id' => $staff->id]);
+        $vice = Employee::create(['employee_id' => 'G-3', 'name' => 'Vice Governor', 'position_title' => 'Provincial Vice Governor',
+            'office_id' => Office::create(['office_abbreviation' => 'PGO', 'office_name' => 'Provincial Governor\'s Office'])->id]);
+        $leave = ['entries' => [['type_of_leave' => 'Vacation Leave', 'number_of_working_days_applied_for' => 1, 'is_half_day' => false,
+            'inclusive_dates' => ['2026-12-10'], 'within_philippines' => true, 'purpose' => 'Home']]];
+
+        $this->assertSame(Employee::TITLE_PBO, Leave::defaultSignatory('recommended_by', $staff)[1]);
+        $this->assertContains('Acting Provincial Governor', Leave::signatoryTitles('recommended_by', $staff));
+        $this->assertContains('OIC, Provincial Budget Officer', Leave::signatoryTitles('recommended_by', $staff));
+
+        $this->actingAs($user)->from('/profile')->post('/profile/filings/leaves', ['values' => $leave + [
+            'recommended_by_employee_id' => $vice->id, 'recommended_by_title' => 'Acting Provincial Governor',
+            'approved_by_employee_id' => $vice->id, 'approved_by_title' => 'Acting Provincial Governor',
+        ]])->assertSessionHasNoErrors();
+        $this->assertSame(['name' => 'Vice Governor', 'title' => 'Acting Provincial Governor'], Leave::sole()->signatory('recommended_by'));
+    }
+
+    public function test_the_governor_recommends_and_approves_a_department_heads_leave(): void
+    {
+        $head = $this->makeEmployee(['name' => 'Budget Officer', 'position_title' => 'Provincial Government Department Head', 'parenthetical_title' => 'Provincial Budget Officer']);
+        $governor = Employee::create(['employee_id' => 'G-1', 'name' => 'The Governor', 'position_title' => 'Provincial Governor', 'designation' => Employee::TITLE_GOVERNOR,
+            'office_id' => Office::create(['office_abbreviation' => 'PGO', 'office_name' => 'Provincial Governor\'s Office'])->id]);
+        $user = User::factory()->create(['employee_id' => $head->id]);
+        $leave = ['entries' => [['type_of_leave' => 'Vacation Leave', 'number_of_working_days_applied_for' => 1, 'is_half_day' => false,
+            'inclusive_dates' => ['2026-12-09'], 'within_philippines' => true, 'purpose' => 'Home']]];
+
+        // By default the Governor signs both
+        $this->assertSame([$governor->id, Employee::TITLE_GOVERNOR], [Leave::defaultSignatory('recommended_by', $head)[0]?->id, Leave::defaultSignatory('recommended_by', $head)[1]]);
+        $this->assertSame(Employee::TITLE_GOVERNOR, Leave::defaultSignatory('approved_by', $head)[1]);
+        $this->assertSame(Employee::TITLE_PBO, Leave::defaultSignatory('recommended_by', $this->makeEmployee())[1]);
+
+        // A Budget Officer's title is not the department head's 7.B; an Acting Governor from another office is
+        $this->actingAs($user)->from('/profile')->post('/profile/filings/leaves', ['values' => $leave + ['recommended_by_title' => 'OIC, Provincial Budget Officer']])
+            ->assertSessionHasErrors('recommended_by_title');
+        $vice = Employee::create(['employee_id' => 'G-2', 'name' => 'Vice Governor', 'position_title' => 'Provincial Vice Governor', 'office_id' => $governor->office_id]);
+        $this->actingAs($user)->from('/profile')->post('/profile/filings/leaves', ['values' => $leave + [
+            'recommended_by_employee_id' => $vice->id, 'recommended_by_title' => 'Acting Provincial Governor',
+            'approved_by_employee_id' => $vice->id, 'approved_by_title' => 'Acting Provincial Governor',
+        ]])->assertSessionHasNoErrors();
+        $this->assertSame(['name' => 'Vice Governor', 'title' => 'Acting Provincial Governor'], Leave::sole()->signatory('recommended_by'));
+    }
+
     public function test_users_can_not_edit_or_print_someone_elses_record(): void
     {
         $user = User::factory()->create(['employee_id' => $this->makeEmployee()->id]);

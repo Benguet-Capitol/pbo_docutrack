@@ -5,7 +5,6 @@ import {
     TITLE_PA,
     TITLE_APA,
     PHRMDO_OFFICE_ID,
-    isPboStaff,
     isProvincialBudgetOfficer,
     isProvincialGovernor,
     isProvincialHrmdOfficer,
@@ -14,10 +13,11 @@ import {
 } from '@/Composables/useOfficials';
 
 /**
- * CS Form No. 6 signatories: 7.A certification of leave credits (PHRMDO), 7.B recommendation (Provincial Budget
- * Officer) and the authorized official: the Provincial Governor for a department head, the Provincial
- * Administrator (or the Assistant Provincial Administrator) for other staff. Each signs as the officer, OIC or
- * Acting. Mirrors Leave::signatoryOfficers() / Leave::defaultSignatory().
+ * CS Form No. 6 signatories: 7.A certification of leave credits (PHRMDO), 7.B recommendation (the Provincial Budget
+ * Officer by default, or the Provincial Governor, e.g. for staff who are OIC or Acting department head; only the
+ * Governor for a department head) and the authorized official: the Provincial Governor for a department head, the
+ * Provincial Administrator (or the Assistant Provincial Administrator) for other staff. Each signs as the officer, OIC
+ * or Acting. Mirrors Leave::signatoryOfficers() / Leave::defaultSignatory().
  */
 
 export type LeaveSignatoryKey = 'certified_by' | 'recommended_by' | 'approved_by';
@@ -56,8 +56,9 @@ export const LEAVE_SIGNATORIES: Array<{
     {
         key: 'recommended_by',
         label: '7.B Recommendation',
-        officers: [TITLE_PBO],
-        isCandidate: isPboStaff,
+        // The Provincial Budget Officer by default; the Provincial Governor too (e.g. for staff who are OIC or Acting department head)
+        officers: [TITLE_PBO, TITLE_GOVERNOR],
+        isCandidate: () => true,
     },
     {
         key: 'approved_by',
@@ -69,9 +70,21 @@ export const LEAVE_SIGNATORIES: Array<{
 
 const configOf = (key: LeaveSignatoryKey) => LEAVE_SIGNATORIES.find((signatory) => signatory.key === key)!;
 
+/** A department head's 7.B recommendation is the Provincial Governor's (e.g. on the Provincial Budget Officer's own leave) */
+const governorRecommends = (key: LeaveSignatoryKey, applicant: SignatoryEmployee | null | undefined) =>
+    key === 'recommended_by' && isDepartmentHead(applicant);
+
+/** Officers who can sign for this applicant. Mirrors Leave::signatoryOfficers() */
+export const signatoryOfficers = (key: LeaveSignatoryKey, applicant?: SignatoryEmployee | null): string[] =>
+    governorRecommends(key, applicant) ? [TITLE_GOVERNOR] : configOf(key).officers;
+
 /** Each officer's title, "OIC, <title>" and "Acting <title>" */
-export const signatoryTitles = (key: LeaveSignatoryKey): string[] =>
-    configOf(key).officers.flatMap((title) => [title, `OIC, ${title}`, `Acting ${title}`]);
+export const signatoryTitles = (key: LeaveSignatoryKey, applicant?: SignatoryEmployee | null): string[] =>
+    signatoryOfficers(key, applicant).flatMap((title) => [title, `OIC, ${title}`, `Acting ${title}`]);
+
+/** Who can be picked (the Provincial Governor or an OIC / Acting can sign 7.B too, so anyone there) */
+export const isSignatoryCandidate = (key: LeaveSignatoryKey, employee: SignatoryEmployee, _applicant?: SignatoryEmployee | null): boolean =>
+    configOf(key).isCandidate(employee);
 
 const findOfficial = <T extends SignatoryEmployee>(employees: T[] | null | undefined, title: string): T | null =>
     (employees || []).find((employee) => OFFICIAL_CHECKS[title]?.(employee)) ?? null;
@@ -86,7 +99,8 @@ export const defaultSignatory = <T extends SignatoryEmployee>(
     applicant: SignatoryEmployee | null | undefined,
 ): { employee: T | null; title: string } => {
     if (key !== 'approved_by' || isDepartmentHead(applicant)) {
-        const title = configOf(key).officers[0];
+        // The Provincial Governor recommends and approves a department head's leave
+        const title = signatoryOfficers(key, applicant)[0];
         return { employee: findOfficial(employees, title), title };
     }
     const administrator = findOfficial(employees, TITLE_PA);
@@ -117,6 +131,30 @@ export const resolveLeaveSignatory = (
     return { name: employee?.name || '', title: leave?.[`${key}_title`] || fallback.title };
 };
 
+/** Stands in for an OIC / Acting department head: signed as a department head's leave (the Provincial Governor's) */
+const ACTING_HEAD = { id: 0, name: '', position_title: 'Department Head' };
+
+/** An OIC / Acting department head's leave: not a department head, but 7.B is the Provincial Governor's */
+export const isActingHeadLeave = (formData: Record<string, any>, applicant: SignatoryEmployee | null | undefined): boolean =>
+    !isDepartmentHead(applicant) && String(formData?.recommended_by_title ?? '').includes(TITLE_GOVERNOR);
+
+/**
+ * The "OIC / Acting department head" box: ticked, the Provincial Governor recommends (7.B) and approves, as for a
+ * department head; unticked, back to the applicant's own defaults (Provincial Budget Officer, Provincial Administrator).
+ */
+export const applyActingHeadSignatories = (
+    formData: Record<string, any>,
+    employees: SignatoryEmployee[] | null | undefined,
+    applicant: SignatoryEmployee | null | undefined,
+    acting: boolean,
+): void => {
+    for (const key of ['recommended_by', 'approved_by'] as const) {
+        const signer = defaultSignatory(employees, key, acting ? ACTING_HEAD : applicant);
+        formData[`${key}_employee_id`] = signer.employee?.id ?? null;
+        formData[`${key}_title`] = signer.title;
+    }
+};
+
 /** Fill unset signatories with the default signatories (create, and older leaves on edit) */
 export const applyDefaultSignatories = (formData: Record<string, any>, employees: SignatoryEmployee[] | null | undefined): void => {
     const applicant = applicantOf(employees, formData);
@@ -136,11 +174,15 @@ export const followApplicantSignatory = (
     employees: SignatoryEmployee[] | null | undefined,
     previousApplicantId: number | null | undefined,
 ): void => {
-    const before = defaultSignatory(employees, 'approved_by', (employees || []).find((emp) => emp.id === Number(previousApplicantId)));
-    const untouched = !formData.approved_by_employee_id
-        || (formData.approved_by_employee_id === before.employee?.id && formData.approved_by_title === before.title);
-    if (!untouched) return;
-    const after = defaultSignatory(employees, 'approved_by', applicantOf(employees, formData));
-    formData.approved_by_employee_id = after.employee?.id ?? null;
-    formData.approved_by_title = after.title;
+    const previous = (employees || []).find((emp) => emp.id === Number(previousApplicantId));
+    // The recommendation follows too: the Provincial Governor's for a department head, else the Provincial Budget Officer's
+    for (const key of ['recommended_by', 'approved_by'] as const) {
+        const before = defaultSignatory(employees, key, previous);
+        const untouched = !formData[`${key}_employee_id`]
+            || (formData[`${key}_employee_id`] === before.employee?.id && formData[`${key}_title`] === before.title);
+        if (!untouched) continue;
+        const after = defaultSignatory(employees, key, applicantOf(employees, formData));
+        formData[`${key}_employee_id`] = after.employee?.id ?? null;
+        formData[`${key}_title`] = after.title;
+    }
 };

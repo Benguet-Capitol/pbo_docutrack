@@ -34,7 +34,11 @@ class ProfileController extends Controller
             'status' => session('status'),
             // PBO staff only; deferred so the profile opens at once
             'leaves' => $filer ? Inertia::defer(fn () => ['summary' => app(SharedLeaveController::class)->data($filer, $year)], 'filings') : null,
-            'filings' => $filer ? Inertia::defer(fn () => ['records' => app(SharedFilingController::class)->records($filer, $year)], 'filings') : null,
+            'filings' => $filer ? Inertia::defer(fn () => [
+                'records' => app(SharedFilingController::class)->records($filer, $year),
+                // The leave form's signatories (7.A, 7.B, authorized official), each as the officer, OIC or Acting
+                'leave_signatories' => app(SharedFilingController::class)->leaveSignatories($filer, $year),
+            ], 'filings') : null,
             // Heads the leaves and filings panel: whose records they are
             'employee' => $filer?->only(['employee_id', 'name', 'position_title', 'parenthetical_title']),
         ]);

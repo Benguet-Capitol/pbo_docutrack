@@ -27,8 +27,10 @@ use Illuminate\Support\Facades\Cache;
  *
  * The save goes through the module's own controller, so its checks apply (overlapping leaves, yearly limits, times);
  * this API fixes what staff may not choose: the employee and the control number (next free one, as the forms make it).
- * Slips take a supervisor (PBO staff) and an approving PBO signatory, as on the forms; a leave's signatories are left to HR, and
- * its recommendation (7.B) is For approval unless the form says For disapproval with a reason. The employee's own records stay
+ * Slips take a supervisor (PBO staff) and an approving PBO signatory, as on the forms. A leave's signatories (7.A, 7.B and the
+ * authorized official, each as the officer, OIC or Acting) stay as they are unless sent (DocuTrack's Profile sends them; a new
+ * leave without them prints the current officers), and its recommendation (7.B) is For approval unless the form says For
+ * disapproval with a reason. The employee's own records stay
  * editable here, except a pass slip naming others too. See docs/filing-api.md.
  */
 class SharedFilingController extends Controller
@@ -60,7 +62,42 @@ class SharedFilingController extends Controller
     {
         $year = (int) ($request->validate(['year' => 'nullable|integer|min:2000|max:2100'])['year'] ?? now()->year);
 
-        return response()->json(['data' => $this->records($this->employee($employeeId), $year)]);
+        $employee = $this->employee($employeeId);
+
+        return response()->json(['data' => $this->records($employee, $year) + ['leave_signatories' => $this->leaveSignatoryChoices($employee, $year)]]);
+    }
+
+    /**
+     * A leave's signatory choices for another system's form, as on the Leaves form: the employees, and for each signatory the
+     * titles (officer / OIC / Acting), who can sign (null: anyone) and who signs by default, so the client needn't know the officers.
+     */
+    private function leaveSignatoryChoices(Employee $employee, int $year): array
+    {
+        $employees = collect($this->leaveSignatories($employee, $year)['employees']);
+        $current = $employees->reject(fn ($e) => $e['separated']);
+        $signatories = [];
+        foreach (array_keys(Leave::SIGNATORIES) as $s) {
+            [$official, $title] = Leave::defaultSignatory($s, $employee);
+            $signatories[$s] = [
+                'titles' => Leave::signatoryTitles($s, $employee),
+                'candidates' => match (true) {
+                    $s === 'certified_by' => $current->filter(fn ($e) => (int) $e['office_id'] === Employee::PHRMDO_OFFICE_ID)->pluck('id')->values(),
+                    // 7.B and the authorized official: anyone, as the Provincial Governor (or an OIC / Acting) can sign them
+                    default => null,
+                },
+                'default' => ['employee_id' => $official?->id, 'title' => $title],
+            ];
+        }
+
+        // The "OIC / Acting department head" box (Leaves form): ticked, the Provincial Governor recommends (7.B) and approves
+        $governor = ['employee_id' => Employee::official(Employee::TITLE_GOVERNOR)?->id, 'title' => Employee::TITLE_GOVERNOR];
+
+        return [
+            'employees' => $employees->map(fn ($e) => ['id' => $e['id'], 'name' => $e['name'], 'designation' => $e['designation'], 'office' => $e['office']['office_abbreviation'] ?? null, 'separated' => $e['separated']])->values(),
+            'signatories' => $signatories,
+            'department_head' => $employee->isDepartmentHead(),
+            'acting_head' => ['recommended_by' => $governor, 'approved_by' => $governor],
+        ];
     }
 
     /** The employee's records of the year with the form's lists, as the API returns them; also DocuTrack's own Profile (ProfileController) */
@@ -76,6 +113,7 @@ class SharedFilingController extends Controller
                 'recommendation' => $rows->first()->recommendation,
                 'disapproval_reason' => $rows->first()->disapproval_reason,
                 'editable' => true,
+            ] + Arr::only($rows->first()->toArray(), self::leaveSignatoryFields()) + [
                 'entries' => $rows->map(fn (Leave $leave) => ['id' => $leave->id] + Arr::only($leave->toArray(), self::LEAVE_FIELDS))->values(),
             ])->values();
 
@@ -153,7 +191,7 @@ class SharedFilingController extends Controller
                 'date_of_filing' => now()->toDateString(),
                 'salary' => $employee->monthly_salary,
                 'entries' => $this->leaveEntries($input),
-            ] + $this->recommendation($input), $actor)),
+            ] + $this->recommendation($input) + $this->leaveSignatoryValues($input, null, $employee), $actor)),
             'pass-slips' => app(PassSlipController::class)->store($this->request([
                 'control_no' => $this->nextControlNo(PassSlip::class, 'PS', (string) ($input['date'] ?? now()->toDateString())),
                 'employee_ids' => [$employee->id],
@@ -185,7 +223,7 @@ class SharedFilingController extends Controller
                 'date_of_filing' => $leave->date_of_filing?->format('Y-m-d'),
                 'salary' => $leave->salary,
                 'entries' => $entries,
-            ] + $this->recommendation($input) + Arr::only($leave->toArray(), array_merge(...array_map(fn ($s) => ["{$s}_employee_id", "{$s}_title"], array_keys(Leave::SIGNATORIES)))), $actor), $leave);
+            ] + $this->recommendation($input) + $this->leaveSignatoryValues($input, $leave, $employee), $actor), $leave);
         }
 
         $record = match ($module) {
@@ -264,6 +302,77 @@ class SharedFilingController extends Controller
         $disapproval = ($input['recommendation'] ?? null) === 'disapproval';
 
         return ['recommendation' => $disapproval ? 'disapproval' : 'approval', 'disapproval_reason' => $disapproval ? ($input['disapproval_reason'] ?? null) : null];
+    }
+
+    /** The leave's signatory columns: certified_by_employee_id, certified_by_title, ... */
+    private static function leaveSignatoryFields(): array
+    {
+        return array_merge(...array_map(fn ($s) => ["{$s}_employee_id", "{$s}_title"], array_keys(Leave::SIGNATORIES)));
+    }
+
+    /**
+     * The choices for a leave's signatories on DocuTrack's Profile, as on the Leaves form: who can sign each (the PHRMDO's staff
+     * for 7.A, PBO staff for 7.B, anyone for the authorized official), each as the officer, OIC or Acting. The list also has
+     * whoever the employee's leaves of the year already name, so an edit shows them.
+     */
+    public function leaveSignatories(Employee $employee, int $year): array
+    {
+        $named = Leave::where('employee_id', $employee->id)->whereYear('date_of_filing', $year)->get(self::leaveSignatoryFields())
+            ->flatMap(fn (Leave $leave) => array_map(fn ($s) => $leave->{"{$s}_employee_id"}, array_keys(Leave::SIGNATORIES)))->filter()->unique()->values();
+
+        $employees = Employee::withTrashed()->with('office:id,office_abbreviation')
+            ->where(fn ($q) => $q->where(fn ($q) => $q->whereNull('separated_at')->whereNull('deleted_at'))->orWhereIn('id', $named))
+            ->where('id', '!=', $employee->id)->orderBy('name')
+            ->get(['id', 'name', 'designation', 'position_title', 'parenthetical_title', 'office_id', 'detailed_to_pbo', 'separated_at', 'deleted_at'])
+            ->map(fn (Employee $e) => [
+                'id' => $e->id, 'name' => $e->name, 'designation' => $e->designation, 'position_title' => $e->position_title,
+                'parenthetical_title' => $e->parenthetical_title, 'office_id' => $e->office_id, 'detailed_to_pbo' => (bool) $e->detailed_to_pbo,
+                'separated' => $e->separated_at !== null || $e->deleted_at !== null, 'office' => $e->office?->only('office_abbreviation'),
+            ])->values();
+
+        return [
+            'employees' => $employees,
+            // The applicant decides the default authorized official (the Governor for a department head)
+            'applicant' => $employee->only(['id', 'name', 'designation', 'position_title', 'parenthetical_title', 'office_id']),
+        ];
+    }
+
+    /**
+     * A leave's signatories: those sent (as on the Leaves form: an employee and the officer / OIC / Acting title, which the
+     * leave controller checks), else the leave's own (none on a new leave: the current officers print).
+     */
+    private function leaveSignatoryValues(array $input, ?Leave $leave, Employee $applicant): array
+    {
+        $values = [];
+        foreach (array_keys(Leave::SIGNATORIES) as $s) {
+            $current = [$leave?->{"{$s}_employee_id"}, $leave?->{"{$s}_title"}];
+            if (!array_key_exists("{$s}_employee_id", $input) && !array_key_exists("{$s}_title", $input)) {
+                [$values["{$s}_employee_id"], $values["{$s}_title"]] = $current;
+                continue;
+            }
+            $id = filled($input["{$s}_employee_id"] ?? null) ? (int) $input["{$s}_employee_id"] : null;
+            // A new choice must be someone who can sign it, still with the Province; the leave's own stays
+            if ($id !== null && $id !== (int) $current[0]) {
+                $query = Employee::active()->whereKey($id);
+                $allowed = match ($s) {
+                    'certified_by' => $query->where('office_id', Employee::PHRMDO_OFFICE_ID)->exists(),
+                    // Anyone: the Provincial Governor (or an OIC / Acting) can recommend too
+                    default => $query->exists(),
+                };
+                if (!$allowed) {
+                    $this->refuse("{$s}_employee_id", 'Choose a signatory from the list.');
+                }
+            }
+            $title = filled($input["{$s}_title"] ?? null) ? (string) $input["{$s}_title"] : null;
+            // A new title must be one of the applicant's officers (a department head's 7.B is the Provincial Governor's), as officer, OIC or Acting
+            if ($title !== null && $title !== $current[1] && !in_array($title, Leave::signatoryTitles($s, $applicant), true)) {
+                $this->refuse("{$s}_title", 'Choose the signatory\'s title from the list.');
+            }
+            $values["{$s}_employee_id"] = $id;
+            $values["{$s}_title"] = $title;
+        }
+
+        return $values;
     }
 
     /** One entry per leave type, each with its own dates and off days (weekday names; none = Saturdays and Sundays) */
