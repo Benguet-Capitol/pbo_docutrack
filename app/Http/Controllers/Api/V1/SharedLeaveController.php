@@ -36,6 +36,14 @@ class SharedLeaveController extends Controller
             return response()->json(['message' => 'Employee not found.'], 404);
         }
 
+        return response()->json(['data' => $this->data($employee, $year)]);
+    }
+
+    /** One employee's year, as the API returns it; also shown on DocuTrack's own Profile (ProfileController) */
+    public function data(Employee $employee, int $year): array
+    {
+        $employee->loadMissing('office');
+
         $leaves = Leave::where('employee_id', $employee->id)
             ->whereYear('date_of_filing', $year)
             ->orderByDesc('date_of_filing')
@@ -90,7 +98,7 @@ class SharedLeaveController extends Controller
             ->sortDesc()
             ->values();
 
-        return response()->json(['data' => [
+        return [
             'employee' => [
                 'employee_id' => $employee->employee_id,
                 'name' => $employee->name,
@@ -126,6 +134,6 @@ class SharedLeaveController extends Controller
                 'return_time' => $record->return_time,
                 'reason' => $record->reason,
             ])->values(),
-        ]]);
+        ];
     }
 }

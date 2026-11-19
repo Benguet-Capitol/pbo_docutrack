@@ -10,6 +10,44 @@
 
 The scheduler runs it **every Monday at 1:00 AM** (`routes/console.php`), weekly to save space on the server. Backups older than `BACKUP_KEEP_DAYS` (default 30) are then deleted. The newest backup is always kept, even if it's old.
 
+## Running a backup by hand
+
+Use this before an update or a big data change, or when you want a backup that can't wait for Monday. A backup made by hand doesn't change the Monday schedule.
+
+1. On the server, open **Command Prompt** or **PowerShell**. If `BACKUP_COPY_PATH` is a network share, sign in to Windows as the same user the scheduler task runs as, or the copy may fail with "access denied".
+2. Go to the app folder:
+
+   ```
+   cd D:\xampp\htdocs\pbo-mbm
+   ```
+
+3. Run the backup:
+
+   ```
+   php artisan backup:run
+   ```
+
+   If `php` isn't recognized, use the full path instead:
+
+   ```
+   D:\xampp\php\php.exe artisan backup:run
+   ```
+
+4. Wait for it to finish; it can take a few minutes. Don't close the window while it runs.
+   - **Success:** a line in green, e.g. `Backup saved: E:\backups\pbo-mbm\pbo-mbm-2026-11-18-143005.zip (512.3 MB, database + 2140 files); copied to \\192.168.2.25\backups\pbo-mbm\pbo-mbm-2026-11-18-143005.zip`.
+   - **Failure:** a line in red, `Backup failed: …`, with the reason (e.g. `mysqldump failed: …` when `BACKUP_MYSQLDUMP` is wrong, or a copy error when the share can't be reached).
+5. Check that the new zip is in `BACKUP_PATH` (and in `BACKUP_COPY_PATH`, if set). **Weekly backup** on System → Connections also shows the run.
+
+Other forms:
+
+| Command | What it does |
+|---|---|
+| `php artisan backup:run` | Database and uploaded files (the same as the Monday backup) |
+| `php artisan backup:run --no-files` | The database only: smaller and faster, e.g. right before running migrations |
+| `php artisan schedule:list` | When the next Monday backup (and HRIS sync) will run |
+
+Old backups are pruned after a manual run too, using the same `BACKUP_KEEP_DAYS` rule.
+
 ## Setup on the server
 
 1. Set these in `.env`:
@@ -24,7 +62,7 @@ The scheduler runs it **every Monday at 1:00 AM** (`routes/console.php`), weekly
 2. Make sure the scheduler runs every minute. It already has to for the monthly HRIS sync.
    - **Windows Task Scheduler:** a task running `php D:\xampp\htdocs\pbo-mbm\artisan schedule:run` every minute.
    - **Linux cron:** `* * * * * cd /path/to/pbo-mbm && php artisan schedule:run >> /dev/null 2>&1`
-3. Run it once by hand and check that the zip appears in `BACKUP_PATH`:
+3. Run it once by hand and check that the zip appears in `BACKUP_PATH` (see [Running a backup by hand](#running-a-backup-by-hand)):
 
    ```
    php artisan backup:run

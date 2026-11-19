@@ -1,84 +1,42 @@
 <script setup lang="ts">
-import InputError from '@/Components/InputError.vue';
-import InputLabel from '@/Components/InputLabel.vue';
-import PrimaryButton from '@/Components/PrimaryButton.vue';
-import TextInput from '@/Components/TextInput.vue';
-import { Link, useForm, usePage } from '@inertiajs/vue3';
+import { useForm, usePage } from '@inertiajs/vue3';
+import SectionHeader from './SectionHeader.vue';
+import { PROFILE_INPUT, PROFILE_LABEL, PROFILE_SAVE } from './profileStyles';
 
-defineProps<{
-    mustVerifyEmail?: Boolean;
-    status?: String;
-}>();
-
-const user = usePage().props.auth.user;
+const user = (usePage().props.auth as any).user;
 
 const form = useForm({
-    name: user.name,
-    username: user.username,
+    name: user.name as string,
+    username: user.username as string,
 });
 </script>
 
 <template>
     <section>
-        <header>
-            <h2 class="text-lg font-medium text-gray-900 dark:text-gray-100">
-                Profile Information
-            </h2>
+        <SectionHeader icon="fa-user-pen" title="Profile Information" description="Your name as it shows in the system, and the username you sign in with." />
 
-            <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
-                Update your account's profile information and username.
-            </p>
-        </header>
-
-        <form
-            @submit.prevent="form.patch(route('profile.update'))"
-            class="mt-6 space-y-6"
-        >
+        <form class="space-y-5" @submit.prevent="form.patch(route('profile.update'), { preserveScroll: true })">
             <div>
-                <InputLabel for="name" value="Name" />
-
-                <TextInput
-                    id="name"
-                    type="text"
-                    class="mt-1 block w-full"
-                    v-model="form.name"
-                    required
-                    autofocus
-                    autocomplete="name"
-                />
-
-                <InputError class="mt-2" :message="form.errors.name" />
+                <label for="profile_name" :class="PROFILE_LABEL">Name</label>
+                <input id="profile_name" v-model="form.name" type="text" required autocomplete="name" maxlength="255" :class="PROFILE_INPUT" />
+                <p v-if="form.errors.name" class="mt-1 text-xs text-red-600 dark:text-red-400">{{ form.errors.name }}</p>
             </div>
 
             <div>
-                <InputLabel for="username" value="Username" />
-
-                <TextInput
-                    id="username"
-                    type="text"
-                    class="mt-1 block w-full"
-                    v-model="form.username"
-                    required
-                    autocomplete="username"
-                />
-
-                <InputError class="mt-2" :message="form.errors.username" />
+                <label for="profile_username" :class="PROFILE_LABEL">Username</label>
+                <input id="profile_username" v-model="form.username" type="text" required autocomplete="username" maxlength="255" :class="PROFILE_INPUT" />
+                <p v-if="form.errors.username" class="mt-1 text-xs text-red-600 dark:text-red-400">{{ form.errors.username }}</p>
             </div>
 
-            <div class="flex items-center gap-4">
-                <PrimaryButton :disabled="form.processing">Save</PrimaryButton>
+            <div class="flex items-center gap-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                <button type="submit" :class="PROFILE_SAVE" :disabled="form.processing || !form.isDirty">
+                    <i class="fas" :class="form.processing ? 'fa-spinner fa-spin' : 'fa-check'"></i>
+                    {{ form.processing ? 'Saving...' : 'Save' }}
+                </button>
 
-                <Transition
-                    enter-active-class="transition ease-in-out"
-                    enter-from-class="opacity-0"
-                    leave-active-class="transition ease-in-out"
-                    leave-to-class="opacity-0"
-                >
-                    <p
-                        v-if="form.recentlySuccessful"
-                        class="text-sm text-gray-600 dark:text-gray-400"
-                    >
-                        Saved.
+                <Transition enter-active-class="transition ease-in-out" enter-from-class="opacity-0" leave-active-class="transition ease-in-out" leave-to-class="opacity-0">
+                    <p v-if="form.recentlySuccessful" class="text-sm text-green-600 dark:text-green-400 font-medium flex items-center gap-2">
+                        <i class="fas fa-check-circle"></i> Saved.
                     </p>
                 </Transition>
             </div>

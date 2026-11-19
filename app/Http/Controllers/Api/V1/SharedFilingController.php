@@ -59,7 +59,13 @@ class SharedFilingController extends Controller
     public function index(Request $request, string $employeeId): JsonResponse
     {
         $year = (int) ($request->validate(['year' => 'nullable|integer|min:2000|max:2100'])['year'] ?? now()->year);
-        $employee = $this->employee($employeeId);
+
+        return response()->json(['data' => $this->records($this->employee($employeeId), $year)]);
+    }
+
+    /** The employee's records of the year with the form's lists, as the API returns them; also DocuTrack's own Profile (ProfileController) */
+    public function records(Employee $employee, int $year): array
+    {
         $slip = fn (Model $record, string $module) => ['id' => $record->id, 'control_no' => $record->control_no]
             + Arr::only($record->toArray(), [...self::SLIPS[$module]['fields'], self::SLIPS[$module]['supervisor'], ...self::SIGNATORY_FIELDS]);
 
@@ -86,7 +92,7 @@ class SharedFilingController extends Controller
         $people = fn ($query) => $query->active()->where('id', '!=', $employee->id)->orderBy('name')->get(['id', 'name', 'designation'])
             ->map(fn (Employee $e) => ['id' => $e->id, 'name' => $e->name, 'designation' => $e->designation])->values();
 
-        return response()->json(['data' => [
+        return [
             'year' => $year,
             'leave_types' => self::LEAVE_TYPES,
             'signatories' => [
@@ -109,16 +115,36 @@ class SharedFilingController extends Controller
             'pass_slips' => $passSlips,
             'time_slips' => $timeSlips,
             'tardiness' => $tardiness,
-        ]]);
+        ];
     }
 
     /** POST /api/v1/filing/employees/{employeeId}/{module}: a new record for the employee */
     public function store(Request $request, string $employeeId, string $module): JsonResponse
     {
         $employee = $this->employee($employeeId);
-        $actor = $this->actAs($request, $employee);
-        $input = $request->all();
 
+        return $this->file($employee, $module, null, $request->all(), $this->actAs($request, $employee));
+    }
+
+    /** PUT /api/v1/filing/employees/{employeeId}/{module}/{id}: the employee's own record (a leave by its control number) */
+    public function update(Request $request, string $employeeId, string $module, string $id): JsonResponse
+    {
+        $employee = $this->employee($employeeId);
+
+        return $this->file($employee, $module, $id, $request->all(), $this->actAs($request, $employee));
+    }
+
+    /**
+     * Files a new record for the employee ($id null) or edits their own, saved by $actor: the Filing API's stand-in user, or
+     * the signed-in user on DocuTrack's own Profile. Refusals come back as 422/404/409 JSON responses or exceptions.
+     */
+    public function file(Employee $employee, string $module, ?string $id, array $input, User $actor): JsonResponse
+    {
+        return $id === null ? $this->create($employee, $module, $input, $actor) : $this->change($employee, $module, $id, $input, $actor);
+    }
+
+    private function create(Employee $employee, string $module, array $input, User $actor): JsonResponse
+    {
         // One at a time per module, so two filings can't take the same control number
         return Cache::lock("filing-api:{$module}", 15)->block(10, fn () => match ($module) {
             'leaves' => app(LeaveController::class)->store($this->request([
@@ -144,13 +170,8 @@ class SharedFilingController extends Controller
         });
     }
 
-    /** PUT /api/v1/filing/employees/{employeeId}/{module}/{id}: the employee's own record (a leave by its control number) */
-    public function update(Request $request, string $employeeId, string $module, string $id): JsonResponse
+    private function change(Employee $employee, string $module, string $id, array $input, User $actor): JsonResponse
     {
-        $employee = $this->employee($employeeId);
-        $actor = $this->actAs($request, $employee);
-        $input = $request->all();
-
         if ($module === 'leaves') {
             $rows = Leave::where('employee_id', $employee->id)->where('control_no', $id)->orderBy('id')->get();
             abort_if($rows->isEmpty(), 404, 'Leave not found.');
@@ -187,7 +208,12 @@ class SharedFilingController extends Controller
     /** GET /api/v1/filing/employees/{employeeId}/{module}/{id}/print: a 30-minute signed link (path only) to the record's print preview, for the employee's own record */
     public function printUrl(string $employeeId, string $module, string $id): JsonResponse
     {
-        $employee = $this->employee($employeeId);
+        return response()->json(['data' => ['path' => $this->printPath($this->employee($employeeId), $module, $id)]]);
+    }
+
+    /** The signed print-preview link (path only) of the employee's own record; a leave by its control number */
+    public function printPath(Employee $employee, string $module, string $id): string
+    {
         $record = match ($module) {
             'leaves' => Leave::where('employee_id', $employee->id)->where('control_no', $id)->orderBy('id')->firstOrFail(),
             'pass-slips' => PassSlip::whereHas('employees', fn ($q) => $q->where('employees.id', $employee->id))->findOrFail($id),
@@ -195,9 +221,13 @@ class SharedFilingController extends Controller
             'tardiness' => Tardiness::where('employee_id', $employee->id)->findOrFail($id),
         };
 
-        return response()->json(['data' => [
-            'path' => \Illuminate\Support\Facades\URL::temporarySignedRoute('filing.print', now()->addMinutes(30), ['module' => $module, 'id' => $record->id], absolute: false),
-        ]]);
+        return \Illuminate\Support\Facades\URL::temporarySignedRoute('filing.print', now()->addMinutes(30), ['module' => $module, 'id' => $record->id], absolute: false);
+    }
+
+    /** The employee who may file here: PBO staff (its own and those detailed to it), still with the Province; null otherwise */
+    public static function filer(?int $employeeKey): ?Employee
+    {
+        return $employeeKey ? Employee::pboStaff()->active()->find($employeeKey) : null;
     }
 
     /** PBO staff only (its own and those detailed to it), still with the Province */

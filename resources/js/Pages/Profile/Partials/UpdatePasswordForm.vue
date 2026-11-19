@@ -1,13 +1,13 @@
 <script setup lang="ts">
-import InputError from '@/Components/InputError.vue';
-import InputLabel from '@/Components/InputLabel.vue';
-import PrimaryButton from '@/Components/PrimaryButton.vue';
-import TextInput from '@/Components/TextInput.vue';
 import { useForm } from '@inertiajs/vue3';
 import { ref } from 'vue';
+import SectionHeader from './SectionHeader.vue';
+import { PROFILE_INPUT, PROFILE_LABEL, PROFILE_SAVE } from './profileStyles';
 
 const passwordInput = ref<HTMLInputElement | null>(null);
 const currentPasswordInput = ref<HTMLInputElement | null>(null);
+// Lets users check what they typed before saving
+const showPasswords = ref(false);
 
 const form = useForm({
     current_password: '',
@@ -18,9 +18,7 @@ const form = useForm({
 const updatePassword = () => {
     form.put(route('password.update'), {
         preserveScroll: true,
-        onSuccess: () => {
-            form.reset();
-        },
+        onSuccess: () => form.reset(),
         onError: () => {
             if (form.errors.password) {
                 form.reset('password', 'password_confirmation');
@@ -36,86 +34,43 @@ const updatePassword = () => {
 </script>
 
 <template>
-    <section class="bg-white dark:bg-gray-800">
-        <header>
-            <h2 class="text-lg font-medium text-gray-900 dark:text-gray-100">
-                Update Password
-            </h2>
+    <section>
+        <SectionHeader icon="fa-key" title="Update Password" description="Use a long password that you don't use anywhere else." />
 
-            <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
-                Ensure your account is using a long, random password to stay
-                secure.
-            </p>
-        </header>
-
-        <form @submit.prevent="updatePassword" class="mt-6 space-y-6">
+        <form class="space-y-5" @submit.prevent="updatePassword">
             <div>
-                <InputLabel for="current_password" value="Current Password" />
-
-                <TextInput
-                    id="current_password"
-                    ref="currentPasswordInput"
-                    v-model="form.current_password"
-                    type="password"
-                    class="mt-1 block w-full"
-                    autocomplete="current-password"
-                />
-
-                <InputError
-                    :message="form.errors.current_password"
-                    class="mt-2"
-                />
+                <label for="current_password" :class="PROFILE_LABEL">Current Password</label>
+                <input id="current_password" ref="currentPasswordInput" v-model="form.current_password" :type="showPasswords ? 'text' : 'password'" autocomplete="current-password" :class="PROFILE_INPUT" />
+                <p v-if="form.errors.current_password" class="mt-1 text-xs text-red-600 dark:text-red-400">{{ form.errors.current_password }}</p>
             </div>
 
-            <div>
-                <InputLabel for="password" value="New Password" />
-
-                <TextInput
-                    id="password"
-                    ref="passwordInput"
-                    v-model="form.password"
-                    type="password"
-                    class="mt-1 block w-full"
-                    autocomplete="new-password"
-                />
-
-                <InputError :message="form.errors.password" class="mt-2" />
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                <div>
+                    <label for="password" :class="PROFILE_LABEL">New Password</label>
+                    <input id="password" ref="passwordInput" v-model="form.password" :type="showPasswords ? 'text' : 'password'" autocomplete="new-password" :class="PROFILE_INPUT" />
+                    <p v-if="form.errors.password" class="mt-1 text-xs text-red-600 dark:text-red-400">{{ form.errors.password }}</p>
+                </div>
+                <div>
+                    <label for="password_confirmation" :class="PROFILE_LABEL">Confirm Password</label>
+                    <input id="password_confirmation" v-model="form.password_confirmation" :type="showPasswords ? 'text' : 'password'" autocomplete="new-password" :class="PROFILE_INPUT" />
+                    <p v-if="form.errors.password_confirmation" class="mt-1 text-xs text-red-600 dark:text-red-400">{{ form.errors.password_confirmation }}</p>
+                </div>
             </div>
 
-            <div>
-                <InputLabel
-                    for="password_confirmation"
-                    value="Confirm Password"
-                />
+            <label class="inline-flex items-center gap-2 text-xs text-gray-600 dark:text-gray-300">
+                <input v-model="showPasswords" type="checkbox" class="rounded border-gray-300 dark:border-gray-600 text-emerald-600 focus:ring-emerald-500" />
+                Show passwords
+            </label>
 
-                <TextInput
-                    id="password_confirmation"
-                    v-model="form.password_confirmation"
-                    type="password"
-                    class="mt-1 block w-full"
-                    autocomplete="new-password"
-                />
+            <div class="flex items-center gap-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                <button type="submit" :class="PROFILE_SAVE" :disabled="form.processing || !form.current_password || !form.password">
+                    <i class="fas" :class="form.processing ? 'fa-spinner fa-spin' : 'fa-check'"></i>
+                    {{ form.processing ? 'Saving...' : 'Save' }}
+                </button>
 
-                <InputError
-                    :message="form.errors.password_confirmation"
-                    class="mt-2"
-                />
-            </div>
-
-            <div class="flex items-center gap-4">
-                <PrimaryButton :disabled="form.processing">Save</PrimaryButton>
-
-                <Transition
-                    enter-active-class="transition ease-in-out"
-                    enter-from-class="opacity-0"
-                    leave-active-class="transition ease-in-out"
-                    leave-to-class="opacity-0"
-                >
-                    <p
-                        v-if="form.recentlySuccessful"
-                        class="text-sm text-gray-600 dark:text-gray-400"
-                    >
-                        Saved.
+                <Transition enter-active-class="transition ease-in-out" enter-from-class="opacity-0" leave-active-class="transition ease-in-out" leave-to-class="opacity-0">
+                    <p v-if="form.recentlySuccessful" class="text-sm text-green-600 dark:text-green-400 font-medium flex items-center gap-2">
+                        <i class="fas fa-check-circle"></i> Saved.
                     </p>
                 </Transition>
             </div>

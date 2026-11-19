@@ -190,7 +190,7 @@ php artisan backup:run
 php artisan employees:sync-hris
 ```
 
-The backup prints "Backup saved: … copied to …". Check that the zip is in both folders.
+The backup prints "Backup saved: … copied to …". Check that the zip is in both folders. To run a backup by hand at any other time, see "Running a backup by hand" in `docs/backups.md`.
 
 ### 9. Back online
 

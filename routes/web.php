@@ -27,6 +27,11 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    // PBO staff file and edit their own leaves and slips from their profile (the controller checks they are PBO staff)
+    Route::post('/profile/filings/{module}/{id?}', [ProfileController::class, 'saveFiling'])->name('profile.filings.save')
+        ->whereIn('module', ['leaves', 'pass-slips', 'time-slips', 'tardiness'])->middleware('throttle:30,1');
+    Route::get('/profile/filings/{module}/{id}/print', [ProfileController::class, 'filingPrint'])->name('profile.filings.print')
+        ->whereIn('module', ['leaves', 'pass-slips', 'time-slips', 'tardiness'])->middleware('throttle:60,1');
 
     // Module pages: each requires its module's view permission (the side menu hides what the role can't open)
     $page = fn (string $uri, string $component, string $name, string $permission) =>
