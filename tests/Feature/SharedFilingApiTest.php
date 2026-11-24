@@ -254,6 +254,21 @@ class SharedFilingApiTest extends TestCase
         $this->withoutVite()->get($path)->assertOk()->assertSee('Vacation Leave', false)->assertSee('Sick Leave', false);
     }
 
+    public function test_a_travel_order_naming_the_employee_can_be_previewed_but_not_filed(): void
+    {
+        $employee = $this->makeEmployee();
+        $order = \App\Models\TravelOrder::create(['control_no' => 'TO-2026-11-0001', 'date' => '2026-11-10', 'from_date' => '2026-11-10', 'to_date' => '2026-11-10',
+            'going_to' => 'La Trinidad', 'inclusive_dates' => ['2026-11-10'], 'purpose' => ['Budget hearing'], 'vehicle' => 'PUJ']);
+        $order->employees()->attach($employee->id);
+
+        $path = $this->api('get', $employee, "travel-orders/{$order->id}/print")->assertOk()->json('data.path');
+        $this->assertStringStartsWith("/filing-print/travel-orders/{$order->id}?expires=", $path);
+        $this->withoutVite()->get($path)->assertOk()->assertSee('TO-2026-11-0001', false)->assertSee('La Trinidad', false);
+
+        $this->api('get', $this->makeEmployee(), "travel-orders/{$order->id}/print")->assertNotFound();
+        $this->assertTrue($this->api('post', $employee, 'travel-orders', [])->isClientError(), 'Travel orders are made by HR, not filed through the API.');
+    }
+
     /** An application: a Vacation Leave entry (changed by $overrides) and any further entries */
     private function leave(array $overrides = [], array ...$more): array
     {

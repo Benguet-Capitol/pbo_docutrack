@@ -31,7 +31,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/profile/filings/{module}/{id?}', [ProfileController::class, 'saveFiling'])->name('profile.filings.save')
         ->whereIn('module', ['leaves', 'pass-slips', 'time-slips', 'tardiness'])->middleware('throttle:30,1');
     Route::get('/profile/filings/{module}/{id}/print', [ProfileController::class, 'filingPrint'])->name('profile.filings.print')
-        ->whereIn('module', ['leaves', 'pass-slips', 'time-slips', 'tardiness'])->middleware('throttle:60,1');
+        ->whereIn('module', ['leaves', 'pass-slips', 'time-slips', 'tardiness', 'travel-orders'])->middleware('throttle:60,1');
 
     // Module pages: each requires its module's view permission (the side menu hides what the role can't open)
     $page = fn (string $uri, string $component, string $name, string $permission) =>
@@ -132,7 +132,7 @@ require __DIR__.'/auth.php';
 
 // A filing's print preview for pbo-registryV2's My Filings: no sign-in, a short-lived link signed by the Filing API (relative, so any host name works)
 Route::get('/filing-print/{module}/{id}', [\App\Http\Controllers\FilingPrintController::class, 'show'])
-    ->whereIn('module', ['leaves', 'pass-slips', 'time-slips', 'tardiness'])->whereNumber('id')
+    ->whereIn('module', ['leaves', 'pass-slips', 'time-slips', 'tardiness', 'travel-orders'])->whereNumber('id')
     ->middleware(['signed:relative', 'throttle:60,1'])->name('filing.print');
 
 // Fallback route for 404 errors - must be after all other routes

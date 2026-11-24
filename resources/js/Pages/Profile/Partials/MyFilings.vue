@@ -48,7 +48,7 @@ const TABS: Tab[] = [
     // Travel orders are made on the Travel Orders page: listed only
     { key: 'travel-orders', label: 'Travel Orders', icon: 'fa-route', readonly: true },
 ];
-const SINGULAR: Record<Module, string> = { leaves: 'Leave', 'pass-slips': 'Pass Slip', 'time-slips': 'Time Slip', tardiness: 'Tardiness/Undertime' };
+const SINGULAR: Record<TabKey, string> = { leaves: 'Leave', 'pass-slips': 'Pass Slip', 'time-slips': 'Time Slip', tardiness: 'Tardiness/Undertime', 'travel-orders': 'Travel Order' };
 // Each tab's table columns (Actions is added to all but Travel Orders)
 const HEADERS: Record<TabKey, string[]> = {
     leaves: ['Control No.', 'Date Filed', 'Type of Leave', 'Inclusive Dates', 'Days'],
@@ -66,6 +66,8 @@ const TAG_TIME = 'whitespace-nowrap rounded-full bg-blue-100 dark:bg-blue-900/30
 const TAG_TARDY = 'rounded-full bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-300';
 const TAG_UNDERTIME = 'rounded-full bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300';
 const TAG_PURPOSE = 'rounded bg-emerald-100 dark:bg-emerald-900 text-emerald-800 dark:text-emerald-200';
+// A field's label on a record card (phones)
+const CARD_LABEL = 'mb-1 text-[10px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400';
 // Each slip's supervisor field and its label on the module's form
 const SUPERVISOR: Record<Exclude<Module, 'leaves'>, [string, string]> = {
     'pass-slips': ['recommending_approval_employee_id', 'Recommending approval (supervisor)'],
@@ -261,7 +263,7 @@ const canSubmit = computed(() => missingFields.value.length === 0 && !submitMess
 const printing = ref<{ title: string; url: string | null; error: string | null; loading: boolean } | null>(null);
 async function openPrint(row: any) {
     const id = tab.value === 'leaves' ? row.control_no : row.id;
-    printing.value = { title: `${SINGULAR[module.value]} ${row.control_no}`, url: null, error: null, loading: true };
+    printing.value = { title: `${SINGULAR[tab.value]} ${row.control_no}`, url: null, error: null, loading: true };
     try {
         const { data } = await axios.get(route('profile.filings.print', { module: tab.value, id }));
         printing.value = { ...printing.value, url: data.url, loading: false };
@@ -373,12 +375,87 @@ const check = 'rounded border-gray-300 dark:border-gray-600 text-emerald-600 foc
         <p v-if="!rows(current).length" class="rounded border border-dashed border-gray-300 dark:border-gray-600 py-8 text-center text-xs text-gray-500 dark:text-gray-400">
             <i class="fas fa-inbox block mb-2 text-lg text-gray-300 dark:text-gray-600"></i>No {{ current.label.toLowerCase() }} in {{ records.year }}.
         </p>
-        <div v-else class="overflow-x-auto rounded border border-gray-200 dark:border-gray-700">
+        <!-- Phones: one card per record, with the table's highlights and actions -->
+        <div v-if="rows(current).length" class="md:hidden space-y-3">
+            <article
+                v-for="row in rows(current)" :key="row.id ?? row.control_no"
+                class="rounded-lg border border-gray-200 dark:border-gray-700 border-l-4 border-l-emerald-500 dark:border-l-emerald-400 bg-white dark:bg-gray-800 shadow-sm p-3"
+            >
+                <header class="flex items-start justify-between gap-2">
+                    <div class="min-w-0">
+                        <p class="font-semibold text-sm text-gray-900 dark:text-gray-100 tabular-nums break-all">{{ row.control_no }}</p>
+                        <p class="text-[11px] text-gray-500 dark:text-gray-400">
+                            <i class="far fa-calendar mr-1"></i>{{ tab === 'leaves' ? 'Filed ' + formatDate(row.date_of_filing) : tab === 'tardiness' ? 'Filed ' + formatDate(row.date_filed) : formatDate(row.date) }}
+                        </p>
+                    </div>
+                    <!-- Travel orders (made by HR) can be viewed and printed, not edited -->
+                    <div class="flex shrink-0 items-center gap-2">
+                        <RowIconButton color="purple" icon="fas fa-print" tooltip="View/Print" @click="openPrint(row)" />
+                        <template v-if="!current.readonly">
+                            <RowIconButton v-if="row.editable" color="blue" icon="fas fa-pencil-alt" tooltip="Edit" @click="open(row)" />
+                            <span v-else class="p-2 rounded-lg bg-gray-100 dark:bg-gray-700/50 text-gray-400 dark:text-gray-500 cursor-help" title="A pass slip naming other employees too: change it on the Pass Slips page."><i class="fas fa-lock"></i></span>
+                        </template>
+                    </div>
+                </header>
+
+                <dl class="mt-2.5 space-y-2 text-xs">
+                    <template v-if="tab === 'leaves'">
+                        <div><dt :class="CARD_LABEL">Type of Leave</dt>
+                            <dd class="flex flex-wrap gap-1">
+                                <span v-for="e in row.entries" :key="e.id" :class="[TAG, TAG_TYPE]">
+                                    {{ e.type_of_leave }}<span v-if="row.entries.length > 1" class="font-normal opacity-80">· {{ e.is_half_day ? 0.5 : e.number_of_working_days_applied_for }}d</span>
+                                    <span v-if="e.is_half_day" :class="[TAG, TAG_HALF, '!py-0 !px-1.5']">{{ e.half_day_period }}</span>
+                                </span>
+                            </dd></div>
+                        <div><dt :class="CARD_LABEL">Inclusive Dates</dt>
+                            <dd class="flex flex-wrap gap-1"><span v-for="(d, i) in row.entries.flatMap((e: any) => e.inclusive_dates ?? [])" :key="i" :class="[TAG, TAG_DATE]">{{ formatDates([d]) }}</span></dd></div>
+                        <div class="flex items-center justify-between border-t border-gray-100 dark:border-gray-700 pt-2"><dt :class="CARD_LABEL" class="!mb-0">Days</dt>
+                            <dd class="text-sm font-bold tabular-nums text-emerald-700 dark:text-emerald-400">{{ formatDays(row.entries.reduce((sum: number, e: any) => sum + (e.is_half_day ? 0.5 : Number(e.number_of_working_days_applied_for) || 0), 0)) }}</dd></div>
+                    </template>
+                    <template v-else-if="tab === 'pass-slips'">
+                        <div><dt :class="CARD_LABEL">Inclusive Dates</dt>
+                            <dd class="flex flex-wrap gap-1"><span v-for="d in (row.inclusive_dates?.length ? row.inclusive_dates : [row.date])" :key="d" :class="[TAG, TAG_DATE]">{{ formatDates([d]) }}</span></dd></div>
+                        <div><dt :class="CARD_LABEL">Time Out – Return</dt><dd class="font-medium text-gray-800 dark:text-gray-200">{{ formatTime(row.requested_time) }} – {{ formatTime(row.expected_return_time) }}</dd></div>
+                        <div><dt :class="CARD_LABEL">Purpose / Location</dt>
+                            <dd class="text-gray-800 dark:text-gray-100 break-words">{{ row.purpose }}<div v-if="row.location" class="text-[11px] text-gray-500 dark:text-gray-400"><i class="fas fa-location-dot mr-1"></i>{{ row.location }}</div></dd></div>
+                    </template>
+                    <template v-else-if="tab === 'time-slips'">
+                        <div class="grid grid-cols-2 gap-2">
+                            <div v-for="(half, h) in [['time_in_am', 'time_out_am'], ['time_in_pm', 'time_out_pm']]" :key="half[0]"><dt :class="CARD_LABEL">{{ h ? 'PM' : 'AM' }} In – Out</dt>
+                                <dd class="flex flex-wrap items-center gap-1">
+                                    <template v-for="(field, i) in half" :key="field">
+                                        <span v-if="i" class="text-gray-400">–</span>
+                                        <span v-if="row[field]" :class="[TAG, TAG_TIME]">{{ formatTime(row[field]) }}</span>
+                                        <span v-else class="text-gray-400">—</span>
+                                    </template>
+                                </dd></div>
+                        </div>
+                        <div><dt :class="CARD_LABEL">Reason</dt><dd class="break-words text-gray-800 dark:text-gray-200">{{ row.reason }}</dd></div>
+                    </template>
+                    <template v-else-if="tab === 'tardiness'">
+                        <div><dt :class="CARD_LABEL">Type</dt><dd><span :class="[TAG, row.type === 'Tardiness' ? TAG_TARDY : TAG_UNDERTIME]">{{ row.type }}</span></dd></div>
+                        <div><dt :class="CARD_LABEL">Requested Date &amp; Time</dt>
+                            <dd><span :class="[TAG, TAG_DATE]">{{ formatDate(row.requested_date) }}</span>
+                                <span class="ml-1 font-medium text-gray-800 dark:text-gray-200">{{ formatTime(row.requested_time) }}<template v-if="row.return_time"> – {{ formatTime(row.return_time) }}</template></span></dd></div>
+                        <div><dt :class="CARD_LABEL">Reason</dt><dd class="break-words text-gray-800 dark:text-gray-200">{{ row.reason }}</dd></div>
+                    </template>
+                    <template v-else>
+                        <div><dt :class="CARD_LABEL">Inclusive Dates</dt>
+                            <dd class="flex flex-wrap gap-1"><span v-for="d in row.inclusive_dates ?? []" :key="d" :class="[TAG, TAG_DATE]">{{ formatDates([d]) }}</span></dd></div>
+                        <div><dt :class="CARD_LABEL">Destination</dt><dd class="break-words text-gray-800 dark:text-gray-200">{{ row.going_to || '—' }}</dd></div>
+                        <div><dt :class="CARD_LABEL">Purpose</dt>
+                            <dd class="flex flex-wrap gap-1"><span v-for="p in [].concat(row.purpose ?? [])" :key="p" :class="[TAG, TAG_PURPOSE, 'break-words']">{{ p }}</span></dd></div>
+                    </template>
+                </dl>
+            </article>
+        </div>
+
+        <div v-if="rows(current).length" class="hidden md:block overflow-x-auto rounded border border-gray-200 dark:border-gray-700">
             <table class="w-full min-w-[760px] text-left text-xs border-separate border-spacing-0">
                 <thead>
                     <tr>
                         <th v-for="h in HEADERS[tab]" :key="h" :class="[LIST_HEAD, h === 'Days' ? 'text-right' : '']">{{ h }}</th>
-                        <th v-if="!current.readonly" class="text-center" :class="LIST_HEAD">Actions</th>
+                        <th class="text-center" :class="LIST_HEAD">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -436,11 +513,13 @@ const check = 'rounded border-gray-300 dark:border-gray-600 text-emerald-600 foc
                             <td class="max-w-xs break-words text-gray-800 dark:text-gray-200">{{ row.going_to || '—' }}</td>
                             <td class="max-w-xs"><div class="flex flex-wrap gap-1"><span v-for="p in [].concat(row.purpose ?? [])" :key="p" :class="[TAG, TAG_PURPOSE, 'break-words']">{{ p }}</span></div></td>
                         </template>
-                        <td v-if="!current.readonly">
+                        <td>
                             <div class="flex items-center justify-center gap-2">
                                 <RowIconButton color="purple" icon="fas fa-print" tooltip="View/Print" @click="openPrint(row)" />
-                                <RowIconButton v-if="row.editable" color="blue" icon="fas fa-pencil-alt" tooltip="Edit" @click="open(row)" />
-                                <span v-else class="p-2 rounded-lg bg-gray-100 dark:bg-gray-700/50 text-gray-400 dark:text-gray-500 cursor-help" title="A pass slip naming other employees too: change it on the Pass Slips page."><i class="fas fa-lock"></i></span>
+                                <template v-if="!current.readonly">
+                                    <RowIconButton v-if="row.editable" color="blue" icon="fas fa-pencil-alt" tooltip="Edit" @click="open(row)" />
+                                    <span v-else class="p-2 rounded-lg bg-gray-100 dark:bg-gray-700/50 text-gray-400 dark:text-gray-500 cursor-help" title="A pass slip naming other employees too: change it on the Pass Slips page."><i class="fas fa-lock"></i></span>
+                                </template>
                             </div>
                         </td>
                     </tr>

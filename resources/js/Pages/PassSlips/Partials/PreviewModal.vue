@@ -1,9 +1,9 @@
 <template>
     <Teleport to="body" v-if="show && formData">
-        <div class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
+        <div class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-2 sm:p-4">
             <div class="relative w-full max-w-7xl bg-white rounded-lg shadow-2xl dark:bg-gray-800 max-h-[90vh] overflow-y-auto">
                 <!-- Modal Header -->
-                <div class="sticky top-0 flex items-center justify-between px-6 py-4 border-b border-gray-200 rounded-t-lg bg-gradient-to-r from-emerald-50 to-emerald-100 dark:from-gray-700 dark:to-gray-600 dark:border-gray-600 z-10 print:hidden">
+                <div ref="fitHeader" class="sticky top-0 flex flex-wrap items-center justify-between gap-2 px-4 py-3 sm:px-6 sm:py-4 border-b border-gray-200 rounded-t-lg bg-gradient-to-r from-emerald-50 to-emerald-100 dark:from-gray-700 dark:to-gray-600 dark:border-gray-600 z-10 print:hidden">
                     <h3 class="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
                         <i class="fas fa-file-pdf text-emerald-600 dark:text-emerald-400"></i>
                         Pass Slip Preview
@@ -35,9 +35,13 @@
 
                 <!-- Preview Content - Two Column Layout -->
                 <!-- The whole sheet, its margins inside (like the Leave preview); only this page is printed -->
-                <div class="p-4 bg-gray-100 dark:bg-gray-900 overflow-x-auto">
+                <!-- The page is shrunk as much as the portrait previews and scrolls sideways for the rest; Print copies it unscaled -->
+                    <div ref="fitBody" class="p-2 sm:p-4 bg-gray-100 dark:bg-gray-900 overflow-x-auto">
+                    <div class="mx-auto" :style="fitFrameStyle">
+                    <div :style="fitPageStyle">
                     <div
-                        id="preview-content"
+                        ref="fitPage"
+                            id="preview-content"
                         class="mx-auto grid grid-cols-2 gap-4 bg-white shadow"
                         data-print-page-only
                         :data-page-width-in="paperSize === 'long' ? 13 : 11"
@@ -293,10 +297,12 @@
                         </div>
                         </div>
                     </div>
+                    </div>
+                    </div>
                 </div>
 
                 <!-- Modal Footer -->
-                <div class="flex items-center justify-center gap-3 p-6 border-t-2 border-gray-200 rounded-b-lg dark:border-gray-600 bg-gray-50 dark:bg-gray-800 sticky bottom-0 print:hidden">
+                <div ref="fitFooter" class="flex flex-wrap items-center justify-center gap-2 sm:gap-3 p-3 sm:p-6 border-t-2 border-gray-200 rounded-b-lg dark:border-gray-600 bg-gray-50 dark:bg-gray-800 sticky bottom-0 print:hidden">
                     <button @click="printPassSlip" class="inline-flex items-center gap-2 px-5 py-3 text-xs font-medium text-gray-600 dark:text-gray-400 border border-gray-600 dark:border-gray-500 hover:text-white hover:bg-gray-600 dark:hover:bg-gray-600 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95">
                         <i class="fas fa-print"></i>
                         Print
@@ -324,6 +330,7 @@
 </template>
 
 <script setup lang="ts">
+import { useFitPreview } from '@/Composables/useFitPreview';
 import { isProvincialBudgetOfficer, isProvincialGovernor } from '@/Composables/useOfficials';
 import { ref } from 'vue';
 import type { Employee } from '../Composables/usePassSlipsData';
@@ -339,6 +346,9 @@ const props = defineProps<{
     sortedEmployees: Employee[];
     isPreviewFromTable?: boolean;
 }>();
+
+// Shrinks the landscape page as much as the portrait previews (the rest scrolls sideways)
+const { fitHeader, fitBody, fitFooter, fitPage, fitFrameStyle, fitPageStyle } = useFitPreview(() => props.show, { landscape: true });
 
 defineEmits<{
     confirm: [];

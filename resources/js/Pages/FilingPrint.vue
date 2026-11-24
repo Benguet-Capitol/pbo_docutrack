@@ -18,6 +18,7 @@
         @close="close"
     />
     <LeavePreview v-else-if="module === 'leaves' && leave" :show="true" :leave="leave" :employee="leaveEmployee" :signatories="leaveSignatories" mode="view" :leave-id="null" @close="close" />
+    <TravelOrderPreview v-else-if="module === 'travel-orders'" :show="true" :form-data="travelOrder" :employees="employees" :sorted-employees="sortedEmployees" :is-preview-from-table="true" hide-trip-ticket @close="close" />
 </template>
 
 <script setup lang="ts">
@@ -27,13 +28,14 @@ import PassSlipPreview from './PassSlips/Partials/PreviewModal.vue';
 import TimeSlipPreview from './TimeSlips/Partials/PreviewModal.vue';
 import TardinessPreview from './Tardiness/Partials/PreviewModal.vue';
 import LeavePreview from './Leaves/Partials/PreviewModal.vue';
+import TravelOrderPreview from './TravelOrders/Partials/PreviewModal.vue';
 import { groupApplications } from './Leaves/Composables/useLeavesData';
 import { resolveLeaveSignatory } from './Leaves/Composables/useLeaveSignatories';
 import { resolveApprovedBy } from '@/Composables/useSignatory';
 import { isProvincialBudgetOfficer, isProvincialGovernor } from '@/Composables/useOfficials';
 
 const props = defineProps<{
-    module: 'leaves' | 'pass-slips' | 'time-slips' | 'tardiness';
+    module: 'leaves' | 'pass-slips' | 'time-slips' | 'tardiness' | 'travel-orders';
     /** The slip, or a leave application's rows */
     record: any;
     employees: any[];
@@ -87,6 +89,18 @@ const tardiness = computed(() => {
         requested_time: hhmm(r.requested_time), reason: r.reason, return_time: r.return_time || '',
         returnType: (r.return_time === 'NWD' || r.return_time === '17:00:00' ? 'nwd' : 'time') as 'time' | 'nwd',
         supervisor_employee_id: r.supervisor_employee_id || null, approved_by_employee_id: r.approved_by_employee_id ?? null, approved_by_title: r.approved_by_title ?? null,
+    };
+});
+
+// As the Travel Orders page's openPreviewModal() fills it from a saved order
+const travelOrder = computed(() => {
+    const o = props.record;
+    return {
+        control_no: o.control_no, date: day(o.date), going_to: o.going_to, inclusive_dates: [...(o.inclusive_dates || [])], purpose: [].concat(o.purpose ?? []),
+        vehicle: o.vehicle, plate_number: o.plate_number || '', employee_ids: (o.employees || []).map((e: any) => e.id), driver: o.driver || '',
+        newPurpose: '', newInclusiveDate: '', newInclusiveDateRange: '', supervisor_employee_id: o.supervisor_employee_id || null,
+        approver_employee_id: o.approver_employee_id || null, is_acting_approver: o.is_acting_approver ?? false,
+        acting_approver_name: o.acting_approver_name || '', acting_approver_designation: o.acting_approver_designation || '',
     };
 });
 

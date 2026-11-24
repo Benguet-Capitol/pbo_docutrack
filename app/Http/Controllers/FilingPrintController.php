@@ -7,6 +7,7 @@ use App\Models\Leave;
 use App\Models\PassSlip;
 use App\Models\Tardiness;
 use App\Models\TimeSlip;
+use App\Models\TravelOrder;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -25,9 +26,10 @@ class FilingPrintController extends Controller
             'pass-slips' => PassSlip::with('employees')->findOrFail($id),
             'time-slips' => TimeSlip::findOrFail($id),
             'tardiness' => Tardiness::findOrFail($id),
+            'travel-orders' => TravelOrder::with('employees')->findOrFail($id),
         };
         // The same employee list the module's page loads, for the names and titles its preview prints
-        $employees = app(EmployeeController::class)->index(Request::create('/', 'GET', $module === 'leaves' ? [] : ['scope' => 'pbo']))->getData(true);
+        $employees = app(EmployeeController::class)->index(Request::create('/', 'GET', in_array($module, ['leaves', 'travel-orders'], true) ? [] : ['scope' => 'pbo']))->getData(true);
 
         return Inertia::render('FilingPrint', ['module' => $module, 'record' => $record, 'employees' => $employees]);
     }

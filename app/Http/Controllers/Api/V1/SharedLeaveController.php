@@ -112,6 +112,7 @@ class SharedLeaveController extends Controller
             'limited_leaves' => $limited,
             'applications' => $applications,
             'travel_orders' => $travelOrders->map(fn (TravelOrder $order) => [
+                'id' => $order->id,
                 'control_no' => $order->control_no,
                 'date' => $order->date?->format('Y-m-d'),
                 'going_to' => $order->going_to,

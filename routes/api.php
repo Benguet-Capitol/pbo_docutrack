@@ -47,7 +47,7 @@ Route::prefix('v1/filing/employees/{employeeId}')->middleware(['api.key:filing',
     Route::get('/', [\App\Http\Controllers\Api\V1\SharedFilingController::class, 'index']);
     Route::post('/{module}', [\App\Http\Controllers\Api\V1\SharedFilingController::class, 'store'])->whereIn('module', ['leaves', 'pass-slips', 'time-slips', 'tardiness']);
     Route::put('/{module}/{id}', [\App\Http\Controllers\Api\V1\SharedFilingController::class, 'update'])->whereIn('module', ['leaves', 'pass-slips', 'time-slips', 'tardiness']);
-    Route::get('/{module}/{id}/print', [\App\Http\Controllers\Api\V1\SharedFilingController::class, 'printUrl'])->whereIn('module', ['leaves', 'pass-slips', 'time-slips', 'tardiness']);
+    Route::get('/{module}/{id}/print', [\App\Http\Controllers\Api\V1\SharedFilingController::class, 'printUrl'])->whereIn('module', ['leaves', 'pass-slips', 'time-slips', 'tardiness', 'travel-orders']);
 });
 
 // Documents API

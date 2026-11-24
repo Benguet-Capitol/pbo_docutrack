@@ -12,6 +12,7 @@ use App\Models\Leave;
 use App\Models\PassSlip;
 use App\Models\Tardiness;
 use App\Models\TimeSlip;
+use App\Models\TravelOrder;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
@@ -257,6 +258,8 @@ class SharedFilingController extends Controller
             'pass-slips' => PassSlip::whereHas('employees', fn ($q) => $q->where('employees.id', $employee->id))->findOrFail($id),
             'time-slips' => TimeSlip::where('requesting_employee_id', $employee->id)->findOrFail($id),
             'tardiness' => Tardiness::where('employee_id', $employee->id)->findOrFail($id),
+            // Made by HR, so only previewed here: one that names the employee
+            'travel-orders' => TravelOrder::whereHas('employees', fn ($q) => $q->where('employees.id', $employee->id))->findOrFail($id),
         };
 
         return \Illuminate\Support\Facades\URL::temporarySignedRoute('filing.print', now()->addMinutes(30), ['module' => $module, 'id' => $record->id], absolute: false);
