@@ -131,13 +131,13 @@
                         </div>
 
                         <!-- Recommending Approval -->
-                        <div v-if="getRecommendingApprovalEmployee() && !isProvincialBudgetOfficerRequesting()" class="mb-4">
+                        <div v-if="getRecommendingApprovalEmployees().length && !isProvincialBudgetOfficerRequesting()" class="mb-4">
                             <p class="text-xs text-gray-900 mb-6">Recommending Approval:</p>
-                            <div class="space-y-8">
-                                <div class="w-72">
-                                    <p class="font-bold text-xs text-center text-gray-900 w-72 uppercase">{{ getRecommendingApprovalEmployee().name }}</p>
-                                    <p class="text-xs text-center text-gray-700 border-b border-gray-900 w-72">{{ getRecommendingApprovalEmployee().designation }}</p>
-                                    <p class="text-xs text-center text-gray-700 w-72">Immediate Supervisor</p>
+                            <div class="flex flex-wrap gap-x-6 gap-y-8">
+                                <div v-for="supervisor in getRecommendingApprovalEmployees()" :key="supervisor.id" :class="getRecommendingApprovalEmployees().length > 1 ? 'w-56' : 'w-72'">
+                                    <p class="font-bold text-xs text-center text-gray-900 uppercase">{{ supervisor.name }}</p>
+                                    <p class="text-xs text-center text-gray-700 border-b border-gray-900">{{ supervisor.designation }}</p>
+                                    <p class="text-xs text-center text-gray-700">Immediate Supervisor</p>
                                 </div>
                             </div>
                         </div>
@@ -255,13 +255,13 @@
                         </div>
 
                         <!-- Recommending Approval -->
-                        <div v-if="getRecommendingApprovalEmployee() && !isProvincialBudgetOfficerRequesting()" class="mb-4">
+                        <div v-if="getRecommendingApprovalEmployees().length && !isProvincialBudgetOfficerRequesting()" class="mb-4">
                             <p class="text-xs text-gray-700 mb-6">Recommending Approval:</p>
-                            <div class="space-y-8">
-                                <div class="w-72">
-                                    <p class="font-bold text-xs text-center text-gray-900 w-72 uppercase">{{ getRecommendingApprovalEmployee().name }}</p>
-                                    <p class="text-xs text-center text-gray-700 border-b border-gray-900 w-72">{{ getRecommendingApprovalEmployee().designation }}</p>
-                                    <p class="text-xs text-center text-gray-700 w-72">Immediate Supervisor</p>
+                            <div class="flex flex-wrap gap-x-6 gap-y-8">
+                                <div v-for="supervisor in getRecommendingApprovalEmployees()" :key="supervisor.id" :class="getRecommendingApprovalEmployees().length > 1 ? 'w-56' : 'w-72'">
+                                    <p class="font-bold text-xs text-center text-gray-900 uppercase">{{ supervisor.name }}</p>
+                                    <p class="text-xs text-center text-gray-700 border-b border-gray-900">{{ supervisor.designation }}</p>
+                                    <p class="text-xs text-center text-gray-700">Immediate Supervisor</p>
                                 </div>
                             </div>
                         </div>
@@ -391,9 +391,12 @@ const getProvincialGovernor = (): any => {
     return gov || null;
 };
 
-const getRecommendingApprovalEmployee = (): any => {
-    if (!props.formData?.recommending_approval_employee_id) return null;
-    return props.employees?.find((emp: Employee) => emp.id === props.formData.recommending_approval_employee_id) || null;
+// Every immediate supervisor recommending approval (several when the requesting employees are under different ones)
+const getRecommendingApprovalEmployees = (): Employee[] => {
+    const ids: number[] = props.formData?.recommending_approval_employee_ids?.length
+        ? props.formData.recommending_approval_employee_ids
+        : [props.formData?.recommending_approval_employee_id].filter(Boolean);
+    return ids.map((id) => props.employees?.find((emp: Employee) => emp.id === id)).filter((emp): emp is Employee => !!emp);
 };
 
 const isProvincialBudgetOfficerRequesting = (): boolean => {

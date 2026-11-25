@@ -22,6 +22,7 @@ export function usePassSlipsForm(employees: any, passSlips: any) {
         remarks: '',
         employee_ids: [] as number[],
         recommending_approval_employee_id: null as number | null,
+        recommending_approval_employee_ids: [] as number[],
         approved_by_employee_id: null as number | null,
         approved_by_title: null as string | null,
         vehicle: 'RP Vehicle' as 'RP Vehicle' | 'PUJ',
@@ -89,6 +90,7 @@ export function usePassSlipsForm(employees: any, passSlips: any) {
                 const pgov = getProvincialGovernor();
                 if (pgov) {
                     formData.value.recommending_approval_employee_id = pgov.id;
+                    formData.value.recommending_approval_employee_ids = [pgov.id];
                 }
             }
         },
@@ -219,6 +221,12 @@ export function usePassSlipsForm(employees: any, passSlips: any) {
         return employees.value.find((emp: Employee) => emp.id === formData.value.recommending_approval_employee_id) || null;
     };
 
+    /** A saved slip's immediate supervisors; a slip from before several were possible has its one supervisor */
+    const recommendersOf = (slip: PassSlip): number[] =>
+        slip.recommending_approval_employee_ids?.length
+            ? [...slip.recommending_approval_employee_ids]
+            : slip.recommending_approval_employee_id ? [slip.recommending_approval_employee_id] : [];
+
     const getProvincialGovernor = (): Employee | null => {
         return employees.value.find((emp: Employee) => isProvincialGovernor(emp)) || null;
     };
@@ -313,6 +321,7 @@ export function usePassSlipsForm(employees: any, passSlips: any) {
             employee_ids: [],
             returnType: 'time',
             recommending_approval_employee_id: null,
+            recommending_approval_employee_ids: [],
             approved_by_employee_id: null,
             approved_by_title: null,
             vehicle: 'RP Vehicle',
@@ -350,6 +359,7 @@ export function usePassSlipsForm(employees: any, passSlips: any) {
             employee_ids: slip.employees.map(emp => emp.id),
             returnType: returnType,
             recommending_approval_employee_id: slip.recommending_approval_employee_id || null,
+            recommending_approval_employee_ids: recommendersOf(slip),
             approved_by_employee_id: slip.approved_by_employee_id ?? null,
             approved_by_title: slip.approved_by_title ?? null,
             vehicle: (slip.vehicle || 'RP Vehicle') as 'RP Vehicle' | 'PUJ',
@@ -397,6 +407,7 @@ export function usePassSlipsForm(employees: any, passSlips: any) {
                 employee_ids: slip.employees.map(emp => emp.id),
                 returnType: returnType,
                 recommending_approval_employee_id: slip.recommending_approval_employee_id || null,
+                recommending_approval_employee_ids: recommendersOf(slip),
                 approved_by_employee_id: slip.approved_by_employee_id ?? null,
                 approved_by_title: slip.approved_by_title ?? null,
                 vehicle: (slip.vehicle || 'RP Vehicle') as 'RP Vehicle' | 'PUJ',
@@ -425,6 +436,7 @@ export function usePassSlipsForm(employees: any, passSlips: any) {
             remarks: '',
             employee_ids: [],
             recommending_approval_employee_id: null,
+            recommending_approval_employee_ids: [],
             approved_by_employee_id: null,
             approved_by_title: null,
             vehicle: 'RP Vehicle',

@@ -70,7 +70,8 @@ const passSlip = computed(() => {
         requested_time: hhmm(s.requested_time), purpose: s.purpose, location: s.location,
         expected_return_time: returnType === 'time' ? hhmm(s.expected_return_time) : s.expected_return_time || '',
         remarks: s.remarks || '', employee_ids: (s.employees || []).map((e: any) => e.id), returnType,
-        recommending_approval_employee_id: s.recommending_approval_employee_id || null, approved_by_employee_id: s.approved_by_employee_id ?? null,
+        recommending_approval_employee_id: s.recommending_approval_employee_id || null, recommending_approval_employee_ids: [...(s.recommending_approval_employee_ids || [])],
+        approved_by_employee_id: s.approved_by_employee_id ?? null,
         approved_by_title: s.approved_by_title ?? null, vehicle: s.vehicle || 'RP Vehicle',
     };
 });

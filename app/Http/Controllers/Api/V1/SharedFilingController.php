@@ -118,7 +118,7 @@ class SharedFilingController extends Controller
                 'entries' => $rows->map(fn (Leave $leave) => ['id' => $leave->id] + Arr::only($leave->toArray(), self::LEAVE_FIELDS))->values(),
             ])->values();
 
-        $passSlips = PassSlip::with('employees:employees.id')->whereHas('employees', fn ($q) => $q->where('employees.id', $employee->id))
+        $passSlips = PassSlip::with('employees:employees.id', 'recommendingApprovals:employees.id')->whereHas('employees', fn ($q) => $q->where('employees.id', $employee->id))
             ->whereYear('date', $year)->latest('date')->get()
             ->map(fn (PassSlip $record) => $slip($record, 'pass-slips') + ['editable' => $this->namesOnly($record, $employee)]);
 

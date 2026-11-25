@@ -295,7 +295,9 @@ const handleConfirmPreviewAndSubmit = async () => {
             expected_return_time: formComposable.formData.value.expected_return_time,
             remarks: formComposable.formData.value.remarks,
             employee_ids: formComposable.formData.value.employee_ids,
-            recommending_approval_employee_id: formComposable.formData.value.recommending_approval_employee_id,
+            recommending_approval_employee_id: formComposable.formData.value.recommending_approval_employee_ids[0] ?? formComposable.formData.value.recommending_approval_employee_id,
+            // Every immediate supervisor (several when the requesting employees are under different ones)
+            recommending_approval_employee_ids: formComposable.formData.value.recommending_approval_employee_ids,
             approved_by_employee_id: formComposable.formData.value.approved_by_employee_id ?? null,
             approved_by_title: formComposable.formData.value.approved_by_title ?? null,
             vehicle: formComposable.formData.value.vehicle,

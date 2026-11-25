@@ -160,18 +160,13 @@
                                 <span v-if="formErrors.vehicle" class="text-red-500 text-xs">{{ formErrors.vehicle }}</span>
                             </div>
 
-                            <!-- Recommending Approval (Supervisor) Field -->
-                            <div class="space-y-2">
-                                <label for="recommending_approval_employee_id" class="block text-xs font-medium text-gray-700 dark:text-gray-300">Recommending Approval (Supervisor)</label>
-                                <div class="relative flex items-center">
-                                    <i class="fas fa-user-check absolute left-3 text-gray-400 text-sm pointer-events-none"></i>
-                                    <select :value="formData.recommending_approval_employee_id || ''" @change="$emit('update:formData', { ...formData, recommending_approval_employee_id: ($event.target as HTMLSelectElement).value ? Number(($event.target as HTMLSelectElement).value) : null })" id="recommending_approval_employee_id" class="block w-full pl-10 pr-4 py-2 text-xs border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:outline-none transition-colors appearance-none" :class="[formErrors.recommending_approval_employee_id ? 'border-red-500 focus:border-red-500' : 'border-gray-300 focus:border-emerald-500']">
-                                        <option :value="null">Select a supervisor</option>
-                                        <option v-for="emp in sortedEmployees.filter((e) => inPboScope(e) || e.id === formData.recommending_approval_employee_id)" :key="emp.id" :value="emp.id">{{ emp.name }}</option>
-                                    </select>
-                                </div>
-                                <span v-if="formErrors.recommending_approval_employee_id" class="text-red-500 text-xs">{{ formErrors.recommending_approval_employee_id }}</span>
-                            </div>
+                            <!-- Recommending Approval: one immediate supervisor, or several when the requesting employees are under different ones -->
+                            <RecommendingApprovalField
+                                :model-value="formData.recommending_approval_employee_ids"
+                                :employees="sortedEmployees"
+                                :error="formErrors.recommending_approval_employee_ids || formErrors.recommending_approval_employee_id"
+                                @update:model-value="$emit('update:formData', { ...formData, recommending_approval_employee_ids: $event, recommending_approval_employee_id: $event[0] ?? null })"
+                            />
 
                             <!-- Approved By (Signatory) Field -->
                             <SignatoryFields
@@ -214,10 +209,11 @@
 </template>
 
 <script setup lang="ts">
-import { isPboStaff, inPboScope } from '@/Composables/useOfficials';
+import { isPboStaff } from '@/Composables/useOfficials';
 import MissingFieldsHint from '@/Components/MissingFieldsHint.vue';
 import { computed } from 'vue';
 import SignatoryFields from '@/Components/SignatoryFields.vue';
+import RecommendingApprovalField from './RecommendingApprovalField.vue';
 import { isProvincialBudgetOfficer } from '@/Composables/useSignatory';
 import type { Employee } from '../Composables/usePassSlipsData';
 
@@ -236,6 +232,7 @@ const props = defineProps<{
         remarks: string;
         employee_ids: number[];
         recommending_approval_employee_id: number | null;
+        recommending_approval_employee_ids: number[];
         approved_by_employee_id?: number | null;
         approved_by_title?: string | null;
         vehicle: 'RP Vehicle' | 'PUJ';

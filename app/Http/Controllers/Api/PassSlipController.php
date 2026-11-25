@@ -17,7 +17,7 @@ class PassSlipController extends Controller
     public function index(): JsonResponse
     {
         try {
-            $passSlips = PassSlip::with('employees')
+            $passSlips = PassSlip::with('employees', 'recommendingApprovals:employees.id')
                 ->latest('date')
                 ->get();
             return response()->json($passSlips);
@@ -46,6 +46,9 @@ class PassSlipController extends Controller
                 'employee_ids' => 'required|array|min:1',
                 'employee_ids.*' => 'integer|exists:employees,id',
                 'recommending_approval_employee_id' => 'nullable|integer|exists:employees,id',
+                // Several immediate supervisors when the requesting employees are under different ones
+                'recommending_approval_employee_ids' => 'nullable|array',
+                'recommending_approval_employee_ids.*' => 'integer|distinct|exists:employees,id',
                 'approved_by_employee_id' => 'nullable|integer|exists:employees,id',
                 'approved_by_title' => ['nullable', 'string', Rule::in(['Provincial Budget Officer', 'OIC, Provincial Budget Officer', 'Acting Provincial Budget Officer'])],
                 'vehicle' => 'required|in:RP Vehicle,PUJ',
@@ -53,6 +56,7 @@ class PassSlipController extends Controller
 
             // Control number is generated in the frontend modal
             $controlNo = $validated['control_no'];
+            $recommenders = PassSlip::recommendingApprovalIds($validated);
 
             // Create pass slip
             $passSlip = PassSlip::create([
@@ -65,14 +69,15 @@ class PassSlipController extends Controller
                 'expected_return_time' => $validated['expected_return_time'],
                 'remarks' => $validated['remarks'] ?? null,
                 'vehicle' => $validated['vehicle'],
-                'recommending_approval_employee_id' => $validated['recommending_approval_employee_id'] ?? null,
+                'recommending_approval_employee_id' => $recommenders[0] ?? null,
                 'approved_by_employee_id' => $validated['approved_by_employee_id'] ?? null,
                 'approved_by_title' => $validated['approved_by_title'] ?? null,
             ]);
 
             // Attach employees
             $passSlip->employees()->attach($validated['employee_ids']);
-            
+            $passSlip->syncRecommendingApprovals($recommenders);
+
             // Reload with employees
             $passSlip->load('employees');
 
@@ -107,10 +112,21 @@ class PassSlipController extends Controller
                 'employee_ids' => 'required|array|min:1',
                 'employee_ids.*' => 'integer|exists:employees,id',
                 'recommending_approval_employee_id' => 'nullable|integer|exists:employees,id',
+                // Several immediate supervisors when the requesting employees are under different ones
+                'recommending_approval_employee_ids' => 'nullable|array',
+                'recommending_approval_employee_ids.*' => 'integer|distinct|exists:employees,id',
                 'approved_by_employee_id' => 'nullable|integer|exists:employees,id',
                 'approved_by_title' => ['nullable', 'string', Rule::in(['Provincial Budget Officer', 'OIC, Provincial Budget Officer', 'Acting Provincial Budget Officer'])],
                 'vehicle' => 'required|in:RP Vehicle,PUJ',
             ]);
+
+            $recommenders = PassSlip::recommendingApprovalIds($validated);
+            // Sent with only the one supervisor field (the Profile / pbo-registryV2 filing API) and it is unchanged: keep the
+            // slip's other supervisors rather than dropping them
+            $current = $passSlip->recommending_approval_employee_ids;
+            if (!array_key_exists('recommending_approval_employee_ids', $validated) && $recommenders && $recommenders[0] === ($current[0] ?? null)) {
+                $recommenders = $current;
+            }
 
             // Update pass slip
             $passSlip->update([
@@ -123,13 +139,14 @@ class PassSlipController extends Controller
                 'expected_return_time' => $validated['expected_return_time'],
                 'remarks' => $validated['remarks'] ?? null,
                 'vehicle' => $validated['vehicle'],
-                'recommending_approval_employee_id' => $validated['recommending_approval_employee_id'] ?? null,
+                'recommending_approval_employee_id' => $recommenders[0] ?? null,
                 'approved_by_employee_id' => $validated['approved_by_employee_id'] ?? null,
                 'approved_by_title' => $validated['approved_by_title'] ?? null,
             ]);
 
             // Sync employees (update the relationship)
             $passSlip->employees()->sync($validated['employee_ids']);
+            $passSlip->syncRecommendingApprovals($recommenders);
             
             // Reload with employees
             $passSlip->load('employees');

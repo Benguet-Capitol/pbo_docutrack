@@ -38,7 +38,7 @@ class TrashController extends Controller
         'records' => ['Records', Record::class, []],
         'leaves' => ['Leaves', Leave::class, ['employee']],
         'travel_orders' => ['Travel Orders', TravelOrder::class, ['employees']],
-        'pass_slips' => ['Pass Slips', PassSlip::class, ['employees']],
+        'pass_slips' => ['Pass Slips', PassSlip::class, ['employees', 'recommendingApprovals:employees.id']],
         'time_slips' => ['Time Slips', TimeSlip::class, ['requestingEmployee']],
         'tardiness' => ['Tardiness/Undertime', Tardiness::class, ['employee']],
         'certificate_of_appearances' => ['Certificates of Appearance', CertificateOfAppearance::class, []],
@@ -320,6 +320,7 @@ class TrashController extends Controller
                 'tardiness/undertime record(s)' => Tardiness::withTrashed()->where('employee_id', $model->id)->count(),
                 'notice(s) of meeting' => NoticeOfMeeting::withTrashed()->where('employee_id', $model->id)->count(),
                 'pass slip assignment(s)' => DB::table('pass_slip_employee')->where('employee_id', $model->id)->count(),
+                'pass slip recommendation(s)' => DB::table('pass_slip_recommending_approvals')->where('employee_id', $model->id)->count(),
                 'travel order assignment(s)' => DB::table('travel_order_employee')->where('employee_id', $model->id)->count(),
             ],
             'users' => [

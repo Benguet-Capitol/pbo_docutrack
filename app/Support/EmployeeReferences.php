@@ -18,6 +18,7 @@ class EmployeeReferences
         'leaves' => [['employee_id', 'certified_by_employee_id', 'recommended_by_employee_id', 'approved_by_employee_id'], 'leave', 'leaves'],
         'pass_slip_employee' => [['employee_id'], 'pass slip', 'pass slips'],
         'pass_slips' => [['recommending_approval_employee_id', 'approved_by_employee_id'], 'pass slip signature', 'pass slip signatures'],
+        'pass_slip_recommending_approvals' => [['employee_id'], 'pass slip recommendation', 'pass slip recommendations'],
         'time_slips' => [['requesting_employee_id', 'certified_by_employee_id', 'approved_by_employee_id'], 'time slip', 'time slips'],
         'tardiness' => [['employee_id', 'supervisor_employee_id', 'approved_by_employee_id'], 'tardiness/undertime record', 'tardiness/undertime records'],
         'travel_order_employee' => [['employee_id'], 'travel order', 'travel orders'],
@@ -31,6 +32,7 @@ class EmployeeReferences
     /** Pivot tables: their parent column, so a merge doesn't create a duplicate (parent, employee) row */
     private const PIVOT_PARENTS = [
         'pass_slip_employee' => 'pass_slip_id',
+        'pass_slip_recommending_approvals' => 'pass_slip_id',
         'travel_order_employee' => 'travel_order_id',
     ];
 

@@ -28,6 +28,7 @@ export interface PassSlip {
     vehicle?: string;
     employees: Employee[];
     recommending_approval_employee_id: number | null;
+    recommending_approval_employee_ids?: number[];
     approved_by_employee_id?: number | null;
     approved_by_title?: string | null;
     created_at: string;

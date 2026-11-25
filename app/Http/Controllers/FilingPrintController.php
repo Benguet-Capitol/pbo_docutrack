@@ -23,7 +23,7 @@ class FilingPrintController extends Controller
     {
         $record = match ($module) {
             'leaves' => Leave::where('control_no', Leave::findOrFail($id)->control_no)->orderBy('id')->get(),
-            'pass-slips' => PassSlip::with('employees')->findOrFail($id),
+            'pass-slips' => PassSlip::with('employees', 'recommendingApprovals:employees.id')->findOrFail($id),
             'time-slips' => TimeSlip::findOrFail($id),
             'tardiness' => Tardiness::findOrFail($id),
             'travel-orders' => TravelOrder::with('employees')->findOrFail($id),
