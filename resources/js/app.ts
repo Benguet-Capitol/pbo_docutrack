@@ -1,5 +1,7 @@
 import '../css/app.css';
 import './bootstrap';
+// Offline / back online and lost connections: toasts on every page
+import './network';
 
 import { createInertiaApp } from '@inertiajs/vue3';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';

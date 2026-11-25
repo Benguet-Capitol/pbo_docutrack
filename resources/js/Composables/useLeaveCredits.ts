@@ -1,7 +1,8 @@
 import { yearOf } from '@/Composables/useYearFilter';
+import { leaveWorkingDates } from '@/Pages/Leaves/Composables/useLeaveFormPrint';
 
 /**
- * Yearly limits (by year of filing) for leave types with a fixed number of days per year.
+ * Yearly limits (by the year of the inclusive dates) for leave types with a fixed number of days per year.
  * Keep in sync with Leave::YEARLY_LIMITS on the server, which enforces them.
  */
 export const LEAVE_LIMITS: Record<string, number> = {
@@ -20,6 +21,8 @@ export interface LeaveLike {
     is_half_day?: boolean;
     number_of_working_days_applied_for?: number | string | null;
     recommendation?: string | null;
+    inclusive_dates?: string[] | null;
+    off_days?: string[] | null;
 }
 
 export interface LeaveCredit {
@@ -33,6 +36,23 @@ export interface LeaveCredit {
 /** leaveDays: days a leave counts against its limit (half day = 0.5) */
 export const leaveDays = (leave: Pick<LeaveLike, 'is_half_day' | 'number_of_working_days_applied_for'>): number =>
     leave.is_half_day ? 0.5 : Number(leave.number_of_working_days_applied_for) || 0;
+
+/**
+ * leaveDaysByYear: days a leave counts against each year's limit, by the year of its inclusive dates (not of filing):
+ * a leave filed in November for January counts in January's year. { year: days }; dates crossing into the next year
+ * split the days by working dates; with no dates, the filing year. Mirrors Leave::daysByYear() on the server.
+ */
+export const leaveDaysByYear = (
+    leave: Pick<LeaveLike, 'is_half_day' | 'number_of_working_days_applied_for' | 'inclusive_dates' | 'off_days'> & { date_of_filing?: string | null },
+): Record<number, number> => {
+    const total = leaveDays(leave);
+    const dates = leaveWorkingDates(leave.inclusive_dates ?? [], leave.off_days ?? null);
+    if (!dates.length) return { [yearOf(leave.date_of_filing ?? '') ?? new Date().getFullYear()]: total };
+    const perYear: Record<number, number> = {};
+    for (const date of dates) perYear[Number(date.slice(0, 4))] = (perYear[Number(date.slice(0, 4))] ?? 0) + 1;
+    for (const year of Object.keys(perYear)) perYear[Number(year)] = (total * perYear[Number(year)]) / dates.length;
+    return perYear;
+};
 
 /** A leave recommended for disapproval didn't proceed: left out of the Dashboard summaries and the Locator Chart, but it still uses the yearly limit (it was filed) */
 export const isDisapproved = (leave: { recommendation?: string | null }): boolean => leave?.recommendation === 'disapproval';
@@ -55,12 +75,12 @@ export const leaveCredit = (
     const limit = LEAVE_LIMITS[type];
     if (limit === undefined) return null;
 
+    // By the year of each leave's inclusive dates, as the server counts them
     const used = leaves
         .filter((leave) => leave.employee_id === employeeId
             && leave.type_of_leave === type
-            && yearOf(leave.date_of_filing) === year
             && (excludeId == null || leave.id !== excludeId))
-        .reduce((sum, leave) => sum + leaveDays(leave), 0);
+        .reduce((sum, leave) => sum + (leaveDaysByYear(leave)[year] ?? 0), 0);
 
     return { type, year, limit, used, remaining: Math.max(0, limit - used) };
 };

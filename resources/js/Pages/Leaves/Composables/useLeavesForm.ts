@@ -3,7 +3,7 @@ import { usePermissions } from '@/Composables/usePermissions';
 import { usePage } from '@inertiajs/vue3';
 import { useTrashedControlNumbers } from '@/Composables/useTrashedControlNumbers';
 import type { Leave } from './useLeavesData';
-import { leaveCredit, leaveDays, formatDays } from '@/Composables/useLeaveCredits';
+import { leaveCredit, leaveDays, leaveDaysByYear, formatDays } from '@/Composables/useLeaveCredits';
 import { yearOf } from '@/Composables/useYearFilter';
 import { leaveWorkingDates, longDate } from './useLeaveFormPrint';
 import { localDateString } from '@/utils/date';
@@ -290,14 +290,17 @@ export function useLeavesForm(
      */
     const leaveCreditInfo = computed(() => {
         const employeeId = Number(formData.value.employee_id);
-        const year = yearOf(formData.value.date_of_filing) ?? new Date().getFullYear();
         const others = (leavesRef.value || []).filter((leave: Leave) => !editedRowIds.value.has(leave.id));
         return formData.value.entries.map((entry) => {
             if (!employeeId) return null;
-            const credit = leaveCredit(others, employeeId, entry.type_of_leave, year, null);
-            if (!credit) return null;
-            const requested = leaveDays(entry);
-            return { ...credit, requested, exceeds: credit.used + requested > credit.limit };
+            // By the year of the entry's inclusive dates (a leave filed now for next year uses next year's days)
+            const byYear = leaveDaysByYear({ ...entry, off_days: entry.off_days.length ? entry.off_days : null, date_of_filing: formData.value.date_of_filing });
+            const checks = Object.entries(byYear).map(([year, requested]) => {
+                const credit = leaveCredit(others, employeeId, entry.type_of_leave, Number(year), null);
+                return credit && { ...credit, requested, exceeds: credit.used + requested > credit.limit + 0.001 };
+            });
+            // The year over the limit, else the (first) year of the dates
+            return checks.find((check) => check?.exceeds) ?? checks[0] ?? null;
         });
     });
 

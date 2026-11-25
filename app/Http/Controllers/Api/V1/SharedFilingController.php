@@ -146,9 +146,10 @@ class SharedFilingController extends Controller
             'leave_check' => [
                 'days' => (object) Leave::daysOnLeave($employee->id),
                 'limits' => Leave::YEARLY_LIMITS,
+                // By the year of the inclusive dates (one item per year a leave's days fall in)
                 'limited' => Leave::where('employee_id', $employee->id)->whereIn('type_of_leave', array_keys(Leave::YEARLY_LIMITS))->get()
-                    ->map(fn (Leave $leave) => ['control_no' => $leave->control_no, 'type' => $leave->type_of_leave, 'year' => $leave->date_of_filing?->year,
-                        'days' => Leave::daysCounted((bool) $leave->is_half_day, $leave->number_of_working_days_applied_for)])->values(),
+                    ->flatMap(fn (Leave $leave) => collect($leave->yearlyDays())->map(fn ($days, $year) => ['control_no' => $leave->control_no, 'type' => $leave->type_of_leave, 'year' => $year, 'days' => $days])->values())
+                    ->values(),
             ],
             'leaves' => $leaves,
             'pass_slips' => $passSlips,

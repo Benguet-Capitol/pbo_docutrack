@@ -243,17 +243,24 @@ const submitMessage = computed<string | null>(() => {
             taken.set(date, [...(taken.get(date) ?? []), { where: `${e.type_of_leave} in this application`, half: half(e) }]);
         }
     }
-    const year = Number(String(editing.value?.date_of_filing ?? today()).slice(0, 4));
+    // By the year of the inclusive dates, as the server checks (a leave filed now for next year uses next year's days)
+    const filingYear = Number(String(editing.value?.date_of_filing ?? today()).slice(0, 4));
     for (const e of x.entries ?? []) {
         const limit = check.limits?.[e.type_of_leave];
         if (!limit) continue;
-        const used = (check.limited ?? []).filter((r: any) => r.type === e.type_of_leave && r.year === year && r.control_no !== own).reduce((sum: number, r: any) => sum + Number(r.days), 0);
-        const requested = leaveDays(e);
-        if (used + requested <= limit) continue;
-        const remaining = Math.max(0, limit - used);
-        return remaining <= 0
-            ? `${e.type_of_leave} is already exhausted for ${year}: all ${limit} days have been used.`
-            : `${e.type_of_leave} exceeds the yearly limit for ${year}: only ${formatDays(remaining)} of ${limit} days remaining, but ${formatDays(requested)} requested.`;
+        const dates = workingDates(e);
+        const byYear: Record<number, number> = {};
+        if (e.is_half_day || !dates.length) byYear[dates.length ? Number(dates[0].slice(0, 4)) : filingYear] = leaveDays(e);
+        else dates.forEach((date) => { byYear[Number(date.slice(0, 4))] = (byYear[Number(date.slice(0, 4))] ?? 0) + 1; });
+        for (const [y, requested] of Object.entries(byYear)) {
+            const year = Number(y);
+            const used = (check.limited ?? []).filter((r: any) => r.type === e.type_of_leave && Number(r.year) === year && r.control_no !== own).reduce((sum: number, r: any) => sum + Number(r.days), 0);
+            if (used + requested <= limit + 0.001) continue;
+            const remaining = Math.max(0, limit - used);
+            return remaining <= 0
+                ? `${e.type_of_leave} is already exhausted for ${year}: all ${limit} days have been used.`
+                : `${e.type_of_leave} exceeds the yearly limit for ${year}: only ${formatDays(remaining)} of ${limit} days remaining, but ${formatDays(requested)} requested.`;
+        }
     }
     return null;
 });

@@ -59,9 +59,10 @@ class SharedLeaveController extends Controller
             $usedByType[$leave->type_of_leave] = ($usedByType[$leave->type_of_leave] ?? 0) + $days($leave);
         }
 
-        // Yearly-limit leaves: every filed leave counts against the limit, disapproved ones included (as when filing)
-        $limited = collect(Leave::YEARLY_LIMITS)->map(function (int $limit, string $type) use ($leaves, $days) {
-            $counted = (float) $leaves->where('type_of_leave', $type)->sum($days);
+        // Yearly-limit leaves: every filed leave counts against the limit, disapproved ones included (as when filing),
+        // by the year of its inclusive dates (a leave filed in December for January counts in January's year)
+        $limited = collect(Leave::YEARLY_LIMITS)->map(function (int $limit, string $type) use ($employee, $year) {
+            $counted = Leave::usedDays($employee->id, $type, $year);
 
             return ['type' => $type, 'limit' => $limit, 'used' => $counted, 'remaining' => max(0, $limit - $counted)];
         })->values();

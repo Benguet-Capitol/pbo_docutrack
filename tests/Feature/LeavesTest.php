@@ -244,6 +244,24 @@ class LeavesTest extends TestCase
             ->assertCreated();
     }
 
+    public function test_the_yearly_limit_goes_by_the_year_of_the_inclusive_dates(): void
+    {
+        // This year's 5 Mandatory/Forced days are used
+        $forced = ['type_of_leave' => 'Mandatory/Forced Leave', 'inclusive_dates' => ['2026-11-02 - 2026-11-06'], 'number_of_working_days_applied_for' => 5];
+        $this->fileLeave($this->admin, $this->application($this->samuel, ['date_of_filing' => '2026-10-26'], $forced))->assertCreated();
+
+        // Filed this year for next January: next year's limit, still unused
+        $this->fileLeave($this->admin, $this->application($this->samuel, ['date_of_filing' => '2026-11-25'], ['type_of_leave' => 'Mandatory/Forced Leave', 'inclusive_dates' => ['2027-01-11 - 2027-01-12'], 'number_of_working_days_applied_for' => 2]))
+            ->assertCreated();
+        $this->assertSame(2.0, Leave::usedDays($this->samuel->id, 'Mandatory/Forced Leave', 2027));
+        $this->assertSame(5.0, Leave::usedDays($this->samuel->id, 'Mandatory/Forced Leave', 2026));
+
+        // Filed next year for a day this year: this year's limit, already used up
+        $this->fileLeave($this->admin, $this->application($this->samuel, ['date_of_filing' => '2027-01-04'], ['type_of_leave' => 'Mandatory/Forced Leave', 'inclusive_dates' => ['2026-12-28']]))
+            ->assertStatus(422)
+            ->assertJsonPath('errors.type_of_leave.0', 'Mandatory/Forced Leave is already exhausted for 2026: all 5 days have been used.');
+    }
+
     public function test_editing_an_application_does_not_count_its_own_days_twice(): void
     {
         $spl = ['type_of_leave' => 'Special Privilege Leave', 'inclusive_dates' => ['2026-10-05 - 2026-10-07'], 'number_of_working_days_applied_for' => 3];

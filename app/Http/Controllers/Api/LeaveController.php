@@ -367,12 +367,12 @@ class LeaveController extends Controller
     }
 
     /**
-     * Yearly limits (Mandatory/Forced, Special Privilege, Wellness): what the employee already used that year
-     * (minus this application's own rows on update) plus what this application asks for.
+     * Yearly limits (Mandatory/Forced, Special Privilege, Wellness), by the year of the inclusive dates (a leave filed
+     * now for next year uses next year's days): what the employee already used that year (minus this application's
+     * own rows on update) plus what this application asks for in it.
      */
     private function ensureWithinYearlyLimits(array $validated, array $excludeIds = []): void
     {
-        $year = Carbon::parse($validated['date_of_filing'])->year;
         $format = fn (float $days) => rtrim(rtrim(number_format($days, 1), '0'), '.');
 
         foreach ($validated['entries'] as $entry) {
@@ -380,14 +380,17 @@ class LeaveController extends Controller
             $limit = Leave::YEARLY_LIMITS[$type] ?? null;
             if ($limit === null) continue;
 
-            $used = Leave::usedDays((int) $validated['employee_id'], $type, $year, $excludeIds);
-            $requested = Leave::daysCounted((bool) ($entry['is_half_day'] ?? false), $entry['number_of_working_days_applied_for']);
-            if ($used + $requested <= $limit) continue;
+            $byYear = Leave::daysByYear((bool) ($entry['is_half_day'] ?? false), $entry['number_of_working_days_applied_for'],
+                $entry['inclusive_dates'] ?? [], $entry['off_days'] ?? null, $validated['date_of_filing']);
+            foreach ($byYear as $year => $requested) {
+                $used = Leave::usedDays((int) $validated['employee_id'], $type, $year, $excludeIds);
+                if ($used + $requested <= $limit + 0.001) continue;
 
-            $remaining = max(0, $limit - $used);
-            throw ValidationException::withMessages(['type_of_leave' => $remaining <= 0
-                ? "{$type} is already exhausted for {$year}: all {$limit} days have been used."
-                : "{$type} exceeds the yearly limit for {$year}: only {$format($remaining)} of {$limit} days remaining, but {$format($requested)} requested."]);
+                $remaining = max(0, $limit - $used);
+                throw ValidationException::withMessages(['type_of_leave' => $remaining <= 0
+                    ? "{$type} is already exhausted for {$year}: all {$limit} days have been used."
+                    : "{$type} exceeds the yearly limit for {$year}: only {$format($remaining)} of {$limit} days remaining, but {$format($requested)} requested."]);
+            }
         }
     }
 

@@ -6,6 +6,7 @@ use App\Models\Concerns\LogsActivity;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Carbon;
 
 class Leave extends Model
 {
@@ -117,7 +118,7 @@ class Leave extends Model
     ];
 
     /**
-     * Days an employee may use per year (by year of filing) for these leave types.
+     * Days an employee may use per year (by the year of the inclusive dates) for these leave types.
      * Keep in sync with LEAVE_LIMITS in resources/js/Composables/useLeaveCredits.ts.
      */
     public const YEARLY_LIMITS = [
@@ -210,6 +211,31 @@ class Leave extends Model
         return !($a && $b && $a !== $b);
     }
 
+    /**
+     * Days a leave counts against each year's limit, by the year of its inclusive dates (not of filing): a leave
+     * filed in November for January uses January's year. [year => days]; a leave whose dates cross into the next
+     * year splits its days by its working dates in each; with no dates, the filing year.
+     * Mirrors leaveDaysByYear() in resources/js/Composables/useLeaveCredits.ts.
+     */
+    public static function daysByYear(bool $isHalfDay, $workingDays, ?array $inclusiveDates, ?array $offDays, $dateOfFiling = null): array
+    {
+        $total = static::daysCounted($isHalfDay, $workingDays);
+        $dates = static::workingDates($inclusiveDates ?? [], $offDays);
+        if (!$dates) {
+            return [($dateOfFiling ? Carbon::parse($dateOfFiling) : now())->year => $total];
+        }
+        $perYear = array_count_values(array_map(fn ($date) => (int) substr($date, 0, 4), $dates));
+
+        return array_map(fn ($count) => $total * $count / count($dates), $perYear);
+    }
+
+    /** This leave's days by year of its inclusive dates (see daysByYear) */
+    public function yearlyDays(): array
+    {
+        return static::daysByYear((bool) $this->is_half_day, $this->number_of_working_days_applied_for, $this->inclusive_dates, $this->off_days, $this->date_of_filing);
+    }
+
+    /** Days of a leave type an employee has used in a year, by the year of the inclusive dates (trashed leaves don't count) */
     public static function usedDays(int $employeeId, string $type, int $year, int|array|null $excludeLeaveIds = null): float
     {
         $exclude = array_filter((array) $excludeLeaveIds);
@@ -217,10 +243,9 @@ class Leave extends Model
         return (float) static::query()
             ->where('employee_id', $employeeId)
             ->where('type_of_leave', $type)
-            ->whereYear('date_of_filing', $year)
             ->when($exclude, fn ($query) => $query->whereKeyNot($exclude))
-            ->get(['is_half_day', 'number_of_working_days_applied_for'])
-            ->sum(fn (Leave $leave) => static::daysCounted((bool) $leave->is_half_day, $leave->number_of_working_days_applied_for));
+            ->get(['is_half_day', 'number_of_working_days_applied_for', 'inclusive_dates', 'off_days', 'date_of_filing'])
+            ->sum(fn (Leave $leave) => $leave->yearlyDays()[$year] ?? 0);
     }
 
     protected function serializeDate($date)
